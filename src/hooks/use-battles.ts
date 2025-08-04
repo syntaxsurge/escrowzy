@@ -1,0 +1,172 @@
+'use client'
+
+import { useCallback, useState } from 'react'
+
+import useSWR, { mutate } from 'swr'
+
+import { apiEndpoints } from '@/config/api-endpoints'
+import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api/http-client'
+import type {
+  BattleDiscount,
+  BattleHistory,
+  BattleResult,
+  BattleStats,
+  DailyBattleLimit
+} from '@/types/battle'
+
+interface FindMatchResponse {
+  opponent: {
+    userId: number
+    combatPower: number
+    username: string
+  } | null
+}
+
+export function useBattles(userId?: number) {
+  const { toast } = useToast()
+  const [isSearching, setIsSearching] = useState(false)
+  const [isBattling, setIsBattling] = useState(false)
+  const [battleResult, setBattleResult] = useState<BattleResult | null>(null)
+
+  // Fetch active discount
+  const { data: activeDiscount, error: discountError } =
+    useSWR<BattleDiscount | null>(
+      userId ? apiEndpoints.battles.activeDiscount : null,
+      (url: string) => api.get(url).then((res: any) => res.data),
+      { refreshInterval: 60000 } // Refresh every minute
+    )
+
+  // Fetch battle history
+  const { data: battleHistory, error: historyError } = useSWR<BattleHistory>(
+    userId ? apiEndpoints.battles.history : null,
+    (url: string) => api.get(url).then((res: any) => res.data)
+  )
+
+  // Fetch daily limit
+  const { data: dailyLimit, error: limitError } = useSWR<DailyBattleLimit>(
+    userId ? apiEndpoints.battles.dailyLimit : null,
+    (url: string) => api.get(url).then((res: any) => res.data),
+    { refreshInterval: 60000 } // Refresh every minute
+  )
+
+  // Find match
+  const findMatch = useCallback(async (matchRange?: number) => {
+    setIsSearching(true)
+    try {
+      const response = await api.post(apiEndpoints.battles.findMatch, {
+        matchRange
+      })
+
+      // Check if response exists
+      if (!response || !response.data) {
+        console.error('Invalid response from find match API')
+        return null
+      }
+
+      const data: FindMatchResponse = response.data
+
+      if (!data?.opponent) {
+        // Don't show a toast here - let the UI handle the no match case
+        return null
+      }
+
+      return data.opponent
+    } catch (error: any) {
+      // Don't show toast here - let the UI handle the error
+      console.error('Failed to find match:', error)
+      return null
+    } finally {
+      setIsSearching(false)
+    }
+  }, [])
+
+  // Create battle
+  const createBattle = useCallback(
+    async (opponentId: number) => {
+      setIsBattling(true)
+      setBattleResult(null)
+
+      try {
+        const response = await api.post(apiEndpoints.battles.create, {
+          player2Id: opponentId
+        })
+        const result: BattleResult = response.data
+
+        setBattleResult(result)
+
+        // Refresh all battle data
+        if (userId) {
+          mutate(apiEndpoints.battles.activeDiscount)
+          mutate(apiEndpoints.battles.history)
+          mutate(apiEndpoints.battles.dailyLimit)
+          mutate(apiEndpoints.battles.statsByUserId(userId))
+        }
+
+        // Show result toast
+        if (result.winnerId === userId) {
+          toast({
+            title: '🏆 Victory!',
+            description: `You won! Enjoy ${result.feeDiscountPercent}% off fees for 24 hours!`,
+            variant: 'default'
+          })
+        } else {
+          toast({
+            title: 'Defeat',
+            description:
+              'Better luck next time! You gained 10 XP for participating.',
+            variant: 'default'
+          })
+        }
+
+        return result
+      } catch (error: any) {
+        toast({
+          title: 'Battle Error',
+          description: error.response?.data?.error || 'Failed to create battle',
+          variant: 'destructive'
+        })
+        return null
+      } finally {
+        setIsBattling(false)
+      }
+    },
+    [userId, toast]
+  )
+
+  // Get battle stats
+  const { data: battleStats } = useSWR<BattleStats>(
+    userId ? apiEndpoints.battles.statsByUserId(userId) : null,
+    (url: string) => api.get(url).then((res: any) => res.data),
+    {
+      refreshInterval: 60000,
+      fallbackData: {
+        totalBattles: 0,
+        wins: 0,
+        losses: 0,
+        winRate: 0,
+        averageCP: 100,
+        totalDiscountsEarned: 0
+      }
+    }
+  )
+
+  const canBattle = dailyLimit
+    ? dailyLimit.battlesUsed < dailyLimit.maxBattles
+    : true
+
+  return {
+    activeDiscount,
+    battleHistory,
+    dailyLimit,
+    battleStats,
+    canBattle,
+    isSearching,
+    isBattling,
+    battleResult,
+    findMatch,
+    createBattle,
+    isLoading: !battleHistory && !historyError,
+    error: discountError || historyError || limitError
+  }
+}

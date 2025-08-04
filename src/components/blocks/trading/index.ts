@@ -1,0 +1,8 @@
+// Re-export PageHeader as GamifiedHeader for backward compatibility
+export { PageHeader as GamifiedHeader } from '../page-header'
+export { GamifiedStatsCards, type StatCard } from './gamified-stats-cards'
+export { ActionAlert } from './action-alert'
+export { GamifiedCard } from './gamified-card'
+export { GamifiedListingCard } from './gamified-listing-card'
+export { TradingSidebar } from './trading-sidebar'
+export { SellerDepositTimer } from './seller-deposit-timer'
