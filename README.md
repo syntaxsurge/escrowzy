@@ -8,6 +8,8 @@
 [![Smart Contracts](https://img.shields.io/badge/Smart%20Contracts-3-green)](./contracts)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](./LICENSE)
 
+[![Escrowzy Demo](public/images/escrowzy-demo.png)](https://youtu.be/0fn4zoo-_G8)
+
 ## 🏆 Etherlink Hackathon Submission
 
 This project is submitted to all four tracks of the Etherlink Hackathon,
@@ -553,7 +555,7 @@ Visit `http://localhost:3000` to see the application.
 
 ### Video Demonstration
 
-[Watch on YouTube](https://youtube.com/watch?v=demo)
+[Watch on YouTube](https://youtu.be/0fn4zoo-_G8)
 
 ### Live Platform
 
