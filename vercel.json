@@ -1,0 +1,11 @@
+{
+  "crons": [
+    {
+      "path": "/",
+      "schedule": "0 3 * * *"
+    }
+  ],
+  "git": {
+    "deploymentEnabled": true
+  }
+}
