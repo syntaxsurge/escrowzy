@@ -8,6 +8,13 @@
       "when": 1754554327429,
       "tag": "0000_huge_songbird",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1754603063040,
+      "tag": "0001_redundant_wendigo",
+      "breakpoints": true
     }
   ]
 }
