@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import {
   isValidPaymentMethod,
+  isValidDomainPaymentMethod,
   isValidToken,
   LISTING_CATEGORIES
 } from '@/types/listings'
@@ -44,8 +45,8 @@ export const createP2PListingSchema = baseListingSchema.extend({
   maxAmount: optionalPositiveNumberString
 })
 
-// Domain-specific listing schema
-export const createDomainListingSchema = baseListingSchema.extend({
+// Domain-specific listing schema with its own payment validation
+export const createDomainListingSchema = z.object({
   listingCategory: z.literal(LISTING_CATEGORIES.DOMAIN),
   listingType: z.literal('sell'), // Domains are always for sale
   domainName: z
@@ -61,8 +62,28 @@ export const createDomainListingSchema = baseListingSchema.extend({
   expiryDate: z.string().optional(),
   monthlyTraffic: optionalPositiveNumberString,
   monthlyRevenue: optionalPositiveNumberString,
-  description: z.string().max(1000).optional()
+  description: z.string().max(1000).optional(),
+  // Domain-specific payment validation
+  paymentMethods: z
+    .array(z.string())
+    .min(1, 'At least one payment method is required')
+    .refine(
+      methods => methods.every(isValidDomainPaymentMethod),
+      'Invalid payment method for domain listings'
+    ),
+  paymentWindow: z
+    .number()
+    .int()
+    .min(5, 'Payment window must be at least 5 minutes')
+    .max(1440, 'Payment window cannot exceed 24 hours')
+    .optional()
+    .default(30)
+    .describe('Payment window in minutes')
 })
+
+// Export individual schema types
+export type CreateP2PListingInput = z.infer<typeof createP2PListingSchema>
+export type CreateDomainListingInput = z.infer<typeof createDomainListingSchema>
 
 // Combined create listing schema using discriminated union
 // First define the union without refinements

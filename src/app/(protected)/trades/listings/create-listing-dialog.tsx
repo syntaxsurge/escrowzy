@@ -37,8 +37,8 @@ import { apiEndpoints } from '@/config/api-endpoints'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 import {
-  createListingSchema,
-  type CreateListingInput
+  createP2PListingSchema,
+  type CreateP2PListingInput
 } from '@/lib/schemas/listings'
 import { handleFormError, handleFormSuccess } from '@/lib/utils/form'
 import { SUPPORTED_TOKENS, PAYMENT_METHODS } from '@/types/listings'
@@ -57,8 +57,8 @@ export function CreateListingDialog({
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const form = useForm<CreateListingInput>({
-    resolver: zodResolver(createListingSchema),
+  const form = useForm<CreateP2PListingInput>({
+    resolver: zodResolver(createP2PListingSchema),
     defaultValues: {
       listingCategory: 'p2p',
       listingType: 'sell',
@@ -72,7 +72,7 @@ export function CreateListingDialog({
     }
   })
 
-  const onSubmit = async (data: CreateListingInput) => {
+  const onSubmit = async (data: CreateP2PListingInput) => {
     try {
       setIsSubmitting(true)
 

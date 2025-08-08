@@ -64,7 +64,6 @@ export default function CreateDomainListingPage() {
       registrar: '',
       domainAge: '',
       expiryDate: '',
-      websiteUrl: '',
       monthlyTraffic: '',
       monthlyRevenue: '',
       description: '',
@@ -322,28 +321,6 @@ export default function CreateDomainListingPage() {
               {/* Optional Information */}
               <div className='space-y-4'>
                 <h3 className='text-lg font-semibold'>Optional Information</h3>
-
-                {/* Website URL */}
-                <FormField
-                  control={form.control}
-                  name='websiteUrl'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Website URL</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder='https://example.com'
-                          type='url'
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        If there's an active website
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
                 <div className='grid grid-cols-2 gap-4'>
                   {/* Monthly Traffic */}

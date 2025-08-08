@@ -164,6 +164,14 @@ export function isValidPaymentMethod(method: string): method is PaymentMethod {
   return Object.values(PAYMENT_METHODS).includes(method as PaymentMethod)
 }
 
+export function isValidDomainPaymentMethod(
+  method: string
+): method is DomainPaymentMethod {
+  return Object.values(DOMAIN_PAYMENT_METHODS).includes(
+    method as DomainPaymentMethod
+  )
+}
+
 export function isValidToken(token: string): token is SupportedToken {
   return Object.values(SUPPORTED_TOKENS).includes(token as SupportedToken)
 }

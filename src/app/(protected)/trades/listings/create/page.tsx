@@ -229,13 +229,21 @@ export default function CreateListingPage() {
 
                 {/* Coming Soon Overlay */}
                 {!option.available && (
-                  <div className='bg-background/80 absolute inset-0 flex items-center justify-center backdrop-blur-sm'>
-                    <div className='space-y-2 text-center'>
-                      <Lock className='text-muted-foreground mx-auto h-8 w-8' />
-                      <p className='font-semibold'>Coming Soon</p>
-                      <p className='text-muted-foreground text-sm'>
-                        This feature is under development
-                      </p>
+                  <div className='absolute inset-0 flex items-end justify-center p-4'>
+                    <div className='bg-background/95 w-full rounded-lg border border-amber-500/50 bg-gradient-to-r from-amber-500/10 to-orange-500/10 p-3 backdrop-blur-[2px]'>
+                      <div className='flex items-center gap-2'>
+                        <div className='flex-shrink-0'>
+                          <Lock className='h-5 w-5 text-amber-500' />
+                        </div>
+                        <div className='flex-1'>
+                          <p className='text-sm font-semibold text-amber-600 dark:text-amber-400'>
+                            Coming Soon
+                          </p>
+                          <p className='text-muted-foreground text-xs'>
+                            We're working hard to bring you this feature
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
