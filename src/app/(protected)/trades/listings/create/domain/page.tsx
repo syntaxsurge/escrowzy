@@ -47,7 +47,7 @@ import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 import { createListingSchema } from '@/lib/schemas/listings'
 import { handleFormError, handleFormSuccess } from '@/lib/utils/form'
-import { PAYMENT_METHODS, DOMAIN_REGISTRARS } from '@/types/listings'
+import { DOMAIN_PAYMENT_METHODS, DOMAIN_REGISTRARS } from '@/types/listings'
 
 export default function CreateDomainListingPage() {
   const router = useRouter()
@@ -62,11 +62,11 @@ export default function CreateDomainListingPage() {
       domainName: '',
       price: '',
       registrar: '',
-      domainAge: undefined,
+      domainAge: '',
       expiryDate: '',
       websiteUrl: '',
-      monthlyTraffic: undefined,
-      monthlyRevenue: undefined,
+      monthlyTraffic: '',
+      monthlyRevenue: '',
       description: '',
       paymentMethods: [],
       paymentWindow: 30
@@ -292,13 +292,7 @@ export default function CreateDomainListingPage() {
                             placeholder='0'
                             type='number'
                             min='0'
-                            onChange={e =>
-                              field.onChange(
-                                e.target.value
-                                  ? parseInt(e.target.value)
-                                  : undefined
-                              )
-                            }
+                            onChange={e => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         <FormDescription>How old is the domain</FormDescription>
@@ -365,13 +359,7 @@ export default function CreateDomainListingPage() {
                             placeholder='0'
                             type='number'
                             min='0'
-                            onChange={e =>
-                              field.onChange(
-                                e.target.value
-                                  ? parseInt(e.target.value)
-                                  : undefined
-                              )
-                            }
+                            onChange={e => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         <FormDescription>
@@ -395,13 +383,7 @@ export default function CreateDomainListingPage() {
                             placeholder='0'
                             type='number'
                             min='0'
-                            onChange={e =>
-                              field.onChange(
-                                e.target.value
-                                  ? parseInt(e.target.value)
-                                  : undefined
-                              )
-                            }
+                            onChange={e => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         <FormDescription>If monetized</FormDescription>
@@ -442,45 +424,46 @@ export default function CreateDomainListingPage() {
                   <FormItem>
                     <FormLabel>Accepted Payment Methods</FormLabel>
                     <FormDescription>
-                      Select the payment methods you accept
+                      Select crypto payment methods for secure escrow
+                      protection. All payments must be on-chain to enable smart
+                      contract escrow.
                     </FormDescription>
                     <div className='mt-4 grid gap-4 md:grid-cols-2'>
-                      {Object.entries(PAYMENT_METHODS).map(([key, value]) => (
-                        <div
-                          key={key}
-                          className='flex items-center space-x-2 rounded-lg border p-3'
-                        >
-                          <Checkbox
-                            id={`domain-${key}`}
-                            checked={field.value?.includes(value)}
-                            onCheckedChange={(
-                              checked: boolean | 'indeterminate'
-                            ) => {
-                              const current = field.value || []
-                              if (checked === true) {
-                                field.onChange([...current, value])
-                              } else if (checked === false) {
-                                field.onChange(
-                                  current.filter((v: string) => v !== value)
-                                )
-                              }
-                            }}
-                          />
-                          <Label
-                            htmlFor={`domain-${key}`}
-                            className='cursor-pointer text-sm font-normal'
+                      {Object.entries(DOMAIN_PAYMENT_METHODS).map(
+                        ([key, value]) => (
+                          <div
+                            key={key}
+                            className='flex items-center space-x-2 rounded-lg border p-3'
                           >
-                            {key
-                              .split('_')
-                              .map(
-                                word =>
-                                  word.charAt(0).toUpperCase() +
-                                  word.slice(1).toLowerCase()
-                              )
-                              .join(' ')}
-                          </Label>
-                        </div>
-                      ))}
+                            <Checkbox
+                              id={`domain-${key}`}
+                              checked={field.value?.includes(value)}
+                              onCheckedChange={(
+                                checked: boolean | 'indeterminate'
+                              ) => {
+                                const current = field.value || []
+                                if (checked === true) {
+                                  field.onChange([...current, value])
+                                } else if (checked === false) {
+                                  field.onChange(
+                                    current.filter((v: string) => v !== value)
+                                  )
+                                }
+                              }}
+                            />
+                            <Label
+                              htmlFor={`domain-${key}`}
+                              className='cursor-pointer text-sm font-normal'
+                            >
+                              {key === 'CRYPTO'
+                                ? 'Direct Cryptocurrency'
+                                : key === 'USDT'
+                                  ? 'USDT (Tether)'
+                                  : 'USDC (USD Coin)'}
+                            </Label>
+                          </div>
+                        )
+                      )}
                     </div>
                     <FormMessage />
                   </FormItem>

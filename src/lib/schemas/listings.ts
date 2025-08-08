@@ -57,10 +57,9 @@ export const createDomainListingSchema = baseListingSchema.extend({
     ),
   registrar: z.string().min(1, 'Registrar is required'),
   price: positiveNumberString.describe('Price is required'),
-  domainAge: z.number().int().min(0).optional(),
-  expiryDate: z.string().datetime().optional(),
-  websiteUrl: z.string().url().optional(),
-  monthlyTraffic: z.number().int().min(0).optional(),
+  domainAge: optionalPositiveNumberString,
+  expiryDate: z.string().optional(),
+  monthlyTraffic: optionalPositiveNumberString,
   monthlyRevenue: optionalPositiveNumberString,
   description: z.string().max(1000).optional()
 })

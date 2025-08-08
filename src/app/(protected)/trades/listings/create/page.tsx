@@ -16,6 +16,7 @@ import {
   Lock
 } from 'lucide-react'
 
+import { navigationProgress } from '@/components/providers/navigation-progress'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { appRoutes } from '@/config/app-routes'
@@ -98,6 +99,8 @@ export default function CreateListingPage() {
 
   const handleCardClick = (option: MarketOption) => {
     if (option.available) {
+      // Start the navigation progress bar
+      navigationProgress.start()
       router.push(option.href)
     }
   }
@@ -172,8 +175,8 @@ export default function CreateListingPage() {
                     className={cn(
                       'font-bold',
                       option.available &&
-                      option.badge === 'New' &&
-                      'bg-gradient-to-r from-purple-500 to-pink-500'
+                        option.badge === 'New' &&
+                        'bg-gradient-to-r from-purple-500 to-pink-500'
                     )}
                   >
                     {option.badge}

@@ -63,7 +63,7 @@ export interface P2PListingFilters
     'listingCategory' | 'domainName' | 'registrar'
   > {}
 
-// Payment methods enum
+// Payment methods enum - for P2P trades
 export const PAYMENT_METHODS = {
   BANK_TRANSFER: 'bank_transfer',
   PAYPAL: 'paypal',
@@ -73,8 +73,21 @@ export const PAYMENT_METHODS = {
   WIRE_TRANSFER: 'wire_transfer'
 } as const
 
+// P2P specific payment methods (all methods)
+export const P2P_PAYMENT_METHODS = PAYMENT_METHODS
+
+// Domain specific payment methods (crypto only for escrow)
+export const DOMAIN_PAYMENT_METHODS = {
+  CRYPTO: 'crypto',
+  USDT: 'usdt',
+  USDC: 'usdc'
+} as const
+
 export type PaymentMethod =
   (typeof PAYMENT_METHODS)[keyof typeof PAYMENT_METHODS]
+
+export type DomainPaymentMethod =
+  (typeof DOMAIN_PAYMENT_METHODS)[keyof typeof DOMAIN_PAYMENT_METHODS]
 
 // Supported tokens
 export const SUPPORTED_TOKENS = {
