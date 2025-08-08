@@ -11,6 +11,22 @@ const nextConfig: NextConfig = {
     authInterrupts: true
   },
   transpilePackages: ['wagmi', '@rainbow-me/rainbowkit'],
+  
+  async redirects() {
+    return [
+      {
+        source: '/demo-video',
+        destination: 'https://youtu.be/0fn4zoo-_G8',
+        permanent: false
+      },
+      {
+        source: '/pitch-deck',
+        destination: 'https://www.canva.com/design/xxxxxxx/view',
+        permanent: false
+      }
+    ]
+  },
+
   webpack: (config, { isServer }) => {
     // Add externals for pino-pretty, lokijs, and encoding
     config.externals.push('pino-pretty', 'lokijs', 'encoding')
