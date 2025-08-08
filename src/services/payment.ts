@@ -11,7 +11,8 @@ import {
   getChainNickname,
   getViemChain,
   getSupportedChainIds,
-  isSupportedChainId
+  isSupportedChainId,
+  SUBSCRIPTION_MANAGER_ABI
 } from '@/lib/blockchain'
 import { db } from '@/lib/db/drizzle'
 import { teams, paymentHistory } from '@/lib/db/schema'
@@ -20,8 +21,6 @@ import {
   getUserPersonalSubscription
 } from '@/services/subscription'
 import type { PaymentIntent } from '@/types/payment'
-
-import SubscriptionManagerArtifact from '../../contracts/out/SubscriptionManager.sol/SubscriptionManager.json'
 
 // Generate payment network configuration dynamically
 function getPaymentNetworkConfig(networkId: number) {
@@ -190,7 +189,7 @@ export async function verifyAndConfirmPayment(
     for (const log of receipt.logs) {
       try {
         const decoded = decodeEventLog({
-          abi: SubscriptionManagerArtifact.abi,
+          abi: SUBSCRIPTION_MANAGER_ABI,
           data: log.data,
           topics: log.topics
         })
