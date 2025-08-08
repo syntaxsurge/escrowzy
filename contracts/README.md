@@ -120,11 +120,11 @@ Update your `config/blockchains.yaml` with the deployed contract addresses:
 
 ```yaml
 chains:
-    # ... other config ...
-    contractAddresses:
-      escrowCore: '0xYourEscrowAddress'
-      achievementNFT: '0xYourNFTAddress'
-      subscriptionManager: '0xYourSubscriptionAddress'
+  # ... other config ...
+  contractAddresses:
+    escrowCore: '0xYourEscrowAddress'
+    achievementNFT: '0xYourNFTAddress'
+    subscriptionManager: '0xYourSubscriptionAddress'
 ```
 
 ## Adding New Networks

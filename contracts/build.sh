@@ -36,6 +36,19 @@ forge build
 # Check if build succeeded
 if [ $? -eq 0 ]; then
     echo "Build successful."
+    
+    # Copy ABIs to contracts folder
+    echo "Copying ABIs to contracts folder..."
+    
+    # Create contracts directory if it doesn't exist
+    mkdir -p ../contracts
+    
+    # Copy the main contract ABIs
+    cp -f out/AchievementNFT.sol/AchievementNFT.json ../contracts/abi/AchievementNFT.json
+    cp -f out/EscrowCore.sol/EscrowCore.json ../contracts/abi/EscrowCore.json
+    cp -f out/SubscriptionManager.sol/SubscriptionManager.json ../contracts/abi/SubscriptionManager.json
+    
+    echo "ABIs copied successfully."
 else
     echo "Build failed."
     exit 1

@@ -4,9 +4,9 @@ import { defineChain as defineViemChain } from 'viem'
 
 import { loadBlockchainConfig } from '@/config/blockchain-config-loader'
 
-import AchievementNFTArtifact from '../../../contracts/out/AchievementNFT.sol/AchievementNFT.json'
-import EscrowCoreArtifact from '../../../contracts/out/EscrowCore.sol/EscrowCore.json'
-import SubscriptionManagerArtifact from '../../../contracts/out/SubscriptionManager.sol/SubscriptionManager.json'
+import AchievementNFTArtifact from '../../../contracts/abi/AchievementNFT.json'
+import EscrowCoreArtifact from '../../../contracts/abi/EscrowCore.json'
+import SubscriptionManagerArtifact from '../../../contracts/abi/SubscriptionManager.json'
 
 // Extract ABIs from artifacts
 export const SUBSCRIPTION_MANAGER_ABI = SubscriptionManagerArtifact.abi

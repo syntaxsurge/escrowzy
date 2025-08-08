@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
     authInterrupts: true
   },
   transpilePackages: ['wagmi', '@rainbow-me/rainbowkit'],
-  
+
   async redirects() {
     return [
       {

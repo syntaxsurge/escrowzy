@@ -21,15 +21,10 @@ import { appRoutes } from '@/config/app-routes'
 import { useUnifiedWalletInfo } from '@/context'
 import { useTransaction } from '@/hooks/blockchain/use-transaction'
 import { api } from '@/lib/api/http-client'
-import { buildTxUrl } from '@/lib/blockchain'
+import { buildTxUrl, SUBSCRIPTION_MANAGER_ABI } from '@/lib/blockchain'
 import { formatCryptoAmount } from '@/lib/blockchain/payment'
 import { formatTeamMemberLimit } from '@/lib/utils/subscription'
 import { type PaymentIntent } from '@/types/payment'
-
-import SubscriptionManagerArtifact from '../../../../contracts/out/SubscriptionManager.sol/SubscriptionManager.json'
-
-// Extract ABI from artifact
-const SUBSCRIPTION_MANAGER_ABI = SubscriptionManagerArtifact.abi
 
 interface CryptoPaymentModalProps {
   isOpen: boolean
