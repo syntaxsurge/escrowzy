@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 
 import { apiResponses } from '@/lib/api/server-utils'
-import { getListingsQuerySchema } from '@/lib/schemas/p2p-listings'
-import { getActiveListings } from '@/services/p2p-listings'
+import { getListingsQuerySchema } from '@/lib/schemas/listings'
+import { getActiveListings } from '@/services/listings'
 
 export async function GET(request: NextRequest) {
   try {

@@ -312,28 +312,33 @@ export const trades = pgTable(
   ]
 )
 
-export const p2pListings = pgTable(
-  'p2p_listings',
+export const escrowListings = pgTable(
+  'escrow_listings',
   {
     id: serial('id').primaryKey(),
     userId: integer('user_id')
       .notNull()
       .references(() => users.id),
-    listingType: varchar('listing_type', { length: 10 }).notNull(),
-    tokenOffered: varchar('token_offered', { length: 10 }).notNull(),
-    amount: varchar('amount', { length: 50 }).notNull(),
-    pricePerUnit: varchar('price_per_unit', { length: 50 }).notNull(),
+    listingCategory: varchar('listing_category', { length: 20 })
+      .notNull()
+      .default('p2p'), // 'p2p' | 'domain'
+    listingType: varchar('listing_type', { length: 10 }).notNull(), // For P2P: 'buy' | 'sell'
+    tokenOffered: varchar('token_offered', { length: 10 }), // For P2P trading
+    amount: varchar('amount', { length: 50 }), // Amount or price
+    pricePerUnit: varchar('price_per_unit', { length: 50 }), // For P2P
     minAmount: varchar('min_amount', { length: 50 }),
     maxAmount: varchar('max_amount', { length: 50 }),
     paymentMethods: jsonb('payment_methods').notNull().default('[]'),
     paymentWindow: integer('payment_window').notNull().default(15), // in minutes
+    metadata: jsonb('metadata').notNull().default('{}'), // Domain-specific data
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at').notNull().defaultNow()
   },
   table => [
-    index('idx_p2p_listings_user').on(table.userId),
-    index('idx_p2p_listings_active').on(table.isActive),
-    index('idx_p2p_listings_type').on(table.listingType)
+    index('idx_escrow_listings_user').on(table.userId),
+    index('idx_escrow_listings_active').on(table.isActive),
+    index('idx_escrow_listings_type').on(table.listingType),
+    index('idx_escrow_listings_category').on(table.listingCategory)
   ]
 )
 
@@ -408,7 +413,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   achievementNFTs: many(achievementNFTs),
   tradesAsBuyer: many(trades, { relationName: 'buyer' }),
   tradesAsSeller: many(trades, { relationName: 'seller' }),
-  p2pListings: many(p2pListings),
+  escrowListings: many(escrowListings),
   battlesAsPlayer1: many(battles, { relationName: 'player1' }),
   battlesAsPlayer2: many(battles, { relationName: 'player2' }),
   battlesWon: many(battles, { relationName: 'winner' }),
@@ -569,9 +574,9 @@ export const tradesRelations = relations(trades, ({ one }) => ({
   })
 }))
 
-export const p2pListingsRelations = relations(p2pListings, ({ one }) => ({
+export const escrowListingsRelations = relations(escrowListings, ({ one }) => ({
   user: one(users, {
-    fields: [p2pListings.userId],
+    fields: [escrowListings.userId],
     references: [users.id]
   })
 }))
@@ -722,8 +727,8 @@ export type PlatformContract = typeof platformContracts.$inferSelect
 export type NewPlatformContract = typeof platformContracts.$inferInsert
 export type Trade = typeof trades.$inferSelect
 export type NewTrade = typeof trades.$inferInsert
-export type P2PListing = typeof p2pListings.$inferSelect
-export type NewP2PListing = typeof p2pListings.$inferInsert
+export type EscrowListing = typeof escrowListings.$inferSelect
+export type NewEscrowListing = typeof escrowListings.$inferInsert
 export type Battle = typeof battles.$inferSelect
 export type NewBattle = typeof battles.$inferInsert
 export type UserTradingStats = typeof userTradingStats.$inferSelect

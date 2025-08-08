@@ -235,8 +235,8 @@ export default function DashboardPage() {
       id: 'create-listing',
       href: appRoutes.trades.listings.create,
       icon: Plus,
-      title: 'Create Trade',
-      subtitle: 'Start P2P trade',
+      title: 'Create Listing',
+      subtitle: 'List an offer',
       color: 'from-blue-500 to-cyan-500',
       reward: 'Low fees',
       glow: 'shadow-cyan-500/50'
@@ -255,8 +255,8 @@ export default function DashboardPage() {
       id: 'browse-listings',
       href: appRoutes.trades.listings.base,
       icon: ShoppingCart,
-      title: 'Browse',
-      subtitle: 'Find deals',
+      title: 'Marketplace',
+      subtitle: 'Browse offers',
       color: 'from-green-500 to-emerald-500',
       reward: 'Safe escrow',
       glow: 'shadow-emerald-500/50'

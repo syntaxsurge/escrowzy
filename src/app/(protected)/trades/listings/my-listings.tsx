@@ -32,7 +32,7 @@ import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 import { handleFormError, handleFormSuccess } from '@/lib/utils/form'
 import { formatRelativeTime } from '@/lib/utils/string'
-import type { P2PListing } from '@/types/p2p-listings'
+import type { P2PListing } from '@/types/listings'
 
 import { UpdateListingDialog } from './update-listing-dialog'
 
@@ -181,7 +181,8 @@ export function MyListings({ onRefresh }: MyListingsProps) {
           <TableBody>
             {listings.map(listing => {
               const totalValue =
-                parseFloat(listing.amount) * parseFloat(listing.pricePerUnit)
+                parseFloat(listing.amount ?? '0') *
+                parseFloat(listing.pricePerUnit ?? '0')
 
               return (
                 <TableRow key={listing.id}>

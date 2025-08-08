@@ -27,8 +27,8 @@ import {
 import { Spinner } from '@/components/ui/spinner'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { api } from '@/lib/api/http-client'
-import type { P2PListingWithUser } from '@/types/p2p-listings'
-import { SUPPORTED_TOKENS, PAYMENT_METHODS } from '@/types/p2p-listings'
+import type { P2PListingWithUser } from '@/types/listings'
+import { SUPPORTED_TOKENS, PAYMENT_METHODS } from '@/types/listings'
 
 import { ListingCard } from './listing-card'
 

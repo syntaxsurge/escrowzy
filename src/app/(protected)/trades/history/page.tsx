@@ -10,7 +10,9 @@ import {
   AlertCircle,
   TrendingUp,
   Trophy,
-  History
+  History,
+  Globe,
+  Zap
 } from 'lucide-react'
 import useSWR from 'swr'
 
@@ -44,13 +46,14 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
 import { useSession } from '@/hooks/use-session'
 import { api } from '@/lib/api/http-client'
 import { formatCurrency, formatRelativeTime } from '@/lib/utils/string'
 import { getUserDisplayName } from '@/lib/utils/user'
-import { TRADE_STATUS, type TradeStatus } from '@/types/p2p-listings'
+import { TRADE_STATUS, type TradeStatus } from '@/types/listings'
 import type { TradeWithUsers } from '@/types/trade'
 
 type FilterStatus =
@@ -66,6 +69,9 @@ export default function TradeHistoryPage() {
   const { user } = useSession()
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
   const [filterPeriod, setFilterPeriod] = useState<string>('all')
+  const [tradeTypeFilter, setTradeTypeFilter] = useState<
+    'all' | 'p2p' | 'domain'
+  >('all')
 
   // Fetch trade history
   const { data: tradesData } = useSWR(
@@ -96,6 +102,11 @@ export default function TradeHistoryPage() {
 
   // Apply filters
   const filteredTrades = allTrades.filter((trade: TradeWithUsers) => {
+    // Trade type filter
+    if (tradeTypeFilter !== 'all' && trade.tradeType !== tradeTypeFilter) {
+      return false
+    }
+
     // Status filter
     if (filterStatus !== 'all') {
       if (
@@ -131,19 +142,19 @@ export default function TradeHistoryPage() {
     return true
   })
 
-  // Calculate statistics
+  // Calculate statistics based on filtered trades
   const stats = {
-    totalTrades: allTrades.length,
-    pendingTrades: allTrades.filter((t: TradeWithUsers) =>
+    totalTrades: filteredTrades.length,
+    pendingTrades: filteredTrades.filter((t: TradeWithUsers) =>
       pendingStatuses.includes(t.status as TradeStatus)
     ).length,
-    completedTrades: allTrades.filter(
+    completedTrades: filteredTrades.filter(
       (t: TradeWithUsers) => t.status === 'completed'
     ).length,
-    disputedTrades: allTrades.filter(
+    disputedTrades: filteredTrades.filter(
       (t: TradeWithUsers) => t.status === 'disputed'
     ).length,
-    totalVolume: allTrades
+    totalVolume: filteredTrades
       .filter((t: TradeWithUsers) => t.status === 'completed')
       .reduce((sum: number, t: TradeWithUsers) => sum + parseFloat(t.amount), 0)
   }
@@ -156,12 +167,22 @@ export default function TradeHistoryPage() {
   // Prepare stats cards
   const statsCards: StatCard[] = [
     {
-      title: 'Total Trades',
+      title:
+        tradeTypeFilter === 'domain'
+          ? 'Domain Trades'
+          : tradeTypeFilter === 'p2p'
+            ? 'P2P Trades'
+            : 'Total Trades',
       value: stats.totalTrades,
       subtitle: 'All-time trades',
-      icon: <History className='h-5 w-5 text-white' />,
+      icon:
+        tradeTypeFilter === 'domain' ? (
+          <Globe className='h-5 w-5 text-white' />
+        ) : (
+          <History className='h-5 w-5 text-white' />
+        ),
       badge: 'HISTORY',
-      colorScheme: 'blue'
+      colorScheme: tradeTypeFilter === 'domain' ? 'purple' : 'blue'
     },
     {
       title: 'Pending',
@@ -253,9 +274,45 @@ export default function TradeHistoryPage() {
         {/* Gaming Header */}
         <GamifiedHeader
           title='TRADE HISTORY'
-          subtitle='View all your trades including pending and completed transactions'
+          subtitle={
+            tradeTypeFilter === 'domain'
+              ? 'View your domain escrow transaction history'
+              : tradeTypeFilter === 'p2p'
+                ? 'View your P2P crypto transaction history'
+                : 'View all your escrow transactions'
+          }
           icon={<Clock className='h-8 w-8 text-white' />}
         />
+
+        {/* Trade Type Tabs */}
+        <Tabs
+          value={tradeTypeFilter}
+          onValueChange={v => setTradeTypeFilter(v as any)}
+          className='w-full'
+        >
+          <TabsList className='bg-background/50 border-primary/20 grid h-14 w-full grid-cols-3 border-2 backdrop-blur-sm'>
+            <TabsTrigger
+              value='all'
+              className='data-[state=active]:from-primary/20 text-lg font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:to-purple-600/20'
+            >
+              ALL TRADES
+            </TabsTrigger>
+            <TabsTrigger
+              value='p2p'
+              className='text-lg font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600/20 data-[state=active]:to-cyan-600/20'
+            >
+              <Zap className='mr-2 h-4 w-4' />
+              P2P CRYPTO
+            </TabsTrigger>
+            <TabsTrigger
+              value='domain'
+              className='text-lg font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/20 data-[state=active]:to-pink-600/20'
+            >
+              <Globe className='mr-2 h-4 w-4' />
+              DOMAINS
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {/* Gaming Stats Cards */}
         <GamifiedStatsCards cards={statsCards} />

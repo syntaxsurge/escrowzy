@@ -1,5 +1,5 @@
 import { db } from '../drizzle'
-import { trades, p2pListings, battles, userTradingStats } from '../schema'
+import { trades, escrowListings, battles, userTradingStats } from '../schema'
 import type { User } from '../schema'
 
 export async function seedTrades(users: {
@@ -12,7 +12,7 @@ export async function seedTrades(users: {
   console.log('Seeding trades and P2P listings...')
 
   // Create P2P listings
-  await db.insert(p2pListings).values([
+  await db.insert(escrowListings).values([
     {
       userId: users.testUser1.id,
       listingType: 'sell',

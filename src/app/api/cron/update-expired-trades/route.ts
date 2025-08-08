@@ -4,7 +4,7 @@ import { and, eq, lt } from 'drizzle-orm'
 
 import { db } from '@/lib/db/drizzle'
 import { trades } from '@/lib/db/schema'
-import { TRADE_STATUS } from '@/types/p2p-listings'
+import { TRADE_STATUS } from '@/types/listings'
 
 export async function GET(request: Request) {
   try {

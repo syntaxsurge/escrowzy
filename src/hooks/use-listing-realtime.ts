@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 
-import type { P2PListing } from '@/lib/db/schema'
+import type { EscrowListing } from '@/lib/db/schema'
 import { pusherClient } from '@/lib/pusher'
 
-interface ListingWithUser extends P2PListing {
+interface ListingWithUser extends EscrowListing {
   user: {
     id: number
     name: string | null

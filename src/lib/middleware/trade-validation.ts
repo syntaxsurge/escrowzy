@@ -2,7 +2,7 @@ import { eq, or, and, inArray, count } from 'drizzle-orm'
 
 import { db } from '@/lib/db/drizzle'
 import { trades } from '@/lib/db/schema'
-import type { TradeStatus } from '@/types/p2p-listings'
+import type { TradeStatus } from '@/types/listings'
 import { canPerformAction } from '@/types/trade'
 
 export interface TradeValidationResult {

@@ -34,6 +34,25 @@ CREATE TABLE "admin_settings" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "api_keys" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"team_id" integer NOT NULL,
+	"name" varchar(100) NOT NULL,
+	"key_hash" varchar(255) NOT NULL,
+	"key_prefix" varchar(10) NOT NULL,
+	"last_used_at" timestamp,
+	"expires_at" timestamp,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"permissions" jsonb DEFAULT '[]' NOT NULL,
+	"rate_limit_per_hour" integer DEFAULT 1000 NOT NULL,
+	"usage_count" integer DEFAULT 0 NOT NULL,
+	"metadata" jsonb,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "api_keys_key_hash_unique" UNIQUE("key_hash")
+);
+--> statement-breakpoint
 CREATE TABLE "attachments" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"message_id" integer NOT NULL,
@@ -67,6 +86,23 @@ CREATE TABLE "email_verification_requests" (
 	CONSTRAINT "email_verification_requests_token_unique" UNIQUE("token")
 );
 --> statement-breakpoint
+CREATE TABLE "escrow_listings" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"listing_category" varchar(20) DEFAULT 'p2p' NOT NULL,
+	"listing_type" varchar(10) NOT NULL,
+	"token_offered" varchar(10),
+	"amount" varchar(50),
+	"price_per_unit" varchar(50),
+	"min_amount" varchar(50),
+	"max_amount" varchar(50),
+	"payment_methods" jsonb DEFAULT '[]' NOT NULL,
+	"payment_window" integer DEFAULT 15 NOT NULL,
+	"metadata" jsonb DEFAULT '{}' NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "message_reads" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
@@ -88,21 +124,6 @@ CREATE TABLE "messages" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"edited_at" timestamp,
 	"deleted_at" timestamp
-);
---> statement-breakpoint
-CREATE TABLE "p2p_listings" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer NOT NULL,
-	"listing_type" varchar(10) NOT NULL,
-	"token_offered" varchar(10) NOT NULL,
-	"amount" varchar(50) NOT NULL,
-	"price_per_unit" varchar(50) NOT NULL,
-	"min_amount" varchar(50),
-	"max_amount" varchar(50),
-	"payment_methods" jsonb DEFAULT '[]' NOT NULL,
-	"payment_window" integer DEFAULT 15 NOT NULL,
-	"is_active" boolean DEFAULT true NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "payment_history" (
@@ -242,16 +263,18 @@ ALTER TABLE "achievement_nfts" ADD CONSTRAINT "achievement_nfts_user_id_users_id
 ALTER TABLE "activity_logs" ADD CONSTRAINT "activity_logs_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "activity_logs" ADD CONSTRAINT "activity_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "admin_settings" ADD CONSTRAINT "admin_settings_updated_by_user_id_users_id_fk" FOREIGN KEY ("updated_by_user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "attachments" ADD CONSTRAINT "attachments_message_id_messages_id_fk" FOREIGN KEY ("message_id") REFERENCES "public"."messages"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "attachments" ADD CONSTRAINT "attachments_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "battles" ADD CONSTRAINT "battles_player1_id_users_id_fk" FOREIGN KEY ("player1_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "battles" ADD CONSTRAINT "battles_player2_id_users_id_fk" FOREIGN KEY ("player2_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "battles" ADD CONSTRAINT "battles_winner_id_users_id_fk" FOREIGN KEY ("winner_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "email_verification_requests" ADD CONSTRAINT "email_verification_requests_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "escrow_listings" ADD CONSTRAINT "escrow_listings_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "message_reads" ADD CONSTRAINT "message_reads_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "message_reads" ADD CONSTRAINT "message_reads_last_read_message_id_messages_id_fk" FOREIGN KEY ("last_read_message_id") REFERENCES "public"."messages"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "messages" ADD CONSTRAINT "messages_sender_id_users_id_fk" FOREIGN KEY ("sender_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "p2p_listings" ADD CONSTRAINT "p2p_listings_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payment_history" ADD CONSTRAINT "payment_history_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payment_history" ADD CONSTRAINT "payment_history_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "team_invitations" ADD CONSTRAINT "team_invitations_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -269,11 +292,12 @@ CREATE INDEX "idx_attachments_message" ON "attachments" USING btree ("message_id
 CREATE INDEX "idx_battles_player1" ON "battles" USING btree ("player1_id");--> statement-breakpoint
 CREATE INDEX "idx_battles_player2" ON "battles" USING btree ("player2_id");--> statement-breakpoint
 CREATE INDEX "idx_battles_winner" ON "battles" USING btree ("winner_id");--> statement-breakpoint
+CREATE INDEX "idx_escrow_listings_user" ON "escrow_listings" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "idx_escrow_listings_active" ON "escrow_listings" USING btree ("is_active");--> statement-breakpoint
+CREATE INDEX "idx_escrow_listings_type" ON "escrow_listings" USING btree ("listing_type");--> statement-breakpoint
+CREATE INDEX "idx_escrow_listings_category" ON "escrow_listings" USING btree ("listing_category");--> statement-breakpoint
 CREATE INDEX "idx_messages_context" ON "messages" USING btree ("context_type","context_id");--> statement-breakpoint
 CREATE INDEX "idx_messages_created" ON "messages" USING btree ("created_at");--> statement-breakpoint
-CREATE INDEX "idx_p2p_listings_user" ON "p2p_listings" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "idx_p2p_listings_active" ON "p2p_listings" USING btree ("is_active");--> statement-breakpoint
-CREATE INDEX "idx_p2p_listings_type" ON "p2p_listings" USING btree ("listing_type");--> statement-breakpoint
 CREATE INDEX "idx_trades_escrow" ON "trades" USING btree ("chain_id","escrow_id");--> statement-breakpoint
 CREATE INDEX "idx_trades_status" ON "trades" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "idx_trades_buyer" ON "trades" USING btree ("buyer_id");--> statement-breakpoint

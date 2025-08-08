@@ -1,5 +1,5 @@
 import { apiResponses } from '@/lib/api/server-utils'
-import { getMarketStats } from '@/services/p2p-listings'
+import { getMarketStats } from '@/services/listings'
 
 export async function GET() {
   try {

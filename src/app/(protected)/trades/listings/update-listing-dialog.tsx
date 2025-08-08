@@ -33,14 +33,14 @@ import { api } from '@/lib/api/http-client'
 import {
   updateListingSchema,
   type UpdateListingInput
-} from '@/lib/schemas/p2p-listings'
+} from '@/lib/schemas/listings'
 import {
   handleFormError,
   handleFormSuccess,
   hasFormChanged
 } from '@/lib/utils/form'
-import type { P2PListing } from '@/types/p2p-listings'
-import { PAYMENT_METHODS } from '@/types/p2p-listings'
+import type { P2PListing } from '@/types/listings'
+import { PAYMENT_METHODS } from '@/types/listings'
 
 interface UpdateListingDialogProps {
   open: boolean
@@ -68,10 +68,10 @@ export function UpdateListingDialog({
   const form = useForm<UpdateListingInput>({
     resolver: zodResolver(updateListingSchema),
     defaultValues: {
-      amount: listing.amount,
-      pricePerUnit: listing.pricePerUnit,
-      minAmount: listing.minAmount || '',
-      maxAmount: listing.maxAmount || '',
+      amount: listing.amount ?? undefined,
+      pricePerUnit: listing.pricePerUnit ?? undefined,
+      minAmount: listing.minAmount ?? '',
+      maxAmount: listing.maxAmount ?? '',
       paymentMethods: existingPaymentMethods,
       isActive: listing.isActive
     }
@@ -97,8 +97,8 @@ export function UpdateListingDialog({
 
       // Check if form has actually changed
       const originalData = {
-        amount: listing.amount,
-        pricePerUnit: listing.pricePerUnit,
+        amount: listing.amount ?? undefined,
+        pricePerUnit: listing.pricePerUnit ?? undefined,
         minAmount: listing.minAmount || '',
         maxAmount: listing.maxAmount || '',
         paymentMethods: existingPaymentMethods,
@@ -115,8 +115,9 @@ export function UpdateListingDialog({
 
       // Only send changed fields
       const changes: any = {}
-      if (data.amount !== listing.amount) changes.amount = data.amount
-      if (data.pricePerUnit !== listing.pricePerUnit)
+      if (data.amount !== (listing.amount ?? undefined))
+        changes.amount = data.amount
+      if (data.pricePerUnit !== (listing.pricePerUnit ?? undefined))
         changes.pricePerUnit = data.pricePerUnit
       if (data.minAmount !== (listing.minAmount || ''))
         changes.minAmount = data.minAmount || null

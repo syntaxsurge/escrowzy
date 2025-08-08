@@ -5,7 +5,7 @@ import { and, count, eq, sql } from 'drizzle-orm'
 import { getSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
 import { getUserListingAnalytics } from '@/lib/db/queries/analytics'
-import { p2pListings, trades } from '@/lib/db/schema'
+import { escrowListings, trades } from '@/lib/db/schema'
 
 export async function GET() {
   try {
@@ -22,36 +22,39 @@ export async function GET() {
     // Get user's listing statistics
     const [activeCount] = await db
       .select({ count: count() })
-      .from(p2pListings)
+      .from(escrowListings)
       .where(
-        and(eq(p2pListings.userId, userId), eq(p2pListings.isActive, true))
+        and(
+          eq(escrowListings.userId, userId),
+          eq(escrowListings.isActive, true)
+        )
       )
 
     const [totalCount] = await db
       .select({ count: count() })
-      .from(p2pListings)
-      .where(eq(p2pListings.userId, userId))
+      .from(escrowListings)
+      .where(eq(escrowListings.userId, userId))
 
     // Get buy and sell offers count
     const [buyOffers] = await db
       .select({ count: count() })
-      .from(p2pListings)
+      .from(escrowListings)
       .where(
         and(
-          eq(p2pListings.userId, userId),
-          eq(p2pListings.listingType, 'buy'),
-          eq(p2pListings.isActive, true)
+          eq(escrowListings.userId, userId),
+          eq(escrowListings.listingType, 'buy'),
+          eq(escrowListings.isActive, true)
         )
       )
 
     const [sellOffers] = await db
       .select({ count: count() })
-      .from(p2pListings)
+      .from(escrowListings)
       .where(
         and(
-          eq(p2pListings.userId, userId),
-          eq(p2pListings.listingType, 'sell'),
-          eq(p2pListings.isActive, true)
+          eq(escrowListings.userId, userId),
+          eq(escrowListings.listingType, 'sell'),
+          eq(escrowListings.isActive, true)
         )
       )
 

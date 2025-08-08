@@ -46,8 +46,8 @@ import {
   parseNumericInput
 } from '@/lib/utils/form'
 import { getUserDisplayName } from '@/lib/utils/user'
-import type { P2PListingWithUser } from '@/types/p2p-listings'
-import { PAYMENT_METHODS } from '@/types/p2p-listings'
+import type { P2PListingWithUser } from '@/types/listings'
+import { PAYMENT_METHODS } from '@/types/listings'
 
 interface AcceptListingDialogProps {
   open: boolean
@@ -89,7 +89,9 @@ export function AcceptListingDialog({
 
   // Calculate total cost
   const totalCost = tradeAmount
-    ? (parseFloat(tradeAmount) * parseFloat(listing.pricePerUnit)).toFixed(2)
+    ? (
+        parseFloat(tradeAmount) * parseFloat(listing.pricePerUnit ?? '0')
+      ).toFixed(2)
     : '0.00'
 
   // Parse payment methods
@@ -106,14 +108,14 @@ export function AcceptListingDialog({
     // Check min/max bounds
     const boundsError = validateAmountBounds(
       amount,
-      listing.minAmount,
-      listing.maxAmount,
-      listing.tokenOffered
+      listing.minAmount ?? undefined,
+      listing.maxAmount ?? undefined,
+      listing.tokenOffered ?? 'USDT'
     )
     if (boundsError) return boundsError
 
     // Check available amount
-    if (amount > parseFloat(listing.amount)) {
+    if (amount > parseFloat(listing.amount ?? '0')) {
       return `Cannot exceed available amount of ${listing.amount} ${listing.tokenOffered}`
     }
 
@@ -269,8 +271,8 @@ export function AcceptListingDialog({
                             placeholder='0.00'
                             type='number'
                             step='0.000001'
-                            min={listing.minAmount || '0'}
-                            max={listing.maxAmount || listing.amount}
+                            min={listing.minAmount ?? '0'}
+                            max={listing.maxAmount ?? listing.amount ?? '0'}
                             className='pr-16'
                             onChange={e => {
                               field.onChange(e)
@@ -285,9 +287,9 @@ export function AcceptListingDialog({
                                   )
                                   const maxAmount = Math.min(
                                     parseFloat(
-                                      listing.maxAmount || listing.amount
+                                      listing.maxAmount ?? listing.amount ?? '0'
                                     ),
-                                    parseFloat(listing.amount)
+                                    parseFloat(listing.amount ?? '0')
                                   )
 
                                   if (amount < minAmount) {
@@ -319,11 +321,13 @@ export function AcceptListingDialog({
                         trade
                       </FormDescription>
                       <div className='text-muted-foreground mt-1 text-xs'>
-                        Min: {listing.minAmount || '0'} {listing.tokenOffered} •
+                        Min: {listing.minAmount ?? '0'} {listing.tokenOffered} •
                         Max:{' '}
                         {Math.min(
-                          parseFloat(listing.maxAmount || listing.amount),
-                          parseFloat(listing.amount)
+                          parseFloat(
+                            listing.maxAmount ?? listing.amount ?? '0'
+                          ),
+                          parseFloat(listing.amount ?? '0')
                         )}{' '}
                         {listing.tokenOffered}
                       </div>

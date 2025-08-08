@@ -1,7 +1,7 @@
 import { eq, and, gte, sql, desc } from 'drizzle-orm'
 
 import { db } from '../drizzle'
-import { p2pListings, trades, activityLogs } from '../schema'
+import { escrowListings, trades, activityLogs } from '../schema'
 
 /**
  * Track a listing view event
@@ -41,7 +41,7 @@ export async function getUserListingAnalytics(userId: number): Promise<{
     .where(
       sql`action LIKE 'LISTING_VIEWED:%' 
         AND metadata->>'listingId' IN (
-          SELECT id::text FROM p2p_listings WHERE user_id = ${userId}
+          SELECT id::text FROM escrow_listings WHERE user_id = ${userId}
         )`
     )
 
@@ -191,8 +191,8 @@ export async function getPlatformAnalytics(): Promise<{
   // Platform-wide conversion rate
   const [listingsCount] = await db
     .select({ count: sql<number>`count(*)` })
-    .from(p2pListings)
-    .where(eq(p2pListings.isActive, true))
+    .from(escrowListings)
+    .where(eq(escrowListings.isActive, true))
 
   const [tradesCount] = await db
     .select({ count: sql<number>`count(*)` })

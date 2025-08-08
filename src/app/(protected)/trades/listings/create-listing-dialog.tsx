@@ -39,9 +39,9 @@ import { api } from '@/lib/api/http-client'
 import {
   createListingSchema,
   type CreateListingInput
-} from '@/lib/schemas/p2p-listings'
+} from '@/lib/schemas/listings'
 import { handleFormError, handleFormSuccess } from '@/lib/utils/form'
-import { SUPPORTED_TOKENS, PAYMENT_METHODS } from '@/types/p2p-listings'
+import { SUPPORTED_TOKENS, PAYMENT_METHODS } from '@/types/listings'
 
 interface CreateListingDialogProps {
   open: boolean
@@ -60,6 +60,7 @@ export function CreateListingDialog({
   const form = useForm<CreateListingInput>({
     resolver: zodResolver(createListingSchema),
     defaultValues: {
+      listingCategory: 'p2p',
       listingType: 'sell',
       tokenOffered: 'XTZ',
       amount: '',
@@ -75,8 +76,8 @@ export function CreateListingDialog({
     try {
       setIsSubmitting(true)
 
-      // Validate min/max amounts
-      if (data.minAmount && data.maxAmount) {
+      // Validate min/max amounts (only for P2P listings)
+      if (data.listingCategory === 'p2p' && data.minAmount && data.maxAmount) {
         const min = parseFloat(data.minAmount)
         const max = parseFloat(data.maxAmount)
         if (min > max) {
@@ -117,9 +118,9 @@ export function CreateListingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>Create P2P Listing</DialogTitle>
+          <DialogTitle>Create Listing</DialogTitle>
           <DialogDescription>
-            Create a buy or sell offer for peer-to-peer trading
+            Create a buy or sell offer for trading
           </DialogDescription>
         </DialogHeader>
 

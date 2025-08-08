@@ -45,7 +45,7 @@ const navigationItems = [
     bgColor: 'hover:bg-blue-500/10'
   },
   {
-    title: 'Create P2P Listing',
+    title: 'Create Listing',
     href: appRoutes.trades.listings.create,
     icon: Plus,
     color: 'text-emerald-600 dark:text-emerald-400',

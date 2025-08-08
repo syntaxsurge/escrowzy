@@ -1,6 +1,6 @@
 import type { trades, users, userTradingStats } from '@/lib/db/schema'
 
-import type { TradeStatus } from './p2p-listings'
+import type { TradeStatus } from './listings'
 
 // Re-export TRADE_STATUS for convenience with better typing
 export const TRADE_STATUS: Record<string, string> = {

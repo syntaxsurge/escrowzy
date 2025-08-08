@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { TRADE_STATUS } from '@/types/p2p-listings'
+import { TRADE_STATUS } from '@/types/listings'
 
 import { transactionHash, urlSchema, nonEmptyString } from './common'
 

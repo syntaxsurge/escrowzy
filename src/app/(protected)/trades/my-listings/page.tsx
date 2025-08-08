@@ -1,8 +1,18 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
-import { ListPlus, Plus, Shield, TrendingUp, Eye, Activity } from 'lucide-react'
+import {
+  ListPlus,
+  Plus,
+  Shield,
+  TrendingUp,
+  Eye,
+  Activity,
+  Zap,
+  Globe
+} from 'lucide-react'
 import useSWR from 'swr'
 
 import {
@@ -13,13 +23,17 @@ import {
 } from '@/components/blocks/trading'
 import { navigationProgress } from '@/components/providers/navigation-progress'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
 import { api } from '@/lib/api/http-client'
-import type { P2PListingWithUser } from '@/types/p2p-listings'
+import type { EscrowListingWithUser } from '@/types/listings'
 
 export default function MyListingsPage() {
   const router = useRouter()
+  const [categoryFilter, setCategoryFilter] = useState<
+    'all' | 'p2p' | 'domain'
+  >('all')
 
   // Fetch user's listings
   const {
@@ -73,25 +87,44 @@ export default function MyListingsPage() {
     mutateUserStats()
   }
 
+  // Filter listings by category
+  const allListings = listingsData?.listings || []
+  const filteredListings = allListings.filter((l: EscrowListingWithUser) => {
+    if (categoryFilter === 'all') return true
+    return l.listingCategory === categoryFilter
+  })
+
   // Calculate listings
-  const activeListings =
-    listingsData?.listings?.filter((l: P2PListingWithUser) => l.isActive) || []
-  const inactiveListings =
-    listingsData?.listings?.filter((l: P2PListingWithUser) => !l.isActive) || []
+  const activeListings = filteredListings.filter(
+    (l: EscrowListingWithUser) => l.isActive
+  )
+  const inactiveListings = filteredListings.filter(
+    (l: EscrowListingWithUser) => !l.isActive
+  )
 
   // Calculate actual stats from listings
   const actualActiveCount = activeListings.length
   const _actualTotalCount = listingsData?.listings?.length || 0
 
-  // Prepare stats cards
+  // Prepare stats cards based on category filter
   const statsCards: StatCard[] = [
     {
-      title: 'Active Listings',
-      value: userStatsData?.activeListings ?? actualActiveCount,
+      title:
+        categoryFilter === 'domain'
+          ? 'Active Domains'
+          : categoryFilter === 'p2p'
+            ? 'Active P2P'
+            : 'Active Listings',
+      value: actualActiveCount,
       subtitle: 'Currently active offers',
-      icon: <ListPlus className='h-5 w-5 text-white' />,
+      icon:
+        categoryFilter === 'domain' ? (
+          <Globe className='h-5 w-5 text-white' />
+        ) : (
+          <ListPlus className='h-5 w-5 text-white' />
+        ),
       badge: 'ACTIVE',
-      colorScheme: 'green'
+      colorScheme: categoryFilter === 'domain' ? 'purple' : 'green'
     },
     {
       title: 'Total Views',
@@ -129,7 +162,13 @@ export default function MyListingsPage() {
         {/* Gaming Header */}
         <GamifiedHeader
           title='MY LISTINGS'
-          subtitle='Manage your buy and sell offers in the P2P marketplace'
+          subtitle={
+            categoryFilter === 'domain'
+              ? 'Manage your domain listings'
+              : categoryFilter === 'p2p'
+                ? 'Manage your P2P crypto offers'
+                : 'Manage all your marketplace listings'
+          }
           icon={<Shield className='h-8 w-8 text-white' />}
           actions={
             <Button
@@ -145,6 +184,36 @@ export default function MyListingsPage() {
             </Button>
           }
         />
+
+        {/* Category Tabs */}
+        <Tabs
+          value={categoryFilter}
+          onValueChange={v => setCategoryFilter(v as any)}
+          className='w-full'
+        >
+          <TabsList className='bg-background/50 border-primary/20 grid h-14 w-full grid-cols-3 border-2 backdrop-blur-sm'>
+            <TabsTrigger
+              value='all'
+              className='data-[state=active]:from-primary/20 text-lg font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:to-purple-600/20'
+            >
+              ALL LISTINGS
+            </TabsTrigger>
+            <TabsTrigger
+              value='p2p'
+              className='text-lg font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600/20 data-[state=active]:to-cyan-600/20'
+            >
+              <Zap className='mr-2 h-4 w-4' />
+              P2P CRYPTO
+            </TabsTrigger>
+            <TabsTrigger
+              value='domain'
+              className='text-lg font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/20 data-[state=active]:to-pink-600/20'
+            >
+              <Globe className='mr-2 h-4 w-4' />
+              DOMAINS
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {/* Gaming Stats Cards */}
         <GamifiedStatsCards cards={statsCards} />
@@ -175,7 +244,7 @@ export default function MyListingsPage() {
               </div>
             </div>
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-              {activeListings.map((listing: P2PListingWithUser) => (
+              {activeListings.map((listing: EscrowListingWithUser) => (
                 <GamifiedListingCard
                   key={listing.id}
                   listing={listing}
@@ -202,7 +271,7 @@ export default function MyListingsPage() {
               </div>
             </div>
             <div className='grid gap-6 opacity-60 md:grid-cols-2 lg:grid-cols-3'>
-              {inactiveListings.map((listing: P2PListingWithUser) => (
+              {inactiveListings.map((listing: EscrowListingWithUser) => (
                 <GamifiedListingCard
                   key={listing.id}
                   listing={listing}

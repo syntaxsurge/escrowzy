@@ -365,7 +365,10 @@ export default function HomePage() {
               transition={{ type: 'spring', stiffness: 200, damping: 15 }}
               className='mb-6 inline-block'
             >
-              <Badge variant='gaming' className='animate-pulse px-4 py-2 text-sm'>
+              <Badge
+                variant='gaming'
+                className='animate-pulse px-4 py-2 text-sm'
+              >
                 <Trophy className='mr-2 h-4 w-4' />
                 ACHIEVEMENT UNLOCKED: WATCH THE GAMEPLAY
               </Badge>
@@ -375,7 +378,8 @@ export default function HomePage() {
               SEE THE ARENA IN ACTION
             </h2>
             <p className='mx-auto mb-8 max-w-2xl text-lg text-gray-300'>
-              Watch how traders battle for discounts, earn NFTs, and level up in the world's first gamified P2P trading platform
+              Watch how traders battle for discounts, earn NFTs, and level up in
+              the world's first gamified P2P trading platform
             </p>
 
             {/* Video Container with Gaming Frame */}
@@ -386,8 +390,8 @@ export default function HomePage() {
               className='relative mx-auto max-w-4xl'
             >
               {/* Animated border glow */}
-              <div className='absolute -inset-2 rounded-2xl bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 opacity-30 blur-xl animate-pulse' />
-              
+              <div className='absolute -inset-2 animate-pulse rounded-2xl bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 opacity-30 blur-xl' />
+
               {/* Video wrapper */}
               <div className='relative overflow-hidden rounded-xl border-2 border-yellow-500/50 bg-black/80 backdrop-blur-lg'>
                 {/* Gaming-style header */}
@@ -398,11 +402,15 @@ export default function HomePage() {
                       <div className='h-3 w-3 rounded-full bg-yellow-500' />
                       <div className='h-3 w-3 rounded-full bg-green-500' />
                     </div>
-                    <span className='text-sm font-bold text-yellow-400'>DEMO MODE</span>
+                    <span className='text-sm font-bold text-yellow-400'>
+                      DEMO MODE
+                    </span>
                   </div>
                   <div className='flex items-center gap-2'>
-                    <Activity className='h-4 w-4 text-green-400 animate-pulse' />
-                    <span className='text-xs text-gray-400'>LIVE RECORDING</span>
+                    <Activity className='h-4 w-4 animate-pulse text-green-400' />
+                    <span className='text-xs text-gray-400'>
+                      LIVE RECORDING
+                    </span>
                   </div>
                 </div>
 
@@ -426,7 +434,9 @@ export default function HomePage() {
                         <Gamepad2 className='mr-1 h-3 w-3' />
                         TUTORIAL
                       </Badge>
-                      <span className='text-xs text-gray-400'>Watch to earn +50 XP</span>
+                      <span className='text-xs text-gray-400'>
+                        Watch to earn +50 XP
+                      </span>
                     </div>
                     <div className='flex items-center gap-2'>
                       <Star className='h-4 w-4 text-yellow-400' />
@@ -483,8 +493,11 @@ export default function HomePage() {
                 { label: 'Likes', value: '98%', icon: Star },
                 { label: 'Shares', value: '250+', icon: Zap },
                 { label: 'Comments', value: '45+', icon: MessageSquare }
-              ].map((stat) => (
-                <div key={stat.label} className='flex items-center gap-2 rounded-lg border border-orange-500/20 bg-black/40 px-4 py-2'>
+              ].map(stat => (
+                <div
+                  key={stat.label}
+                  className='flex items-center gap-2 rounded-lg border border-orange-500/20 bg-black/40 px-4 py-2'
+                >
                   <stat.icon className='h-4 w-4 text-orange-400' />
                   <div className='text-left'>
                     <p className='text-xs text-gray-500'>{stat.label}</p>
@@ -498,7 +511,10 @@ export default function HomePage() {
       </section>
 
       {/* Track #1: DeFi Features */}
-      <section id='track-1' className='relative z-10 px-4 py-20 sm:px-6 lg:px-8'>
+      <section
+        id='track-1'
+        className='relative z-10 px-4 py-20 sm:px-6 lg:px-8'
+      >
         <div className='mx-auto max-w-7xl'>
           <motion.div
             initial={{ opacity: 0 }}

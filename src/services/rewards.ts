@@ -36,13 +36,15 @@ export class RewardsService {
         .from(userGameData)
         .where(eq(userGameData.userId, userId))
         .limit(1)
-      
+
       if (existingAfterConflict.length > 0) {
         return existingAfterConflict[0]
       }
-      
+
       // This should rarely happen, but handle it gracefully
-      throw new Error(`Failed to create or retrieve game data for user ${userId}`)
+      throw new Error(
+        `Failed to create or retrieve game data for user ${userId}`
+      )
     }
 
     await this.checkAchievement(userId, 'first_login')

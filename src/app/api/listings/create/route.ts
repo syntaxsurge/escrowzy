@@ -6,8 +6,8 @@ import { apiResponses } from '@/lib/api/server-utils'
 import { getSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
 import { userSubscriptions } from '@/lib/db/schema'
-import { createListingSchema } from '@/lib/schemas/p2p-listings'
-import { createP2PListing, canUserCreateListing } from '@/services/p2p-listings'
+import { createListingSchema } from '@/lib/schemas/listings'
+import { createListing, canUserCreateListing } from '@/services/listings'
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,12 +62,15 @@ export async function POST(request: NextRequest) {
       return apiResponses.forbidden(canCreate.reason || 'Cannot create listing')
     }
 
-    // Create the listing
-    const listing = await createP2PListing(session.user.id, input)
+    // Create the listing (works for both P2P and domain)
+    const listing = await createListing(session.user.id, input)
 
     return apiResponses.success({
       listing,
-      message: 'Listing created successfully'
+      message:
+        input.listingCategory === 'domain'
+          ? 'Domain listing created successfully'
+          : 'Listing created successfully'
     })
   } catch (error) {
     console.error('Error creating listing:', error)

@@ -17,7 +17,8 @@ import {
   ArrowRight,
   Coins,
   Users,
-  DollarSign
+  DollarSign,
+  Globe
 } from 'lucide-react'
 import useSWR from 'swr'
 
@@ -94,6 +95,19 @@ export default function TradingHubDashboard() {
     }
   )
 
+  // Fetch marketplace stats
+  const { data: marketStats } = useSWR(
+    apiEndpoints.listings.marketStats,
+    async () => {
+      const res = await api.get(apiEndpoints.listings.marketStats)
+      return res.success ? res.data : null
+    },
+    {
+      refreshInterval: 60000,
+      revalidateOnFocus: true
+    }
+  )
+
   // Prepare stats cards for the header
   const statsCards: StatCard[] = [
     {
@@ -163,7 +177,7 @@ export default function TradingHubDashboard() {
     },
     {
       title: 'Browse Marketplace',
-      description: 'Find the best P2P trading offers',
+      description: 'Find crypto, domain, and other listings',
       icon: <ShoppingCart className='h-6 w-6' />,
       href: appRoutes.trades.listings.base,
       color: 'from-blue-500 to-cyan-600',
@@ -171,14 +185,16 @@ export default function TradingHubDashboard() {
       badge: 'Popular',
       stats: [
         {
-          label: 'Buy Offers',
-          value: userStats?.totalBuyOffers || 0,
-          icon: <DollarSign className='h-4 w-4' />
+          label: 'P2P Listings',
+          value:
+            (marketStats?.totalActiveListings || 0) -
+            (marketStats?.totalDomainListings || 0),
+          icon: <Zap className='h-4 w-4' />
         },
         {
-          label: 'Sell Offers',
-          value: userStats?.totalSellOffers || 0,
-          icon: <Coins className='h-4 w-4' />
+          label: 'Domains',
+          value: marketStats?.totalDomainListings || 0,
+          icon: <Globe className='h-4 w-4' />
         }
       ]
     },
@@ -226,6 +242,27 @@ export default function TradingHubDashboard() {
           icon: <Target className='h-4 w-4' />
         }
       ]
+    },
+    {
+      title: 'Create New Listing',
+      description: 'List crypto, domains, or services for sale',
+      icon: <ListPlus className='h-6 w-6' />,
+      href: appRoutes.trades.listings.create,
+      color: 'from-indigo-500 to-blue-600',
+      bgColor: 'hover:bg-indigo-500/10',
+      badge: 'Quick Start',
+      stats: [
+        {
+          label: 'Low Fees',
+          value: '1-2%',
+          icon: <DollarSign className='h-4 w-4' />
+        },
+        {
+          label: 'Secure',
+          value: '100%',
+          icon: <Shield className='h-4 w-4' />
+        }
+      ]
     }
   ]
 
@@ -235,7 +272,7 @@ export default function TradingHubDashboard() {
         {/* Gaming Header */}
         <GamifiedHeader
           title='TRADING HUB'
-          subtitle='Your central command for P2P trading and escrow management'
+          subtitle='Your central command for secure trading and escrow management'
           icon={<Zap className='h-8 w-8 text-white' />}
           actions={
             <div className='flex gap-3'>

@@ -13,7 +13,7 @@ function clearAuthStorage(): void {
   try {
     // Clear all localStorage items that might contain auth data
     const keysToRemove: string[] = []
-    
+
     // Find all thirdweb related keys
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i)
@@ -33,12 +33,12 @@ function clearAuthStorage(): void {
         }
       }
     }
-    
+
     // Remove all identified keys
     keysToRemove.forEach(key => {
       localStorage.removeItem(key)
     })
-    
+
     // Also clear sessionStorage for any temporary auth data
     const sessionKeysToRemove: string[] = []
     for (let i = 0; i < sessionStorage.length; i++) {
@@ -56,7 +56,7 @@ function clearAuthStorage(): void {
         }
       }
     }
-    
+
     sessionKeysToRemove.forEach(key => {
       sessionStorage.removeItem(key)
     })
@@ -80,7 +80,7 @@ export async function disconnectWallet(disconnect?: () => void): Promise<void> {
     // Clear SWR cache to remove user data
     await mutate(apiEndpoints.user.profile, null, { revalidate: false })
     await mutate(apiEndpoints.team, null, { revalidate: false })
-    
+
     // Clear all authentication related storage (including email/Google auth)
     clearAuthStorage()
 
@@ -93,10 +93,10 @@ export async function disconnectWallet(disconnect?: () => void): Promise<void> {
     window.location.href = appRoutes.home
   } catch (error) {
     console.error('Error during wallet disconnect:', error)
-    
+
     // Even if API call fails, still clear local storage and disconnect
     clearAuthStorage()
-    
+
     if (disconnect) {
       try {
         disconnect()
@@ -104,7 +104,7 @@ export async function disconnectWallet(disconnect?: () => void): Promise<void> {
         console.error('Error disconnecting wallet:', disconnectError)
       }
     }
-    
+
     // Still redirect even if signout fails to ensure user is logged out
     window.location.href = appRoutes.home
   }

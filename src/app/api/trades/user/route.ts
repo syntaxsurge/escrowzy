@@ -5,7 +5,7 @@ import { ZodError } from 'zod'
 import { getSession } from '@/lib/auth/session'
 import { getUserTradesSchema } from '@/lib/schemas/trade'
 import { getUserTrades } from '@/services/trade'
-import type { TradeStatus } from '@/types/p2p-listings'
+import type { TradeStatus } from '@/types/listings'
 import type { TradeFilters } from '@/types/trade'
 
 export async function GET(request: Request) {

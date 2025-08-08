@@ -15,7 +15,7 @@ import {
   trades,
   users,
   userTradingStats,
-  p2pListings,
+  escrowListings,
   ActivityType
 } from '@/lib/db/schema'
 import {
@@ -32,7 +32,7 @@ import type {
   DisputeTradeInput,
   ResolveDisputeInput
 } from '@/lib/schemas/trade'
-import { TRADE_STATUS, type TradeStatus } from '@/types/p2p-listings'
+import { TRADE_STATUS, type TradeStatus } from '@/types/listings'
 import type {
   Trade,
   TradeWithUsers,
@@ -57,9 +57,12 @@ export async function createTrade(
     // Get the listing
     const [listing] = await db
       .select()
-      .from(p2pListings)
+      .from(escrowListings)
       .where(
-        and(eq(p2pListings.id, input.listingId), eq(p2pListings.isActive, true))
+        and(
+          eq(escrowListings.id, input.listingId),
+          eq(escrowListings.isActive, true)
+        )
       )
       .limit(1)
 
@@ -111,7 +114,7 @@ export async function createTrade(
         buyerId,
         sellerId,
         amount: input.amount,
-        currency: listing.tokenOffered,
+        currency: listing.tokenOffered || 'USD',
         tradeType: 'p2p',
         status: TRADE_STATUS.CREATED,
         metadata

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { getSession } from '@/lib/auth/session'
-import { getUserListings } from '@/services/p2p-listings'
+import { getUserListings } from '@/services/listings'
 
 export async function GET() {
   try {

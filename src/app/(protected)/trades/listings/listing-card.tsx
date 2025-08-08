@@ -22,8 +22,8 @@ import { appRoutes } from '@/config/app-routes'
 import { useSession } from '@/hooks/use-session'
 import { formatRelativeTime } from '@/lib/utils/string'
 import { getUserDisplayName } from '@/lib/utils/user'
-import type { P2PListingWithUser } from '@/types/p2p-listings'
-import { PAYMENT_METHODS } from '@/types/p2p-listings'
+import type { P2PListingWithUser } from '@/types/listings'
+import { PAYMENT_METHODS } from '@/types/listings'
 
 import { AcceptListingDialog } from './accept-listing-dialog'
 
@@ -39,7 +39,7 @@ export function ListingCard({ listing, onAccept }: ListingCardProps) {
 
   const isOwnListing = user?.id === listing.userId
   const totalValue =
-    parseFloat(listing.amount) * parseFloat(listing.pricePerUnit)
+    parseFloat(listing.amount ?? '0') * parseFloat(listing.pricePerUnit ?? '0')
 
   // Parse payment methods from JSON
   const paymentMethods = Array.isArray(listing.paymentMethods)

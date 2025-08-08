@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 
 import { apiResponses } from '@/lib/api/server-utils'
 import { getSession } from '@/lib/auth/session'
-import { acceptListingSchema } from '@/lib/schemas/p2p-listings'
-import { acceptListingAndCreateTrade } from '@/services/p2p-listings'
+import { acceptListingSchema } from '@/lib/schemas/listings'
+import { acceptListingAndCreateTrade } from '@/services/listings'
 
 export async function POST(
   request: NextRequest,

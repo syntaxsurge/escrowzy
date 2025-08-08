@@ -24,6 +24,11 @@ const PublicEnv = z.object({
     .email()
     .optional()
     .default('admin@example.com'),
+  NEXT_PUBLIC_DOMAIN_ESCROW_EMAIL: z
+    .string()
+    .email()
+    .optional()
+    .default('domains@escrowzy.com'),
 
   // Pusher (Real-time)
   NEXT_PUBLIC_PUSHER_KEY: z.string().optional().default(''),
@@ -51,6 +56,7 @@ const envVars =
         NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID:
           process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
         NEXT_PUBLIC_ADMIN_EMAIL: process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+        NEXT_PUBLIC_DOMAIN_ESCROW_EMAIL: process.env.NEXT_PUBLIC_DOMAIN_ESCROW_EMAIL,
         NEXT_PUBLIC_PUSHER_KEY: process.env.NEXT_PUBLIC_PUSHER_KEY,
         NEXT_PUBLIC_PUSHER_CLUSTER: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
         BLOCKCHAIN_CONFIG_PATH: process.env.BLOCKCHAIN_CONFIG_PATH

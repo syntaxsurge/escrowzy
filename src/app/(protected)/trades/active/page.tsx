@@ -12,7 +12,8 @@ import {
   TrendingUp,
   Shield,
   Zap,
-  Flame
+  Flame,
+  Globe
 } from 'lucide-react'
 import useSWR from 'swr'
 
@@ -43,6 +44,9 @@ export default function ActiveTradesPage() {
   const { user } = useSession()
   const [view, setView] = useState<'grid' | 'table'>('grid')
   const [filter, setFilter] = useState<'all' | 'buyer' | 'seller'>('all')
+  const [tradeTypeFilter, setTradeTypeFilter] = useState<
+    'all' | 'p2p' | 'domain'
+  >('all')
 
   // Fetch user's active trades
   const {
@@ -118,8 +122,14 @@ export default function ActiveTradesPage() {
     onStatusChange: handleStatusChange
   })
 
-  // Filter trades based on user role
+  // Filter trades based on user role and trade type
   const filteredTrades = trades.filter((trade: TradeWithUsers) => {
+    // Trade type filter
+    if (tradeTypeFilter !== 'all' && trade.tradeType !== tradeTypeFilter) {
+      return false
+    }
+
+    // Role filter
     if (filter === 'all') return true
     // Check if current user is buyer or seller
     return filter === 'buyer'
@@ -169,7 +179,13 @@ export default function ActiveTradesPage() {
         {/* Gaming Header with Parallax Effect */}
         <GamifiedHeader
           title='ACTIVE TRADES'
-          subtitle='Manage your ongoing P2P transactions'
+          subtitle={
+            tradeTypeFilter === 'domain'
+              ? 'Manage your domain escrow transactions'
+              : tradeTypeFilter === 'p2p'
+                ? 'Manage your P2P crypto transactions'
+                : 'Manage all your escrow transactions'
+          }
           icon={<TrendingUp className='h-8 w-8 text-white' />}
           actions={
             <Button
@@ -185,20 +201,60 @@ export default function ActiveTradesPage() {
           }
         />
 
+        {/* Trade Type Tabs */}
+        <Tabs
+          value={tradeTypeFilter}
+          onValueChange={v => setTradeTypeFilter(v as any)}
+          className='w-full'
+        >
+          <TabsList className='bg-background/50 border-primary/20 grid h-14 w-full grid-cols-3 border-2 backdrop-blur-sm'>
+            <TabsTrigger
+              value='all'
+              className='data-[state=active]:from-primary/20 text-lg font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:to-purple-600/20'
+            >
+              ALL TRADES
+            </TabsTrigger>
+            <TabsTrigger
+              value='p2p'
+              className='text-lg font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600/20 data-[state=active]:to-cyan-600/20'
+            >
+              <Zap className='mr-2 h-4 w-4' />
+              P2P CRYPTO
+            </TabsTrigger>
+            <TabsTrigger
+              value='domain'
+              className='text-lg font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/20 data-[state=active]:to-pink-600/20'
+            >
+              <Globe className='mr-2 h-4 w-4' />
+              DOMAINS
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         {/* Gaming Stats Dashboard */}
         <GamifiedStatsCards
           cards={
             [
               {
-                title: 'Active Trades',
+                title:
+                  tradeTypeFilter === 'domain'
+                    ? 'Domain Trades'
+                    : tradeTypeFilter === 'p2p'
+                      ? 'P2P Trades'
+                      : 'Active Trades',
                 value: activeTrades.length,
-                icon: <Zap className='h-5 w-5 text-white' />,
+                icon:
+                  tradeTypeFilter === 'domain' ? (
+                    <Globe className='h-5 w-5 text-white' />
+                  ) : (
+                    <Zap className='h-5 w-5 text-white' />
+                  ),
                 badge: 'ACTIVE',
-                colorScheme: 'yellow'
+                colorScheme: tradeTypeFilter === 'domain' ? 'purple' : 'yellow'
               },
               {
                 title: 'In Escrow',
-                value: trades.filter(
+                value: filteredTrades.filter(
                   (t: TradeWithUsers) => t.status === 'funded'
                 ).length,
                 icon: <Shield className='h-5 w-5 text-white' />,
@@ -207,7 +263,7 @@ export default function ActiveTradesPage() {
               },
               {
                 title: 'Need Action',
-                value: trades.filter(
+                value: filteredTrades.filter(
                   (t: TradeWithUsers) =>
                     t.status === 'created' ||
                     t.status === 'awaiting_deposit' ||

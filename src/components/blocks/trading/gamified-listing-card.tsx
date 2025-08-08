@@ -12,7 +12,11 @@ import {
   ArrowRightLeft,
   Zap,
   Trophy,
-  CheckCircle
+  CheckCircle,
+  Globe,
+  Calendar,
+  Users,
+  BarChart
 } from 'lucide-react'
 
 import { AcceptListingDialog } from '@/app/(protected)/trades/listings/accept-listing-dialog'
@@ -25,11 +29,11 @@ import { useSession } from '@/hooks/use-session'
 import { cn } from '@/lib'
 import { formatRelativeTime } from '@/lib/utils/string'
 import { getUserDisplayName } from '@/lib/utils/user'
-import type { P2PListingWithUser } from '@/types/p2p-listings'
-import { PAYMENT_METHODS } from '@/types/p2p-listings'
+import type { EscrowListingWithUser, DomainMetadata } from '@/types/listings'
+import { PAYMENT_METHODS } from '@/types/listings'
 
 interface GamifiedListingCardProps {
-  listing: P2PListingWithUser
+  listing: EscrowListingWithUser
   onAccept?: () => void
   onUpdate?: () => void
   showManageButton?: boolean
@@ -47,8 +51,15 @@ export function GamifiedListingCard({
   const [isHovered, setIsHovered] = useState(false)
 
   const isOwnListing = user?.id === listing.userId
-  const totalValue =
-    parseFloat(listing.amount) * parseFloat(listing.pricePerUnit)
+  const isDomainListing = listing.listingCategory === 'domain'
+  const domainMetadata = isDomainListing
+    ? (listing.metadata as DomainMetadata)
+    : null
+
+  const totalValue = isDomainListing
+    ? parseFloat(listing.amount || '0')
+    : parseFloat(listing.amount || '0') *
+      parseFloat(listing.pricePerUnit || '0')
 
   // Parse payment methods from JSON
   const paymentMethods = Array.isArray(listing.paymentMethods)
@@ -70,7 +81,19 @@ export function GamifiedListingCard({
 
   // Get listing type config
   const getListingTypeConfig = () => {
-    if (listing.listingType === 'sell') {
+    if (isDomainListing) {
+      return {
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-50 dark:bg-purple-950/50',
+        borderColor: 'border-purple-500/60',
+        shadowColor: 'shadow-purple-500/20',
+        icon: <Globe className='h-4 w-4' />,
+        label: 'DOMAIN',
+        actionLabel: 'Buy Domain',
+        actionColor:
+          'from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700'
+      }
+    } else if (listing.listingType === 'sell') {
       return {
         color: 'text-green-600',
         bgColor: 'bg-green-50 dark:bg-green-950/50',
@@ -178,12 +201,14 @@ export function GamifiedListingCard({
                     {typeConfig.icon}
                     <span className='ml-1'>{typeConfig.label}</span>
                   </Badge>
-                  <Badge
-                    variant='outline'
-                    className='from-primary/10 border-primary/30 bg-gradient-to-r to-purple-600/10 font-bold'
-                  >
-                    {listing.tokenOffered}
-                  </Badge>
+                  {!isDomainListing && (
+                    <Badge
+                      variant='outline'
+                      className='from-primary/10 border-primary/30 bg-gradient-to-r to-purple-600/10 font-bold'
+                    >
+                      {listing.tokenOffered}
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>
@@ -203,42 +228,119 @@ export function GamifiedListingCard({
 
         <CardContent className='flex-1 space-y-4'>
           {/* Gaming Trade Amount Card */}
-          <div className='from-primary/20 border-primary/30 relative overflow-hidden rounded-xl border-2 bg-gradient-to-br via-purple-600/20 to-pink-600/20 p-5 backdrop-blur-sm'>
-            <div className='bg-grid-white/5 dark:bg-grid-white/10 absolute inset-0' />
-            <div className='relative'>
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='text-center'>
+          {isDomainListing ? (
+            <div className='from-primary/20 border-primary/30 relative overflow-hidden rounded-xl border-2 bg-gradient-to-br via-purple-600/20 to-pink-600/20 p-5 backdrop-blur-sm'>
+              <div className='bg-grid-white/5 dark:bg-grid-white/10 absolute inset-0' />
+              <div className='relative'>
+                <div className='mb-3 text-center'>
                   <p className='text-muted-foreground mb-1 text-xs font-bold tracking-wider uppercase'>
-                    <Coins className='mr-1 inline h-3 w-3' />
-                    Amount
+                    <Globe className='mr-1 inline h-3 w-3' />
+                    Domain Name
                   </p>
                   <p className='from-primary bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text text-2xl font-black text-transparent'>
-                    {listing.amount} {listing.tokenOffered}
+                    {domainMetadata?.domainName || 'N/A'}
                   </p>
                 </div>
-                <div className='text-center'>
-                  <p className='text-muted-foreground mb-1 text-xs font-bold tracking-wider uppercase'>
-                    <DollarSign className='mr-1 inline h-3 w-3' />
-                    Price/Unit
-                  </p>
-                  <p className='from-primary bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text text-2xl font-black text-transparent'>
-                    ${listing.pricePerUnit}
-                  </p>
+                <div className='grid grid-cols-2 gap-4'>
+                  <div className='text-center'>
+                    <p className='text-muted-foreground mb-1 text-xs font-bold tracking-wider uppercase'>
+                      <DollarSign className='mr-1 inline h-3 w-3' />
+                      Price
+                    </p>
+                    <p className='from-primary bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text text-xl font-black text-transparent'>
+                      ${listing.amount}
+                    </p>
+                  </div>
+                  <div className='text-center'>
+                    <p className='text-muted-foreground mb-1 text-xs font-bold tracking-wider uppercase'>
+                      <Users className='mr-1 inline h-3 w-3' />
+                      Registrar
+                    </p>
+                    <p className='from-primary bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text text-xl font-black text-transparent'>
+                      {domainMetadata?.registrar || 'Unknown'}
+                    </p>
+                  </div>
                 </div>
+                {(domainMetadata?.monthlyTraffic ||
+                  domainMetadata?.monthlyRevenue) && (
+                  <div className='mt-3 grid grid-cols-2 gap-4'>
+                    {domainMetadata?.monthlyTraffic && (
+                      <div className='text-center'>
+                        <p className='text-muted-foreground mb-1 text-xs font-bold tracking-wider uppercase'>
+                          <BarChart className='mr-1 inline h-3 w-3' />
+                          Traffic/Mo
+                        </p>
+                        <p className='text-sm font-bold text-purple-600 dark:text-purple-400'>
+                          {domainMetadata.monthlyTraffic.toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                    {domainMetadata?.monthlyRevenue && (
+                      <div className='text-center'>
+                        <p className='text-muted-foreground mb-1 text-xs font-bold tracking-wider uppercase'>
+                          <DollarSign className='mr-1 inline h-3 w-3' />
+                          Revenue/Mo
+                        </p>
+                        <p className='text-sm font-bold text-green-600 dark:text-green-400'>
+                          ${domainMetadata.monthlyRevenue.toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {domainMetadata?.expiryDate && (
+                  <div className='mt-3 text-center'>
+                    <div className='inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-yellow-500/10 to-amber-500/10 px-4 py-2 dark:from-yellow-500/20 dark:to-amber-500/20'>
+                      <Calendar className='h-4 w-4 text-yellow-600 dark:text-yellow-400' />
+                      <span className='text-sm font-bold text-yellow-600 dark:text-yellow-400'>
+                        EXPIRES:{' '}
+                        {new Date(
+                          domainMetadata.expiryDate
+                        ).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className='mt-3 text-center'>
-                <div className='inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-yellow-500/10 to-amber-500/10 px-4 py-2 dark:from-yellow-500/20 dark:to-amber-500/20'>
-                  <Trophy className='h-4 w-4 text-yellow-600 dark:text-yellow-400' />
-                  <span className='text-sm font-bold text-yellow-600 dark:text-yellow-400'>
-                    TOTAL VALUE: ${totalValue.toFixed(2)}
-                  </span>
+            </div>
+          ) : (
+            <div className='from-primary/20 border-primary/30 relative overflow-hidden rounded-xl border-2 bg-gradient-to-br via-purple-600/20 to-pink-600/20 p-5 backdrop-blur-sm'>
+              <div className='bg-grid-white/5 dark:bg-grid-white/10 absolute inset-0' />
+              <div className='relative'>
+                <div className='grid grid-cols-2 gap-4'>
+                  <div className='text-center'>
+                    <p className='text-muted-foreground mb-1 text-xs font-bold tracking-wider uppercase'>
+                      <Coins className='mr-1 inline h-3 w-3' />
+                      Amount
+                    </p>
+                    <p className='from-primary bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text text-2xl font-black text-transparent'>
+                      {listing.amount} {listing.tokenOffered}
+                    </p>
+                  </div>
+                  <div className='text-center'>
+                    <p className='text-muted-foreground mb-1 text-xs font-bold tracking-wider uppercase'>
+                      <DollarSign className='mr-1 inline h-3 w-3' />
+                      Price/Unit
+                    </p>
+                    <p className='from-primary bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text text-2xl font-black text-transparent'>
+                      ${listing.pricePerUnit}
+                    </p>
+                  </div>
+                </div>
+                <div className='mt-3 text-center'>
+                  <div className='inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-yellow-500/10 to-amber-500/10 px-4 py-2 dark:from-yellow-500/20 dark:to-amber-500/20'>
+                    <Trophy className='h-4 w-4 text-yellow-600 dark:text-yellow-400' />
+                    <span className='text-sm font-bold text-yellow-600 dark:text-yellow-400'>
+                      TOTAL VALUE: ${totalValue.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Limits */}
-          {(listing.minAmount || listing.maxAmount) && (
+          {/* Limits - only for P2P */}
+          {!isDomainListing && (listing.minAmount || listing.maxAmount) && (
             <div className='border-border/50 bg-muted/50 flex items-center justify-center gap-2 rounded-lg border p-3'>
               <ArrowRightLeft className='text-muted-foreground h-4 w-4' />
               <span className='text-muted-foreground text-sm font-bold uppercase'>
