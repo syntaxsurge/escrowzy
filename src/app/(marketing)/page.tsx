@@ -349,8 +349,156 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Track #1: DeFi Features */}
+      {/* Video Demo Section */}
       <section className='relative z-10 px-4 py-20 sm:px-6 lg:px-8'>
+        <div className='mx-auto max-w-5xl'>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className='text-center'
+          >
+            {/* Achievement-style badge */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+              className='mb-6 inline-block'
+            >
+              <Badge variant='gaming' className='animate-pulse px-4 py-2 text-sm'>
+                <Trophy className='mr-2 h-4 w-4' />
+                ACHIEVEMENT UNLOCKED: WATCH THE GAMEPLAY
+              </Badge>
+            </motion.div>
+
+            <h2 className='mb-4 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-4xl font-black text-transparent sm:text-5xl'>
+              SEE THE ARENA IN ACTION
+            </h2>
+            <p className='mx-auto mb-8 max-w-2xl text-lg text-gray-300'>
+              Watch how traders battle for discounts, earn NFTs, and level up in the world's first gamified P2P trading platform
+            </p>
+
+            {/* Video Container with Gaming Frame */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className='relative mx-auto max-w-4xl'
+            >
+              {/* Animated border glow */}
+              <div className='absolute -inset-2 rounded-2xl bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 opacity-30 blur-xl animate-pulse' />
+              
+              {/* Video wrapper */}
+              <div className='relative overflow-hidden rounded-xl border-2 border-yellow-500/50 bg-black/80 backdrop-blur-lg'>
+                {/* Gaming-style header */}
+                <div className='flex items-center justify-between border-b border-yellow-500/30 bg-gradient-to-r from-orange-950/50 to-red-950/50 px-4 py-3'>
+                  <div className='flex items-center gap-3'>
+                    <div className='flex gap-1.5'>
+                      <div className='h-3 w-3 rounded-full bg-red-500' />
+                      <div className='h-3 w-3 rounded-full bg-yellow-500' />
+                      <div className='h-3 w-3 rounded-full bg-green-500' />
+                    </div>
+                    <span className='text-sm font-bold text-yellow-400'>DEMO MODE</span>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <Activity className='h-4 w-4 text-green-400 animate-pulse' />
+                    <span className='text-xs text-gray-400'>LIVE RECORDING</span>
+                  </div>
+                </div>
+
+                {/* YouTube Video Embed */}
+                <div className='relative aspect-video w-full'>
+                  <iframe
+                    className='absolute inset-0 h-full w-full'
+                    src='https://www.youtube.com/embed/0fn4zoo-_G8'
+                    title='Escrowzy Demo - Gamified P2P Trading Platform'
+                    frameBorder='0'
+                    allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+                    allowFullScreen
+                  />
+                </div>
+
+                {/* Gaming-style footer */}
+                <div className='border-t border-yellow-500/30 bg-gradient-to-r from-orange-950/50 to-red-950/50 px-4 py-3'>
+                  <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-4'>
+                      <Badge variant='rare' className='text-xs'>
+                        <Gamepad2 className='mr-1 h-3 w-3' />
+                        TUTORIAL
+                      </Badge>
+                      <span className='text-xs text-gray-400'>Watch to earn +50 XP</span>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <Star className='h-4 w-4 text-yellow-400' />
+                      <Star className='h-4 w-4 text-yellow-400' />
+                      <Star className='h-4 w-4 text-yellow-400' />
+                      <Star className='h-4 w-4 text-yellow-400' />
+                      <Star className='h-4 w-4 text-yellow-400' />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Call to action buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className='mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row'
+            >
+              <Link href={appRoutes.dashboard.base}>
+                <Button
+                  size='lg'
+                  className='group bg-gradient-to-r from-yellow-600 to-orange-600 font-bold tracking-wider text-white uppercase hover:from-yellow-500 hover:to-orange-500'
+                >
+                  <Rocket className='mr-2 h-5 w-5' />
+                  TRY IT YOURSELF
+                  <ChevronRight className='ml-1 h-5 w-5 transition-transform group-hover:translate-x-1' />
+                </Button>
+              </Link>
+              <Button
+                size='lg'
+                variant='outline'
+                className='border-orange-500/50 bg-orange-950/30 text-orange-300 hover:bg-orange-950/50'
+                onClick={() => {
+                  const defiSection = document.querySelector('#track-1')
+                  defiSection?.scrollIntoView({ behavior: 'smooth' })
+                }}
+              >
+                <ScrollText className='mr-2 h-5 w-5' />
+                LEARN MORE
+              </Button>
+            </motion.div>
+
+            {/* Stats bar */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className='mt-12 flex flex-wrap justify-center gap-6 text-center'
+            >
+              {[
+                { label: 'Views', value: '1.2K+', icon: Activity },
+                { label: 'Likes', value: '98%', icon: Star },
+                { label: 'Shares', value: '250+', icon: Zap },
+                { label: 'Comments', value: '45+', icon: MessageSquare }
+              ].map((stat) => (
+                <div key={stat.label} className='flex items-center gap-2 rounded-lg border border-orange-500/20 bg-black/40 px-4 py-2'>
+                  <stat.icon className='h-4 w-4 text-orange-400' />
+                  <div className='text-left'>
+                    <p className='text-xs text-gray-500'>{stat.label}</p>
+                    <p className='font-bold text-orange-300'>{stat.value}</p>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Track #1: DeFi Features */}
+      <section id='track-1' className='relative z-10 px-4 py-20 sm:px-6 lg:px-8'>
         <div className='mx-auto max-w-7xl'>
           <motion.div
             initial={{ opacity: 0 }}
