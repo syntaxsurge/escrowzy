@@ -2,7 +2,11 @@
   "crons": [
     {
       "path": "/api/cron/update-expired-trades",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/subscription-check",
+      "schedule": "0 1 * * *"
     }
   ],
   "git": {
