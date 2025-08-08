@@ -31,9 +31,11 @@ export function useUnifiedWalletAuth() {
         await disconnectWallet(disconnect)
       }
       setWasConnected(false)
+      setIsAuthenticating(false)
     } catch (error) {
       console.error('Error during wallet disconnect:', error)
       setWasConnected(false)
+      setIsAuthenticating(false)
     }
   }
 
