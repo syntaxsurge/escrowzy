@@ -1071,3 +1071,178 @@ export async function confirmPaymentReceived(input: {
     return { success: false, error: 'Failed to confirm payment' }
   }
 }
+
+export async function getTradesForTable(
+  userId: number,
+  params: {
+    page: number
+    limit: number
+    sortBy: string
+    sortOrder: 'asc' | 'desc'
+    globalFilter?: string
+    status?: string
+    period?: string
+    listingCategory?: string
+  }
+) {
+  try {
+    const offset = (params.page - 1) * params.limit
+
+    // Aliases for buyer and seller
+    const buyer = aliasedTable(users, 'buyer')
+    const seller = aliasedTable(users, 'seller')
+
+    // Build where conditions
+    const conditions = []
+
+    // User is either buyer or seller
+    conditions.push(or(eq(trades.buyerId, userId), eq(trades.sellerId, userId)))
+
+    // Status filter
+    if (params.status) {
+      if (params.status === 'pending') {
+        const pendingStatuses = [
+          TRADE_STATUS.CREATED,
+          TRADE_STATUS.AWAITING_DEPOSIT,
+          TRADE_STATUS.FUNDED,
+          TRADE_STATUS.PAYMENT_SENT,
+          TRADE_STATUS.PAYMENT_CONFIRMED,
+          TRADE_STATUS.DELIVERED,
+          TRADE_STATUS.CONFIRMED
+        ]
+        conditions.push(inArray(trades.status, pendingStatuses))
+      } else {
+        conditions.push(eq(trades.status, params.status))
+      }
+    }
+
+    // Period filter
+    if (params.period) {
+      const now = new Date()
+      let startDate: Date | undefined
+
+      switch (params.period) {
+        case '7days':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+          break
+        case '30days':
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+          break
+        case '90days':
+          startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+          break
+      }
+
+      if (startDate) {
+        conditions.push(gte(trades.createdAt, startDate))
+      }
+    }
+
+    // Listing category filter
+    if (params.listingCategory && params.listingCategory !== 'all') {
+      conditions.push(eq(trades.listingCategory, params.listingCategory))
+    }
+
+    // Get total count
+    const [{ totalCount }] = await db
+      .select({ totalCount: count() })
+      .from(trades)
+      .where(and(...conditions))
+
+    // Get paginated data with user joins
+    const results = await db
+      .select({
+        trade: trades,
+        buyer: buyer,
+        seller: seller
+      })
+      .from(trades)
+      .leftJoin(buyer, eq(trades.buyerId, buyer.id))
+      .leftJoin(seller, eq(trades.sellerId, seller.id))
+      .where(and(...conditions))
+      .orderBy(desc(trades.createdAt))
+      .limit(params.limit)
+      .offset(offset)
+
+    // Transform results to match TradeWithUsers type
+    const data = results.map(({ trade, buyer, seller }) => ({
+      ...trade,
+      buyer,
+      seller
+    })) as TradeWithUsers[]
+
+    const pageCount = Math.ceil(totalCount / params.limit)
+
+    return {
+      data,
+      pageCount,
+      totalCount
+    }
+  } catch (error) {
+    console.error('Error getting trades for table:', error)
+    return {
+      data: [],
+      pageCount: 0,
+      totalCount: 0
+    }
+  }
+}
+
+export async function getTradeStats(userId: number) {
+  try {
+    // Define pending statuses
+    const pendingStatuses = [
+      TRADE_STATUS.CREATED,
+      TRADE_STATUS.AWAITING_DEPOSIT,
+      TRADE_STATUS.FUNDED,
+      TRADE_STATUS.PAYMENT_SENT,
+      TRADE_STATUS.PAYMENT_CONFIRMED,
+      TRADE_STATUS.DELIVERED,
+      TRADE_STATUS.CONFIRMED
+    ]
+
+    // Get all user trades
+    const userTrades = await db
+      .select()
+      .from(trades)
+      .where(or(eq(trades.buyerId, userId), eq(trades.sellerId, userId)))
+
+    // Calculate stats
+    const totalTrades = userTrades.length
+    const pendingTrades = userTrades.filter(t =>
+      pendingStatuses.includes(t.status as any)
+    ).length
+    const completedTrades = userTrades.filter(
+      t => t.status === TRADE_STATUS.COMPLETED
+    ).length
+    const disputedTrades = userTrades.filter(
+      t => t.status === TRADE_STATUS.DISPUTED
+    ).length
+
+    const totalVolume = userTrades
+      .filter(t => t.status === TRADE_STATUS.COMPLETED)
+      .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+
+    const successRate =
+      totalTrades > 0 ? Math.round((completedTrades / totalTrades) * 100) : 100
+
+    return {
+      totalTrades,
+      pendingTrades,
+      completedTrades,
+      disputedTrades,
+      totalVolume,
+      successRate
+    }
+  } catch (error) {
+    console.error('Error getting trade stats:', error)
+    return {
+      totalTrades: 0,
+      pendingTrades: 0,
+      completedTrades: 0,
+      disputedTrades: 0,
+      totalVolume: 0,
+      successRate: 100
+    }
+  }
+}

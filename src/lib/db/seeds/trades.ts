@@ -9,12 +9,13 @@ export async function seedTrades(users: {
   proUser: User
   enterpriseUser: User
 }) {
-  console.log('Seeding trades and P2P listings...')
+  console.log('Seeding P2P and domain listings with trades...')
 
-  // Create P2P listings
+  // Create P2P listings (only 2)
   await db.insert(escrowListings).values([
     {
       userId: users.testUser1.id,
+      listingCategory: 'p2p',
       listingType: 'sell',
       tokenOffered: 'ETH',
       amount: '5.0',
@@ -26,18 +27,8 @@ export async function seedTrades(users: {
     },
     {
       userId: users.testUser2.id,
+      listingCategory: 'p2p',
       listingType: 'buy',
-      tokenOffered: 'ETH',
-      amount: '2.0',
-      pricePerUnit: '2480',
-      minAmount: '0.05',
-      maxAmount: '2.0',
-      paymentMethods: ['bank_transfer'],
-      isActive: true
-    },
-    {
-      userId: users.proUser.id,
-      listingType: 'sell',
       tokenOffered: 'BTC',
       amount: '0.5',
       pricePerUnit: '65000',
@@ -46,31 +37,48 @@ export async function seedTrades(users: {
       paymentMethods: ['bank_transfer', 'wise'],
       isActive: true
     },
+    // Domain listings (only 2)
     {
-      userId: users.enterpriseUser.id,
-      listingType: 'buy',
-      tokenOffered: 'USDT',
-      amount: '10000',
-      pricePerUnit: '1.0',
-      minAmount: '100',
-      maxAmount: '10000',
-      paymentMethods: ['bank_transfer', 'paypal', 'wise'],
+      userId: users.adminUser.id,
+      listingCategory: 'domain',
+      listingType: 'sell',
+      amount: '5000',
+      metadata: {
+        domainName: 'cryptoexchange.com',
+        registrar: 'GoDaddy',
+        expiryDate: '2025-12-15',
+        monthlyTraffic: 15000,
+        monthlyRevenue: 2500,
+        description: 'Premium crypto exchange domain with established traffic',
+        transferMethod: 'push',
+        includesWebsite: false,
+        category: 'cryptocurrency'
+      },
       isActive: true
     },
     {
-      userId: users.adminUser.id,
+      userId: users.proUser.id,
+      listingCategory: 'domain',
       listingType: 'sell',
-      tokenOffered: 'XTZ',
-      amount: '1000',
-      pricePerUnit: '1.5',
-      minAmount: '10',
-      maxAmount: '1000',
-      paymentMethods: ['crypto', 'bank_transfer'],
+      amount: '15000',
+      metadata: {
+        domainName: 'defiprotocol.io',
+        registrar: 'Namecheap',
+        expiryDate: '2026-03-20',
+        monthlyTraffic: 45000,
+        monthlyRevenue: 8500,
+        description:
+          'High-traffic DeFi domain with active community and revenue',
+        transferMethod: 'escrow',
+        includesWebsite: true,
+        websiteStack: 'Next.js, TypeScript, Tailwind',
+        category: 'defi'
+      },
       isActive: true
     }
   ])
 
-  // Create trades
+  // Create sample trades for P2P
   await db.insert(trades).values([
     {
       escrowId: 1,
@@ -92,60 +100,50 @@ export async function seedTrades(users: {
       escrowId: 2,
       chainId: 128123,
       buyerId: users.proUser.id,
-      sellerId: users.testUser1.id,
-      amount: '1.0',
-      currency: 'ETH',
-      listingCategory: 'p2p',
-      status: 'completed',
-      metadata: {
-        paymentMethod: 'paypal',
-        completionTime: '30 minutes',
-        rating: 5
-      },
-      completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) // 5 days ago
-    },
-    {
-      escrowId: 3,
-      chainId: 128123,
-      buyerId: users.enterpriseUser.id,
-      sellerId: users.proUser.id,
+      sellerId: users.testUser2.id,
       amount: '0.1',
       currency: 'BTC',
       listingCategory: 'p2p',
+      status: 'funded',
+      metadata: {
+        paymentMethod: 'wise'
+      },
+      depositedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) // 1 day ago
+    },
+    // Domain trades
+    {
+      escrowId: 3,
+      chainId: 128123,
+      buyerId: users.testUser2.id,
+      sellerId: users.adminUser.id,
+      amount: '5000',
+      currency: 'USD',
+      listingCategory: 'domain',
       status: 'completed',
       metadata: {
-        paymentMethod: 'wise',
-        completionTime: '1 hour',
-        rating: 4
+        domainName: 'cryptoexchange.com',
+        transferMethod: 'push',
+        completionTime: '2 hours',
+        rating: 5,
+        escrowAgent: 'Escrow.com'
       },
-      completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+      completedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) // 10 days ago
     },
     {
       escrowId: 4,
       chainId: 128123,
-      buyerId: users.testUser1.id,
-      sellerId: users.enterpriseUser.id,
-      amount: '500',
-      currency: 'USDT',
-      listingCategory: 'p2p',
-      status: 'funded',
+      buyerId: users.enterpriseUser.id,
+      sellerId: users.proUser.id,
+      amount: '15000',
+      currency: 'USD',
+      listingCategory: 'domain',
+      status: 'payment_sent',
       metadata: {
-        paymentMethod: 'bank_transfer'
-      }
-    },
-    {
-      escrowId: 5,
-      chainId: 128123,
-      buyerId: users.testUser2.id,
-      sellerId: users.adminUser.id,
-      amount: '100',
-      currency: 'XTZ',
-      listingCategory: 'p2p',
-      status: 'disputed',
-      metadata: {
-        paymentMethod: 'crypto',
-        disputeReason: 'Payment not received'
-      }
+        domainName: 'defiprotocol.io',
+        transferMethod: 'escrow',
+        includesWebsite: true
+      },
+      paymentSentAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) // 1 day ago
     }
   ])
 
@@ -253,6 +251,10 @@ export async function seedTrades(users: {
   ])
 
   console.log(
-    'Trades, P2P listings, battles, and trading stats seeded successfully'
+    'Trades (P2P and domains), battles, and trading stats seeded successfully'
   )
+  console.log('- P2P listings created: 2')
+  console.log('- Domain listings created: 2')
+  console.log('- P2P trades created: 2')
+  console.log('- Domain trades created: 2')
 }

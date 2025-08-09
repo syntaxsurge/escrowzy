@@ -116,6 +116,8 @@ export const apiEndpoints = {
     create: '/api/trades/create',
     user: '/api/trades/user',
     userWithParams: (params: string) => `/api/trades/user?${params}`,
+    table: '/api/trades/table',
+    stats: '/api/trades/stats',
     byId: (id: string) => `/api/trades/${id}`,
     deposit: (id: string | number) => `/api/trades/${id}/deposit`,
     fund: (id: string | number) => `/api/trades/${id}/fund`,
