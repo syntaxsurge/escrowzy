@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm'
 
 import { getSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
-import { battleInvitations, users } from '@/lib/db/schema'
+import { battleInvitations, battles, users } from '@/lib/db/schema'
 import {
   broadcastBattleAccepted,
   broadcastBattleStats
@@ -58,6 +58,16 @@ export async function POST(request: Request) {
       )
     }
 
+    // Get the actual battle data to get player IDs
+    const [battleData] = await db
+      .select({
+        player1Id: battles.player1Id,
+        player2Id: battles.player2Id
+      })
+      .from(battles)
+      .where(eq(battles.id, battleResult.id))
+      .limit(1)
+
     // Get accepter's details for the sender
     const [accepterUser] = await db
       .select({
@@ -78,11 +88,13 @@ export async function POST(request: Request) {
       'Opponent'
 
     // Broadcast acceptance to both users with full battle data
-    const battleData = {
+    const broadcastData = {
       battleId: battleResult.id,
       invitationId,
       fromUserId: invitation.fromUserId,
       toUserId: invitation.toUserId,
+      player1Id: battleData?.player1Id || invitation.fromUserId, // Use actual player IDs from battle
+      player2Id: battleData?.player2Id || invitation.toUserId,
       toUserName: accepterName, // Add accepter's name for the sender
       winnerId: battleResult.winnerId,
       player1CP: battleResult.player1CP,
@@ -93,7 +105,7 @@ export async function POST(request: Request) {
     await broadcastBattleAccepted(
       invitation.fromUserId,
       invitation.toUserId,
-      battleData
+      broadcastData
     )
 
     // Broadcast stats update
@@ -101,7 +113,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      data: battleData
+      data: broadcastData
     })
   } catch (error) {
     console.error('Error in POST /api/battles/accept:', error)

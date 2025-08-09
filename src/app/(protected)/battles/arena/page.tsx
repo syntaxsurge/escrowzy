@@ -182,31 +182,35 @@ export default function BattleArenaPage() {
     },
     onInvitationAccepted: data => {
       // Sender receives this when their invitation is accepted
-      // Immediately transition to preparing then countdown
-      if (battleStateRef.current === 'invitation-sent') {
+      // Check if we're the sender and currently in invitation-sent state
+      const currentState = battleStateRef.current
+
+      // If we're the sender (fromUserId) and we sent an invitation, transition to battle
+      if (data.fromUserId === user?.id && currentState === 'invitation-sent') {
         setBattleState('preparing')
 
         // Determine player positions based on who sent the invitation
-        const senderIsPlayer1 = data.fromUserId === data.player1Id
-        const currentUserIsSender = data.fromUserId === user?.id
+        const senderIsPlayer1 = data.player1Id === user?.id
 
         // Format battle data for the sender with correct positioning
         const formattedData: CurrentBattleData = {
           battleId: data.battleId,
-          isPlayer1: senderIsPlayer1
-            ? currentUserIsSender
-            : !currentUserIsSender,
+          isPlayer1: senderIsPlayer1,
           player1: {
-            id: data.player1Id || data.fromUserId,
-            combatPower: data.player1CP || 100
+            id: data.player1Id || user?.id,
+            combatPower: data.player1CP || combatPower || 100
           },
           player2: {
             id: data.player2Id || data.toUserId,
             combatPower: data.player2CP || 100
           },
           opponent: {
-            id: data.toUserId,
-            name: data.toUserName || currentOpponent?.username || 'Opponent',
+            id: data.player2Id || data.toUserId,
+            name:
+              data.toUserName ||
+              data.player2Name ||
+              currentOpponent?.username ||
+              'Opponent',
             combatPower: data.player2CP || 100
           },
           winnerId: data.winnerId,
@@ -218,8 +222,8 @@ export default function BattleArenaPage() {
         // Also set opponent info if not already set
         if (!currentOpponent && data.toUserName) {
           setCurrentOpponent({
-            userId: data.toUserId,
-            username: data.toUserName,
+            userId: data.player2Id || data.toUserId,
+            username: data.toUserName || data.player2Name,
             combatPower: data.player2CP || 100
           })
         }
