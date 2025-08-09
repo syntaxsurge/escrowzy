@@ -13,8 +13,10 @@ interface BattleRealtimeEvents {
   onInvitationAccepted?: (data: any) => void
   onInvitationRejected?: (data: any) => void
   onBattleStarted?: (data: any) => void
+  onBattleCompleted?: (data: any) => void
   onQueueStatusChanged?: (data: any) => void
   onStatsUpdated?: () => void
+  onOpponentAction?: (data: any) => void
 }
 
 export function useBattleRealtime(
@@ -83,6 +85,8 @@ export function useBattleRealtime(
       // Refresh battle data
       mutate('/api/battles/invitations')
       mutate(apiEndpoints.battles.dailyLimit)
+      mutate(apiEndpoints.battles.history)
+      mutate('/api/battles/current')
     })
 
     userChannel.bind('battle-rejected', (data: any) => {
@@ -112,6 +116,26 @@ export function useBattleRealtime(
       // Refresh battle data
       mutate(apiEndpoints.battles.dailyLimit)
       mutate(apiEndpoints.battles.history)
+      mutate('/api/battles/current')
+    })
+
+    userChannel.bind('battle-completed', (data: any) => {
+      // Battle has completed
+      events?.onBattleCompleted?.(data)
+
+      // Refresh all battle data
+      mutate(apiEndpoints.battles.dailyLimit)
+      mutate(apiEndpoints.battles.history)
+      mutate(apiEndpoints.battles.activeDiscount)
+      mutate('/api/battles/current')
+      if (userId) {
+        mutate(apiEndpoints.battles.statsByUserId(userId))
+      }
+    })
+
+    userChannel.bind('opponent-action', (data: any) => {
+      // Opponent performed an action in battle
+      events?.onOpponentAction?.(data)
     })
 
     userChannel.bind('queue-status', (data: any) => {
@@ -179,6 +203,7 @@ export function useBattleRealtime(
     mutate(apiEndpoints.battles.history)
     mutate(apiEndpoints.battles.activeDiscount)
     mutate(apiEndpoints.battles.statsByUserId(userId))
+    mutate('/api/battles/current')
   }, [userId])
 
   return {

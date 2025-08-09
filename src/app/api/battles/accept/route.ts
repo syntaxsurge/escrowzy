@@ -58,20 +58,30 @@ export async function POST(request: Request) {
       )
     }
 
-    // Broadcast acceptance to both users
-    await broadcastBattleAccepted(invitation.fromUserId, invitation.toUserId, {
-      battleId: battleResult,
+    // Broadcast acceptance to both users with full battle data
+    const battleData = {
+      battleId: battleResult.id,
       invitationId,
       fromUserId: invitation.fromUserId,
-      toUserId: invitation.toUserId
-    })
+      toUserId: invitation.toUserId,
+      winnerId: battleResult.winnerId,
+      player1CP: battleResult.player1CP,
+      player2CP: battleResult.player2CP,
+      feeDiscountPercent: battleResult.feeDiscountPercent
+    }
+
+    await broadcastBattleAccepted(
+      invitation.fromUserId,
+      invitation.toUserId,
+      battleData
+    )
 
     // Broadcast stats update
     await broadcastBattleStats()
 
     return NextResponse.json({
       success: true,
-      data: battleResult
+      data: battleData
     })
   } catch (error) {
     console.error('Error in POST /api/battles/accept:', error)

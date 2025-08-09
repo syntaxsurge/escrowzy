@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Swords,
   Trophy,
@@ -10,8 +10,10 @@ import {
   Flame,
   Calendar,
   User,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react'
+import useSWR from 'swr'
 
 import { LiveStatsDisplay } from '@/components/blocks/battle/live-stats-display'
 import { GamifiedHeader } from '@/components/blocks/trading'
@@ -25,15 +27,40 @@ import { useBattleRealtime } from '@/hooks/use-battle-realtime'
 import { useBattles } from '@/hooks/use-battles'
 import { useRewards } from '@/hooks/use-rewards'
 import { useSession } from '@/hooks/use-session'
+import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api/http-client'
 import { formatNumber } from '@/lib/utils/string'
 
 import { BattleAnimation } from './battle-animation'
+import { BattleCountdown } from './battle-countdown'
 import { BattleHistory } from './battle-history'
+import { BattleInteractions } from './battle-interactions'
 import { DiscountTimer } from './discount-timer'
 import { MatchmakingInterface } from './matchmaking-interface'
 
+type BattleState =
+  | 'idle'
+  | 'searching'
+  | 'invitation-sent'
+  | 'invitation-received'
+  | 'preparing'
+  | 'countdown'
+  | 'battling'
+  | 'result'
+
+interface CurrentBattleData {
+  battleId: number
+  isPlayer1: boolean
+  player1: { id: number; combatPower: number }
+  player2: { id: number; combatPower: number }
+  opponent: { id: number; name: string; combatPower: number }
+  winnerId?: number
+  feeDiscountPercent?: number
+}
+
 export default function BattleArenaPage() {
   const { user } = useSession()
+  const { toast } = useToast()
   const { stats } = useRewards(user?.id)
   const {
     activeDiscount,
@@ -42,19 +69,23 @@ export default function BattleArenaPage() {
     battleStats,
     canBattle,
     isSearching,
-    isBattling,
     battleResult,
     isInQueue,
     findMatch,
-    leaveQueue
+    leaveQueue,
+    createBattle
   } = useBattles(user?.id)
 
-  const [selectedTab, setSelectedTab] = useState('arena')
+  // Battle state management
+  const [battleState, setBattleState] = useState<BattleState>('idle')
   const [currentOpponent, setCurrentOpponent] = useState<any>(null)
-  const [waitingForResponse, setWaitingForResponse] = useState(false)
   const [currentInvitationId, setCurrentInvitationId] = useState<number | null>(
     null
   )
+  const [currentBattleData, setCurrentBattleData] =
+    useState<CurrentBattleData | null>(null)
+  const [playerActions, setPlayerActions] = useState<any[]>([])
+  const [selectedTab, setSelectedTab] = useState('arena')
 
   const {
     pendingInvitations,
@@ -63,40 +94,108 @@ export default function BattleArenaPage() {
     sendInvitation
   } = useBattleInvitations(user?.id)
 
+  // Fetch current battle data
+  const { data: currentBattle } = useSWR<{ data: CurrentBattleData | null }>(
+    user?.id && battleState === 'battling' ? '/api/battles/current' : null,
+    (url: string) => api.get(url).then(res => res.data),
+    { refreshInterval: 1000 }
+  )
+
   // Setup real-time battle events
   useBattleRealtime(user?.id, {
+    onInvitationReceived: data => {
+      if (battleState === 'idle') {
+        setBattleState('invitation-received')
+      }
+    },
     onInvitationAccepted: data => {
-      setWaitingForResponse(false)
-      setCurrentInvitationId(null)
-      // Battle will start automatically
+      // Sender receives this when their invitation is accepted
+      if (battleState === 'invitation-sent') {
+        setBattleState('preparing')
+        setCurrentBattleData(data)
+
+        // Start countdown after a short delay
+        setTimeout(() => {
+          setBattleState('countdown')
+        }, 1000)
+      }
     },
     onInvitationRejected: data => {
-      setCurrentOpponent(null)
-      setWaitingForResponse(false)
-      setCurrentInvitationId(null)
+      if (battleState === 'invitation-sent') {
+        setBattleState('idle')
+        setCurrentOpponent(null)
+        setCurrentInvitationId(null)
+        toast({
+          title: 'Challenge Declined',
+          description: 'Your opponent declined the battle.',
+          variant: 'default'
+        })
+      }
+    },
+    onBattleStarted: data => {
+      // Accepter receives this when they accept
+      if (battleState === 'invitation-received' || battleState === 'idle') {
+        setBattleState('preparing')
+        setCurrentBattleData(data)
+
+        // Start countdown after a short delay
+        setTimeout(() => {
+          setBattleState('countdown')
+        }, 1000)
+      }
+    },
+    onBattleCompleted: data => {
+      if (battleState === 'battling') {
+        setBattleState('result')
+        setCurrentBattleData(prev => ({
+          ...prev!,
+          winnerId: data.winnerId,
+          feeDiscountPercent: data.feeDiscountPercent
+        }))
+      }
+    },
+    onOpponentAction: data => {
+      setPlayerActions(prev => [...prev, { ...data, isOpponent: true }])
     }
   })
 
+  // Handle finding a match
   const handleFindMatch = async (matchRange?: number) => {
     if (!canBattle) return null
+
+    setBattleState('searching')
     const opponent = await findMatch(matchRange)
+
     if (opponent) {
       // Send invitation to matched opponent
       const invitation = await sendInvitation(opponent.userId)
       if (invitation) {
         setCurrentOpponent(opponent)
         setCurrentInvitationId(invitation.invitationId)
-        setWaitingForResponse(true)
+        setBattleState('invitation-sent')
+      } else {
+        setBattleState('idle')
       }
+    } else {
+      // No match found, stay in queue or return to idle
+      if (isInQueue) {
+        toast({
+          title: 'Added to Queue',
+          description:
+            "You've been added to the matchmaking queue. We'll notify you when an opponent is found.",
+          variant: 'default'
+        })
+      }
+      setBattleState('idle')
     }
+
     return opponent
   }
 
   // Handle incoming battle invitations
   useEffect(() => {
-    if (pendingInvitations.length > 0 && !currentOpponent && !isBattling) {
+    if (pendingInvitations.length > 0 && battleState === 'idle') {
       const latestInvitation = pendingInvitations[0]
-      // Use the improved display name from the API
       const displayName =
         latestInvitation.fromUser.name ||
         (latestInvitation.fromUser as any).email ||
@@ -109,26 +208,112 @@ export default function BattleArenaPage() {
         combatPower: latestInvitation.fromUserCP
       })
       setCurrentInvitationId(latestInvitation.id)
-      setWaitingForResponse(false)
+      setBattleState('invitation-received')
     }
-  }, [pendingInvitations, currentOpponent, isBattling])
+  }, [pendingInvitations, battleState])
 
+  // Handle accepting battle
   const handleAcceptBattle = async () => {
     if (!currentInvitationId) return
+
+    setBattleState('preparing')
     const result = await acceptInvitation(currentInvitationId)
+
     if (result) {
-      setWaitingForResponse(false)
+      setCurrentBattleData(result)
       setCurrentInvitationId(null)
-      // Battle will start automatically
+
+      // Start countdown
+      setTimeout(() => {
+        setBattleState('countdown')
+      }, 1000)
+    } else {
+      setBattleState('idle')
+      setCurrentOpponent(null)
     }
   }
 
+  // Handle rejecting battle
   const handleRejectBattle = async () => {
     if (!currentInvitationId) return
+
     await rejectInvitation(currentInvitationId)
+    setBattleState('idle')
     setCurrentOpponent(null)
-    setWaitingForResponse(false)
     setCurrentInvitationId(null)
+  }
+
+  // Handle countdown complete
+  const handleCountdownComplete = () => {
+    setBattleState('battling')
+  }
+
+  // Handle battle animation complete
+  const handleBattleComplete = useCallback(
+    (winnerId: number) => {
+      setBattleState('result')
+
+      // The battle result will be updated via real-time events
+      setTimeout(() => {
+        if (winnerId === user?.id) {
+          toast({
+            title: '🏆 Victory!',
+            description: `You won! Enjoy ${currentBattleData?.feeDiscountPercent || 25}% off fees for 24 hours!`,
+            variant: 'default'
+          })
+        } else {
+          toast({
+            title: 'Defeat',
+            description:
+              'Better luck next time! You gained 10 XP for participating.',
+            variant: 'default'
+          })
+        }
+      }, 500)
+    },
+    [user?.id, currentBattleData, toast]
+  )
+
+  // Handle power boost from interactions
+  const handlePowerBoost = (boost: number, playerNumber: 1 | 2) => {
+    // Broadcast power boost to opponent
+    if (user?.id) {
+      api
+        .post('/api/battles/action', {
+          battleId: currentBattleData?.battleId,
+          action: 'power-boost',
+          value: boost
+        })
+        .catch(console.error)
+    }
+  }
+
+  // Handle player action
+  const handlePlayerAction = (action: string, playerNumber: 1 | 2) => {
+    // Broadcast action to opponent
+    if (user?.id) {
+      api
+        .post('/api/battles/action', {
+          battleId: currentBattleData?.battleId,
+          action,
+          playerNumber
+        })
+        .catch(console.error)
+    }
+
+    setPlayerActions(prev => [
+      ...prev,
+      { action, playerNumber, isOpponent: false }
+    ])
+  }
+
+  // Reset battle state
+  const resetBattle = () => {
+    setBattleState('idle')
+    setCurrentOpponent(null)
+    setCurrentInvitationId(null)
+    setCurrentBattleData(null)
+    setPlayerActions([])
   }
 
   const combatPower = stats?.gameData?.combatPower || 100
@@ -236,11 +421,17 @@ export default function BattleArenaPage() {
               <CardTitle className='from-primary bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text text-3xl font-black text-transparent'>
                 WARRIOR ARENA
               </CardTitle>
+              {battleState !== 'idle' && (
+                <Badge className='ml-auto animate-pulse bg-gradient-to-r from-orange-500 to-red-500 text-white'>
+                  {battleState.toUpperCase().replace('-', ' ')}
+                </Badge>
+              )}
             </div>
           </CardHeader>
           <CardContent>
-            {/* Live Platform Stats - Moved inside the card */}
+            {/* Live Platform Stats */}
             <LiveStatsDisplay className='mb-6' compact />
+
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
               <TabsList className='grid w-full grid-cols-2'>
                 <TabsTrigger value='arena' className='flex items-center gap-2'>
@@ -265,98 +456,168 @@ export default function BattleArenaPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-6'>
-                    {!currentOpponent && !battleResult && (
-                      <MatchmakingInterface
-                        combatPower={combatPower}
-                        canBattle={canBattle}
-                        isSearching={isSearching}
-                        isInQueue={isInQueue}
-                        dailyLimit={dailyLimit}
-                        onFindMatch={handleFindMatch}
-                        onLeaveQueue={leaveQueue}
-                      />
-                    )}
+                    <AnimatePresence mode='wait'>
+                      {/* Idle State - Show Matchmaking */}
+                      {battleState === 'idle' && !battleResult && (
+                        <motion.div
+                          key='idle'
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                        >
+                          <MatchmakingInterface
+                            combatPower={combatPower}
+                            canBattle={canBattle}
+                            isSearching={false}
+                            isInQueue={isInQueue}
+                            dailyLimit={dailyLimit}
+                            onFindMatch={handleFindMatch}
+                            onLeaveQueue={leaveQueue}
+                          />
+                        </motion.div>
+                      )}
 
-                    {currentOpponent && !battleResult && !isBattling && (
-                      <div className='space-y-6'>
-                        <div className='text-center'>
-                          <h3 className='from-primary bg-gradient-to-r to-purple-600 bg-clip-text text-2xl font-black text-transparent'>
-                            {waitingForResponse
-                              ? 'INVITATION SENT!'
-                              : 'BATTLE CHALLENGE!'}
+                      {/* Searching State */}
+                      {battleState === 'searching' && (
+                        <motion.div
+                          key='searching'
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className='py-12 text-center'
+                        >
+                          <Loader2 className='text-primary mx-auto mb-4 h-16 w-16 animate-spin' />
+                          <h3 className='text-2xl font-bold'>
+                            SEARCHING FOR OPPONENT...
                           </h3>
                           <p className='text-muted-foreground mt-2'>
-                            {waitingForResponse
-                              ? 'Waiting for opponent to accept...'
-                              : `${currentOpponent.username} wants to battle you!`}
+                            Looking for a worthy warrior to battle
                           </p>
-                        </div>
+                          <Button
+                            onClick={() => {
+                              leaveQueue()
+                              setBattleState('idle')
+                            }}
+                            variant='outline'
+                            className='mt-6'
+                          >
+                            Cancel Search
+                          </Button>
+                        </motion.div>
+                      )}
 
-                        <div className='grid grid-cols-3 items-center gap-4'>
-                          {/* Your Stats */}
-                          <Card className='group relative overflow-hidden border-green-500/30 bg-gradient-to-br from-green-500/10 to-emerald-500/10 transition-all hover:scale-105'>
-                            <CardContent className='pt-6 text-center'>
-                              <div className='from-primary relative mx-auto mb-2 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br to-purple-600'>
-                                <User className='h-6 w-6 text-white' />
-                              </div>
-                              <p className='font-bold text-green-600 dark:text-green-400'>
-                                YOU
-                              </p>
-                              <p className='mt-2 text-3xl font-black'>
-                                {formatNumber(combatPower)}
-                              </p>
-                              <p className='text-muted-foreground text-xs uppercase'>
-                                Combat Power
-                              </p>
-                            </CardContent>
-                          </Card>
-
-                          {/* VS */}
+                      {/* Invitation Sent State */}
+                      {battleState === 'invitation-sent' && currentOpponent && (
+                        <motion.div
+                          key='invitation-sent'
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          className='space-y-6'
+                        >
                           <div className='text-center'>
                             <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              transition={{ type: 'spring', stiffness: 200 }}
-                              className='from-primary bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text text-5xl font-black text-transparent'
+                              animate={{ scale: [1, 1.1, 1] }}
+                              transition={{ duration: 2, repeat: Infinity }}
                             >
-                              VS
+                              <Swords className='mx-auto mb-4 h-16 w-16 text-orange-500' />
                             </motion.div>
+                            <h3 className='from-primary bg-gradient-to-r to-purple-600 bg-clip-text text-2xl font-black text-transparent'>
+                              INVITATION SENT!
+                            </h3>
+                            <p className='text-muted-foreground mt-2'>
+                              Waiting for {currentOpponent.username} to
+                              accept...
+                            </p>
                           </div>
 
-                          {/* Opponent Stats */}
-                          <Card className='group relative overflow-hidden border-red-500/30 bg-gradient-to-br from-red-500/10 to-orange-500/10 transition-all hover:scale-105'>
-                            <CardContent className='pt-6 text-center'>
-                              <div className='relative mx-auto mb-2 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-red-600 to-orange-600'>
-                                <User className='h-6 w-6 text-white' />
-                              </div>
-                              <p className='font-bold text-red-600 uppercase dark:text-red-400'>
-                                {currentOpponent.username}
-                              </p>
-                              <p className='mt-2 text-3xl font-black'>
-                                {formatNumber(currentOpponent.combatPower)}
-                              </p>
-                              <p className='text-muted-foreground text-xs uppercase'>
-                                Combat Power
-                              </p>
-                            </CardContent>
-                          </Card>
-                        </div>
-
-                        <div className='flex justify-center gap-4'>
-                          {waitingForResponse ? (
+                          <div className='flex justify-center'>
                             <Button
                               variant='outline'
                               onClick={() => {
+                                setBattleState('idle')
                                 setCurrentOpponent(null)
-                                setWaitingForResponse(false)
                                 setCurrentInvitationId(null)
                               }}
                               className='border-red-500/30 hover:bg-red-500/10'
                             >
                               Cancel Invitation
                             </Button>
-                          ) : (
-                            <>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Invitation Received State */}
+                      {battleState === 'invitation-received' &&
+                        currentOpponent && (
+                          <motion.div
+                            key='invitation-received'
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className='space-y-6'
+                          >
+                            <div className='text-center'>
+                              <motion.div
+                                animate={{ rotate: [0, 10, -10, 0] }}
+                                transition={{ duration: 0.5, repeat: Infinity }}
+                              >
+                                <Swords className='mx-auto mb-4 h-20 w-20 text-red-500' />
+                              </motion.div>
+                              <h3 className='from-primary bg-gradient-to-r to-purple-600 bg-clip-text text-2xl font-black text-transparent'>
+                                BATTLE CHALLENGE!
+                              </h3>
+                              <p className='text-muted-foreground mt-2'>
+                                {currentOpponent.username} wants to battle you!
+                              </p>
+                            </div>
+
+                            <div className='grid grid-cols-3 items-center gap-4'>
+                              {/* Your Stats */}
+                              <Card className='group relative overflow-hidden border-green-500/30 bg-gradient-to-br from-green-500/10 to-emerald-500/10'>
+                                <CardContent className='pt-6 text-center'>
+                                  <User className='mx-auto mb-2 h-8 w-8 text-green-500' />
+                                  <p className='font-bold text-green-600 dark:text-green-400'>
+                                    YOU
+                                  </p>
+                                  <p className='mt-2 text-2xl font-black'>
+                                    {formatNumber(combatPower)}
+                                  </p>
+                                  <p className='text-muted-foreground text-xs uppercase'>
+                                    Combat Power
+                                  </p>
+                                </CardContent>
+                              </Card>
+
+                              {/* VS */}
+                              <div className='text-center'>
+                                <motion.div
+                                  animate={{ scale: [1, 1.2, 1] }}
+                                  transition={{ duration: 1, repeat: Infinity }}
+                                  className='text-4xl font-black text-orange-500'
+                                >
+                                  VS
+                                </motion.div>
+                              </div>
+
+                              {/* Opponent Stats */}
+                              <Card className='group relative overflow-hidden border-red-500/30 bg-gradient-to-br from-red-500/10 to-orange-500/10'>
+                                <CardContent className='pt-6 text-center'>
+                                  <User className='mx-auto mb-2 h-8 w-8 text-red-500' />
+                                  <p className='font-bold text-red-600 dark:text-red-400'>
+                                    {currentOpponent.username}
+                                  </p>
+                                  <p className='mt-2 text-2xl font-black'>
+                                    {formatNumber(currentOpponent.combatPower)}
+                                  </p>
+                                  <p className='text-muted-foreground text-xs uppercase'>
+                                    Combat Power
+                                  </p>
+                                </CardContent>
+                              </Card>
+                            </div>
+
+                            <div className='flex justify-center gap-4'>
                               <Button
                                 variant='outline'
                                 onClick={handleRejectBattle}
@@ -371,99 +632,204 @@ export default function BattleArenaPage() {
                                 <Swords className='h-4 w-4' />
                                 ACCEPT BATTLE
                               </Button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                            </div>
+                          </motion.div>
+                        )}
 
-                    {isBattling && (
-                      <BattleAnimation
-                        player1={{
-                          id: user?.id || 0,
-                          name: user?.name || 'You',
-                          combatPower: combatPower
-                        }}
-                        player2={{
-                          id: currentOpponent?.userId || 0,
-                          name: currentOpponent?.username || 'Opponent',
-                          combatPower: currentOpponent?.combatPower || 100
-                        }}
-                      />
-                    )}
-
-                    {battleResult && (
-                      <div className='space-y-6'>
+                      {/* Preparing State */}
+                      {battleState === 'preparing' && (
                         <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ type: 'spring', stiffness: 200 }}
-                          className='text-center'
+                          key='preparing'
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className='py-12 text-center'
                         >
-                          {battleResult.winnerId === user?.id ? (
-                            <>
-                              <motion.div
-                                animate={{ rotate: [0, 10, -10, 10, 0] }}
-                                transition={{ duration: 0.5, delay: 0.2 }}
-                                className='inline-block'
-                              >
-                                <Trophy className='mx-auto mb-4 h-20 w-20 text-yellow-500' />
-                              </motion.div>
-                              <h3 className='bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 bg-clip-text text-4xl font-black text-transparent'>
-                                VICTORY!
-                              </h3>
-                              <Badge className='mt-3 bg-green-500/20 px-4 py-2 text-green-600 dark:text-green-400'>
-                                <Sparkles className='mr-2 h-4 w-4' />
-                                {battleResult.feeDiscountPercent}% FEE DISCOUNT
-                                FOR 24 HOURS!
-                              </Badge>
-                              <p className='text-muted-foreground mt-2'>
-                                Congratulations, warrior! You've conquered your
-                                opponent!
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <motion.div
-                                animate={{ y: [0, 10, 0] }}
-                                transition={{ duration: 1, repeat: 2 }}
-                                className='inline-block'
-                              >
-                                <Shield className='mx-auto mb-4 h-20 w-20 text-gray-500' />
-                              </motion.div>
-                              <h3 className='bg-gradient-to-r from-red-500 via-pink-500 to-rose-500 bg-clip-text text-4xl font-black text-transparent'>
-                                DEFEAT
-                              </h3>
-                              <Badge className='mt-3 bg-blue-500/20 px-4 py-2 text-blue-600 dark:text-blue-400'>
-                                +10 XP FOR PARTICIPATING
-                              </Badge>
-                              <p className='text-muted-foreground mt-2'>
-                                Better luck next time, warrior! Keep training!
-                              </p>
-                            </>
-                          )}
-                        </motion.div>
-
-                        <div className='flex justify-center'>
-                          <Button
-                            onClick={() => {
-                              setCurrentOpponent(null)
-                              // Note: battleResult is set via the hook
-                            }}
-                            disabled={!canBattle}
-                            className={
-                              canBattle
-                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white hover:from-purple-700 hover:to-pink-700'
-                                : 'cursor-not-allowed opacity-50'
-                            }
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity }}
                           >
-                            {canBattle
-                              ? 'FIND ANOTHER MATCH'
-                              : 'DAILY LIMIT REACHED'}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+                            <Shield className='mx-auto mb-4 h-20 w-20 text-blue-500' />
+                          </motion.div>
+                          <h3 className='text-3xl font-black text-blue-600 dark:text-blue-400'>
+                            PREPARING BATTLE...
+                          </h3>
+                          <p className='text-muted-foreground mt-2 animate-pulse'>
+                            Warriors are entering the arena
+                          </p>
+                        </motion.div>
+                      )}
+
+                      {/* Countdown State */}
+                      {battleState === 'countdown' && currentBattleData && (
+                        <motion.div
+                          key='countdown'
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                        >
+                          <BattleCountdown
+                            onComplete={handleCountdownComplete}
+                            player1Name={user?.name || 'You'}
+                            player2Name={
+                              currentOpponent?.username || 'Opponent'
+                            }
+                            player1CP={
+                              currentBattleData.isPlayer1
+                                ? currentBattleData.player1.combatPower
+                                : currentBattleData.player2.combatPower
+                            }
+                            player2CP={
+                              currentBattleData.isPlayer1
+                                ? currentBattleData.player2.combatPower
+                                : currentBattleData.player1.combatPower
+                            }
+                          />
+                        </motion.div>
+                      )}
+
+                      {/* Battling State with Interactions */}
+                      {battleState === 'battling' && currentBattleData && (
+                        <motion.div
+                          key='battling'
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className='space-y-6'
+                        >
+                          <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+                            {/* Player 1 Interactions */}
+                            <div className='order-2 lg:order-1'>
+                              <h4 className='mb-3 text-center font-bold text-blue-600 dark:text-blue-400'>
+                                YOUR CONTROLS
+                              </h4>
+                              <BattleInteractions
+                                onPowerBoost={boost =>
+                                  handlePowerBoost(boost, 1)
+                                }
+                                onAction={action =>
+                                  handlePlayerAction(action, 1)
+                                }
+                                isActive={true}
+                                playerNumber={1}
+                              />
+                            </div>
+
+                            {/* Battle Animation */}
+                            <div className='order-1 lg:order-2'>
+                              <BattleAnimation
+                                player1={{
+                                  id: user?.id || 0,
+                                  name: user?.name || 'You',
+                                  combatPower: currentBattleData.isPlayer1
+                                    ? currentBattleData.player1.combatPower
+                                    : currentBattleData.player2.combatPower
+                                }}
+                                player2={{
+                                  id: currentOpponent?.userId || 0,
+                                  name: currentOpponent?.username || 'Opponent',
+                                  combatPower: currentBattleData.isPlayer1
+                                    ? currentBattleData.player2.combatPower
+                                    : currentBattleData.player1.combatPower
+                                }}
+                                onComplete={handleBattleComplete}
+                              />
+                            </div>
+
+                            {/* Opponent Status */}
+                            <div className='order-3'>
+                              <h4 className='mb-3 text-center font-bold text-red-600 dark:text-red-400'>
+                                OPPONENT STATUS
+                              </h4>
+                              <BattleInteractions
+                                isActive={false}
+                                playerNumber={2}
+                              />
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Result State */}
+                      {(battleState === 'result' || battleResult) && (
+                        <motion.div
+                          key='result'
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          className='space-y-6'
+                        >
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: 'spring', stiffness: 200 }}
+                            className='text-center'
+                          >
+                            {currentBattleData?.winnerId === user?.id ||
+                            battleResult?.winnerId === user?.id ? (
+                              <>
+                                <motion.div
+                                  animate={{ rotate: [0, 10, -10, 10, 0] }}
+                                  transition={{ duration: 0.5, delay: 0.2 }}
+                                  className='inline-block'
+                                >
+                                  <Trophy className='mx-auto mb-4 h-20 w-20 text-yellow-500' />
+                                </motion.div>
+                                <h3 className='bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 bg-clip-text text-4xl font-black text-transparent'>
+                                  VICTORY!
+                                </h3>
+                                <Badge className='mt-3 bg-green-500/20 px-4 py-2 text-green-600 dark:text-green-400'>
+                                  <Sparkles className='mr-2 h-4 w-4' />
+                                  {currentBattleData?.feeDiscountPercent ||
+                                    battleResult?.feeDiscountPercent ||
+                                    25}
+                                  % FEE DISCOUNT FOR 24 HOURS!
+                                </Badge>
+                                <p className='text-muted-foreground mt-2'>
+                                  Congratulations, warrior! You've conquered
+                                  your opponent!
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <motion.div
+                                  animate={{ y: [0, 10, 0] }}
+                                  transition={{ duration: 1, repeat: 2 }}
+                                  className='inline-block'
+                                >
+                                  <Shield className='mx-auto mb-4 h-20 w-20 text-gray-500' />
+                                </motion.div>
+                                <h3 className='bg-gradient-to-r from-red-500 via-pink-500 to-rose-500 bg-clip-text text-4xl font-black text-transparent'>
+                                  DEFEAT
+                                </h3>
+                                <Badge className='mt-3 bg-blue-500/20 px-4 py-2 text-blue-600 dark:text-blue-400'>
+                                  +10 XP FOR PARTICIPATING
+                                </Badge>
+                                <p className='text-muted-foreground mt-2'>
+                                  Better luck next time, warrior! Keep training!
+                                </p>
+                              </>
+                            )}
+                          </motion.div>
+
+                          <div className='flex justify-center'>
+                            <Button
+                              onClick={resetBattle}
+                              disabled={!canBattle}
+                              className={
+                                canBattle
+                                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white hover:from-purple-700 hover:to-pink-700'
+                                  : 'cursor-not-allowed opacity-50'
+                              }
+                            >
+                              {canBattle
+                                ? 'FIND ANOTHER MATCH'
+                                : 'DAILY LIMIT REACHED'}
+                            </Button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </CardContent>
                 </Card>
 
@@ -517,9 +883,11 @@ export default function BattleArenaPage() {
                         4
                       </Badge>
                       <div>
-                        <p className='font-bold uppercase'>Opponent Cooldown</p>
+                        <p className='font-bold uppercase'>
+                          Interactive Battles
+                        </p>
                         <p className='text-muted-foreground text-sm'>
-                          Cannot battle the same opponent twice within 24 hours
+                          Click rapidly to boost power and use special attacks!
                         </p>
                       </div>
                     </div>

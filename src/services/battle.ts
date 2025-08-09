@@ -275,7 +275,10 @@ export async function createBattle(
       discountExpiresAt
     }
 
-    await db.insert(battles).values(newBattle).returning()
+    const [createdBattle] = await db
+      .insert(battles)
+      .values(newBattle)
+      .returning()
 
     // Update winner's combat power and stats using rewards service
     const loserGameData = await rewardsService.getOrCreateGameData(loserId)
@@ -288,10 +291,13 @@ export async function createBattle(
     await broadcastBattleStats()
 
     return {
+      id: createdBattle.id,
       winnerId,
       loserId,
       winnerCP,
       loserCP,
+      player1CP,
+      player2CP,
       feeDiscountPercent: BATTLE_CONSTANTS.WINNER_DISCOUNT_PERCENT,
       discountExpiresAt
     }
@@ -563,7 +569,7 @@ export async function acceptBattleInvitation(
       })
       .where(eq(battleInvitations.id, invitationId))
 
-    // Create the battle
+    // Create the battle and return full result
     const result = await createBattle(
       invitation.fromUserId,
       invitation.toUserId
