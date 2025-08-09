@@ -45,7 +45,7 @@ import { envPublic } from '@/config/env.public'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 import { createListingSchema } from '@/lib/schemas/listings'
-import { handleFormError, handleFormSuccess } from '@/lib/utils/form'
+import { handleFormSuccess } from '@/lib/utils/form'
 import { DOMAIN_REGISTRARS, SUPPORTED_TOKENS } from '@/types/listings'
 
 export default function CreateDomainListingPage() {
@@ -82,11 +82,7 @@ export default function CreateDomainListingPage() {
         // Invalidate the listings cache to ensure new listing shows
         await mutate(apiEndpoints.listings.user)
         router.push(appRoutes.trades.myListings)
-      } else {
-        throw new Error(response.error || 'Failed to create listing')
       }
-    } catch (error) {
-      handleFormError(error, toast, 'Failed to create listing')
     } finally {
       setIsSubmitting(false)
     }

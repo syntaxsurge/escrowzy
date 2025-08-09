@@ -331,13 +331,24 @@ export function UpdateListingDialog({
                           </p>
                         </div>
                       )}
-                      {domainMetadata.monthlyTraffic && (
+                      {domainMetadata.monthlyTraffic !== undefined && (
                         <div>
                           <span className='text-muted-foreground'>
                             Monthly Traffic:
                           </span>
                           <p className='font-medium'>
-                            {domainMetadata.monthlyTraffic} visitors
+                            {domainMetadata.monthlyTraffic.toLocaleString()}{' '}
+                            visitors
+                          </p>
+                        </div>
+                      )}
+                      {domainMetadata.monthlyRevenue !== undefined && (
+                        <div>
+                          <span className='text-muted-foreground'>
+                            Revenue/Month:
+                          </span>
+                          <p className='font-medium'>
+                            ${domainMetadata.monthlyRevenue.toLocaleString()}
                           </p>
                         </div>
                       )}

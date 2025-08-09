@@ -104,8 +104,6 @@ export function CreateListingDialog({
         handleFormSuccess(toast, 'Listing created successfully')
         form.reset()
         onSuccess()
-      } else {
-        throw new Error(response.error || 'Failed to create listing')
       }
     } finally {
       setIsSubmitting(false)

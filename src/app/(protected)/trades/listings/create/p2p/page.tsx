@@ -91,11 +91,7 @@ export default function CreateP2PListingPage() {
         // Invalidate the listings cache to ensure new listing shows
         await mutate(apiEndpoints.listings.user)
         router.push(appRoutes.trades.myListings)
-      } else {
-        throw new Error(response.error || 'Failed to create listing')
       }
-    } catch (error) {
-      handleFormError(error, toast, 'Failed to create listing')
     } finally {
       setIsSubmitting(false)
     }

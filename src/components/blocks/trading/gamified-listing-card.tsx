@@ -261,10 +261,10 @@ export function GamifiedListingCard({
                     </p>
                   </div>
                 </div>
-                {(domainMetadata?.monthlyTraffic ||
-                  domainMetadata?.monthlyRevenue) && (
+                {(domainMetadata?.monthlyTraffic !== undefined ||
+                  domainMetadata?.monthlyRevenue !== undefined) && (
                   <div className='mt-3 grid grid-cols-2 gap-4'>
-                    {domainMetadata?.monthlyTraffic && (
+                    {domainMetadata?.monthlyTraffic !== undefined && (
                       <div className='text-center'>
                         <p className='text-muted-foreground mb-1 text-xs font-bold tracking-wider uppercase'>
                           <BarChart className='mr-1 inline h-3 w-3' />
@@ -275,7 +275,7 @@ export function GamifiedListingCard({
                         </p>
                       </div>
                     )}
-                    {domainMetadata?.monthlyRevenue && (
+                    {domainMetadata?.monthlyRevenue !== undefined && (
                       <div className='text-center'>
                         <p className='text-muted-foreground mb-1 text-xs font-bold tracking-wider uppercase'>
                           <DollarSign className='mr-1 inline h-3 w-3' />

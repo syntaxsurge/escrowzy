@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
           : 'Listing created successfully'
     })
   } catch (error) {
-    console.error('Error creating listing:', error)
     return apiResponses.error('Failed to create listing')
   }
 }
