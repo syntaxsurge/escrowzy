@@ -13,6 +13,7 @@ interface BattleRealtimeEvents {
   onInvitationAccepted?: (data: any) => void
   onInvitationRejected?: (data: any) => void
   onBattleStarted?: (data: any) => void
+  onBattleUpdate?: (data: any) => void
   onBattleCompleted?: (data: any) => void
   onQueueStatusChanged?: (data: any) => void
   onStatsUpdated?: () => void
@@ -116,6 +117,14 @@ export function useBattleRealtime(
       // Refresh battle data
       mutate(apiEndpoints.battles.dailyLimit)
       mutate(apiEndpoints.battles.history)
+      mutate('/api/battles/current')
+    })
+
+    userChannel.bind('battle-update', (data: any) => {
+      // Battle round update
+      events?.onBattleUpdate?.(data)
+
+      // Refresh current battle data
       mutate('/api/battles/current')
     })
 

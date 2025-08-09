@@ -101,7 +101,7 @@ export default function BattleArenaPage() {
         if (response.data?.data) {
           const battle = response.data.data
 
-          // Restore battle state based on status
+          // Only restore if battle is actually in progress
           if (battle.status === 'preparing') {
             setBattleState('preparing')
             setCurrentBattleData({
@@ -117,6 +117,12 @@ export default function BattleArenaPage() {
               setBattleState('countdown')
             }, 1000)
           } else if (battle.status === 'ongoing') {
+            // Check if battle health indicates completion
+            if (battle.player1.health <= 0 || battle.player2.health <= 0) {
+              // Battle is actually completed, don't restore
+              return
+            }
+
             setBattleState('battling')
             setCurrentBattleData({
               battleId: battle.battleId,
@@ -363,10 +369,29 @@ export default function BattleArenaPage() {
     (winnerId: number) => {
       setBattleState('result')
 
-      // The battle result is shown in the UI - no toasts needed
+      // Update current battle data with winner
+      setCurrentBattleData(prev =>
+        prev
+          ? {
+              ...prev,
+              winnerId,
+              feeDiscountPercent: BATTLE_CONSTANTS.WINNER_DISCOUNT_PERCENT
+            }
+          : null
+      )
+
+      // Auto-reset to lobby after showing result
+      setTimeout(() => {
+        resetBattle()
+      }, 8000) // Show result for 8 seconds
     },
-    [user?.id, currentBattleData]
+    [user?.id]
   )
+
+  // Constants for battle
+  const BATTLE_CONSTANTS = {
+    WINNER_DISCOUNT_PERCENT: 25
+  }
 
   // Reset battle state
   const resetBattle = () => {
@@ -813,92 +838,94 @@ export default function BattleArenaPage() {
                         )}
 
                       {/* Result State */}
-                      {(battleState === 'result' || battleResult) && (
-                        <motion.div
-                          key='result'
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          className='space-y-6'
-                        >
+                      {battleState === 'result' &&
+                        (currentBattleData?.winnerId || battleResult) && (
                           <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ type: 'spring', stiffness: 200 }}
-                            className='text-center'
+                            key='result'
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className='space-y-6'
                           >
-                            {currentBattleData?.winnerId === user?.id ||
-                            battleResult?.winnerId === user?.id ? (
-                              <>
-                                <motion.div
-                                  animate={{ rotate: [0, 10, -10, 10, 0] }}
-                                  transition={{ duration: 0.5, delay: 0.2 }}
-                                  className='inline-block'
-                                >
-                                  <Trophy className='mx-auto mb-4 h-20 w-20 text-yellow-500' />
-                                </motion.div>
-                                <h3 className='bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 bg-clip-text text-4xl font-black text-transparent'>
-                                  VICTORY!
-                                </h3>
-                                <div className='mt-3 flex flex-col items-center gap-2'>
-                                  <Badge className='bg-green-500/20 px-4 py-2 text-green-600 dark:text-green-400'>
-                                    <Sparkles className='mr-2 h-4 w-4' />
-                                    {currentBattleData?.feeDiscountPercent ||
-                                      battleResult?.feeDiscountPercent ||
-                                      25}
-                                    % FEE DISCOUNT FOR 24 HOURS!
-                                  </Badge>
-                                  <Badge className='bg-blue-500/20 px-4 py-2 text-blue-600 dark:text-blue-400'>
-                                    <Trophy className='mr-2 h-4 w-4' />+
-                                    {battleResult?.winnerXP || 50} XP EARNED!
-                                  </Badge>
-                                </div>
-                                <p className='text-muted-foreground mt-2'>
-                                  Congratulations, warrior! You've conquered
-                                  your opponent!
-                                </p>
-                              </>
-                            ) : (
-                              <>
-                                <motion.div
-                                  animate={{ y: [0, 10, 0] }}
-                                  transition={{ duration: 1, repeat: 2 }}
-                                  className='inline-block'
-                                >
-                                  <Shield className='mx-auto mb-4 h-20 w-20 text-gray-500' />
-                                </motion.div>
-                                <h3 className='bg-gradient-to-r from-red-500 via-pink-500 to-rose-500 bg-clip-text text-4xl font-black text-transparent'>
-                                  DEFEAT
-                                </h3>
-                                <Badge className='mt-3 bg-blue-500/20 px-4 py-2 text-blue-600 dark:text-blue-400'>
-                                  <Shield className='mr-2 h-4 w-4' />+
-                                  {battleResult?.loserXP || 10} XP FOR
-                                  PARTICIPATING
-                                </Badge>
-                                <p className='text-muted-foreground mt-2'>
-                                  Better luck next time, warrior! Keep training!
-                                </p>
-                              </>
-                            )}
-                          </motion.div>
-
-                          <div className='flex justify-center'>
-                            <Button
-                              onClick={resetBattle}
-                              disabled={!canBattle}
-                              className={
-                                canBattle
-                                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white hover:from-purple-700 hover:to-pink-700'
-                                  : 'cursor-not-allowed opacity-50'
-                              }
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ type: 'spring', stiffness: 200 }}
+                              className='text-center'
                             >
-                              {canBattle
-                                ? 'FIND ANOTHER MATCH'
-                                : 'DAILY LIMIT REACHED'}
-                            </Button>
-                          </div>
-                        </motion.div>
-                      )}
+                              {currentBattleData?.winnerId === user?.id ||
+                              battleResult?.winnerId === user?.id ? (
+                                <>
+                                  <motion.div
+                                    animate={{ rotate: [0, 10, -10, 10, 0] }}
+                                    transition={{ duration: 0.5, delay: 0.2 }}
+                                    className='inline-block'
+                                  >
+                                    <Trophy className='mx-auto mb-4 h-20 w-20 text-yellow-500' />
+                                  </motion.div>
+                                  <h3 className='bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 bg-clip-text text-4xl font-black text-transparent'>
+                                    VICTORY!
+                                  </h3>
+                                  <div className='mt-3 flex flex-col items-center gap-2'>
+                                    <Badge className='bg-green-500/20 px-4 py-2 text-green-600 dark:text-green-400'>
+                                      <Sparkles className='mr-2 h-4 w-4' />
+                                      {currentBattleData?.feeDiscountPercent ||
+                                        battleResult?.feeDiscountPercent ||
+                                        25}
+                                      % FEE DISCOUNT FOR 24 HOURS!
+                                    </Badge>
+                                    <Badge className='bg-blue-500/20 px-4 py-2 text-blue-600 dark:text-blue-400'>
+                                      <Trophy className='mr-2 h-4 w-4' />+
+                                      {battleResult?.winnerXP || 50} XP EARNED!
+                                    </Badge>
+                                  </div>
+                                  <p className='text-muted-foreground mt-2'>
+                                    Congratulations, warrior! You've conquered
+                                    your opponent!
+                                  </p>
+                                </>
+                              ) : (
+                                <>
+                                  <motion.div
+                                    animate={{ y: [0, 10, 0] }}
+                                    transition={{ duration: 1, repeat: 2 }}
+                                    className='inline-block'
+                                  >
+                                    <Shield className='mx-auto mb-4 h-20 w-20 text-gray-500' />
+                                  </motion.div>
+                                  <h3 className='bg-gradient-to-r from-red-500 via-pink-500 to-rose-500 bg-clip-text text-4xl font-black text-transparent'>
+                                    DEFEAT
+                                  </h3>
+                                  <Badge className='mt-3 bg-blue-500/20 px-4 py-2 text-blue-600 dark:text-blue-400'>
+                                    <Shield className='mr-2 h-4 w-4' />+
+                                    {battleResult?.loserXP || 10} XP FOR
+                                    PARTICIPATING
+                                  </Badge>
+                                  <p className='text-muted-foreground mt-2'>
+                                    Better luck next time, warrior! Keep
+                                    training!
+                                  </p>
+                                </>
+                              )}
+                            </motion.div>
+
+                            <div className='flex justify-center'>
+                              <Button
+                                onClick={resetBattle}
+                                disabled={!canBattle}
+                                className={
+                                  canBattle
+                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white hover:from-purple-700 hover:to-pink-700'
+                                    : 'cursor-not-allowed opacity-50'
+                                }
+                              >
+                                {canBattle
+                                  ? 'FIND ANOTHER MATCH'
+                                  : 'DAILY LIMIT REACHED'}
+                              </Button>
+                            </div>
+                          </motion.div>
+                        )}
                     </AnimatePresence>
                   </CardContent>
                 </Card>

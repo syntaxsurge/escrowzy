@@ -290,6 +290,42 @@ export async function broadcastBattleAccepted(
   }
 }
 
+export async function sendBattleEvent(
+  eventType: 'battle-started' | 'battle-update' | 'battle-completed',
+  data: any
+) {
+  if (!pusherServer) return
+
+  try {
+    const channels: string[] = []
+
+    // Send to both players' channels
+    if (data.player1Id) {
+      channels.push(`user-${data.player1Id}`)
+    }
+    if (data.player2Id) {
+      channels.push(`user-${data.player2Id}`)
+    }
+
+    // Broadcast to all relevant channels
+    await Promise.all(
+      channels.map(channel =>
+        pusherServer.trigger(channel, eventType, {
+          ...data,
+          timestamp: new Date().toISOString()
+        })
+      )
+    )
+
+    // Also update global battle stats
+    if (eventType === 'battle-completed') {
+      await broadcastBattleStats()
+    }
+  } catch (error) {
+    console.error(`Failed to send battle event ${eventType}:`, error)
+  }
+}
+
 export async function broadcastBattleRejected(
   fromUserId: number,
   toUserId: number,

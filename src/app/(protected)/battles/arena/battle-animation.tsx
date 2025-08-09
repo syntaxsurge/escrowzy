@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 import confetti from 'canvas-confetti'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -12,12 +12,15 @@ import {
   Heart,
   Skull,
   Sparkles,
-  Star
+  Star,
+  Sparkle
 } from 'lucide-react'
-import useSWR from 'swr'
 
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
+import { useBattleRealtime } from '@/hooks/use-battle-realtime'
+import { useSession } from '@/hooks/use-session'
 import { cn } from '@/lib'
 import { api } from '@/lib/api/http-client'
 
@@ -50,6 +53,7 @@ export function BattleAnimation({
   battleId,
   onComplete
 }: BattleAnimationProps) {
+  const { user } = useSession()
   const [phase, setPhase] = useState<
     'preparing' | 'fighting' | 'victory' | 'complete'
   >('preparing')
@@ -61,16 +65,60 @@ export function BattleAnimation({
   const [winner, setWinner] = useState<1 | 2 | null>(null)
   const [screenShake, setScreenShake] = useState(false)
   const [currentRound, setCurrentRound] = useState(0)
+  const [actionCount, setActionCount] = useState(0)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [lastProcessTime, setLastProcessTime] = useState(0)
 
-  // Poll for battle state updates from server
-  const { data: battleData } = useSWR(
-    battleId && phase === 'fighting' ? `/api/battles/current` : null,
-    (url: string) => api.get(url).then(res => res.data),
-    {
-      refreshInterval: 2000, // Poll every 2 seconds
-      revalidateOnFocus: false
+  // Real-time battle updates
+  useBattleRealtime(user?.id, {
+    onBattleUpdate: data => {
+      if (data.battleId !== battleId) return
+
+      // Update health
+      setPlayer1Health(data.player1Health)
+      setPlayer2Health(data.player2Health)
+      setCurrentRound(data.round)
+
+      // Show attack animation
+      if (data.attacker) {
+        setCurrentAttacker(data.attacker)
+
+        // Add damage number
+        addDamageNumber(
+          data.damage,
+          data.attacker === 1 ? 2 : 1,
+          data.isCritical
+        )
+
+        // Screen shake on critical
+        if (data.isCritical) {
+          setScreenShake(true)
+          setTimeout(() => setScreenShake(false), 300)
+        }
+
+        // Clear attacker after animation
+        setTimeout(() => setCurrentAttacker(null), 1000)
+      }
+    },
+    onBattleCompleted: data => {
+      if (data.battleId !== battleId) return
+
+      const battleWinner = data.winnerId === player1.id ? 1 : 2
+      setWinner(battleWinner)
+      setPhase('victory')
+
+      if (data.winnerId === user?.id) {
+        triggerVictoryConfetti()
+      }
+
+      setTimeout(() => {
+        setPhase('complete')
+        if (onComplete) {
+          onComplete(data.winnerId)
+        }
+      }, 4000)
     }
-  )
+  })
 
   // Victory confetti effect
   const triggerVictoryConfetti = () => {
@@ -123,143 +171,88 @@ export function BattleAnimation({
     }, 1500)
   }
 
-  // Update battle state from server data
-  useEffect(() => {
-    if (battleData?.data && phase === 'fighting') {
-      const {
-        player1: p1,
-        player2: p2,
-        currentRound: round,
-        status
-      } = battleData.data
+  // Process battle round
+  const processBattleRound = useCallback(async () => {
+    if (!battleId || isProcessing || phase !== 'fighting') return
 
-      // Update health
-      if (p1?.health !== undefined) setPlayer1Health(p1.health)
-      if (p2?.health !== undefined) setPlayer2Health(p2.health)
-      if (round !== undefined) setCurrentRound(round)
+    const now = Date.now()
+    if (now - lastProcessTime < 3000) return // Prevent too frequent processing
 
-      // Check if battle is completed
-      if (status === 'completed' || p1?.health <= 0 || p2?.health <= 0) {
-        const battleWinner = p1?.health > p2?.health ? 1 : 2
-        setWinner(battleWinner)
-        setPhase('victory')
+    setIsProcessing(true)
+    setLastProcessTime(now)
 
-        if (battleWinner === 1) {
-          triggerVictoryConfetti()
-        }
+    try {
+      const response = await api.post('/api/battles/process', {
+        battleId,
+        action: actionCount > 0 ? { type: 'attack', power: actionCount } : null
+      })
 
-        // Victory phase duration
-        setTimeout(() => {
-          setPhase('complete')
-          if (onComplete) {
-            onComplete(battleWinner === 1 ? player1.id : player2.id)
-          }
-        }, 4000)
-      }
+      if (response.data?.data) {
+        const data = response.data.data
+        setPlayer1Health(data.player1Health)
+        setPlayer2Health(data.player2Health)
+        setCurrentRound(data.currentRound)
 
-      // Show attack animations based on battle log
-      const battleLog = battleData.data.battleLog || []
-      if (battleLog.length > currentRound && battleLog[currentRound - 1]) {
-        const lastRound = battleLog[currentRound - 1]
-        if (lastRound.attacker) {
-          setCurrentAttacker(lastRound.attacker)
-
-          // Add damage number
-          if (lastRound.damage) {
-            addDamageNumber(
-              lastRound.damage,
-              lastRound.attacker === 1 ? 2 : 1,
-              lastRound.isCritical || false
-            )
-          }
-
-          // Screen shake on critical
-          if (lastRound.isCritical) {
-            setScreenShake(true)
-            setTimeout(() => setScreenShake(false), 300)
-          }
-
-          // Clear attacker after animation
-          setTimeout(() => setCurrentAttacker(null), 1000)
+        // Reset action count after processing
+        if (actionCount > 0) {
+          setActionCount(0)
         }
       }
+    } catch (error) {
+      console.error('Error processing battle round:', error)
+    } finally {
+      setIsProcessing(false)
     }
-  }, [battleData, phase, currentRound, player1.id, player2.id, onComplete])
+  }, [battleId, isProcessing, phase, actionCount, lastProcessTime])
 
+  // Handle player action (clicking/tapping for attacks)
+  const handlePlayerAction = useCallback(
+    (actionType: 'attack' | 'defend' | 'special') => {
+      if (phase !== 'fighting' || winner) return
+
+      setActionCount(prev => prev + 1)
+      setComboCount(prev => prev + 1)
+
+      // Reset combo after 2 seconds
+      setTimeout(() => {
+        setComboCount(0)
+      }, 2000)
+
+      // Visual feedback
+      const isPlayer1 = user?.id === player1.id
+      setCurrentAttacker(isPlayer1 ? 1 : 2)
+      setTimeout(() => setCurrentAttacker(null), 300)
+    },
+    [phase, winner, user?.id, player1.id]
+  )
+
+  // Start battle sequence
   useEffect(() => {
-    const battleSequence = async () => {
+    const startBattle = async () => {
       // Preparing phase
       await new Promise(resolve => setTimeout(resolve, 2000))
       setPhase('fighting')
 
-      // For battles without server processing (fallback)
-      if (!battleId) {
-        // Simple animation for 3 minutes
-        const totalRounds = 30 // 30 rounds over 3 minutes
-        const roundDuration = 6000 // 6 seconds per round
-
-        for (let round = 1; round <= totalRounds; round++) {
-          setCurrentRound(round)
-
-          // Random attacker
-          const attacker = Math.random() > 0.5 ? 1 : 2
-          setCurrentAttacker(attacker)
-
-          // Simulate damage
-          const damage = Math.floor(3 + Math.random() * 5) // Smaller damage for longer battle
-          const isCritical = Math.random() < 0.2
-
-          if (attacker === 1) {
-            setPlayer2Health(prev => {
-              const newHealth = Math.max(0, prev - damage)
-              if (newHealth <= 0) {
-                setWinner(1)
-                setPhase('victory')
-                triggerVictoryConfetti()
-                setTimeout(() => {
-                  setPhase('complete')
-                  if (onComplete) onComplete(player1.id)
-                }, 4000)
-              }
-              return newHealth
-            })
-            addDamageNumber(damage, 2, isCritical)
-          } else {
-            setPlayer1Health(prev => {
-              const newHealth = Math.max(0, prev - damage)
-              if (newHealth <= 0) {
-                setWinner(2)
-                setPhase('victory')
-                setTimeout(() => {
-                  setPhase('complete')
-                  if (onComplete) onComplete(player2.id)
-                }, 4000)
-              }
-              return newHealth
-            })
-            addDamageNumber(damage, 1, isCritical)
-          }
-
-          if (isCritical) {
-            setScreenShake(true)
-            setTimeout(() => setScreenShake(false), 300)
-          }
-
-          // Wait for round duration
-          await new Promise(resolve =>
-            setTimeout(resolve, roundDuration - 1000)
-          )
-          setCurrentAttacker(null)
-          await new Promise(resolve => setTimeout(resolve, 1000))
-
-          // Check if battle should end
-          if (phase !== 'fighting') break
-        }
+      // If we have a battleId, start processing rounds
+      if (battleId) {
+        // Initial round processing
+        processBattleRound()
       }
     }
 
-    battleSequence()
-  }, [battleId, player1, player2, onComplete])
+    startBattle()
+  }, [battleId])
+
+  // Process rounds periodically
+  useEffect(() => {
+    if (phase !== 'fighting' || !battleId) return
+
+    const interval = setInterval(() => {
+      processBattleRound()
+    }, 3000) // Process every 3 seconds
+
+    return () => clearInterval(interval)
+  }, [phase, battleId, processBattleRound])
 
   return (
     <div
@@ -300,6 +293,13 @@ export function BattleAnimation({
             exit={{ opacity: 0 }}
             className='w-full space-y-8'
           >
+            {/* Round Counter */}
+            <div className='text-center'>
+              <Badge className='bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-1 text-white'>
+                ROUND {currentRound}
+              </Badge>
+            </div>
+
             {/* Combo Counter */}
             <AnimatePresence>
               {comboCount > 1 && (
@@ -573,6 +573,59 @@ export function BattleAnimation({
                 )}
               </motion.div>
             </div>
+
+            {/* Action Buttons */}
+            {phase === 'fighting' && !winner && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className='mt-8 flex justify-center gap-4'
+              >
+                <Button
+                  onClick={() => handlePlayerAction('attack')}
+                  disabled={isProcessing}
+                  className='gap-2 bg-gradient-to-r from-red-600 to-orange-600 font-bold text-white hover:from-red-700 hover:to-orange-700'
+                >
+                  <Swords className='h-4 w-4' />
+                  ATTACK!
+                </Button>
+                <Button
+                  onClick={() => handlePlayerAction('defend')}
+                  disabled={isProcessing}
+                  variant='outline'
+                  className='gap-2 border-blue-500/30 hover:bg-blue-500/10'
+                >
+                  <Shield className='h-4 w-4' />
+                  DEFEND
+                </Button>
+                <Button
+                  onClick={() => handlePlayerAction('special')}
+                  disabled={isProcessing || comboCount < 3}
+                  className={cn(
+                    'gap-2',
+                    comboCount >= 3
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white hover:from-purple-700 hover:to-pink-700'
+                      : 'cursor-not-allowed opacity-50'
+                  )}
+                >
+                  <Sparkle className='h-4 w-4' />
+                  SPECIAL
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Action Counter */}
+            {actionCount > 0 && phase === 'fighting' && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className='text-center'
+              >
+                <Badge className='bg-gradient-to-r from-blue-500 to-cyan-500 px-4 py-2 text-white'>
+                  ACTION POWER: {actionCount}
+                </Badge>
+              </motion.div>
+            )}
           </motion.div>
         )}
 
