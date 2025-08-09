@@ -29,6 +29,19 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at').notNull().defaultNow()
 })
 
+export const sessions = pgTable('sessions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  sessionToken: varchar('session_token', { length: 255 }).notNull().unique(),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  lastActiveAt: timestamp('last_active_at').notNull().defaultNow()
+})
+
 export const teams = pgTable('teams', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 100 }).notNull(),
@@ -403,6 +416,13 @@ export const teamsRelations = relations(teams, ({ many }) => ({
   paymentHistory: many(paymentHistory)
 }))
 
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.userId],
+    references: [users.id]
+  })
+}))
+
 export const usersRelations = relations(users, ({ many, one }) => ({
   teamMembers: many(teamMembers),
   activityLogs: many(activityLogs),
@@ -412,6 +432,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   emailVerificationRequests: many(emailVerificationRequests),
   messages: many(messages),
   messageReads: many(messageReads),
+  sessions: many(sessions),
   gameData: one(userGameData, {
     fields: [users.id],
     references: [userGameData.userId]

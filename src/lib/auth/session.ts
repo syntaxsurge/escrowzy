@@ -8,6 +8,7 @@ const key = new TextEncoder().encode(envServer.AUTH_SECRET)
 
 type SessionData = {
   user: { id: number; walletAddress: string }
+  sessionToken: string
   expires: string
 }
 
@@ -32,10 +33,14 @@ export async function getSession() {
   return await verifyToken(session)
 }
 
-export async function setSession(user: { id: number; walletAddress: string }) {
+export async function setSession(
+  user: { id: number; walletAddress: string },
+  sessionToken: string
+) {
   const expiresInOneDay = new Date(Date.now() + 24 * 60 * 60 * 1000)
   const session: SessionData = {
     user: { id: user.id, walletAddress: user.walletAddress },
+    sessionToken,
     expires: expiresInOneDay.toISOString()
   }
   const encryptedSession = await signToken(session)

@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { desc, eq } from 'drizzle-orm'
 
 import { verifyToken } from '@/lib/auth/session'
+import { validateSession } from '@/lib/db/queries/sessions'
 
 import { db } from '../lib/db/drizzle'
 import {
@@ -19,16 +20,29 @@ export async function getUser() {
     return null
   }
 
-  const sessionData = await verifyToken(sessionCookie.value)
+  let sessionData
+  try {
+    sessionData = await verifyToken(sessionCookie.value)
+  } catch (_error) {
+    return null
+  }
+
   if (
     !sessionData ||
     !sessionData.user ||
-    typeof sessionData.user.id !== 'number'
+    typeof sessionData.user.id !== 'number' ||
+    !sessionData.sessionToken
   ) {
     return null
   }
 
   if (new Date(sessionData.expires) < new Date()) {
+    return null
+  }
+
+  // Validate session exists in database
+  const dbSession = await validateSession(sessionData.sessionToken)
+  if (!dbSession) {
     return null
   }
 

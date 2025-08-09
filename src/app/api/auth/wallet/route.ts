@@ -8,6 +8,7 @@ import { truncateAddress } from '@/lib'
 import { apiResponses } from '@/lib/api/server-utils'
 import { setSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
+import { createSession } from '@/lib/db/queries/sessions'
 import { findUserByWalletAddress, createUser } from '@/lib/db/queries/users'
 import { teams, teamMembers, ActivityType, activityLogs } from '@/lib/db/schema'
 
@@ -24,8 +25,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get IP address
+    // Get IP address and user agent
     const ipAddress = requestIp.getClientIp(request as any) || 'unknown'
+    const userAgent = request.headers.get('user-agent') || undefined
 
     // Verify the signature
     let isValid = false
@@ -164,9 +166,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Set session
+    // Create database session
+    const dbSession = await createSession(user.id, ipAddress, userAgent)
+
+    // Set session cookie with database session token
     try {
-      await setSession(user)
+      await setSession(user, dbSession.sessionToken)
     } catch (_) {
       throw new Error('Failed to create session')
     }
