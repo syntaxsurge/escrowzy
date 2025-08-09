@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, ReactNode } from 'react'
+import { createContext, useContext, ReactNode } from 'react'
 
 import { appRoutes } from '@/config/app-routes'
 import { useBattleRealtime } from '@/hooks/use-battle-realtime'
@@ -116,31 +116,6 @@ export function RealtimeNotificationsProvider({
 
   // Overall connection status
   const isConnected = tradeConnected || battleConnected || listingConnected
-
-  // Request notification permission on mount
-  useEffect(() => {
-    if (
-      user &&
-      'Notification' in window &&
-      Notification.permission === 'default'
-    ) {
-      // Show a toast prompting user to enable notifications
-      // Request permission directly instead of using toast onClick
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          toast({
-            title: 'Notifications Enabled',
-            description: 'You will now receive real-time notifications'
-          })
-        } else if (permission === 'denied') {
-          toast({
-            title: 'Notifications Blocked',
-            description: 'You can enable notifications in your browser settings'
-          })
-        }
-      })
-    }
-  }, [user, toast])
 
   return (
     <RealtimeNotificationsContext.Provider value={{ isConnected }}>

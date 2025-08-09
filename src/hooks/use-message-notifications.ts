@@ -43,9 +43,22 @@ export function useMessageNotifications({
     if (Notification.permission === 'default') {
       Notification.requestPermission().then(perm => {
         setPermission(perm)
+
+        // Show toast notification based on permission result
+        if (perm === 'granted') {
+          toast({
+            title: 'Notifications Enabled',
+            description: 'You will now receive real-time notifications'
+          })
+        } else if (perm === 'denied') {
+          toast({
+            title: 'Notifications Blocked',
+            description: 'You can enable notifications in your browser settings'
+          })
+        }
       })
     }
-  }, [enabled])
+  }, [enabled, toast])
 
   // Track window focus
   useEffect(() => {
