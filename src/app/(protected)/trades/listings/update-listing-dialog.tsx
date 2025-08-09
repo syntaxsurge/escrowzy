@@ -82,8 +82,11 @@ export function UpdateListingDialog({
     try {
       setIsSubmitting(true)
 
-      // Validate min/max amounts
-      if (data.minAmount && data.maxAmount) {
+      // Check if this is a domain listing
+      const isDomainListing = listing.listingCategory === 'domain'
+
+      // Validate min/max amounts (only for P2P listings)
+      if (!isDomainListing && data.minAmount && data.maxAmount) {
         const min = parseFloat(data.minAmount)
         const max = parseFloat(data.maxAmount)
         if (min > max) {
@@ -92,45 +95,61 @@ export function UpdateListingDialog({
             toast,
             'Validation Error'
           )
+          setIsSubmitting(false) // Ensure button is re-enabled on validation error
           return
         }
       }
 
       // Check if form has actually changed
-      const originalData = {
-        amount: listing.amount ?? undefined,
-        pricePerUnit: listing.pricePerUnit ?? undefined,
-        minAmount: listing.minAmount || '',
-        maxAmount: listing.maxAmount || '',
-        paymentMethods: existingPaymentMethods,
-        isActive: listing.isActive
-      }
+      const originalData = isDomainListing
+        ? {
+            amount: listing.amount ?? undefined,
+            isActive: listing.isActive
+          }
+        : {
+            amount: listing.amount ?? undefined,
+            pricePerUnit: listing.pricePerUnit ?? undefined,
+            minAmount: listing.minAmount || '',
+            maxAmount: listing.maxAmount || '',
+            paymentMethods: existingPaymentMethods,
+            isActive: listing.isActive
+          }
 
       if (!hasFormChanged(data, originalData)) {
         toast({
           title: 'No Changes',
           description: 'No changes were made to the listing'
         })
+        onOpenChange(false) // Close the dialog when no changes
         return
       }
 
       // Only send changed fields
       const changes: any = {}
-      if (data.amount !== (listing.amount ?? undefined))
-        changes.amount = data.amount
-      if (data.pricePerUnit !== (listing.pricePerUnit ?? undefined))
-        changes.pricePerUnit = data.pricePerUnit
-      if (data.minAmount !== (listing.minAmount || ''))
-        changes.minAmount = data.minAmount || null
-      if (data.maxAmount !== (listing.maxAmount || ''))
-        changes.maxAmount = data.maxAmount || null
-      if (
-        JSON.stringify(data.paymentMethods) !==
-        JSON.stringify(existingPaymentMethods)
-      ) {
-        changes.paymentMethods = data.paymentMethods
+
+      // For domain listings, only update amount (price) and isActive
+      if (isDomainListing) {
+        if (data.amount !== (listing.amount ?? undefined))
+          changes.amount = data.amount
+        if (data.isActive !== listing.isActive) changes.isActive = data.isActive
+      } else {
+        // For P2P listings, update all relevant fields
+        if (data.amount !== (listing.amount ?? undefined))
+          changes.amount = data.amount
+        if (data.pricePerUnit !== (listing.pricePerUnit ?? undefined))
+          changes.pricePerUnit = data.pricePerUnit
+        if (data.minAmount !== (listing.minAmount || ''))
+          changes.minAmount = data.minAmount || null
+        if (data.maxAmount !== (listing.maxAmount || ''))
+          changes.maxAmount = data.maxAmount || null
+        if (
+          JSON.stringify(data.paymentMethods) !==
+          JSON.stringify(existingPaymentMethods)
+        ) {
+          changes.paymentMethods = data.paymentMethods
+        }
+        if (data.isActive !== listing.isActive) changes.isActive = data.isActive
       }
-      if (data.isActive !== listing.isActive) changes.isActive = data.isActive
 
       const response = await api.put(
         apiEndpoints.listings.byId(listing.id.toString()),
@@ -140,6 +159,7 @@ export function UpdateListingDialog({
       if (response.success) {
         handleFormSuccess(toast, 'Listing updated successfully')
         onSuccess()
+        onOpenChange(false) // Close the dialog after successful update
       } else {
         throw new Error(response.error || 'Failed to update listing')
       }

@@ -531,10 +531,6 @@ export async function cancelTrade(
         .update(escrowListings)
         .set({ isActive: true })
         .where(eq(escrowListings.id, metadata.originalListingId))
-
-      console.log(
-        `Reactivated domain listing ${metadata.originalListingId} after trade cancellation`
-      )
     }
 
     // Log cancellation activity
