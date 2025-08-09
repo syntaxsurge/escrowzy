@@ -41,8 +41,10 @@ export default function BattleArenaPage() {
     isSearching,
     isBattling,
     battleResult,
+    isInQueue,
     findMatch,
-    createBattle
+    createBattle,
+    leaveQueue
   } = useBattles(user?.id)
 
   const [selectedTab, setSelectedTab] = useState('arena')
@@ -202,8 +204,10 @@ export default function BattleArenaPage() {
                         combatPower={combatPower}
                         canBattle={canBattle}
                         isSearching={isSearching}
+                        isInQueue={isInQueue}
                         dailyLimit={dailyLimit}
                         onFindMatch={handleFindMatch}
+                        onLeaveQueue={leaveQueue}
                       />
                     )}
 

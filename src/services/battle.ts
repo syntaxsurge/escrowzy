@@ -1,6 +1,13 @@
 import { and, desc, eq, gte, lte, or, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db/drizzle'
+import {
+  addToQueue,
+  findMatchesInQueue,
+  markAsMatched,
+  removeFromQueue,
+  cleanupExpiredQueueEntries
+} from '@/lib/db/queries/battles'
 import { battles, userGameData, userSubscriptions } from '@/lib/db/schema'
 import { rewardsService } from '@/services/rewards'
 import type {
@@ -135,18 +142,43 @@ export async function getDailyBattleLimit(
 export async function findMatch(
   params: BattleMatchmakingParams
 ): Promise<{ userId: number; combatPower: number } | null> {
+  const {
+    userId,
+    combatPower,
+    matchRange = BATTLE_CONSTANTS.DEFAULT_MATCH_RANGE
+  } = params
+
   try {
-    const {
+    // First, clean up any expired queue entries
+    await cleanupExpiredQueueEntries()
+
+    // Check if there are compatible opponents already in queue
+    const queueMatches = await findMatchesInQueue(
       userId,
       combatPower,
-      matchRange = BATTLE_CONSTANTS.DEFAULT_MATCH_RANGE
-    } = params
+      matchRange
+    )
 
-    // Calculate CP range for matching
-    const minCP = Math.floor(combatPower * (1 - matchRange / 100))
-    const maxCP = Math.ceil(combatPower * (1 + matchRange / 100))
+    if (queueMatches.length > 0) {
+      const match = queueMatches[0]
 
-    // Get recent opponent IDs to avoid (last 24 hours)
+      // Mark both users as matched
+      await markAsMatched(userId, match.userId)
+
+      // Remove both from queue (they're matched now)
+      await removeFromQueue(userId)
+      await removeFromQueue(match.userId)
+
+      return {
+        userId: match.userId,
+        combatPower: match.combatPower
+      }
+    }
+
+    // No match found in queue, add current user to queue
+    await addToQueue(userId, combatPower, matchRange)
+
+    // Get recent opponent IDs to avoid (last 24 hours) for fallback search
     const cooldownTime = new Date()
     cooldownTime.setHours(
       cooldownTime.getHours() - BATTLE_CONSTANTS.SAME_OPPONENT_COOLDOWN_HOURS
@@ -174,7 +206,11 @@ export async function findMatch(
       ...recentOpponents.map((r: { opponentId: number }) => r.opponentId)
     ]
 
-    // Find potential opponents
+    // Calculate CP range for matching
+    const minCP = Math.floor(combatPower * (1 - matchRange / 100))
+    const maxCP = Math.ceil(combatPower * (1 + matchRange / 100))
+
+    // Try to find potential opponents not in queue (fallback for inactive users)
     const potentialOpponents = await db
       .select({
         userId: userGameData.userId,
@@ -194,9 +230,18 @@ export async function findMatch(
       .orderBy(sql`RANDOM()`)
       .limit(1)
 
-    return potentialOpponents[0] || null
+    // If we found a fallback opponent, remove ourselves from queue and return the match
+    if (potentialOpponents[0]) {
+      await removeFromQueue(userId)
+      return potentialOpponents[0]
+    }
+
+    // No match found at all - user stays in queue
+    return null
   } catch (error) {
     console.error('Error finding match:', error)
+    // Clean up on error
+    await removeFromQueue(userId)
     throw error
   }
 }

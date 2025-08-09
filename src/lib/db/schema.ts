@@ -385,6 +385,33 @@ export const battles = pgTable(
   ]
 )
 
+export const battleQueue = pgTable(
+  'battle_queue',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id)
+      .unique(), // User can only be in queue once
+    combatPower: integer('combat_power').notNull(),
+    minCP: integer('min_cp').notNull(), // Pre-calculated min CP for matching
+    maxCP: integer('max_cp').notNull(), // Pre-calculated max CP for matching
+    matchRange: integer('match_range').notNull().default(20), // Percentage range
+    searchStartedAt: timestamp('search_started_at').notNull().defaultNow(),
+    expiresAt: timestamp('expires_at').notNull(), // Auto-remove after timeout
+    status: varchar('status', { length: 20 }).notNull().default('searching'), // searching, matched, expired
+    matchedWithUserId: integer('matched_with_user_id').references(
+      () => users.id
+    )
+  },
+  table => [
+    index('idx_battle_queue_user').on(table.userId),
+    index('idx_battle_queue_status').on(table.status),
+    index('idx_battle_queue_cp_range').on(table.minCP, table.maxCP),
+    index('idx_battle_queue_expires').on(table.expiresAt)
+  ]
+)
+
 export const userTradingStats = pgTable(
   'user_trading_stats',
   {
@@ -444,6 +471,10 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   battlesAsPlayer1: many(battles, { relationName: 'player1' }),
   battlesAsPlayer2: many(battles, { relationName: 'player2' }),
   battlesWon: many(battles, { relationName: 'winner' }),
+  battleQueueEntry: one(battleQueue, {
+    fields: [users.id],
+    references: [battleQueue.userId]
+  }),
   tradingStats: one(userTradingStats, {
     fields: [users.id],
     references: [userTradingStats.userId]
@@ -623,6 +654,17 @@ export const battlesRelations = relations(battles, ({ one }) => ({
     fields: [battles.winnerId],
     references: [users.id],
     relationName: 'winner'
+  })
+}))
+
+export const battleQueueRelations = relations(battleQueue, ({ one }) => ({
+  user: one(users, {
+    fields: [battleQueue.userId],
+    references: [users.id]
+  }),
+  matchedWithUser: one(users, {
+    fields: [battleQueue.matchedWithUserId],
+    references: [users.id]
   })
 }))
 

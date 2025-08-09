@@ -34,8 +34,10 @@ interface MatchmakingInterfaceProps {
   combatPower: number
   canBattle: boolean
   isSearching: boolean
+  isInQueue: boolean
   dailyLimit: DailyBattleLimit | undefined
   onFindMatch: (matchRange?: number) => Promise<any>
+  onLeaveQueue: () => Promise<void>
 }
 
 const SEARCH_DURATION = 15000 // 15 seconds search time
@@ -52,8 +54,10 @@ export function MatchmakingInterface({
   combatPower,
   canBattle,
   isSearching,
+  isInQueue,
   dailyLimit,
-  onFindMatch
+  onFindMatch,
+  onLeaveQueue
 }: MatchmakingInterfaceProps) {
   const [matchRange, setMatchRange] = useState(20)
   const [searchingAnimation, setSearchingAnimation] = useState(0)
@@ -112,7 +116,7 @@ export function MatchmakingInterface({
 
   // Countdown timer and message cycling
   useEffect(() => {
-    if (searchStartTime && isLocalSearching) {
+    if (searchStartTime && (isLocalSearching || isInQueue)) {
       const interval = setInterval(() => {
         const elapsed = Date.now() - searchStartTime
         const remaining = Math.max(0, SEARCH_DURATION - elapsed)
@@ -128,7 +132,7 @@ export function MatchmakingInterface({
         setCurrentMessage(Math.min(messageIndex, SEARCH_MESSAGES.length - 1))
 
         // Check if search time is up
-        if (remaining <= 0) {
+        if (remaining <= 0 && !isInQueue) {
           setIsLocalSearching(false)
           setSearchStartTime(null)
           setShowNoMatchFound(true)
@@ -138,7 +142,7 @@ export function MatchmakingInterface({
 
       return () => clearInterval(interval)
     }
-  }, [searchStartTime, isLocalSearching])
+  }, [searchStartTime, isLocalSearching, isInQueue])
 
   // Reset state when isSearching changes
   useEffect(() => {
@@ -273,7 +277,7 @@ export function MatchmakingInterface({
   }
 
   // Show searching overlay when looking for match
-  if (isLocalSearching || isSearching) {
+  if (isLocalSearching || isSearching || isInQueue) {
     return (
       <div className='space-y-6'>
         <motion.div
@@ -303,13 +307,26 @@ export function MatchmakingInterface({
                 <Swords className='text-primary h-16 w-16' />
               </motion.div>
             </div>
-            {timeRemaining > 0 && (
+            {(timeRemaining > 0 || isInQueue) && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 className='absolute -right-2 -bottom-2 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-pink-600 text-white shadow-lg'
               >
-                <span className='text-lg font-bold'>{timeRemaining}</span>
+                {isInQueue ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: 'linear'
+                    }}
+                  >
+                    <RefreshCw className='h-6 w-6' />
+                  </motion.div>
+                ) : (
+                  <span className='text-lg font-bold'>{timeRemaining}</span>
+                )}
               </motion.div>
             )}
           </div>
@@ -319,7 +336,7 @@ export function MatchmakingInterface({
             transition={{ duration: 2, repeat: Infinity }}
             className='text-primary text-2xl font-black'
           >
-            SEARCHING FOR OPPONENT
+            {isInQueue ? 'IN MATCHMAKING QUEUE' : 'SEARCHING FOR OPPONENT'}
           </motion.h3>
 
           <div className='mx-auto mt-4 max-w-xs space-y-3'>
@@ -332,12 +349,24 @@ export function MatchmakingInterface({
                 exit={{ opacity: 0, y: -10 }}
                 className='text-muted-foreground text-sm font-medium'
               >
-                {SEARCH_MESSAGES[currentMessage]}
+                {isInQueue
+                  ? 'You are in the queue, waiting for opponents...'
+                  : SEARCH_MESSAGES[currentMessage]}
               </motion.p>
             </AnimatePresence>
             <p className='text-muted-foreground text-xs'>
               Finding warriors within {minCP} - {maxCP} CP range
             </p>
+            {isInQueue && (
+              <Button
+                onClick={onLeaveQueue}
+                variant='outline'
+                className='gap-2 border-red-500/30 hover:bg-red-500/10'
+              >
+                <UserX className='h-4 w-4' />
+                Leave Queue
+              </Button>
+            )}
           </div>
 
           <div className='mt-6 flex justify-center gap-8'>

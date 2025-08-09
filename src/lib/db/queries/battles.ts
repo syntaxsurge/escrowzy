@@ -1,7 +1,7 @@
-import { eq, and, gte, sql, isNull, or } from 'drizzle-orm'
+import { eq, and, gte, sql, isNull, or, lt, ne, lte } from 'drizzle-orm'
 
 import { db } from '../drizzle'
-import { battles, users, userGameData } from '../schema'
+import { battles, users, userGameData, sessions, battleQueue } from '../schema'
 
 /**
  * Get real-time battle statistics
@@ -12,18 +12,22 @@ export async function getBattleStats(): Promise<{
   inQueue: number
 }> {
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
-  const oneMinuteAgo = new Date(Date.now() - 60 * 1000)
+  const now = new Date()
 
-  // Get warriors online (users active in last 5 minutes)
-  // We'll consider users who have recent game data updates
+  // Get warriors online (users with active sessions in last 5 minutes)
   const [onlineResult] = await db
     .select({
-      count: sql<number>`count(*)`
+      count: sql<number>`count(distinct ${sessions.userId})`
     })
-    .from(userGameData)
-    .where(gte(userGameData.updatedAt, fiveMinutesAgo))
+    .from(sessions)
+    .where(
+      and(
+        gte(sessions.lastActiveAt, fiveMinutesAgo),
+        gte(sessions.expiresAt, now)
+      )
+    )
 
-  // Get active battles (battles without a winner yet)
+  // Get active battles (battles without a winner yet, created in last 5 minutes)
   const [activeBattlesResult] = await db
     .select({
       count: sql<number>`count(*)`
@@ -33,23 +37,15 @@ export async function getBattleStats(): Promise<{
       and(isNull(battles.winnerId), gte(battles.createdAt, fiveMinutesAgo))
     )
 
-  // Get users in queue (approximation based on recent activity without active battles)
-  // This would normally come from a queue system
+  // Get users in queue (active queue entries that haven't expired)
   const [inQueueResult] = await db
     .select({
-      count: sql<number>`count(distinct ${users.id})`
+      count: sql<number>`count(*)`
     })
-    .from(users)
-    .innerJoin(userGameData, eq(userGameData.userId, users.id))
-    .leftJoin(
-      battles,
-      and(
-        or(eq(battles.player1Id, users.id), eq(battles.player2Id, users.id)),
-        isNull(battles.winnerId),
-        gte(battles.createdAt, oneMinuteAgo)
-      )
+    .from(battleQueue)
+    .where(
+      and(eq(battleQueue.status, 'searching'), gte(battleQueue.expiresAt, now))
     )
-    .where(and(gte(userGameData.updatedAt, oneMinuteAgo), isNull(battles.id)))
 
   return {
     warriorsOnline: Number(onlineResult?.count || 0),
@@ -237,4 +233,139 @@ export async function completeBattle(
       updatedAt: new Date()
     })
     .where(eq(userGameData.userId, winnerId))
+}
+
+/**
+ * Add user to battle queue
+ */
+export async function addToQueue(
+  userId: number,
+  combatPower: number,
+  matchRange: number = 20
+): Promise<{ id: number }> {
+  const minCP = Math.floor(combatPower * (1 - matchRange / 100))
+  const maxCP = Math.ceil(combatPower * (1 + matchRange / 100))
+  const expiresAt = new Date(Date.now() + 30 * 1000) // 30 seconds timeout
+
+  // Remove any existing queue entry for this user
+  await removeFromQueue(userId)
+
+  const [queueEntry] = await db
+    .insert(battleQueue)
+    .values({
+      userId,
+      combatPower,
+      minCP,
+      maxCP,
+      matchRange,
+      expiresAt,
+      status: 'searching'
+    })
+    .returning({ id: battleQueue.id })
+
+  return queueEntry
+}
+
+/**
+ * Remove user from battle queue
+ */
+export async function removeFromQueue(userId: number): Promise<void> {
+  await db.delete(battleQueue).where(eq(battleQueue.userId, userId))
+}
+
+/**
+ * Find matches in queue
+ */
+export async function findMatchesInQueue(
+  userId: number,
+  combatPower: number,
+  matchRange: number = 20
+): Promise<
+  Array<{
+    userId: number
+    combatPower: number
+    queueId: number
+  }>
+> {
+  const minCP = Math.floor(combatPower * (1 - matchRange / 100))
+  const maxCP = Math.ceil(combatPower * (1 + matchRange / 100))
+  const now = new Date()
+
+  // Find compatible opponents in queue
+  const matches = await db
+    .select({
+      userId: battleQueue.userId,
+      combatPower: battleQueue.combatPower,
+      queueId: battleQueue.id
+    })
+    .from(battleQueue)
+    .where(
+      and(
+        ne(battleQueue.userId, userId),
+        eq(battleQueue.status, 'searching'),
+        gte(battleQueue.expiresAt, now),
+        // Check if their CP is in our range
+        lte(battleQueue.combatPower, maxCP),
+        gte(battleQueue.combatPower, minCP),
+        // Check if our CP is in their range
+        gte(battleQueue.maxCP, minCP),
+        lte(battleQueue.minCP, maxCP)
+      )
+    )
+    .orderBy(sql`RANDOM()`)
+    .limit(1)
+
+  return matches
+}
+
+/**
+ * Mark queue entries as matched
+ */
+export async function markAsMatched(
+  user1Id: number,
+  user2Id: number
+): Promise<void> {
+  await db.transaction(async tx => {
+    await tx
+      .update(battleQueue)
+      .set({
+        status: 'matched',
+        matchedWithUserId: user2Id
+      })
+      .where(eq(battleQueue.userId, user1Id))
+
+    await tx
+      .update(battleQueue)
+      .set({
+        status: 'matched',
+        matchedWithUserId: user1Id
+      })
+      .where(eq(battleQueue.userId, user2Id))
+  })
+}
+
+/**
+ * Clean up expired queue entries
+ */
+export async function cleanupExpiredQueueEntries(): Promise<void> {
+  const now = new Date()
+  await db
+    .delete(battleQueue)
+    .where(
+      and(lt(battleQueue.expiresAt, now), eq(battleQueue.status, 'searching'))
+    )
+}
+
+/**
+ * Update session activity
+ */
+export async function updateSessionActivity(
+  sessionToken: string
+): Promise<void> {
+  await db
+    .update(sessions)
+    .set({
+      lastActiveAt: new Date()
+    })
+    .where(eq(sessions.sessionToken, sessionToken))
 }

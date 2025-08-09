@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 import { eq } from 'drizzle-orm'
@@ -5,6 +6,10 @@ import { ZodError } from 'zod'
 
 import { getSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
+import {
+  updateSessionActivity,
+  removeFromQueue
+} from '@/lib/db/queries/battles'
 import { users } from '@/lib/db/schema'
 import { findMatchSchema } from '@/lib/schemas/battle'
 import {
@@ -25,9 +30,19 @@ export async function POST(request: Request) {
       )
     }
 
+    // Update session activity to track online users
+    const cookieStore = await cookies()
+    const sessionToken = cookieStore.get('session')?.value
+    if (sessionToken) {
+      await updateSessionActivity(sessionToken)
+    }
+
     // Check if user can battle today
     const canBattle = await canBattleToday(session.user.id)
     if (!canBattle) {
+      // Remove from queue if they can't battle
+      await removeFromQueue(session.user.id)
+
       const limit = await getDailyBattleLimit(session.user.id)
       return NextResponse.json(
         {
@@ -56,7 +71,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Find a match
+    // Find a match (this will add user to queue if no match found)
     const match = await findMatch({
       userId: session.user.id,
       combatPower: gameData.combatPower,
@@ -64,8 +79,10 @@ export async function POST(request: Request) {
     })
 
     if (!match) {
+      // User is now in queue, waiting for opponent
       return NextResponse.json({
-        opponent: null
+        opponent: null,
+        inQueue: true
       })
     }
 
@@ -81,7 +98,8 @@ export async function POST(request: Request) {
         userId: match.userId,
         combatPower: match.combatPower,
         username: opponent?.name || 'Unknown Player'
-      }
+      },
+      inQueue: false
     })
   } catch (error) {
     if (error instanceof ZodError) {
@@ -96,6 +114,30 @@ export async function POST(request: Request) {
     }
 
     console.error('Error in POST /api/battles/find-match:', error)
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+// Add DELETE endpoint to remove user from queue
+export async function DELETE(request: Request) {
+  try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    // Remove user from queue
+    await removeFromQueue(session.user.id)
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error in DELETE /api/battles/find-match:', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

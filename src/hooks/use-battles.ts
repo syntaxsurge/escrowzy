@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 
 import useSWR, { mutate } from 'swr'
 
@@ -21,6 +21,7 @@ interface FindMatchResponse {
     combatPower: number
     username: string
   } | null
+  inQueue?: boolean
 }
 
 export function useBattles(userId?: number) {
@@ -28,6 +29,7 @@ export function useBattles(userId?: number) {
   const [isSearching, setIsSearching] = useState(false)
   const [isBattling, setIsBattling] = useState(false)
   const [battleResult, setBattleResult] = useState<BattleResult | null>(null)
+  const [isInQueue, setIsInQueue] = useState(false)
 
   // Fetch active discount
   const { data: activeDiscount, error: discountError } =
@@ -53,6 +55,7 @@ export function useBattles(userId?: number) {
   // Find match
   const findMatch = useCallback(async (matchRange?: number) => {
     setIsSearching(true)
+    setIsInQueue(false)
     try {
       const response = await api.post(apiEndpoints.battles.findMatch, {
         matchRange
@@ -66,20 +69,39 @@ export function useBattles(userId?: number) {
 
       const data: FindMatchResponse = response.data
 
+      // Check if user is in queue
+      if (data?.inQueue) {
+        setIsInQueue(true)
+      }
+
       if (!data?.opponent) {
         // Don't show a toast here - let the UI handle the no match case
         return null
       }
 
+      setIsInQueue(false)
       return data.opponent
     } catch (error: any) {
       // Don't show toast here - let the UI handle the error
       console.error('Failed to find match:', error)
+      setIsInQueue(false)
       return null
     } finally {
       setIsSearching(false)
     }
   }, [])
+
+  // Remove from queue
+  const leaveQueue = useCallback(async () => {
+    if (!userId) return
+
+    try {
+      await api.delete(apiEndpoints.battles.findMatch)
+      setIsInQueue(false)
+    } catch (error) {
+      console.error('Failed to leave queue:', error)
+    }
+  }, [userId])
 
   // Create battle
   const createBattle = useCallback(
@@ -155,6 +177,18 @@ export function useBattles(userId?: number) {
     ? dailyLimit.battlesUsed < dailyLimit.maxBattles
     : true
 
+  // Cleanup queue on unmount or when user navigates away
+  useEffect(() => {
+    return () => {
+      if (isInQueue && userId) {
+        // Clean up queue entry when component unmounts
+        api.delete(apiEndpoints.battles.findMatch).catch(error => {
+          console.error('Failed to cleanup queue on unmount:', error)
+        })
+      }
+    }
+  }, [isInQueue, userId])
+
   return {
     activeDiscount,
     battleHistory,
@@ -164,8 +198,10 @@ export function useBattles(userId?: number) {
     isSearching,
     isBattling,
     battleResult,
+    isInQueue,
     findMatch,
     createBattle,
+    leaveQueue,
     isLoading: !battleHistory && !historyError,
     error: discountError || historyError || limitError
   }
