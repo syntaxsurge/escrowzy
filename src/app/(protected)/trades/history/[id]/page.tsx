@@ -332,6 +332,7 @@ export default function TradeDetailPage() {
               completedAt={trade.completedAt}
               metadata={metadata}
               chainId={trade.chainId}
+              tradeType={trade.tradeType}
             />
 
             {/* Trade Details Card */}

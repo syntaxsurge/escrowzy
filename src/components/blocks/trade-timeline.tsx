@@ -39,6 +39,7 @@ interface TradeTimelineProps {
   metadata?: any
   chainId?: number
   className?: string
+  tradeType?: 'p2p' | 'domain'
 }
 
 export function TradeTimeline({
@@ -47,10 +48,67 @@ export function TradeTimeline({
   completedAt,
   metadata,
   chainId,
-  className
+  className,
+  tradeType = 'p2p'
 }: TradeTimelineProps) {
   // Define all possible steps
   const getAllSteps = (): TimelineStep[] => {
+    // Different steps for domain vs P2P trades
+    const isDomain = (tradeType as string) === 'domain'
+    if (isDomain) {
+      const steps: TimelineStep[] = [
+        {
+          id: 'created',
+          title: 'Trade Created',
+          description: 'Domain purchase initiated',
+          icon: <Clock className='h-5 w-5' />,
+          status: 'completed',
+          timestamp: createdAt
+        },
+        {
+          id: 'payment_sent',
+          title: 'Payment Sent',
+          description: 'Buyer sends payment to escrow smart contract',
+          icon: <Send className='h-5 w-5' />,
+          status: 'pending',
+          metadata: {
+            paymentMethod: metadata?.paymentMethod
+          }
+        },
+        {
+          id: 'funded',
+          title: 'Payment Received',
+          description: 'Payment secured in escrow smart contract',
+          icon: <Shield className='h-5 w-5' />,
+          status: 'pending',
+          metadata: {
+            txHash: metadata?.cryptoDepositTxHash
+          }
+        },
+        {
+          id: 'delivered',
+          title: 'Domain Transfer Initiated',
+          description: 'Seller has initiated domain transfer to buyer',
+          icon: <Send className='h-5 w-5' />,
+          status: 'pending'
+        },
+        {
+          id: 'confirmed',
+          title: 'Domain Transfer Confirmed',
+          description:
+            'Buyer confirmed domain receipt and funds released to seller',
+          icon: <Trophy className='h-5 w-5' />,
+          status: 'pending',
+          metadata: {
+            txHash: metadata?.claimTxHash
+          },
+          timestamp: completedAt
+        }
+      ]
+      return steps
+    }
+
+    // P2P trade steps (existing flow)
     const steps: TimelineStep[] = [
       {
         id: 'created',
@@ -101,16 +159,24 @@ export function TradeTimeline({
     ]
 
     // Update step statuses based on current trade status
-    const statusOrder = [
-      'created',
-      'awaiting_deposit',
-      'funded',
-      'payment_sent',
-      'payment_confirmed'
-    ]
+    const isDomainTrade = (tradeType as string) === 'domain'
+    const statusOrder = isDomainTrade
+      ? ['created', 'payment_sent', 'funded', 'delivered', 'confirmed']
+      : [
+          'created',
+          'awaiting_deposit',
+          'funded',
+          'payment_sent',
+          'payment_confirmed'
+        ]
 
-    // Map 'completed' status to 'payment_confirmed' for timeline purposes
-    const mappedStatus = status === 'completed' ? 'payment_confirmed' : status
+    // Map 'completed' status to final step for timeline purposes
+    const mappedStatus =
+      status === 'completed'
+        ? isDomainTrade
+          ? 'confirmed'
+          : 'payment_confirmed'
+        : status
     const currentIndex = statusOrder.indexOf(mappedStatus)
 
     steps.forEach((step, index) => {

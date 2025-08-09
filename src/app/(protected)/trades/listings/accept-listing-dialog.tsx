@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertCircle, Shield, ArrowRight } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import { mutate } from 'swr'
 import { z } from 'zod'
 
 import { navigationProgress } from '@/components/providers/navigation-progress'
@@ -193,12 +194,18 @@ export function AcceptListingDialog({
       )
 
       if (response.success) {
-        handleFormSuccess(
-          toast,
-          'Trade created successfully. Seller has 15 minutes to deposit crypto.'
-        )
+        // Different success messages for P2P vs Domain trades
+        const successMessage = isDomainListing
+          ? 'Trade created successfully. You can now send payment to complete the purchase.'
+          : 'Trade created successfully. Seller has 15 minutes to deposit crypto.'
+
+        handleFormSuccess(toast, successMessage)
         form.reset()
         onSuccess()
+
+        // Invalidate the active trades cache to ensure new trade shows
+        await mutate(apiEndpoints.trades.userWithParams('status=active'))
+
         // Navigate to active trades with progress indicator
         navigationProgress.start()
         router.push(appRoutes.trades.active)

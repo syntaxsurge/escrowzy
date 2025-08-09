@@ -88,8 +88,10 @@ export function GamifiedTradeCard({
 
   // Get action button config - ensure visibility for all statuses
   const getActionButton = () => {
-    // For sellers with awaiting_deposit status - use robust check
-    if (trade.status === 'awaiting_deposit' && isSeller) {
+    const isDomainTrade = trade.tradeType === 'domain'
+
+    // For P2P trades: sellers with awaiting_deposit status
+    if (trade.status === 'awaiting_deposit' && isSeller && !isDomainTrade) {
       return {
         action: 'deposit',
         label: 'Deposit Crypto to Escrow',
@@ -101,8 +103,21 @@ export function GamifiedTradeCard({
       }
     }
 
-    // For buyers who need to send payment
-    if (trade.status === 'funded' && isBuyer) {
+    // For domain trades: buyers send payment directly when trade is created
+    if (trade.status === 'created' && isBuyer && isDomainTrade) {
+      return {
+        action: 'payment_sent',
+        label: 'Send Payment',
+        icon: <Send className='h-5 w-5' />,
+        variant: 'default' as const,
+        className:
+          'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0',
+        pulse: true
+      }
+    }
+
+    // For P2P trades: buyers mark payment sent after crypto is funded
+    if (trade.status === 'funded' && isBuyer && !isDomainTrade) {
       return {
         action: 'payment_sent',
         label: 'Mark Payment Sent',
@@ -114,8 +129,21 @@ export function GamifiedTradeCard({
       }
     }
 
-    // For sellers to confirm payment
-    if (trade.status === 'payment_sent' && isSeller) {
+    // For domain trades: sellers initiate domain transfer after payment
+    if (trade.status === 'funded' && isSeller && isDomainTrade) {
+      return {
+        action: 'deliver',
+        label: 'Initiate Domain Transfer',
+        icon: <Send className='h-5 w-5' />,
+        variant: 'default' as const,
+        className:
+          'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0',
+        pulse: true
+      }
+    }
+
+    // For sellers to confirm payment (P2P) or domain transfer completed (Domain)
+    if (trade.status === 'payment_sent' && isSeller && !isDomainTrade) {
       return {
         action: 'confirm',
         label: 'Confirm Payment Received',
@@ -127,8 +155,21 @@ export function GamifiedTradeCard({
       }
     }
 
-    // For buyers who accepted a trade (initial state)
-    if (trade.status === 'created' && isBuyer) {
+    // For domain trades: buyers confirm domain receipt
+    if (trade.status === 'delivered' && isBuyer && isDomainTrade) {
+      return {
+        action: 'confirm',
+        label: 'Confirm Domain Received',
+        icon: <CheckCircle className='h-5 w-5' />,
+        variant: 'default' as const,
+        className:
+          'bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white border-0',
+        pulse: true
+      }
+    }
+
+    // For buyers who accepted a P2P trade (initial state)
+    if (trade.status === 'created' && isBuyer && !isDomainTrade) {
       return {
         action: 'fund',
         label: 'Fund Escrow',
