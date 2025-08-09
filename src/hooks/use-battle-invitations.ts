@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 import useSWR from 'swr'
 
-import { useToast } from '@/hooks/use-toast'
+// Removed useToast - all notifications handled in UI
 import { api } from '@/lib/api/http-client'
 import type { BattleInvitation } from '@/lib/db/schema'
 import { pusherClient } from '@/lib/pusher'
@@ -19,7 +19,7 @@ interface InvitationWithUser extends BattleInvitation {
 }
 
 export function useBattleInvitations(userId?: number) {
-  const { toast } = useToast()
+  // Removed toast - all notifications handled in UI
   const [pendingInvitations, setPendingInvitations] = useState<
     InvitationWithUser[]
   >([])
@@ -38,11 +38,7 @@ export function useBattleInvitations(userId?: number) {
         const response = await api.post('/api/battles/accept', { invitationId })
 
         if (response.data.success) {
-          toast({
-            title: '⚔️ Battle Starting!',
-            description: 'Get ready to fight!',
-            variant: 'default'
-          })
+          // No toast - UI handles battle starting state
 
           // Remove from pending list
           setPendingInvitations(prev =>
@@ -53,18 +49,11 @@ export function useBattleInvitations(userId?: number) {
           return response.data.data
         }
       } catch (error: any) {
-        // Don't show toast for invalid invitations - let the UI handle it
-        if (error.response?.data?.error !== 'Invalid or expired invitation') {
-          toast({
-            title: 'Failed to accept',
-            description: error.response?.data?.error || 'Something went wrong',
-            variant: 'destructive'
-          })
-        }
+        // Don't show any toasts - let the UI handle all errors
         return null
       }
     },
-    [toast, mutate]
+    [mutate]
   )
 
   // Reject invitation
@@ -83,42 +72,27 @@ export function useBattleInvitations(userId?: number) {
           return true
         }
       } catch (error: any) {
-        toast({
-          title: 'Failed to reject',
-          description: error.response?.data?.error || 'Something went wrong',
-          variant: 'destructive'
-        })
+        // Don't show any toasts - let the UI handle all errors
         return false
       }
     },
-    [toast, mutate]
+    [mutate]
   )
 
   // Send invitation
-  const sendInvitation = useCallback(
-    async (toUserId: number) => {
-      try {
-        const response = await api.post('/api/battles/invite', { toUserId })
+  const sendInvitation = useCallback(async (toUserId: number) => {
+    try {
+      const response = await api.post('/api/battles/invite', { toUserId })
 
-        if (response.data.success) {
-          toast({
-            title: '⚔️ Battle invitation sent!',
-            description: 'Waiting for opponent to accept...',
-            variant: 'default'
-          })
-          return response.data.data
-        }
-      } catch (error: any) {
-        toast({
-          title: 'Failed to send invitation',
-          description: error.response?.data?.error || 'Something went wrong',
-          variant: 'destructive'
-        })
-        return null
+      if (response.data.success) {
+        // No toast - UI handles invitation sent state
+        return response.data.data
       }
-    },
-    [toast]
-  )
+    } catch (error: any) {
+      // Don't show any toasts - let the UI handle all errors
+      return null
+    }
+  }, [])
 
   // Setup Pusher for real-time updates
   useEffect(() => {
@@ -146,11 +120,7 @@ export function useBattleInvitations(userId?: number) {
         }
       ])
 
-      toast({
-        title: '⚔️ Battle Challenge!',
-        description: `${displayName} wants to battle you!`,
-        variant: 'default'
-      })
+      // Don't show toast - UI will handle the invitation display
 
       mutate()
     })
@@ -183,7 +153,7 @@ export function useBattleInvitations(userId?: number) {
       channel.unbind('battle-rejected')
       pusherClient?.unsubscribe(`user-${userId}`)
     }
-  }, [userId, toast, mutate])
+  }, [userId, mutate])
 
   // Update pending invitations from SWR data
   useEffect(() => {

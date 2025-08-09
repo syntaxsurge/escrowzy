@@ -11,22 +11,16 @@ import {
   Swords,
   User,
   UserX,
-  RefreshCw,
-  Timer,
-  Sparkles,
-  Globe,
-  Users
+  RefreshCw
 } from 'lucide-react'
 import useSWR from 'swr'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { Progress } from '@/components/ui/progress'
 import { Slider } from '@/components/ui/slider'
-import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib'
 import type { DailyBattleLimit } from '@/types/battle'
 
@@ -40,7 +34,6 @@ interface MatchmakingInterfaceProps {
   onLeaveQueue: () => Promise<void>
 }
 
-const SEARCH_DURATION = 15000 // 15 seconds search time
 const SEARCH_MESSAGES = [
   'Scanning the battlefield...',
   'Looking for worthy opponents...',
@@ -61,12 +54,8 @@ export function MatchmakingInterface({
 }: MatchmakingInterfaceProps) {
   const [matchRange, setMatchRange] = useState(20)
   const [searchingAnimation, setSearchingAnimation] = useState(0)
-  const [searchStartTime, setSearchStartTime] = useState<number | null>(null)
-  const [timeRemaining, setTimeRemaining] = useState(0)
   const [currentMessage, setCurrentMessage] = useState(0)
-  const [showNoMatchFound, setShowNoMatchFound] = useState(false)
   const [isLocalSearching, setIsLocalSearching] = useState(false)
-  const [enableTimeLimit, setEnableTimeLimit] = useState(true)
 
   // Fetch live battle stats and queue info
   const { data: _liveStats } = useSWR(
@@ -103,193 +92,37 @@ export function MatchmakingInterface({
 
   // Handle search initiation
   const handleFindMatch = useCallback(async () => {
-    setShowNoMatchFound(false)
     setIsLocalSearching(true)
-    setSearchStartTime(Date.now())
     setCurrentMessage(0)
 
     // Start the actual search
     const result = await onFindMatch(matchRange)
 
-    // If no match found immediately, let the timer continue
-    if (!result) {
-      // Timer will handle the no match found state
-    } else {
+    if (result) {
       // Match found, stop searching
       setIsLocalSearching(false)
-      setSearchStartTime(null)
     }
+    // If no match, we stay in queue - no need to show any error
   }, [matchRange, onFindMatch])
 
-  // Countdown timer and message cycling
+  // Message cycling animation
   useEffect(() => {
-    if (searchStartTime && (isLocalSearching || isInQueue)) {
+    if (isLocalSearching || isInQueue) {
       const interval = setInterval(() => {
-        const elapsed = Date.now() - searchStartTime
-        const remaining = Math.max(0, SEARCH_DURATION - elapsed)
-        setTimeRemaining(Math.ceil(remaining / 1000))
-
-        // Update progress if time limit is enabled
-        if (enableTimeLimit) {
-          setSearchingAnimation((elapsed / SEARCH_DURATION) * 100)
-        } else {
-          // For unlimited searching, loop the animation
-          setSearchingAnimation(
-            ((elapsed % SEARCH_DURATION) / SEARCH_DURATION) * 100
-          )
-        }
-
-        // Cycle through messages
-        const messageIndex = Math.floor(
-          ((elapsed % SEARCH_DURATION) / SEARCH_DURATION) *
-            SEARCH_MESSAGES.length
-        )
-        setCurrentMessage(Math.min(messageIndex, SEARCH_MESSAGES.length - 1))
-
-        // Check if search time is up (only if time limit is enabled)
-        if (enableTimeLimit && remaining <= 0 && !isInQueue) {
-          setIsLocalSearching(false)
-          setSearchStartTime(null)
-          setShowNoMatchFound(true)
-          setSearchingAnimation(0)
-        }
-      }, 100)
+        setCurrentMessage(prev => (prev + 1) % SEARCH_MESSAGES.length)
+        setSearchingAnimation(prev => (prev + 10) % 100)
+      }, 2000) // Change message every 2 seconds
 
       return () => clearInterval(interval)
     }
-  }, [searchStartTime, isLocalSearching, isInQueue, enableTimeLimit])
+  }, [isLocalSearching, isInQueue])
 
   // Reset state when isSearching changes
   useEffect(() => {
     if (!isSearching && !isLocalSearching) {
       setSearchingAnimation(0)
-      setTimeRemaining(0)
     }
   }, [isSearching, isLocalSearching])
-
-  // Show no match found screen
-  if (showNoMatchFound) {
-    return (
-      <div className='space-y-6'>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className='text-center'
-        >
-          <motion.div
-            initial={{ rotate: 0 }}
-            animate={{ rotate: [0, -10, 10, -10, 0] }}
-            transition={{ duration: 0.5 }}
-            className='relative mb-6 inline-block'
-          >
-            <div className='relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-orange-500/20 to-red-500/20'>
-              <UserX className='h-16 w-16 text-orange-500' />
-            </div>
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: 'spring' }}
-              className='absolute -top-2 -right-2'
-            >
-              <Badge className='bg-red-500 text-white'>NO MATCH</Badge>
-            </motion.div>
-          </motion.div>
-
-          <h3 className='bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-3xl font-black text-transparent'>
-            NO OPPONENTS FOUND
-          </h3>
-
-          <p className='text-muted-foreground mt-2 text-lg'>
-            The battlefield is empty right now!
-          </p>
-
-          <div className='mx-auto mt-6 max-w-md space-y-4'>
-            <Card className='border-orange-500/30 bg-gradient-to-br from-orange-500/10 to-red-500/10'>
-              <CardContent className='pt-6'>
-                <div className='space-y-3'>
-                  <div className='flex items-center gap-3'>
-                    <Globe className='h-5 w-5 text-orange-500' />
-                    <p className='text-sm font-semibold'>
-                      Search Range: {minCP} - {maxCP} CP
-                    </p>
-                  </div>
-                  <p className='text-muted-foreground text-sm'>
-                    We couldn't find any warriors matching your combat power.
-                    They might be in other battles or offline.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className='grid grid-cols-3 gap-3'>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className='rounded-lg border border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 p-3 text-center'
-              >
-                <Timer className='mx-auto mb-2 h-6 w-6 text-blue-500' />
-                <p className='text-xs font-bold'>WAIT</p>
-                <p className='text-muted-foreground text-xs'>Try again soon</p>
-              </motion.div>
-
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className='rounded-lg border border-green-500/30 bg-gradient-to-br from-green-500/10 to-emerald-500/10 p-3 text-center'
-              >
-                <Users className='mx-auto mb-2 h-6 w-6 text-green-500' />
-                <p className='text-xs font-bold'>INVITE</p>
-                <p className='text-muted-foreground text-xs'>Bring friends</p>
-              </motion.div>
-
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className='rounded-lg border border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-pink-500/10 p-3 text-center'
-              >
-                <Sparkles className='mx-auto mb-2 h-6 w-6 text-purple-500' />
-                <p className='text-xs font-bold'>LEVEL UP</p>
-                <p className='text-muted-foreground text-xs'>Gain more CP</p>
-              </motion.div>
-            </div>
-
-            <div className='flex flex-col gap-3'>
-              <Button
-                onClick={() => {
-                  setMatchRange(Math.min(matchRange + 10, 50))
-                  setShowNoMatchFound(false)
-                }}
-                variant='outline'
-                className='gap-2 border-purple-500/30 hover:bg-purple-500/10'
-                disabled={matchRange >= 50}
-              >
-                <Zap className='h-4 w-4' />
-                Expand Search Range{' '}
-                {matchRange < 50 && `(to ±${matchRange + 10}%)`}
-              </Button>
-
-              <Button
-                onClick={() => {
-                  setShowNoMatchFound(false)
-                  handleFindMatch()
-                }}
-                className='gap-2 bg-gradient-to-r from-green-600 to-emerald-700 font-bold text-white hover:from-green-700 hover:to-emerald-800'
-              >
-                <RefreshCw className='h-4 w-4' />
-                SEARCH AGAIN
-              </Button>
-            </div>
-
-            <Alert className='border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 to-amber-500/10'>
-              <Info className='h-4 w-4 text-yellow-500' />
-              <AlertDescription>
-                <strong>Pro Tip:</strong> Peak battle hours are usually evenings
-                and weekends. Try expanding your search range or come back
-                later!
-              </AlertDescription>
-            </Alert>
-          </div>
-        </motion.div>
-      </div>
-    )
-  }
 
   // Show searching overlay when looking for match
   if (isLocalSearching || isSearching || isInQueue) {
@@ -322,30 +155,22 @@ export function MatchmakingInterface({
                 <Swords className='text-primary h-16 w-16' />
               </motion.div>
             </div>
-            {((enableTimeLimit && timeRemaining > 0) ||
-              isInQueue ||
-              !enableTimeLimit) && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className='absolute -right-2 -bottom-2 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-pink-600 text-white shadow-lg'
+            >
               <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className='absolute -right-2 -bottom-2 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-pink-600 text-white shadow-lg'
+                animate={{ rotate: 360 }}
+                transition={{
+                  duration: 1,
+                  repeat: Infinity,
+                  ease: 'linear'
+                }}
               >
-                {isInQueue || !enableTimeLimit ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      ease: 'linear'
-                    }}
-                  >
-                    <RefreshCw className='h-6 w-6' />
-                  </motion.div>
-                ) : (
-                  <span className='text-lg font-bold'>{timeRemaining}</span>
-                )}
+                <RefreshCw className='h-6 w-6' />
               </motion.div>
-            )}
+            </motion.div>
           </div>
 
           <motion.h3
@@ -357,9 +182,7 @@ export function MatchmakingInterface({
           </motion.h3>
 
           <div className='mx-auto mt-4 max-w-xs space-y-3'>
-            {enableTimeLimit && (
-              <Progress value={searchingAnimation} className='h-3' />
-            )}
+            <Progress value={searchingAnimation} className='h-3' />
             <AnimatePresence mode='wait'>
               <motion.p
                 key={currentMessage}
@@ -376,18 +199,12 @@ export function MatchmakingInterface({
             <p className='text-muted-foreground text-xs'>
               Finding warriors within {minCP} - {maxCP} CP range
             </p>
-            {!enableTimeLimit && (
-              <p className='text-xs font-medium text-yellow-500'>
-                ⚡ Unlimited search mode - No time limit
-              </p>
-            )}
             <Button
               onClick={() => {
                 if (isInQueue) {
                   onLeaveQueue()
                 } else {
                   setIsLocalSearching(false)
-                  setSearchStartTime(null)
                   setSearchingAnimation(0)
                 }
               }}
@@ -484,22 +301,6 @@ export function MatchmakingInterface({
       <Card>
         <CardContent className='pt-6'>
           <div className='space-y-4'>
-            {/* Time Limit Toggle */}
-            <div className='flex items-center justify-between rounded-lg border p-3'>
-              <div className='space-y-0.5'>
-                <label className='text-sm font-medium'>Search Time Limit</label>
-                <p className='text-muted-foreground text-xs'>
-                  {enableTimeLimit
-                    ? 'Stop searching after 15 seconds'
-                    : 'Keep searching until match found'}
-                </p>
-              </div>
-              <Switch
-                checked={enableTimeLimit}
-                onCheckedChange={setEnableTimeLimit}
-              />
-            </div>
-
             {/* Match Range Selector */}
             <div className='flex items-center justify-between'>
               <label className='text-sm font-medium'>Match Range</label>

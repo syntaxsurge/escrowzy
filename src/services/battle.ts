@@ -560,6 +560,26 @@ export async function acceptBattleInvitation(
       return null
     }
 
+    // First, delete any existing accepted invitations between these users
+    // to avoid unique constraint violation
+    await db
+      .delete(battleInvitations)
+      .where(
+        and(
+          or(
+            and(
+              eq(battleInvitations.fromUserId, invitation.fromUserId),
+              eq(battleInvitations.toUserId, invitation.toUserId)
+            ),
+            and(
+              eq(battleInvitations.fromUserId, invitation.toUserId),
+              eq(battleInvitations.toUserId, invitation.fromUserId)
+            )
+          ),
+          eq(battleInvitations.status, 'accepted')
+        )
+      )
+
     // Update invitation status
     await db
       .update(battleInvitations)

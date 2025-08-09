@@ -5,7 +5,7 @@ import { useCallback, useState, useEffect } from 'react'
 import useSWR, { mutate } from 'swr'
 
 import { apiEndpoints } from '@/config/api-endpoints'
-import { useToast } from '@/hooks/use-toast'
+// Removed useToast - all notifications handled in UI
 import { api } from '@/lib/api/http-client'
 import type {
   BattleDiscount,
@@ -24,7 +24,7 @@ interface FindMatchResponse {
 }
 
 export function useBattles(userId?: number) {
-  const { toast } = useToast()
+  // Removed toast - all notifications handled in UI
   const [isSearching, setIsSearching] = useState(false)
   const [isBattling, setIsBattling] = useState(false)
   const [battleResult, setBattleResult] = useState<BattleResult | null>(null)
@@ -125,35 +125,18 @@ export function useBattles(userId?: number) {
           mutate(apiEndpoints.battles.statsByUserId(userId))
         }
 
-        // Show result toast
-        if (result.winnerId === userId) {
-          toast({
-            title: '🏆 Victory!',
-            description: `You won! Enjoy ${result.feeDiscountPercent}% off fees for 24 hours!`,
-            variant: 'default'
-          })
-        } else {
-          toast({
-            title: 'Defeat',
-            description:
-              'Better luck next time! You gained 10 XP for participating.',
-            variant: 'default'
-          })
-        }
+        // No toasts - battle result is shown in UI
 
         return result
       } catch (error: any) {
-        toast({
-          title: 'Battle Error',
-          description: error.response?.data?.error || 'Failed to create battle',
-          variant: 'destructive'
-        })
+        // No toast - errors are handled in UI
+        console.error('Failed to create battle:', error)
         return null
       } finally {
         setIsBattling(false)
       }
     },
-    [userId, toast]
+    [userId]
   )
 
   // Get battle stats

@@ -26,7 +26,7 @@ import { useBattleRealtime } from '@/hooks/use-battle-realtime'
 import { useBattles } from '@/hooks/use-battles'
 import { useRewards } from '@/hooks/use-rewards'
 import { useSession } from '@/hooks/use-session'
-import { useToast } from '@/hooks/use-toast'
+// Removed useToast - all notifications handled in UI
 import { api } from '@/lib/api/http-client'
 import { formatNumber } from '@/lib/utils/string'
 
@@ -60,7 +60,7 @@ interface CurrentBattleData {
 
 export default function BattleArenaPage() {
   const { user } = useSession()
-  const { toast } = useToast()
+  // Removed toast - all notifications handled in UI
   const { stats } = useRewards(user?.id)
   const {
     activeDiscount,
@@ -121,16 +121,12 @@ export default function BattleArenaPage() {
         }, 1000)
       }
     },
-    onInvitationRejected: data => {
+    onInvitationRejected: _data => {
       if (battleState === 'invitation-sent') {
         setBattleState('idle')
         setCurrentOpponent(null)
         setCurrentInvitationId(null)
-        toast({
-          title: 'Challenge Declined',
-          description: 'Your opponent declined the battle.',
-          variant: 'default'
-        })
+        // No toast - UI already shows the state change
       }
     },
     onBattleStarted: data => {
@@ -178,15 +174,8 @@ export default function BattleArenaPage() {
         setBattleState('idle')
       }
     } else {
-      // No match found, stay in queue or return to idle
-      if (isInQueue) {
-        toast({
-          title: 'Added to Queue',
-          description:
-            "You've been added to the matchmaking queue. We'll notify you when an opponent is found.",
-          variant: 'default'
-        })
-      }
+      // No match found, stay in queue (no need to show anything)
+      // User is already informed by the UI state
       setBattleState('idle')
     }
 
@@ -256,25 +245,9 @@ export default function BattleArenaPage() {
     (winnerId: number) => {
       setBattleState('result')
 
-      // The battle result will be updated via real-time events
-      setTimeout(() => {
-        if (winnerId === user?.id) {
-          toast({
-            title: '🏆 Victory!',
-            description: `You won! Enjoy ${currentBattleData?.feeDiscountPercent || 25}% off fees for 24 hours!`,
-            variant: 'default'
-          })
-        } else {
-          toast({
-            title: 'Defeat',
-            description:
-              'Better luck next time! You gained 10 XP for participating.',
-            variant: 'default'
-          })
-        }
-      }, 500)
+      // The battle result is shown in the UI - no toasts needed
     },
-    [user?.id, currentBattleData, toast]
+    [user?.id, currentBattleData]
   )
 
   // Handle power boost from interactions
