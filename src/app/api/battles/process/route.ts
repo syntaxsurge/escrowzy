@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 
 import { getSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
@@ -14,6 +14,8 @@ const BATTLE_CONSTANTS = {
   DAMAGE_VARIANCE: 8,
   CRITICAL_HIT_CHANCE: 0.15,
   CRITICAL_MULTIPLIER: 2,
+  DODGE_CHANCE: 0.1, // 10% chance to dodge
+  DEFEND_REDUCTION: 0.5, // 50% damage reduction when defending
   ROUND_INTERVAL: 3000, // 3 seconds between rounds
   DISCOUNT_DURATION_HOURS: 24,
   WINNER_DISCOUNT_PERCENT: 25
@@ -165,6 +167,7 @@ export async function POST(request: Request) {
 
         // Calculate damage for this round
         const attacker = Math.random() > 0.5 ? 1 : 2
+        const defender = attacker === 1 ? 2 : 1
         const attackPower = attacker === 1 ? battle.player1CP : battle.player2CP
         const defensePower =
           attacker === 1 ? battle.player2CP : battle.player1CP
@@ -175,24 +178,53 @@ export async function POST(request: Request) {
             ? (battleState.player1Actions as BattleAction[]) || []
             : (battleState.player2Actions as BattleAction[]) || []
 
+        const defenderActions =
+          defender === 1
+            ? (battleState.player1Actions as BattleAction[]) || []
+            : (battleState.player2Actions as BattleAction[]) || []
+
         const actionBonus = attackerActions.length * 2 // Bonus for being active
 
-        // Calculate damage
-        const baseDamage =
-          BATTLE_CONSTANTS.BASE_DAMAGE +
-          Math.random() * BATTLE_CONSTANTS.DAMAGE_VARIANCE
-        const powerRatio =
-          (attackPower + actionBonus) / (attackPower + defensePower)
-        const damageMultiplier = 0.5 + powerRatio
-
-        const isCritical = Math.random() < BATTLE_CONSTANTS.CRITICAL_HIT_CHANCE
-        const critMultiplier = isCritical
-          ? BATTLE_CONSTANTS.CRITICAL_MULTIPLIER
-          : 1
-
-        const damage = Math.floor(
-          baseDamage * damageMultiplier * critMultiplier
+        // Check if defender is defending
+        const recentDefenderActions = defenderActions.filter(
+          (a: BattleAction) => Date.now() - a.timestamp < 3000
         )
+        const isDefending = recentDefenderActions.some(
+          (a: BattleAction) => a.type === 'defend'
+        )
+
+        // Check for dodge
+        const isDodged = Math.random() < BATTLE_CONSTANTS.DODGE_CHANCE
+
+        let damage = 0
+        let actionResult: 'hit' | 'defended' | 'dodged' | 'blocked' = 'hit'
+        let isCritical = false
+
+        if (isDodged) {
+          damage = 0
+          actionResult = 'dodged'
+        } else {
+          // Calculate base damage
+          const baseDamage =
+            BATTLE_CONSTANTS.BASE_DAMAGE +
+            Math.random() * BATTLE_CONSTANTS.DAMAGE_VARIANCE
+          const powerRatio =
+            (attackPower + actionBonus) / (attackPower + defensePower)
+          const damageMultiplier = 0.5 + powerRatio
+
+          isCritical = Math.random() < BATTLE_CONSTANTS.CRITICAL_HIT_CHANCE
+          const critMultiplier = isCritical
+            ? BATTLE_CONSTANTS.CRITICAL_MULTIPLIER
+            : 1
+
+          damage = Math.floor(baseDamage * damageMultiplier * critMultiplier)
+
+          // Apply defense reduction
+          if (isDefending && !isCritical) {
+            damage = Math.floor(damage * BATTLE_CONSTANTS.DEFEND_REDUCTION)
+            actionResult = 'defended'
+          }
+        }
 
         // Apply damage
         let player1Health = battleState.player1Health
@@ -211,26 +243,40 @@ export async function POST(request: Request) {
           attacker,
           damage,
           isCritical,
+          actionResult,
           player1Health,
           player2Health,
           timestamp: new Date().toISOString()
         })
 
-        // Save round - check if it already exists first
-        try {
-          await db.insert(battleRounds).values({
-            battleId,
-            roundNumber: newRound,
-            attacker,
-            damage,
-            isCritical,
-            player1Health,
-            player2Health
-          })
-        } catch (error: any) {
-          // If duplicate key error, skip insertion but continue processing
-          if (error?.code !== '23505') {
-            console.error('Error inserting battle round:', error)
+        // Check if round already exists before inserting
+        const [existingRound] = await db
+          .select()
+          .from(battleRounds)
+          .where(
+            and(
+              eq(battleRounds.battleId, battleId),
+              eq(battleRounds.roundNumber, newRound)
+            )
+          )
+          .limit(1)
+
+        if (!existingRound) {
+          try {
+            await db.insert(battleRounds).values({
+              battleId,
+              roundNumber: newRound,
+              attacker,
+              damage,
+              isCritical,
+              player1Health,
+              player2Health
+            })
+          } catch (error: any) {
+            // If duplicate key error due to race condition, skip insertion
+            if (error?.code !== '23505') {
+              console.error('Error inserting battle round:', error)
+            }
           }
         }
 
@@ -247,13 +293,14 @@ export async function POST(request: Request) {
           })
           .where(eq(battleStates.battleId, battleId))
 
-        // Send real-time update
+        // Send real-time update with action result
         await sendBattleEvent('battle-update', {
           battleId,
           round: newRound,
           attacker,
           damage,
           isCritical,
+          actionResult,
           player1Health,
           player2Health,
           player1Id: battle.player1Id,

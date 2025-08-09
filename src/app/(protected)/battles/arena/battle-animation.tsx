@@ -35,6 +35,9 @@ interface BattleAnimationProps {
     combatPower: number
   }
   battleId?: number
+  isPlayer1?: boolean
+  actualPlayer1Id?: number
+  actualPlayer2Id?: number
   onComplete?: (winnerId: number) => void
 }
 
@@ -44,12 +47,16 @@ interface DamageNumber {
   x: number
   y: number
   isCritical: boolean
+  actionResult?: 'hit' | 'defended' | 'dodged' | 'blocked'
 }
 
 export function BattleAnimation({
   player1,
   player2,
   battleId,
+  isPlayer1 = true,
+  actualPlayer1Id,
+  actualPlayer2Id,
   onComplete
 }: BattleAnimationProps) {
   const { user } = useSession()
@@ -78,20 +85,42 @@ export function BattleAnimation({
     onBattleUpdate: data => {
       if (data.battleId !== battleId) return
 
-      // Update health - ensure it shows 0 when defeated
-      setPlayer1Health(Math.max(0, data.player1Health))
-      setPlayer2Health(Math.max(0, data.player2Health))
+      // Update health based on actual battle positions
+      // If we're player1 in the actual battle, use the data directly
+      // If we're player2, we need to swap the health values for display
+      if (isPlayer1) {
+        setPlayer1Health(Math.max(0, data.player1Health))
+        setPlayer2Health(Math.max(0, data.player2Health))
+      } else {
+        // Swap health values for player2's perspective
+        setPlayer1Health(Math.max(0, data.player2Health))
+        setPlayer2Health(Math.max(0, data.player1Health))
+      }
       setCurrentRound(data.round)
 
-      // Show attack animation
+      // Show attack animation with correct perspective
       if (data.attacker) {
-        setCurrentAttacker(data.attacker)
+        // Adjust attacker based on perspective
+        const displayAttacker = isPlayer1
+          ? data.attacker === 1
+            ? 1
+            : 2
+          : data.attacker === 1
+            ? 2
+            : 1
 
-        // Add damage number
+        setCurrentAttacker(displayAttacker)
+
+        // Determine action result
+        const actionResult =
+          data.actionResult || (data.damage === 0 ? 'dodged' : 'hit')
+
+        // Add damage number with action result
         addDamageNumber(
           data.damage,
-          data.attacker === 1 ? 2 : 1,
-          data.isCritical
+          displayAttacker === 1 ? 2 : 1,
+          data.isCritical,
+          actionResult
         )
 
         // Screen shake on critical
@@ -163,14 +192,16 @@ export function BattleAnimation({
   const addDamageNumber = (
     damage: number,
     targetPlayer: 1 | 2,
-    isCritical: boolean = false
+    isCritical: boolean = false,
+    actionResult: 'hit' | 'defended' | 'dodged' | 'blocked' = 'hit'
   ) => {
     const newDamage: DamageNumber = {
       id: Date.now() + Math.random(),
       damage,
       x: targetPlayer === 1 ? 25 : 75,
       y: 50,
-      isCritical
+      isCritical,
+      actionResult
     }
     setDamageNumbers(prev => [...prev, newDamage])
 
@@ -457,19 +488,38 @@ export function BattleAnimation({
                   className='pointer-events-none absolute z-30'
                   style={{ left: `${dmg.x}%`, top: '40%' }}
                 >
-                  <span
-                    className={cn(
-                      'font-black',
-                      dmg.isCritical
-                        ? 'text-4xl text-red-500'
-                        : 'text-2xl text-yellow-500'
-                    )}
-                  >
-                    -{dmg.damage}
-                    {dmg.isCritical && (
-                      <span className='ml-2 text-lg'>CRITICAL!</span>
-                    )}
-                  </span>
+                  {dmg.actionResult === 'dodged' ? (
+                    <span className='text-2xl font-black text-blue-500'>
+                      DODGED!
+                    </span>
+                  ) : dmg.actionResult === 'defended' ? (
+                    <span className='text-2xl font-black text-green-500'>
+                      DEFENDED!
+                      {dmg.damage > 0 && (
+                        <span className='ml-2 text-lg text-yellow-500'>
+                          -{dmg.damage}
+                        </span>
+                      )}
+                    </span>
+                  ) : dmg.actionResult === 'blocked' ? (
+                    <span className='text-2xl font-black text-purple-500'>
+                      BLOCKED!
+                    </span>
+                  ) : (
+                    <span
+                      className={cn(
+                        'font-black',
+                        dmg.isCritical
+                          ? 'text-4xl text-red-500'
+                          : 'text-2xl text-yellow-500'
+                      )}
+                    >
+                      -{dmg.damage}
+                      {dmg.isCritical && (
+                        <span className='ml-2 text-lg'>CRITICAL!</span>
+                      )}
+                    </span>
+                  )}
                 </motion.div>
               ))}
             </AnimatePresence>

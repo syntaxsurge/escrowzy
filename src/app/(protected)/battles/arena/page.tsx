@@ -830,12 +830,14 @@ export default function BattleArenaPage() {
                                   : currentBattleData.player2.combatPower
                               }}
                               player2={{
-                                id: currentOpponent?.userId || 0,
-                                name: currentOpponent?.username || 'Opponent',
-                                combatPower: currentBattleData.isPlayer1
-                                  ? currentBattleData.player2.combatPower
-                                  : currentBattleData.player1.combatPower
+                                id: currentBattleData.opponent.id,
+                                name: currentBattleData.opponent.name,
+                                combatPower:
+                                  currentBattleData.opponent.combatPower
                               }}
+                              isPlayer1={currentBattleData.isPlayer1}
+                              actualPlayer1Id={currentBattleData.player1.id}
+                              actualPlayer2Id={currentBattleData.player2.id}
                               onComplete={handleBattleComplete}
                             />
                           </motion.div>
