@@ -12,8 +12,8 @@ import {
   User,
   Sparkles
 } from 'lucide-react'
-import useSWR from 'swr'
 
+import { LiveStatsDisplay } from '@/components/blocks/battle/live-stats-display'
 import { GamifiedHeader } from '@/components/blocks/trading'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useBattleInvitations } from '@/hooks/use-battle-invitations'
+import { useBattleRealtime } from '@/hooks/use-battle-realtime'
 import { useBattles } from '@/hooks/use-battles'
 import { useRewards } from '@/hooks/use-rewards'
 import { useSession } from '@/hooks/use-session'
@@ -62,12 +63,19 @@ export default function BattleArenaPage() {
     sendInvitation
   } = useBattleInvitations(user?.id)
 
-  // Fetch live battle stats
-  const { data: liveStats } = useSWR(
-    '/api/battles/live-stats',
-    (url: string) => fetch(url).then(res => res.json()),
-    { refreshInterval: 5000 }
-  )
+  // Setup real-time battle events
+  useBattleRealtime(user?.id, {
+    onInvitationAccepted: data => {
+      setWaitingForResponse(false)
+      setCurrentInvitationId(null)
+      // Battle will start automatically
+    },
+    onInvitationRejected: data => {
+      setCurrentOpponent(null)
+      setWaitingForResponse(false)
+      setCurrentInvitationId(null)
+    }
+  })
 
   const handleFindMatch = async (matchRange?: number) => {
     if (!canBattle) return null
@@ -88,9 +96,16 @@ export default function BattleArenaPage() {
   useEffect(() => {
     if (pendingInvitations.length > 0 && !currentOpponent && !isBattling) {
       const latestInvitation = pendingInvitations[0]
+      // Use the improved display name from the API
+      const displayName =
+        latestInvitation.fromUser.name ||
+        (latestInvitation.fromUser as any).email ||
+        `${latestInvitation.fromUser.walletAddress?.slice(0, 6)}...${latestInvitation.fromUser.walletAddress?.slice(-4)}` ||
+        'Anonymous Warrior'
+
       setCurrentOpponent({
         userId: latestInvitation.fromUserId,
-        username: latestInvitation.fromUser.name,
+        username: displayName,
         combatPower: latestInvitation.fromUserCP
       })
       setCurrentInvitationId(latestInvitation.id)
@@ -130,6 +145,9 @@ export default function BattleArenaPage() {
             activeDiscount && <DiscountTimer discount={activeDiscount} />
           }
         />
+
+        {/* Live Platform Stats */}
+        <LiveStatsDisplay className='mb-6' />
 
         {/* Stats Overview */}
         <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
@@ -240,43 +258,6 @@ export default function BattleArenaPage() {
               </TabsList>
 
               <TabsContent value='arena' className='mt-6 space-y-6'>
-                {/* Live Platform Stats */}
-                <div className='grid grid-cols-3 gap-4'>
-                  <Card className='group relative overflow-hidden border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/10'>
-                    <CardContent className='p-4 text-center'>
-                      <User className='mx-auto mb-2 h-6 w-6 text-blue-500' />
-                      <p className='text-2xl font-bold text-blue-500'>
-                        {liveStats?.data?.warriorsOnline || 0}
-                      </p>
-                      <p className='text-muted-foreground text-xs'>
-                        Warriors Online
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className='group relative overflow-hidden border-green-500/20 bg-gradient-to-br from-green-500/10 to-emerald-500/10'>
-                    <CardContent className='p-4 text-center'>
-                      <Swords className='mx-auto mb-2 h-6 w-6 text-green-500' />
-                      <p className='text-2xl font-bold text-green-500'>
-                        {liveStats?.data?.activeBattles || 0}
-                      </p>
-                      <p className='text-muted-foreground text-xs'>
-                        Active Battles
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className='group relative overflow-hidden border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-pink-500/10'>
-                    <CardContent className='p-4 text-center'>
-                      <Flame className='mx-auto mb-2 h-6 w-6 text-purple-500' />
-                      <p className='text-2xl font-bold text-purple-500'>
-                        {liveStats?.data?.inQueue || 0}
-                      </p>
-                      <p className='text-muted-foreground text-xs'>In Queue</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
                 {/* Battle Interface */}
                 <Card className='group border-primary/20 from-primary/10 relative overflow-hidden bg-gradient-to-br to-purple-600/10 transition-all hover:scale-[1.01]'>
                   <CardHeader>

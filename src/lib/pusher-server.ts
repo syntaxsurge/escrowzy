@@ -246,3 +246,102 @@ export async function broadcastTradeDisputed(
     console.error('Failed to broadcast trade disputed event:', error)
   }
 }
+
+// Battle-specific broadcast functions
+export async function broadcastBattleInvitation(
+  fromUserId: number,
+  toUserId: number,
+  invitationData: any
+) {
+  if (!pusherServer) return
+
+  try {
+    // Send to the recipient's personal channel
+    await pusherServer.trigger(`user-${toUserId}`, 'battle-invitation', {
+      ...invitationData,
+      timestamp: new Date().toISOString()
+    })
+  } catch (error) {
+    console.error('Failed to broadcast battle invitation:', error)
+  }
+}
+
+export async function broadcastBattleAccepted(
+  fromUserId: number,
+  toUserId: number,
+  battleData: any
+) {
+  if (!pusherServer) return
+
+  try {
+    // Notify both users that battle is starting
+    await Promise.all([
+      pusherServer.trigger(`user-${fromUserId}`, 'battle-accepted', {
+        ...battleData,
+        timestamp: new Date().toISOString()
+      }),
+      pusherServer.trigger(`user-${toUserId}`, 'battle-started', {
+        ...battleData,
+        timestamp: new Date().toISOString()
+      })
+    ])
+  } catch (error) {
+    console.error('Failed to broadcast battle accepted:', error)
+  }
+}
+
+export async function broadcastBattleRejected(
+  fromUserId: number,
+  toUserId: number,
+  invitationId: number
+) {
+  if (!pusherServer) return
+
+  try {
+    // Notify the inviter that their invitation was rejected
+    await pusherServer.trigger(`user-${fromUserId}`, 'battle-rejected', {
+      invitationId,
+      rejectedBy: toUserId,
+      timestamp: new Date().toISOString()
+    })
+  } catch (error) {
+    console.error('Failed to broadcast battle rejected:', error)
+  }
+}
+
+export async function broadcastBattleStats() {
+  if (!pusherServer) return
+
+  try {
+    // Broadcast to global battle stats channel
+    await pusherServer.trigger('battle-stats', 'stats-updated', {
+      timestamp: new Date().toISOString()
+    })
+  } catch (error) {
+    console.error('Failed to broadcast battle stats:', error)
+  }
+}
+
+export async function broadcastQueueUpdate(
+  userId: number,
+  status: 'joined' | 'left' | 'matched'
+) {
+  if (!pusherServer) return
+
+  try {
+    // Broadcast to global battle queue channel and user's personal channel
+    await Promise.all([
+      pusherServer.trigger('battle-queue', 'queue-updated', {
+        userId,
+        status,
+        timestamp: new Date().toISOString()
+      }),
+      pusherServer.trigger(`user-${userId}`, 'queue-status', {
+        status,
+        timestamp: new Date().toISOString()
+      })
+    ])
+  } catch (error) {
+    console.error('Failed to broadcast queue update:', error)
+  }
+}

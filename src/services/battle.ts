@@ -15,6 +15,7 @@ import {
   battleInvitations,
   battleSessionRejections
 } from '@/lib/db/schema'
+import { broadcastQueueUpdate, broadcastBattleStats } from '@/lib/pusher-server'
 import { rewardsService } from '@/services/rewards'
 import type {
   Battle,
@@ -180,6 +181,11 @@ export async function findMatch(
       await removeFromQueue(userId)
       await removeFromQueue(match.userId)
 
+      // Broadcast queue updates for both users
+      await broadcastQueueUpdate(userId, 'matched')
+      await broadcastQueueUpdate(match.userId, 'matched')
+      await broadcastBattleStats()
+
       return {
         userId: match.userId,
         combatPower: match.combatPower
@@ -191,6 +197,10 @@ export async function findMatch(
 
     // Calculate queue position and estimated wait time
     await updateQueuePositions()
+
+    // Broadcast queue update
+    await broadcastQueueUpdate(userId, 'joined')
+    await broadcastBattleStats()
 
     // No match found - user stays in queue waiting for real players
     return null
@@ -267,6 +277,9 @@ export async function createBattle(
 
     // Update loser's stats using rewards service
     await rewardsService.handleBattleLoss(loserId)
+
+    // Broadcast stats update
+    await broadcastBattleStats()
 
     return {
       winnerId,

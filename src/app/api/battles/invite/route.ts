@@ -7,6 +7,10 @@ import { getSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
 import { users } from '@/lib/db/schema'
 import {
+  broadcastBattleInvitation,
+  broadcastBattleStats
+} from '@/lib/pusher-server'
+import {
   sendBattleInvitation,
   canBattleToday,
   hasSessionRejection
@@ -84,12 +88,62 @@ export async function POST(request: Request) {
       toUserData.combatPower
     )
 
-    // Get opponent username
-    const [opponent] = await db
-      .select({ name: users.name })
-      .from(users)
-      .where(eq(users.id, toUserId))
-      .limit(1)
+    // Get both users' details for display and broadcasting
+    const [fromUser, toUser] = await Promise.all([
+      db
+        .select({
+          name: users.name,
+          email: users.email,
+          walletAddress: users.walletAddress
+        })
+        .from(users)
+        .where(eq(users.id, session.user.id))
+        .limit(1),
+      db
+        .select({
+          name: users.name,
+          email: users.email,
+          walletAddress: users.walletAddress
+        })
+        .from(users)
+        .where(eq(users.id, toUserId))
+        .limit(1)
+    ])
+
+    // Determine display names with proper fallback
+    const getDisplayName = (user: any) => {
+      if (user?.name && user.name !== 'Unknown Player') {
+        return user.name
+      }
+      if (user?.email) {
+        return user.email
+      }
+      if (user?.walletAddress) {
+        return `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`
+      }
+      return 'Anonymous Warrior'
+    }
+
+    const fromUserDisplay = getDisplayName(fromUser[0])
+    const toUserDisplay = getDisplayName(toUser[0])
+
+    // Broadcast the invitation to the recipient
+    await broadcastBattleInvitation(session.user.id, toUserId, {
+      id: invitationId,
+      fromUserId: session.user.id,
+      toUserId,
+      fromUserCP: fromUserData.combatPower,
+      toUserCP: toUserData.combatPower,
+      fromUser: {
+        id: session.user.id,
+        name: fromUserDisplay,
+        email: fromUser[0]?.email || null,
+        walletAddress: fromUser[0]?.walletAddress || ''
+      }
+    })
+
+    // Broadcast stats update
+    await broadcastBattleStats()
 
     return NextResponse.json({
       success: true,
@@ -97,7 +151,7 @@ export async function POST(request: Request) {
         invitationId,
         opponent: {
           userId: toUserId,
-          username: opponent?.name || 'Unknown Player',
+          username: toUserDisplay,
           combatPower: toUserData.combatPower
         }
       }

@@ -26,17 +26,32 @@ export async function GET() {
         const [fromUser] = await db
           .select({
             name: users.name,
+            email: users.email,
             walletAddress: users.walletAddress
           })
           .from(users)
           .where(eq(users.id, invitation.fromUserId))
           .limit(1)
 
+        // Determine display name with proper fallback
+        let displayName = fromUser?.name
+        if (!displayName || displayName === 'Unknown Player') {
+          if (fromUser?.email) {
+            displayName = fromUser.email
+          } else if (fromUser?.walletAddress) {
+            // Show shortened wallet address
+            displayName = `${fromUser.walletAddress.slice(0, 6)}...${fromUser.walletAddress.slice(-4)}`
+          } else {
+            displayName = 'Anonymous Warrior'
+          }
+        }
+
         return {
           ...invitation,
           fromUser: {
             id: invitation.fromUserId,
-            name: fromUser?.name || 'Unknown Player',
+            name: displayName,
+            email: fromUser?.email || null,
             walletAddress: fromUser?.walletAddress || ''
           }
         }

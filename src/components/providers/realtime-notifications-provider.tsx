@@ -62,31 +62,14 @@ export function RealtimeNotificationsProvider({
   })
 
   // Battle real-time updates
-  const { isConnected: battleConnected } = useBattleRealtime({
-    userId: user?.id,
-    onMatchFound: battle => {
-      toast({
-        title: 'Battle Match Found!',
-        description: `You've been matched against ${
-          battle.player1.id === user?.id
-            ? battle.player2.name || 'an opponent'
-            : battle.player1.name || 'an opponent'
-        }`
-      })
+  const { isConnected: battleConnected } = useBattleRealtime(user?.id, {
+    onInvitationReceived: (data: any) => {
+      // Handled by the hook itself with toast
     },
-    onBattleComplete: battle => {
-      const isWinner = battle.winnerId === user?.id
-
+    onBattleStarted: (data: any) => {
       toast({
-        variant: isWinner ? 'default' : 'destructive',
-        title: isWinner ? 'Victory!' : 'Defeat',
-        description: isWinner
-          ? `You won the battle! ${
-              battle.feeDiscountPercent
-                ? `You earned a ${battle.feeDiscountPercent}% fee discount for 24 hours!`
-                : ''
-            }`
-          : 'Better luck next time! You still earned 10 XP for participating.'
+        title: '⚔️ Battle Starting!',
+        description: 'Get ready to fight!'
       })
     }
   })

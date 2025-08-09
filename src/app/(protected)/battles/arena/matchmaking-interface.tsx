@@ -455,39 +455,6 @@ export function MatchmakingInterface({
 
   return (
     <div className='space-y-6'>
-      {/* Live Platform Stats */}
-      <div className='grid grid-cols-3 gap-3'>
-        <Card className='group relative overflow-hidden border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-cyan-500/5'>
-          <CardContent className='p-4 text-center'>
-            <Users className='mx-auto mb-2 h-6 w-6 text-blue-500' />
-            <p className='text-2xl font-bold text-blue-500'>
-              {liveStats?.data?.warriorsOnline || 0}
-            </p>
-            <p className='text-muted-foreground text-xs'>Warriors Online</p>
-          </CardContent>
-        </Card>
-
-        <Card className='group relative overflow-hidden border-green-500/20 bg-gradient-to-br from-green-500/5 to-emerald-500/5'>
-          <CardContent className='p-4 text-center'>
-            <Swords className='mx-auto mb-2 h-6 w-6 text-green-500' />
-            <p className='text-2xl font-bold text-green-500'>
-              {liveStats?.data?.activeBattles || 0}
-            </p>
-            <p className='text-muted-foreground text-xs'>Active Battles</p>
-          </CardContent>
-        </Card>
-
-        <Card className='group relative overflow-hidden border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-pink-500/5'>
-          <CardContent className='p-4 text-center'>
-            <Timer className='mx-auto mb-2 h-6 w-6 text-purple-500' />
-            <p className='text-2xl font-bold text-purple-500'>
-              {liveStats?.data?.inQueue || 0}
-            </p>
-            <p className='text-muted-foreground text-xs'>In Queue</p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Match Range Selector */}
       <Card>
         <CardContent className='pt-6'>

@@ -13,6 +13,7 @@ interface InvitationWithUser extends BattleInvitation {
   fromUser: {
     id: number
     name: string
+    email?: string | null
     walletAddress: string
   }
 }
@@ -123,11 +124,28 @@ export function useBattleInvitations(userId?: number) {
     const channel = pusherClient.subscribe(`user-${userId}`)
 
     channel.bind('battle-invitation', (invitation: InvitationWithUser) => {
-      setPendingInvitations(prev => [...prev, invitation])
+      // Use improved display name
+      const displayName =
+        invitation.fromUser?.name ||
+        invitation.fromUser?.email ||
+        (invitation.fromUser?.walletAddress
+          ? `${invitation.fromUser.walletAddress.slice(0, 6)}...${invitation.fromUser.walletAddress.slice(-4)}`
+          : 'Anonymous Warrior')
+
+      setPendingInvitations(prev => [
+        ...prev,
+        {
+          ...invitation,
+          fromUser: {
+            ...invitation.fromUser,
+            name: displayName
+          }
+        }
+      ])
 
       toast({
         title: '⚔️ Battle Challenge!',
-        description: `${invitation.fromUser.name} wants to battle you!`,
+        description: `${displayName} wants to battle you!`,
         variant: 'default'
       })
 
@@ -141,9 +159,25 @@ export function useBattleInvitations(userId?: number) {
       )
     })
 
+    channel.bind('battle-accepted', (data: any) => {
+      // Remove the invitation when accepted
+      setPendingInvitations(prev =>
+        prev.filter(inv => inv.id !== data.invitationId)
+      )
+    })
+
+    channel.bind('battle-rejected', (data: any) => {
+      // Remove the invitation when rejected
+      setPendingInvitations(prev =>
+        prev.filter(inv => inv.id !== data.invitationId)
+      )
+    })
+
     return () => {
       channel.unbind('battle-invitation')
       channel.unbind('battle-started')
+      channel.unbind('battle-accepted')
+      channel.unbind('battle-rejected')
       pusherClient?.unsubscribe(`user-${userId}`)
     }
   }, [userId, toast, mutate])
