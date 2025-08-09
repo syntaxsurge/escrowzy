@@ -1,3 +1,4 @@
+import { seedDomains } from './seeds/domains'
 import { seedLegalDocuments } from './seeds/legal-documents'
 import { seedPlatformContracts } from './seeds/platform-contracts'
 import { seedRewards } from './seeds/rewards'
@@ -24,7 +25,11 @@ async function seed() {
 
     // Seed trades and P2P listings
     await seedTrades(users)
-    console.log('✅ Trades and listings seeded')
+    console.log('✅ P2P trades and listings seeded')
+
+    // Seed domain listings and trades
+    await seedDomains(users)
+    console.log('✅ Domain listings and trades seeded')
 
     // Seed legal documents
     await seedLegalDocuments(users.adminUser)
@@ -43,7 +48,9 @@ async function seed() {
     console.log('- Game data initialized for all users')
     console.log('- Achievement NFTs minted: 9')
     console.log('- P2P Listings created: 5')
-    console.log('- Trades created: 5')
+    console.log('- P2P Trades created: 5')
+    console.log('- Domain Listings created: 8')
+    console.log('- Domain Trades created: 8')
     console.log('- Battles created: 5')
     console.log('- Trading stats initialized')
     console.log('- Platform contracts configured')
