@@ -8,6 +8,13 @@
       "when": 1754680239310,
       "tag": "0000_remarkable_aaron_stack",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1754706710733,
+      "tag": "0001_small_sersi",
+      "breakpoints": true
     }
   ]
 }

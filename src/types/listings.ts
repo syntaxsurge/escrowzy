@@ -76,18 +76,8 @@ export const PAYMENT_METHODS = {
 // P2P specific payment methods (all methods)
 export const P2P_PAYMENT_METHODS = PAYMENT_METHODS
 
-// Domain specific payment methods (crypto only for escrow)
-export const DOMAIN_PAYMENT_METHODS = {
-  CRYPTO: 'crypto',
-  USDT: 'usdt',
-  USDC: 'usdc'
-} as const
-
 export type PaymentMethod =
   (typeof PAYMENT_METHODS)[keyof typeof PAYMENT_METHODS]
-
-export type DomainPaymentMethod =
-  (typeof DOMAIN_PAYMENT_METHODS)[keyof typeof DOMAIN_PAYMENT_METHODS]
 
 // Supported tokens
 export const SUPPORTED_TOKENS = {
@@ -162,14 +152,6 @@ export function isValidListingType(type: string): type is 'buy' | 'sell' {
 
 export function isValidPaymentMethod(method: string): method is PaymentMethod {
   return Object.values(PAYMENT_METHODS).includes(method as PaymentMethod)
-}
-
-export function isValidDomainPaymentMethod(
-  method: string
-): method is DomainPaymentMethod {
-  return Object.values(DOMAIN_PAYMENT_METHODS).includes(
-    method as DomainPaymentMethod
-  )
 }
 
 export function isValidToken(token: string): token is SupportedToken {

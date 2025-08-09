@@ -27,7 +27,6 @@ export async function createListing(
     userId,
     listingCategory: input.listingCategory,
     listingType: input.listingType,
-    paymentMethods: input.paymentMethods,
     paymentWindow: input.paymentWindow || 15,
     isActive: true,
     metadata: {}
@@ -35,21 +34,24 @@ export async function createListing(
 
   if (input.listingCategory === 'p2p') {
     // P2P specific fields
-    values.tokenOffered = input.tokenOffered
-    values.amount = input.amount
-    values.pricePerUnit = input.pricePerUnit
-    values.minAmount = input.minAmount || null
-    values.maxAmount = input.maxAmount || null
+    const p2pInput = input as any
+    values.tokenOffered = p2pInput.tokenOffered
+    values.amount = p2pInput.amount
+    values.pricePerUnit = p2pInput.pricePerUnit
+    values.minAmount = p2pInput.minAmount || null
+    values.maxAmount = p2pInput.maxAmount || null
+    values.paymentMethods = p2pInput.paymentMethods
   } else if (input.listingCategory === 'domain') {
     // Domain specific fields
     const domainInput = input as any // Type assertion for domain fields
+    values.tokenOffered = domainInput.tokenOffered // Store the cryptocurrency accepted
     values.amount = domainInput.price // Store price in amount field
+    values.paymentMethods = [domainInput.tokenOffered] // Store as single payment method
     values.metadata = {
       domainName: domainInput.domainName,
       registrar: domainInput.registrar,
       domainAge: domainInput.domainAge,
       expiryDate: domainInput.expiryDate,
-      websiteUrl: domainInput.websiteUrl,
       monthlyTraffic: domainInput.monthlyTraffic,
       monthlyRevenue: domainInput.monthlyRevenue,
       description: domainInput.description,

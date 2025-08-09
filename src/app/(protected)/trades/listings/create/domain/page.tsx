@@ -19,7 +19,6 @@ import { GamifiedHeader } from '@/components/blocks/trading'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
@@ -30,7 +29,6 @@ import {
   FormMessage
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { LoadingButton } from '@/components/ui/loading-button'
 import {
   Select,
@@ -47,7 +45,7 @@ import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 import { createListingSchema } from '@/lib/schemas/listings'
 import { handleFormError, handleFormSuccess } from '@/lib/utils/form'
-import { DOMAIN_PAYMENT_METHODS, DOMAIN_REGISTRARS } from '@/types/listings'
+import { DOMAIN_REGISTRARS, SUPPORTED_TOKENS } from '@/types/listings'
 
 export default function CreateDomainListingPage() {
   const router = useRouter()
@@ -61,13 +59,13 @@ export default function CreateDomainListingPage() {
       listingType: 'sell',
       domainName: '',
       price: '',
+      tokenOffered: 'XTZ',
       registrar: '',
       domainAge: '',
       expiryDate: '',
       monthlyTraffic: '',
       monthlyRevenue: '',
       description: '',
-      paymentMethods: [],
       paymentWindow: 30
     }
   })
@@ -214,6 +212,38 @@ export default function CreateDomainListingPage() {
                       </FormControl>
                       <FormDescription>
                         Enter the full domain name without https://
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Cryptocurrency Selection */}
+                <FormField
+                  control={form.control}
+                  name='tokenOffered'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Accepted Cryptocurrency</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select cryptocurrency' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.keys(SUPPORTED_TOKENS).map(token => (
+                            <SelectItem key={token} value={token}>
+                              {token}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        The cryptocurrency buyers must pay to the smart contract
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -392,60 +422,6 @@ export default function CreateDomainListingPage() {
                   )}
                 />
               </div>
-
-              {/* Payment Methods */}
-              <FormField
-                control={form.control}
-                name='paymentMethods'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Accepted Payment Methods</FormLabel>
-                    <FormDescription>
-                      Select crypto payment methods for secure escrow
-                      protection. All payments must be on-chain to enable smart
-                      contract escrow.
-                    </FormDescription>
-                    <div className='mt-4 grid gap-4 md:grid-cols-2'>
-                      {Object.entries(DOMAIN_PAYMENT_METHODS).map(
-                        ([key, value]) => (
-                          <div
-                            key={key}
-                            className='flex items-center space-x-2 rounded-lg border p-3'
-                          >
-                            <Checkbox
-                              id={`domain-${key}`}
-                              checked={field.value?.includes(value)}
-                              onCheckedChange={(
-                                checked: boolean | 'indeterminate'
-                              ) => {
-                                const current = field.value || []
-                                if (checked === true) {
-                                  field.onChange([...current, value])
-                                } else if (checked === false) {
-                                  field.onChange(
-                                    current.filter((v: string) => v !== value)
-                                  )
-                                }
-                              }}
-                            />
-                            <Label
-                              htmlFor={`domain-${key}`}
-                              className='cursor-pointer text-sm font-normal'
-                            >
-                              {key === 'CRYPTO'
-                                ? 'Direct Cryptocurrency'
-                                : key === 'USDT'
-                                  ? 'USDT (Tether)'
-                                  : 'USDC (USD Coin)'}
-                            </Label>
-                          </div>
-                        )
-                      )}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               {/* Submit Buttons */}
               <div className='border-primary/30 from-primary/10 relative rounded-xl border-2 bg-gradient-to-br to-purple-600/10 p-6'>

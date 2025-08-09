@@ -23,10 +23,12 @@ export type Trade = typeof trades.$inferSelect
 export type NewTrade = typeof trades.$inferInsert
 
 // Extended trade types with relations - override metadata to be properly typed
-export interface TradeWithUsers extends Omit<Trade, 'metadata'> {
+export interface TradeWithUsers
+  extends Omit<Trade, 'metadata' | 'listingCategory'> {
   buyer: typeof users.$inferSelect
   seller: typeof users.$inferSelect
   metadata: TradeMetadata | null
+  listingCategory: 'p2p' | 'domain'
 }
 
 export interface TradeWithStats extends TradeWithUsers {
@@ -72,6 +74,13 @@ export interface TradeMetadata {
   paymentProofUploadedAt?: string // When buyer uploaded payment proof
   escrowFeeAmount?: string // Platform fee amount
   escrowNetAmount?: string // Amount seller receives after fees
+  // Domain-specific metadata
+  domainName?: string
+  registrar?: string
+  domainAge?: string
+  expiryDate?: string
+  monthlyTraffic?: string
+  monthlyRevenue?: string
 }
 
 // Trade action types

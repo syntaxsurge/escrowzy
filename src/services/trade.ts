@@ -617,7 +617,10 @@ export async function getTradeWithUsers(
     ...result[0].trade,
     buyer: result[0].buyer,
     seller: result[0].seller,
-    metadata: result[0].trade.metadata as TradeMetadata | null
+    metadata: result[0].trade.metadata as TradeMetadata | null,
+    listingCategory: (result[0].trade.listingCategory || 'p2p') as
+      | 'p2p'
+      | 'domain'
   }
 }
 

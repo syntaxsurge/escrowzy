@@ -2,7 +2,6 @@ import { z } from 'zod'
 
 import {
   isValidPaymentMethod,
-  isValidDomainPaymentMethod,
   isValidToken,
   LISTING_CATEGORIES
 } from '@/types/listings'
@@ -45,7 +44,7 @@ export const createP2PListingSchema = baseListingSchema.extend({
   maxAmount: optionalPositiveNumberString
 })
 
-// Domain-specific listing schema with its own payment validation
+// Domain-specific listing schema with cryptocurrency selection
 export const createDomainListingSchema = z.object({
   listingCategory: z.literal(LISTING_CATEGORIES.DOMAIN),
   listingType: z.literal('sell'), // Domains are always for sale
@@ -58,19 +57,12 @@ export const createDomainListingSchema = z.object({
     ),
   registrar: z.string().min(1, 'Registrar is required'),
   price: positiveNumberString.describe('Price is required'),
+  tokenOffered: z.string().min(1, 'Cryptocurrency is required'),
   domainAge: optionalPositiveNumberString,
   expiryDate: z.string().optional(),
   monthlyTraffic: optionalPositiveNumberString,
   monthlyRevenue: optionalPositiveNumberString,
   description: z.string().max(1000).optional(),
-  // Domain-specific payment validation
-  paymentMethods: z
-    .array(z.string())
-    .min(1, 'At least one payment method is required')
-    .refine(
-      methods => methods.every(isValidDomainPaymentMethod),
-      'Invalid payment method for domain listings'
-    ),
   paymentWindow: z
     .number()
     .int()

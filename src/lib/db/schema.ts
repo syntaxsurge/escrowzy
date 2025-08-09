@@ -294,6 +294,9 @@ export const trades = pgTable(
     amount: varchar('amount', { length: 50 }).notNull(),
     currency: varchar('currency', { length: 10 }).notNull().default('XTZ'),
     tradeType: varchar('trade_type', { length: 50 }).notNull(),
+    listingCategory: varchar('listing_category', { length: 20 })
+      .notNull()
+      .default('p2p'), // 'p2p' | 'domain'
     status: varchar('status', { length: 50 }).notNull().default('created'),
     metadata: jsonb('metadata'),
     depositDeadline: timestamp('deposit_deadline'),
@@ -308,7 +311,8 @@ export const trades = pgTable(
     index('idx_trades_status').on(table.status),
     index('idx_trades_buyer').on(table.buyerId),
     index('idx_trades_seller').on(table.sellerId),
-    index('idx_trades_deposit_deadline').on(table.depositDeadline)
+    index('idx_trades_deposit_deadline').on(table.depositDeadline),
+    index('idx_trades_category').on(table.listingCategory)
   ]
 )
 

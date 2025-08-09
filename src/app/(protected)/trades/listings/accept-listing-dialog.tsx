@@ -47,7 +47,7 @@ import {
 } from '@/lib/utils/form'
 import { getUserDisplayName } from '@/lib/utils/user'
 import type { EscrowListingWithUser, DomainMetadata } from '@/types/listings'
-import { PAYMENT_METHODS, DOMAIN_PAYMENT_METHODS } from '@/types/listings'
+import { PAYMENT_METHODS } from '@/types/listings'
 
 interface AcceptListingDialogProps {
   open: boolean
@@ -62,7 +62,7 @@ const acceptP2PListingSchema = z.object({
 })
 
 const acceptDomainListingSchema = z.object({
-  paymentMethod: z.string().min(1, 'Payment method is required')
+  // Domain listings don't need payment method selection - always via smart contract
 })
 
 type AcceptP2PListingInput = z.infer<typeof acceptP2PListingSchema>
@@ -92,9 +92,7 @@ export function AcceptListingDialog({
       isDomainListing ? acceptDomainListingSchema : acceptP2PListingSchema
     ),
     defaultValues: isDomainListing
-      ? {
-          paymentMethod: ''
-        }
+      ? {}
       : {
           tradeAmount: '',
           paymentMethod: ''
@@ -115,16 +113,14 @@ export function AcceptListingDialog({
         ).toFixed(2)
       : '0.00'
 
-  // Parse payment methods - use domain payment methods for domains
-  const availablePaymentMethods = isDomainListing
-    ? DOMAIN_PAYMENT_METHODS
-    : PAYMENT_METHODS
-
-  const paymentMethods = Array.isArray(listing.paymentMethods)
-    ? listing.paymentMethods
-    : typeof listing.paymentMethods === 'string'
-      ? JSON.parse(listing.paymentMethods)
-      : []
+  // Parse payment methods for P2P listings
+  const paymentMethods = !isDomainListing
+    ? Array.isArray(listing.paymentMethods)
+      ? listing.paymentMethods
+      : typeof listing.paymentMethods === 'string'
+        ? JSON.parse(listing.paymentMethods)
+        : []
+    : []
 
   const validateAmount = () => {
     if (!tradeAmount) return 'Please enter a valid amount'
@@ -158,14 +154,14 @@ export function AcceptListingDialog({
         })
         return
       }
-    }
 
-    if (!selectedPaymentMethod) {
-      form.setError('paymentMethod', {
-        type: 'manual',
-        message: 'Please select a payment method'
-      })
-      return
+      if (!selectedPaymentMethod) {
+        form.setError('paymentMethod', {
+          type: 'manual',
+          message: 'Please select a payment method'
+        })
+        return
+      }
     }
 
     setStep('confirm')
@@ -189,7 +185,9 @@ export function AcceptListingDialog({
           amount: isDomainListing
             ? listing.amount
             : (data as AcceptP2PListingInput).tradeAmount, // Map tradeAmount to amount for P2P, use listing amount for domains
-          paymentMethod: data.paymentMethod,
+          paymentMethod: isDomainListing
+            ? listing.tokenOffered
+            : (data as AcceptP2PListingInput).paymentMethod,
           chainId: currentChainId
         }
       )
@@ -413,38 +411,31 @@ export function AcceptListingDialog({
                   />
                 )}
 
-                {/* Payment Method */}
-                <FormField
-                  control={form.control}
-                  name='paymentMethod'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Payment Method</FormLabel>
-                      <FormControl>
-                        <select
-                          {...field}
-                          className='border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50'
-                        >
-                          <option value=''>Select payment method</option>
-                          {paymentMethods.map((method: string) => {
-                            // Find the key for this payment method value
-                            const methodKey = Object.keys(
-                              availablePaymentMethods
-                            ).find(
-                              key =>
-                                availablePaymentMethods[
-                                  key as keyof typeof availablePaymentMethods
-                                ] === method
-                            )
-                            const displayName = isDomainListing
-                              ? method === 'crypto'
-                                ? 'Direct Cryptocurrency'
-                                : method === 'usdt'
-                                  ? 'USDT (Tether)'
-                                  : method === 'usdc'
-                                    ? 'USDC (USD Coin)'
-                                    : method
-                              : methodKey
+                {/* Payment Method - Only for P2P */}
+                {!isDomainListing && (
+                  <FormField
+                    control={form.control}
+                    name='paymentMethod'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Payment Method</FormLabel>
+                        <FormControl>
+                          <select
+                            {...field}
+                            className='border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+                          >
+                            <option value=''>Select payment method</option>
+                            {paymentMethods.map((method: string) => {
+                              // Find the key for this payment method value
+                              const methodKey = Object.keys(
+                                PAYMENT_METHODS
+                              ).find(
+                                key =>
+                                  PAYMENT_METHODS[
+                                    key as keyof typeof PAYMENT_METHODS
+                                  ] === method
+                              )
+                              const displayName = methodKey
                                 ? methodKey
                                     .split('_')
                                     .map(
@@ -454,21 +445,35 @@ export function AcceptListingDialog({
                                     )
                                     .join(' ')
                                 : method
-                            return (
-                              <option key={method} value={method}>
-                                {displayName}
-                              </option>
-                            )
-                          })}
-                        </select>
-                      </FormControl>
-                      <FormDescription>
-                        Choose your preferred payment method
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                              return (
+                                <option key={method} value={method}>
+                                  {displayName}
+                                </option>
+                              )
+                            })}
+                          </select>
+                        </FormControl>
+                        <FormDescription>
+                          Choose your preferred payment method
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {/* Domain Payment Info */}
+                {isDomainListing && (
+                  <Alert className='border-blue-500/50 bg-blue-50/10'>
+                    <Shield className='h-4 w-4' />
+                    <AlertDescription>
+                      Domain payment will be made via smart contract escrow
+                      using <strong>{listing.tokenOffered}</strong>. After
+                      accepting, you'll deposit the cryptocurrency directly to
+                      the escrow contract.
+                    </AlertDescription>
+                  </Alert>
+                )}
 
                 {/* Total Cost Display */}
                 {(isDomainListing || tradeAmount) && (
@@ -499,7 +504,7 @@ export function AcceptListingDialog({
                     onClick={handleContinue}
                     disabled={
                       isDomainListing
-                        ? !selectedPaymentMethod
+                        ? false // Always enabled for domains since no selection needed
                         : !tradeAmount || !selectedPaymentMethod
                     }
                   >
