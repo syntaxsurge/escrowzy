@@ -147,6 +147,50 @@ export default function TradingHubDashboard() {
   // Navigation cards for different sections
   const navigationCards: NavigationCard[] = [
     {
+      title: 'Create New Listing',
+      description: 'List crypto, domains, or services for sale',
+      icon: <ListPlus className='h-6 w-6' />,
+      href: appRoutes.trades.listings.create,
+      color: 'from-indigo-500 to-blue-600',
+      bgColor: 'hover:bg-indigo-500/10',
+      badge: 'Quick Start',
+      stats: [
+        {
+          label: 'Low Fees',
+          value: '1-2%',
+          icon: <DollarSign className='h-4 w-4' />
+        },
+        {
+          label: 'Secure',
+          value: '100%',
+          icon: <Shield className='h-4 w-4' />
+        }
+      ]
+    },
+    {
+      title: 'Browse Marketplace',
+      description: 'Find crypto, domain, and other listings',
+      icon: <ShoppingCart className='h-6 w-6' />,
+      href: appRoutes.trades.listings.base,
+      color: 'from-blue-500 to-cyan-600',
+      bgColor: 'hover:bg-blue-500/10',
+      badge: 'Popular',
+      stats: [
+        {
+          label: 'P2P Listings',
+          value:
+            (marketStats?.totalActiveListings || 0) -
+            (marketStats?.totalDomainListings || 0),
+          icon: <Zap className='h-4 w-4' />
+        },
+        {
+          label: 'Domains',
+          value: marketStats?.totalDomainListings || 0,
+          icon: <Globe className='h-4 w-4' />
+        }
+      ]
+    },
+    {
       title: 'Active Trades',
       description: 'View and manage your ongoing trades',
       icon: <TrendingUp className='h-6 w-6' />,
@@ -172,29 +216,6 @@ export default function TradingHubDashboard() {
               (t: any) => t.status === 'awaiting_deposit'
             ).length || 0,
           icon: <Clock className='h-4 w-4' />
-        }
-      ]
-    },
-    {
-      title: 'Browse Marketplace',
-      description: 'Find crypto, domain, and other listings',
-      icon: <ShoppingCart className='h-6 w-6' />,
-      href: appRoutes.trades.listings.base,
-      color: 'from-blue-500 to-cyan-600',
-      bgColor: 'hover:bg-blue-500/10',
-      badge: 'Popular',
-      stats: [
-        {
-          label: 'P2P Listings',
-          value:
-            (marketStats?.totalActiveListings || 0) -
-            (marketStats?.totalDomainListings || 0),
-          icon: <Zap className='h-4 w-4' />
-        },
-        {
-          label: 'Domains',
-          value: marketStats?.totalDomainListings || 0,
-          icon: <Globe className='h-4 w-4' />
         }
       ]
     },
@@ -244,23 +265,23 @@ export default function TradingHubDashboard() {
       ]
     },
     {
-      title: 'Create New Listing',
-      description: 'List crypto, domains, or services for sale',
-      icon: <ListPlus className='h-6 w-6' />,
-      href: appRoutes.trades.listings.create,
-      color: 'from-indigo-500 to-blue-600',
-      bgColor: 'hover:bg-indigo-500/10',
-      badge: 'Quick Start',
+      title: 'Trading Chats',
+      description: 'Message buyers and sellers directly',
+      icon: <Activity className='h-6 w-6' />,
+      href: appRoutes.withParams.tradesTab(appRoutes.chat.base),
+      color: 'from-pink-500 to-rose-600',
+      bgColor: 'hover:bg-pink-500/10',
+      badge: tradesData?.trades?.length > 0 ? 'Messages' : undefined,
       stats: [
         {
-          label: 'Low Fees',
-          value: '1-2%',
-          icon: <DollarSign className='h-4 w-4' />
+          label: 'Active Chats',
+          value: tradesData?.trades?.length || 0,
+          icon: <Users className='h-4 w-4' />
         },
         {
-          label: 'Secure',
-          value: '100%',
-          icon: <Shield className='h-4 w-4' />
+          label: 'Quick Reply',
+          value: '< 5min',
+          icon: <Zap className='h-4 w-4' />
         }
       ]
     }

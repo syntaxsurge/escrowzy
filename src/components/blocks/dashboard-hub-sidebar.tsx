@@ -74,18 +74,18 @@ export function DashboardHubSidebar({
 
       <div
         className={cn(
-          'from-background via-muted/50 to-primary/5 dark:to-primary/10 border-border/50 relative flex h-full flex-col border-r-2 bg-gradient-to-br backdrop-blur-sm transition-all duration-300',
+          'from-background via-muted/50 to-primary/5 dark:to-primary/10 border-border/50 flex h-full flex-col border-r-2 bg-gradient-to-br backdrop-blur-sm transition-all duration-300',
           isCollapsed ? 'w-20' : 'w-64',
-          isMobile &&
-            !isCollapsed &&
-            'fixed top-16 left-0 z-50 h-[calc(100vh-4rem)]',
+          isMobile && !isCollapsed
+            ? 'fixed top-16 left-0 z-50 h-[calc(100vh-4rem)]'
+            : 'sticky top-16',
           className
         )}
       >
         {/* Header */}
         <div className='border-border/50 border-b p-4'>
           <div className='flex items-center justify-between'>
-            {!isCollapsed && (
+            {!isCollapsed ? (
               <div className='flex items-center gap-2'>
                 <div
                   className={cn(
@@ -99,12 +99,27 @@ export function DashboardHubSidebar({
                   {title}
                 </span>
               </div>
+            ) : (
+              <div className='flex justify-center'>
+                <div
+                  className={cn(
+                    'relative rounded-lg p-2 shadow-lg',
+                    iconGradient
+                  )}
+                  title={title}
+                >
+                  <HubIcon className='h-5 w-5 text-white' />
+                </div>
+              </div>
             )}
             <Button
               variant='ghost'
               size='icon'
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className='ml-auto hover:bg-white/10'
+              className={cn(
+                'hover:bg-white/10',
+                isCollapsed ? 'mx-auto' : 'ml-auto'
+              )}
             >
               {isCollapsed ? (
                 <ChevronRight className='h-4 w-4' />
@@ -140,7 +155,7 @@ export function DashboardHubSidebar({
         )}
 
         {/* Navigation */}
-        <nav className='flex-1 space-y-1 p-4'>
+        <nav className='flex-1 space-y-1 overflow-y-auto p-4'>
           {navigationItems.map(item => {
             const Icon = item.icon
             const isActive = pathname === item.href
@@ -157,6 +172,7 @@ export function DashboardHubSidebar({
                     : 'hover:scale-105',
                   item.bgColor
                 )}
+                title={isCollapsed ? item.title : undefined}
               >
                 {isActive && (
                   <div className='bg-primary absolute top-1/2 left-0 h-8 w-1 -translate-y-1/2 rounded-r-full' />
@@ -165,7 +181,8 @@ export function DashboardHubSidebar({
                 <Icon
                   className={cn(
                     'h-5 w-5 transition-transform group-hover:rotate-12',
-                    isActive ? 'text-primary' : item.color
+                    isActive ? 'text-primary' : item.color,
+                    isCollapsed && 'mx-auto'
                   )}
                 />
 

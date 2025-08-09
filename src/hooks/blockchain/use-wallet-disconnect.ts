@@ -68,7 +68,6 @@ function clearAuthStorage(): void {
 /**
  * Centralized wallet disconnect function that handles both session clearing and wallet disconnection
  * This ensures consistent behavior across all disconnect implementations
- * Works with both RainbowKit (wagmi) and thirdweb providers
  */
 export async function disconnectWallet(disconnect?: () => void): Promise<void> {
   try {
