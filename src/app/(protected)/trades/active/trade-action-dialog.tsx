@@ -510,6 +510,37 @@ export function TradeActionDialog({
       if (response.success) {
         form.reset()
         setPaymentProofFiles([])
+
+        // Show success toast for specific actions
+        if (actionType === 'cancel') {
+          toast({
+            title: 'Trade Cancelled',
+            description: 'The trade has been successfully cancelled.',
+            variant: 'default'
+          })
+        } else if (actionType === 'dispute') {
+          toast({
+            title: 'Dispute Raised',
+            description: 'Your dispute has been submitted for review.',
+            variant: 'default'
+          })
+        } else if (actionType === 'payment_sent') {
+          toast({
+            title: 'Payment Marked as Sent',
+            description: 'The seller has been notified of your payment.',
+            variant: 'default'
+          })
+        } else if (actionType === 'confirm') {
+          toast({
+            title: 'Trade Confirmed',
+            description:
+              trade.status === 'payment_sent'
+                ? 'Payment confirmed and crypto released successfully.'
+                : 'Trade has been confirmed successfully.',
+            variant: 'default'
+          })
+        }
+
         onSuccess()
       } else {
         throw new Error(response.error || `Failed to ${actionType} trade`)
