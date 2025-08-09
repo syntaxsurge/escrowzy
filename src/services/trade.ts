@@ -10,13 +10,15 @@ import {
   aliasedTable
 } from 'drizzle-orm'
 
+import { appRoutes } from '@/config/app-routes'
 import { db } from '@/lib/db/drizzle'
 import {
   trades,
   users,
   userTradingStats,
   escrowListings,
-  ActivityType
+  ActivityType,
+  teamMembers
 } from '@/lib/db/schema'
 import {
   broadcastTradeUpdate,
@@ -43,6 +45,7 @@ import type {
 } from '@/types/trade'
 import { canPerformAction } from '@/types/trade'
 
+import { createNotification } from './notification'
 import { sendDepositMessage, type TradeMessageData } from './trade-messages'
 
 // Create a new trade
@@ -632,13 +635,160 @@ export async function getTradeWithUsers(
   }
 }
 
+// Helper: Get user's primary team
+async function getUserPrimaryTeam(userId: number): Promise<number> {
+  try {
+    const [userTeam] = await db
+      .select()
+      .from(teamMembers)
+      .where(eq(teamMembers.userId, userId))
+      .limit(1)
+
+    return userTeam?.teamId || 1 // Default to system team (1) if no team found
+  } catch (error) {
+    console.error('Error getting user team:', error)
+    return 1 // Default to system team on error
+  }
+}
+
 // Helper: Log trade activity
 async function logTradeActivity(trade: TradeWithUsers | Trade, action: string) {
   try {
-    // For now, we'll just log to console
-    // In production, you could integrate with activity logs or notification service
-    console.log(`Trade Activity: ${action} for trade #${trade.id}`)
+    // Map action strings to ActivityType enum values
+    const actionTypeMap: Record<string, ActivityType> = {
+      'Trade created': ActivityType.TRADE_CREATED,
+      'Trade funded': ActivityType.TRADE_FUNDED,
+      'Trade delivered': ActivityType.TRADE_DELIVERED,
+      'Payment confirmed and funds released to buyer - trade completed':
+        ActivityType.TRADE_COMPLETED,
+      'Trade cancelled': ActivityType.TRADE_CANCELLED,
+      'Trade refunded': ActivityType.TRADE_REFUNDED
+    }
+
+    // Check if action contains "disputed"
+    let activityType: ActivityType | string = actionTypeMap[action] || action
+    if (action.toLowerCase().includes('disputed')) {
+      activityType = ActivityType.TRADE_DISPUTED
+    } else if (action.toLowerCase().includes('resolved')) {
+      activityType = ActivityType.TRADE_COMPLETED
+    }
+
+    // Get team IDs for both parties
+    const buyerTeamId = await getUserPrimaryTeam(trade.buyerId)
+    const sellerTeamId = await getUserPrimaryTeam(trade.sellerId)
+
+    // Prepare notification messages
+    const getNotificationMessage = (role: 'buyer' | 'seller'): string => {
+      const tradeId = `#${trade.id}`
+
+      switch (activityType) {
+        case ActivityType.TRADE_CREATED:
+          return role === 'buyer'
+            ? `Your trade ${tradeId} has been created. Please fund the escrow to proceed.`
+            : `Trade ${tradeId} has been created. Waiting for buyer to fund the escrow.`
+
+        case ActivityType.TRADE_FUNDED:
+          return role === 'buyer'
+            ? `You have successfully funded trade ${tradeId}. Waiting for seller to deliver.`
+            : `Trade ${tradeId} has been funded. Please deliver the asset to the buyer.`
+
+        case ActivityType.TRADE_DELIVERED:
+          return role === 'buyer'
+            ? `Seller has marked trade ${tradeId} as delivered. Please confirm receipt.`
+            : `You have marked trade ${tradeId} as delivered. Waiting for buyer confirmation.`
+
+        case ActivityType.TRADE_COMPLETED:
+          return role === 'buyer'
+            ? `Trade ${tradeId} completed successfully. Asset received and funds released.`
+            : `Trade ${tradeId} completed successfully. Payment confirmed and funds released.`
+
+        case ActivityType.TRADE_DISPUTED:
+          const disputeReason = action.split(': ')[1] || 'No reason provided'
+          return role === 'buyer'
+            ? `You have disputed trade ${tradeId}: ${disputeReason}`
+            : `Trade ${tradeId} has been disputed: ${disputeReason}`
+
+        case ActivityType.TRADE_CANCELLED:
+          return role === 'buyer'
+            ? `Trade ${tradeId} has been cancelled. Any funds will be refunded.`
+            : `Trade ${tradeId} has been cancelled.`
+
+        case ActivityType.TRADE_REFUNDED:
+          return role === 'buyer'
+            ? `Trade ${tradeId} has been refunded. Funds returned to your wallet.`
+            : `Trade ${tradeId} has been refunded to the buyer.`
+
+        default:
+          return `Trade ${tradeId}: ${action}`
+      }
+    }
+
+    const getNotificationTitle = (_role: 'buyer' | 'seller'): string => {
+      switch (activityType) {
+        case ActivityType.TRADE_CREATED:
+          return 'Trade Created'
+        case ActivityType.TRADE_FUNDED:
+          return 'Trade Funded'
+        case ActivityType.TRADE_DELIVERED:
+          return 'Asset Delivered'
+        case ActivityType.TRADE_COMPLETED:
+          return 'Trade Completed'
+        case ActivityType.TRADE_DISPUTED:
+          return 'Trade Disputed'
+        case ActivityType.TRADE_CANCELLED:
+          return 'Trade Cancelled'
+        case ActivityType.TRADE_REFUNDED:
+          return 'Trade Refunded'
+        default:
+          return 'Trade Update'
+      }
+    }
+
+    // Create notifications for both parties
+    const tradeUrl = appRoutes.trades.history.detail(trade.id.toString())
+
+    // Notification for buyer
+    await createNotification({
+      userId: trade.buyerId,
+      teamId: buyerTeamId,
+      action: activityType as string,
+      title: getNotificationTitle('buyer'),
+      message: getNotificationMessage('buyer'),
+      actionUrl: tradeUrl,
+      notificationType: 'trade',
+      metadata: {
+        tradeId: trade.id,
+        role: 'buyer',
+        sellerId: trade.sellerId,
+        amount: trade.amount,
+        currency: trade.currency
+      }
+    })
+
+    // Notification for seller
+    await createNotification({
+      userId: trade.sellerId,
+      teamId: sellerTeamId,
+      action: activityType as string,
+      title: getNotificationTitle('seller'),
+      message: getNotificationMessage('seller'),
+      actionUrl: tradeUrl,
+      notificationType: 'trade',
+      metadata: {
+        tradeId: trade.id,
+        role: 'seller',
+        buyerId: trade.buyerId,
+        amount: trade.amount,
+        currency: trade.currency
+      }
+    })
+
+    // Log to console for debugging (can be removed in production)
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Trade Activity: ${action} for trade #${trade.id}`)
+    }
   } catch (error) {
+    // Don't let logging errors break the trade flow
     console.error('Error logging trade activity:', error)
   }
 }
