@@ -76,7 +76,7 @@ export default function BattleArenaPage() {
   )
   const [currentBattleData, setCurrentBattleData] =
     useState<CurrentBattleData | null>(null)
-  
+
   // Keep ref in sync with state
   useEffect(() => {
     battleStateRef.current = battleState

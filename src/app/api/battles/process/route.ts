@@ -51,6 +51,14 @@ export async function POST(request: Request) {
       )
     }
 
+    // Check if battle is already completed
+    if (battle.status === 'completed') {
+      return NextResponse.json(
+        { success: false, error: 'Battle already completed' },
+        { status: 400 }
+      )
+    }
+
     const isPlayer1 = battle.player1Id === session.user.id
     const isPlayer2 = battle.player2Id === session.user.id
 
@@ -131,6 +139,22 @@ export async function POST(request: Request) {
 
     // Process round if ongoing
     if (battle.status === 'ongoing' && battleState) {
+      // Don't process if either player's health is already 0
+      if (battleState.player1Health <= 0 || battleState.player2Health <= 0) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            battleId,
+            status: 'completed',
+            currentRound: battleState.currentRound,
+            player1Health: battleState.player1Health,
+            player2Health: battleState.player2Health,
+            battleLog: battleState.battleLog || [],
+            isPlayer1
+          }
+        })
+      }
+
       const shouldProcessRound =
         !battleState.lastActionAt ||
         Date.now() - new Date(battleState.lastActionAt).getTime() >
@@ -249,7 +273,7 @@ export async function POST(request: Request) {
             winnerId === battle.player1Id ? battle.player2Id : battle.player1Id
 
           // Check if winner already has an active discount
-          const now = new Date()
+          const now = new Date().toISOString()
           const [existingDiscount] = await db
             .select()
             .from(battles)

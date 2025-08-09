@@ -69,6 +69,9 @@ export function BattleAnimation({
   const [lastProcessTime, setLastProcessTime] = useState(0)
   const [lastAutoActionTime, setLastAutoActionTime] = useState(0)
   const [userActionBonus, setUserActionBonus] = useState(0)
+  const [lastActionType, setLastActionType] = useState<
+    'attack' | 'defend' | 'special' | null
+  >(null)
 
   // Real-time battle updates
   useBattleRealtime(user?.id, {
@@ -198,7 +201,7 @@ export function BattleAnimation({
 
   // Process battle round with automatic actions
   const processBattleRound = useCallback(async () => {
-    if (!battleId || isProcessing || phase !== 'fighting') return
+    if (!battleId || isProcessing || phase !== 'fighting' || winner) return
 
     const now = Date.now()
     if (now - lastProcessTime < 3000) return // Prevent too frequent processing
@@ -208,12 +211,13 @@ export function BattleAnimation({
 
     // Generate automatic action if no recent user action
     const shouldAutoAction = now - lastAutoActionTime > 2000
-    let actionType = null
+    let actionType: 'attack' | 'defend' | 'special' | null = null
     let totalPower = actionCount + userActionBonus
 
     if (shouldAutoAction && actionCount === 0) {
       actionType = generateAutoAction()
       setLastAutoActionTime(now)
+      setLastActionType(actionType)
 
       // Visual feedback for auto action
       const isPlayer1 = user?.id === player1.id
@@ -267,8 +271,11 @@ export function BattleAnimation({
 
   // Handle player action (clicking/tapping for attacks)
   const handlePlayerAction = useCallback(
-    (actionType: 'attack' | 'defend' | 'special') => {
-      if (phase !== 'fighting' || winner) return
+    async (actionType: 'attack' | 'defend' | 'special') => {
+      if (phase !== 'fighting' || winner || isProcessing) return
+
+      // Track the action type
+      setLastActionType(actionType)
 
       // Track user actions - these increase win probability
       setActionCount(prev => prev + 1)
@@ -291,8 +298,20 @@ export function BattleAnimation({
         setScreenShake(true)
         setTimeout(() => setScreenShake(false), 500)
       }
+
+      // Send action to server immediately
+      if (battleId) {
+        try {
+          await api.post('/api/battles/process', {
+            battleId,
+            action: { type: actionType, power: 2 }
+          })
+        } catch (error) {
+          console.error('Error sending action:', error)
+        }
+      }
     },
-    [phase, winner, user?.id, player1.id, comboCount]
+    [phase, winner, user?.id, player1.id, comboCount, isProcessing, battleId]
   )
 
   // Start battle sequence
@@ -314,14 +333,14 @@ export function BattleAnimation({
 
   // Process rounds periodically
   useEffect(() => {
-    if (phase !== 'fighting' || !battleId) return
+    if (phase !== 'fighting' || !battleId || winner) return
 
     const interval = setInterval(() => {
       processBattleRound()
     }, 3000) // Process every 3 seconds
 
     return () => clearInterval(interval)
-  }, [phase, battleId, processBattleRound])
+  }, [phase, battleId, winner, processBattleRound])
 
   // Auto-generate actions for visual effect
   useEffect(() => {
@@ -569,7 +588,11 @@ export function BattleAnimation({
                         className='mt-2 text-sm font-bold text-orange-500'
                       >
                         {currentAttacker === 1 ? player1.name : player2.name}{' '}
-                        ATTACKS!
+                        {lastActionType === 'defend'
+                          ? 'DEFENDS!'
+                          : lastActionType === 'special'
+                            ? 'SPECIAL ATTACK!'
+                            : 'ATTACKS!'}
                       </motion.p>
                     )}
                   </>
