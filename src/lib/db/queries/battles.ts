@@ -37,7 +37,7 @@ export async function getBattleStats(): Promise<{
   // This would normally come from a queue system
   const [inQueueResult] = await db
     .select({
-      count: sql<number>`count(distinct u.id)`
+      count: sql<number>`count(distinct ${users.id})`
     })
     .from(users)
     .innerJoin(userGameData, eq(userGameData.userId, users.id))
