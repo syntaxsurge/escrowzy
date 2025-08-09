@@ -119,7 +119,7 @@ export default function RewardsLayout({
 
   return (
     <div className='flex min-h-screen'>
-      <div className='sticky top-16 h-[calc(100vh-4rem)]'>
+      <div className='hidden md:sticky md:top-16 md:block md:h-[calc(100vh-4rem)]'>
         <DashboardHubSidebar
           title='REWARDS CENTER'
           icon={Star}
@@ -130,7 +130,18 @@ export default function RewardsLayout({
           className='h-full'
         />
       </div>
-      <div className='flex-1'>{children}</div>
+      <div className='block md:hidden'>
+        <DashboardHubSidebar
+          title='REWARDS CENTER'
+          icon={Star}
+          iconGradient='bg-gradient-to-br from-yellow-500 to-orange-600'
+          navigationItems={navigationItems}
+          stats={stats}
+          alerts={[]}
+          className='h-[calc(100vh-4rem)]'
+        />
+      </div>
+      <div className='w-full flex-1 overflow-x-hidden'>{children}</div>
     </div>
   )
 }

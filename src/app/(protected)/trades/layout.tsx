@@ -82,7 +82,7 @@ export default function TradesLayout({
 
   return (
     <div className='flex min-h-screen'>
-      <div className='sticky top-16 h-[calc(100vh-4rem)]'>
+      <div className='hidden md:sticky md:top-16 md:block md:h-[calc(100vh-4rem)]'>
         <TradingSidebar
           activeTrades={stats.activeTrades}
           disputedTrades={stats.disputedTrades}
@@ -90,7 +90,15 @@ export default function TradesLayout({
           className='h-full'
         />
       </div>
-      <div className='flex-1'>{children}</div>
+      <div className='block md:hidden'>
+        <TradingSidebar
+          activeTrades={stats.activeTrades}
+          disputedTrades={stats.disputedTrades}
+          activeListings={stats.activeListings}
+          className='h-[calc(100vh-4rem)]'
+        />
+      </div>
+      <div className='w-full flex-1 overflow-x-hidden'>{children}</div>
     </div>
   )
 }

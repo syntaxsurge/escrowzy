@@ -131,7 +131,7 @@ export default function BattlesLayout({
 
   return (
     <div className='flex min-h-screen'>
-      <div className='sticky top-16 h-[calc(100vh-4rem)]'>
+      <div className='hidden md:sticky md:top-16 md:block md:h-[calc(100vh-4rem)]'>
         <GameHubSidebar
           title='BATTLE ZONE'
           icon={Shield}
@@ -142,7 +142,18 @@ export default function BattlesLayout({
           className='h-full'
         />
       </div>
-      <div className='flex-1'>{children}</div>
+      <div className='block md:hidden'>
+        <GameHubSidebar
+          title='BATTLE ZONE'
+          icon={Shield}
+          iconGradient='bg-gradient-to-br from-red-500 to-orange-600'
+          navigationItems={navigationItems}
+          stats={stats}
+          alerts={alerts}
+          className='h-[calc(100vh-4rem)]'
+        />
+      </div>
+      <div className='w-full flex-1 overflow-x-hidden'>{children}</div>
     </div>
   )
 }
