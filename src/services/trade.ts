@@ -525,6 +525,18 @@ export async function cancelTrade(
       .where(eq(trades.id, tradeId))
       .returning()
 
+    // If this is a domain trade, reactivate the original listing
+    if (trade.tradeType === 'domain' && metadata.originalListingId) {
+      await db
+        .update(escrowListings)
+        .set({ isActive: true })
+        .where(eq(escrowListings.id, metadata.originalListingId))
+
+      console.log(
+        `Reactivated domain listing ${metadata.originalListingId} after trade cancellation`
+      )
+    }
+
     // Log cancellation activity
     await logTradeActivity(trade, 'Trade cancelled')
 
@@ -630,14 +642,6 @@ async function logTradeActivity(trade: TradeWithUsers | Trade, action: string) {
     // For now, we'll just log to console
     // In production, you could integrate with activity logs or notification service
     console.log(`Trade Activity: ${action} for trade #${trade.id}`)
-
-    // Optional: Create activity logs if you have a team/organization context
-    // await db.insert(activityLogs).values({
-    //   teamId: 1, // Would need to get from context
-    //   userId: trade.buyerId,
-    //   action: `${action} - Trade #${trade.id}`,
-    //   ipAddress: '0.0.0.0' // Would get from request context
-    // })
   } catch (error) {
     console.error('Error logging trade activity:', error)
   }
