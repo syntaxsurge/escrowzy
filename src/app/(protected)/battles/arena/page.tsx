@@ -110,15 +110,7 @@ export default function BattleArenaPage() {
     },
     onInvitationAccepted: data => {
       // Sender receives this when their invitation is accepted
-      if (battleState === 'invitation-sent') {
-        setBattleState('preparing')
-        setCurrentBattleData(data)
-
-        // Start countdown after a short delay
-        setTimeout(() => {
-          setBattleState('countdown')
-        }, 1000)
-      }
+      // This is now handled by onBattleStarted for both users
     },
     onInvitationRejected: _data => {
       if (battleState === 'invitation-sent') {
@@ -129,10 +121,39 @@ export default function BattleArenaPage() {
       }
     },
     onBattleStarted: data => {
-      // Accepter receives this when they accept
-      if (battleState === 'invitation-received' || battleState === 'idle') {
+      // Both users receive this when battle starts
+      if (
+        battleState === 'invitation-received' ||
+        battleState === 'invitation-sent' ||
+        battleState === 'idle'
+      ) {
         setBattleState('preparing')
-        setCurrentBattleData(data)
+
+        // Format battle data properly for both users
+        const isPlayer1 = data.fromUserId === user?.id
+        const formattedData: CurrentBattleData = {
+          battleId: data.battleId,
+          isPlayer1,
+          player1: {
+            id: data.fromUserId,
+            combatPower: data.player1CP || 100
+          },
+          player2: {
+            id: data.toUserId,
+            combatPower: data.player2CP || 100
+          },
+          opponent: {
+            id: isPlayer1 ? data.toUserId : data.fromUserId,
+            name: currentOpponent?.username || 'Opponent',
+            combatPower: isPlayer1
+              ? data.player2CP || 100
+              : data.player1CP || 100
+          },
+          winnerId: data.winnerId,
+          feeDiscountPercent: data.feeDiscountPercent
+        }
+
+        setCurrentBattleData(formattedData)
 
         // Start countdown after a short delay
         setTimeout(() => {
@@ -209,10 +230,34 @@ export default function BattleArenaPage() {
     const result = await acceptInvitation(currentInvitationId)
 
     if (result) {
-      setCurrentBattleData(result)
+      // Format battle data properly
+      const isPlayer1 = result.fromUserId === user?.id
+      const formattedData: CurrentBattleData = {
+        battleId: result.battleId,
+        isPlayer1,
+        player1: {
+          id: result.fromUserId,
+          combatPower: result.player1CP || 100
+        },
+        player2: {
+          id: result.toUserId,
+          combatPower: result.player2CP || 100
+        },
+        opponent: {
+          id: currentOpponent?.userId || result.fromUserId,
+          name: currentOpponent?.username || 'Opponent',
+          combatPower: isPlayer1
+            ? result.player2CP || 100
+            : result.player1CP || 100
+        },
+        winnerId: result.winnerId,
+        feeDiscountPercent: result.feeDiscountPercent
+      }
+
+      setCurrentBattleData(formattedData)
       setCurrentInvitationId(null)
 
-      // Start countdown
+      // Start countdown - the sender will also receive battle-started event
       setTimeout(() => {
         setBattleState('countdown')
       }, 1000)
@@ -674,94 +719,101 @@ export default function BattleArenaPage() {
                       )}
 
                       {/* Countdown State */}
-                      {battleState === 'countdown' && currentBattleData && (
-                        <motion.div
-                          key='countdown'
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                        >
-                          <BattleCountdown
-                            onComplete={handleCountdownComplete}
-                            player1Name={user?.name || 'You'}
-                            player2Name={
-                              currentOpponent?.username || 'Opponent'
-                            }
-                            player1CP={
-                              currentBattleData.isPlayer1
-                                ? currentBattleData.player1.combatPower
-                                : currentBattleData.player2.combatPower
-                            }
-                            player2CP={
-                              currentBattleData.isPlayer1
-                                ? currentBattleData.player2.combatPower
-                                : currentBattleData.player1.combatPower
-                            }
-                          />
-                        </motion.div>
-                      )}
+                      {battleState === 'countdown' &&
+                        currentBattleData &&
+                        currentBattleData.player1 &&
+                        currentBattleData.player2 && (
+                          <motion.div
+                            key='countdown'
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                          >
+                            <BattleCountdown
+                              onComplete={handleCountdownComplete}
+                              player1Name={user?.name || 'You'}
+                              player2Name={
+                                currentOpponent?.username || 'Opponent'
+                              }
+                              player1CP={
+                                currentBattleData.isPlayer1
+                                  ? currentBattleData.player1.combatPower
+                                  : currentBattleData.player2.combatPower
+                              }
+                              player2CP={
+                                currentBattleData.isPlayer1
+                                  ? currentBattleData.player2.combatPower
+                                  : currentBattleData.player1.combatPower
+                              }
+                            />
+                          </motion.div>
+                        )}
 
                       {/* Battling State with Interactions */}
-                      {battleState === 'battling' && currentBattleData && (
-                        <motion.div
-                          key='battling'
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className='space-y-6'
-                        >
-                          <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-                            {/* Player 1 Interactions */}
-                            <div className='order-2 lg:order-1'>
-                              <h4 className='mb-3 text-center font-bold text-blue-600 dark:text-blue-400'>
-                                YOUR CONTROLS
-                              </h4>
-                              <BattleInteractions
-                                onPowerBoost={boost =>
-                                  handlePowerBoost(boost, 1)
-                                }
-                                onAction={action =>
-                                  handlePlayerAction(action, 1)
-                                }
-                                isActive={true}
-                                playerNumber={1}
-                              />
-                            </div>
+                      {battleState === 'battling' &&
+                        currentBattleData &&
+                        currentBattleData.player1 &&
+                        currentBattleData.player2 && (
+                          <motion.div
+                            key='battling'
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className='space-y-6'
+                          >
+                            <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+                              {/* Player 1 Interactions */}
+                              <div className='order-2 lg:order-1'>
+                                <h4 className='mb-3 text-center font-bold text-blue-600 dark:text-blue-400'>
+                                  YOUR CONTROLS
+                                </h4>
+                                <BattleInteractions
+                                  onPowerBoost={boost =>
+                                    handlePowerBoost(boost, 1)
+                                  }
+                                  onAction={action =>
+                                    handlePlayerAction(action, 1)
+                                  }
+                                  isActive={true}
+                                  playerNumber={1}
+                                />
+                              </div>
 
-                            {/* Battle Animation */}
-                            <div className='order-1 lg:order-2'>
-                              <BattleAnimation
-                                player1={{
-                                  id: user?.id || 0,
-                                  name: user?.name || 'You',
-                                  combatPower: currentBattleData.isPlayer1
-                                    ? currentBattleData.player1.combatPower
-                                    : currentBattleData.player2.combatPower
-                                }}
-                                player2={{
-                                  id: currentOpponent?.userId || 0,
-                                  name: currentOpponent?.username || 'Opponent',
-                                  combatPower: currentBattleData.isPlayer1
-                                    ? currentBattleData.player2.combatPower
-                                    : currentBattleData.player1.combatPower
-                                }}
-                                onComplete={handleBattleComplete}
-                              />
-                            </div>
+                              {/* Battle Animation */}
+                              <div className='order-1 lg:order-2'>
+                                <BattleAnimation
+                                  player1={{
+                                    id: user?.id || 0,
+                                    name: user?.name || 'You',
+                                    combatPower: currentBattleData.isPlayer1
+                                      ? currentBattleData.player1.combatPower
+                                      : currentBattleData.player2.combatPower
+                                  }}
+                                  player2={{
+                                    id: currentOpponent?.userId || 0,
+                                    name:
+                                      currentOpponent?.username || 'Opponent',
+                                    combatPower: currentBattleData.isPlayer1
+                                      ? currentBattleData.player2.combatPower
+                                      : currentBattleData.player1.combatPower
+                                  }}
+                                  onComplete={handleBattleComplete}
+                                />
+                              </div>
 
-                            {/* Opponent Status */}
-                            <div className='order-3'>
-                              <h4 className='mb-3 text-center font-bold text-red-600 dark:text-red-400'>
-                                OPPONENT STATUS
-                              </h4>
-                              <BattleInteractions
-                                isActive={false}
-                                playerNumber={2}
-                              />
+                              {/* Opponent Status */}
+                              <div className='order-3'>
+                                <h4 className='mb-3 text-center font-bold text-red-600 dark:text-red-400'>
+                                  OPPONENT STATUS
+                                </h4>
+                                <BattleInteractions
+                                  isActive={false}
+                                  playerNumber={2}
+                                />
+                              </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      )}
+                          </motion.div>
+                        )}
 
                       {/* Result State */}
                       {(battleState === 'result' || battleResult) && (
