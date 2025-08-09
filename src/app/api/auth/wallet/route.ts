@@ -6,6 +6,7 @@ import { verifyMessage } from 'viem'
 
 import { truncateAddress } from '@/lib'
 import { apiResponses } from '@/lib/api/server-utils'
+import { authRateLimit } from '@/lib/auth/rate-limit'
 import { setSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
 import { createSession } from '@/lib/db/queries/sessions'
@@ -13,6 +14,14 @@ import { findUserByWalletAddress, createUser } from '@/lib/db/queries/users'
 import { teams, teamMembers, ActivityType, activityLogs } from '@/lib/db/schema'
 
 export async function POST(request: NextRequest) {
+  // Apply rate limiting
+  const isAllowed = await authRateLimit(request)
+  if (!isAllowed) {
+    return apiResponses.tooManyRequests(
+      'Too many authentication attempts. Please try again later.'
+    )
+  }
+
   try {
     const { message, signature, address, socialEmail, socialName } =
       await request.json()

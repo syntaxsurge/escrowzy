@@ -15,7 +15,9 @@ import {
 } from '../lib/db/schema'
 
 export async function getUser() {
-  const sessionCookie = (await cookies()).get('session')
+  const cookieStore = await cookies()
+  const sessionCookie = cookieStore.get('session')
+
   if (!sessionCookie || !sessionCookie.value) {
     return null
   }
@@ -23,40 +25,65 @@ export async function getUser() {
   let sessionData
   try {
     sessionData = await verifyToken(sessionCookie.value)
-  } catch (_error) {
+  } catch (error) {
+    // Invalid JWT - clear the cookie
+    cookieStore.delete('session')
     return null
   }
 
+  // Validate session structure
   if (
     !sessionData ||
     !sessionData.user ||
     typeof sessionData.user.id !== 'number' ||
-    !sessionData.sessionToken
+    !sessionData.sessionToken ||
+    !sessionData.expires
   ) {
+    cookieStore.delete('session')
     return null
   }
 
+  // Check JWT expiry
   if (new Date(sessionData.expires) < new Date()) {
+    cookieStore.delete('session')
     return null
   }
 
-  // Validate session exists in database
-  const dbSession = await validateSession(sessionData.sessionToken)
-  if (!dbSession) {
+  try {
+    // Validate session exists in database and is not expired
+    const dbSession = await validateSession(sessionData.sessionToken)
+    if (!dbSession) {
+      // Session doesn't exist in DB or is expired - clear cookie
+      cookieStore.delete('session')
+      return null
+    }
+
+    // Check if user ID matches
+    if (dbSession.userId !== sessionData.user.id) {
+      cookieStore.delete('session')
+      return null
+    }
+
+    // Get user from database
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, sessionData.user.id))
+      .limit(1)
+
+    if (user.length === 0) {
+      // User doesn't exist - clear session
+      cookieStore.delete('session')
+      return null
+    }
+
+    // Return the user data
+    return user[0]
+  } catch (error) {
+    // Database error - fail closed (deny access)
+    console.error('Session validation error:', error)
     return null
   }
-
-  const user = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, sessionData.user.id))
-    .limit(1)
-
-  if (user.length === 0) {
-    return null
-  }
-
-  return user[0]
 }
 
 export async function getUserWithTeam(userId: number) {

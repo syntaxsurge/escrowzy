@@ -151,6 +151,12 @@ export const apiResponses = {
     NextResponse.json({ error: message }, { status: 429 }),
 
   /**
+   * Too many requests response (alias for rateLimited)
+   */
+  tooManyRequests: (message = 'Too many requests') =>
+    NextResponse.json({ error: message }, { status: 429 }),
+
+  /**
    * Method not allowed response
    */
   methodNotAllowed: (allowed: string[]) =>

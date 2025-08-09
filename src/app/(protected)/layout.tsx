@@ -1,36 +1,26 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import { ClientOnly } from '@/components/client-only'
-import { Footer } from '@/components/layout/footer'
-import Header from '@/components/layout/header'
-import { AuthDependentProviders } from '@/components/providers/auth-dependent-providers'
-import { useSubscriptionValidation } from '@/hooks/use-subscription-validation'
+import { AuthGuard } from '@/components/auth/auth-guard'
+import { appRoutes } from '@/config/app-routes'
+import { getUser } from '@/services/user'
 
-function LayoutWithSubscriptionValidation({
+import ProtectedLayoutClient from './protected-layout-client'
+
+export default async function Layout({
   children
 }: {
   children: React.ReactNode
 }) {
-  // Validate subscription status on mount and when focus changes
-  useSubscriptionValidation()
+  // Server-side authentication check
+  const user = await getUser()
+
+  if (!user) {
+    redirect(appRoutes.home)
+  }
 
   return (
-    <section className='bg-background text-foreground flex min-h-screen flex-col'>
-      <Header />
-      <main className='flex-1'>{children}</main>
-      <Footer />
-    </section>
-  )
-}
-
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <ClientOnly>
-      <AuthDependentProviders>
-        <LayoutWithSubscriptionValidation>
-          {children}
-        </LayoutWithSubscriptionValidation>
-      </AuthDependentProviders>
-    </ClientOnly>
+    <AuthGuard>
+      <ProtectedLayoutClient user={user}>{children}</ProtectedLayoutClient>
+    </AuthGuard>
   )
 }
