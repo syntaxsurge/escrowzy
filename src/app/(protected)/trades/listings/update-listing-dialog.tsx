@@ -59,6 +59,9 @@ export function UpdateListingDialog({
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Check if this is a domain listing
+  const isDomainListing = listing.listingCategory === 'domain'
+
   // Parse existing payment methods
   const existingPaymentMethods = Array.isArray(listing.paymentMethods)
     ? listing.paymentMethods
@@ -66,24 +69,29 @@ export function UpdateListingDialog({
       ? JSON.parse(listing.paymentMethods)
       : []
 
+  // Set form defaults based on listing type
+  const defaultValues = isDomainListing
+    ? {
+        amount: listing.amount ?? undefined,
+        isActive: listing.isActive
+      }
+    : {
+        amount: listing.amount ?? undefined,
+        pricePerUnit: listing.pricePerUnit ?? undefined,
+        minAmount: listing.minAmount ?? '',
+        maxAmount: listing.maxAmount ?? '',
+        paymentMethods: existingPaymentMethods,
+        isActive: listing.isActive
+      }
+
   const form = useForm<UpdateListingInput>({
     resolver: zodResolver(updateListingSchema),
-    defaultValues: {
-      amount: listing.amount ?? undefined,
-      pricePerUnit: listing.pricePerUnit ?? undefined,
-      minAmount: listing.minAmount ?? '',
-      maxAmount: listing.maxAmount ?? '',
-      paymentMethods: existingPaymentMethods,
-      isActive: listing.isActive
-    }
+    defaultValues: defaultValues as UpdateListingInput
   })
 
   const onSubmit = async (data: UpdateListingInput) => {
     try {
       setIsSubmitting(true)
-
-      // Check if this is a domain listing
-      const isDomainListing = listing.listingCategory === 'domain'
 
       // Validate min/max amounts (only for P2P listings)
       if (!isDomainListing && data.minAmount && data.maxAmount) {
@@ -100,6 +108,14 @@ export function UpdateListingDialog({
         }
       }
 
+      // Filter data based on listing type for comparison
+      const filteredData = isDomainListing
+        ? {
+            amount: data.amount,
+            isActive: data.isActive
+          }
+        : data
+
       // Check if form has actually changed
       const originalData = isDomainListing
         ? {
@@ -115,11 +131,12 @@ export function UpdateListingDialog({
             isActive: listing.isActive
           }
 
-      if (!hasFormChanged(data, originalData)) {
+      if (!hasFormChanged(filteredData, originalData)) {
         toast({
           title: 'No Changes',
           description: 'No changes were made to the listing'
         })
+        setIsSubmitting(false) // Reset button state
         onOpenChange(false) // Close the dialog when no changes
         return
       }
@@ -179,8 +196,7 @@ export function UpdateListingDialog({
       ? (parseFloat(amount) * parseFloat(pricePerUnit)).toFixed(2)
       : '0.00'
 
-  // Check if this is a domain listing
-  const isDomainListing = listing.listingCategory === 'domain'
+  // Get domain metadata if applicable
   const domainMetadata =
     isDomainListing && listing.metadata
       ? typeof listing.metadata === 'string'
