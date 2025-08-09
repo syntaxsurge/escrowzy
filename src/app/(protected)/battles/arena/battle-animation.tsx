@@ -86,13 +86,16 @@ export function BattleAnimation({
       if (data.battleId !== battleId) return
 
       // Update health based on actual battle positions
-      // If we're player1 in the actual battle, use the data directly
-      // If we're player2, we need to swap the health values for display
-      if (isPlayer1) {
+      // The UI always shows current user on the left (player1 position)
+      // So we need to map the health correctly based on who the current user is
+      const currentUserIsActualPlayer1 = actualPlayer1Id === user?.id
+
+      if (currentUserIsActualPlayer1) {
+        // Current user is actual player1, so display data as-is
         setPlayer1Health(Math.max(0, data.player1Health))
         setPlayer2Health(Math.max(0, data.player2Health))
       } else {
-        // Swap health values for player2's perspective
+        // Current user is actual player2, so swap health for display
         setPlayer1Health(Math.max(0, data.player2Health))
         setPlayer2Health(Math.max(0, data.player1Health))
       }
@@ -100,14 +103,10 @@ export function BattleAnimation({
 
       // Show attack animation with correct perspective
       if (data.attacker) {
-        // Adjust attacker based on perspective
-        const displayAttacker = isPlayer1
-          ? data.attacker === 1
-            ? 1
-            : 2
-          : data.attacker === 1
-            ? 2
-            : 1
+        // Determine who is attacking from UI perspective
+        const actualAttackerId =
+          data.attacker === 1 ? actualPlayer1Id : actualPlayer2Id
+        const displayAttacker = actualAttackerId === user?.id ? 1 : 2
 
         setCurrentAttacker(displayAttacker)
 
@@ -136,18 +135,21 @@ export function BattleAnimation({
     onBattleCompleted: data => {
       if (data.battleId !== battleId) return
 
-      const battleWinner = data.winnerId === player1.id ? 1 : 2
-      setWinner(battleWinner)
+      // Determine winner from UI perspective (current user is always shown as player1)
+      const currentUserWon = data.winnerId === user?.id
+      const uiWinner = currentUserWon ? 1 : 2
+
+      setWinner(uiWinner)
       setPhase('victory')
 
       // Set final health to 0 for defeated player
-      if (battleWinner === 1) {
+      if (uiWinner === 1) {
         setPlayer2Health(0)
       } else {
         setPlayer1Health(0)
       }
 
-      if (data.winnerId === user?.id) {
+      if (currentUserWon) {
         triggerVictoryConfetti()
       }
 
@@ -250,9 +252,8 @@ export function BattleAnimation({
       setLastAutoActionTime(now)
       setLastActionType(actionType)
 
-      // Visual feedback for auto action
-      const isPlayer1 = user?.id === player1.id
-      setCurrentAttacker(isPlayer1 ? 1 : 2)
+      // Visual feedback for auto action - current user is always shown as player1 in UI
+      setCurrentAttacker(1)
       setTimeout(() => setCurrentAttacker(null), 300)
 
       // Base power for auto actions
@@ -270,8 +271,16 @@ export function BattleAnimation({
 
       if (response.data?.data) {
         const data = response.data.data
-        setPlayer1Health(Math.max(0, data.player1Health))
-        setPlayer2Health(Math.max(0, data.player2Health))
+        // Map health based on actual player positions
+        const currentUserIsActualPlayer1 = actualPlayer1Id === user?.id
+
+        if (currentUserIsActualPlayer1) {
+          setPlayer1Health(Math.max(0, data.player1Health))
+          setPlayer2Health(Math.max(0, data.player2Health))
+        } else {
+          setPlayer1Health(Math.max(0, data.player2Health))
+          setPlayer2Health(Math.max(0, data.player1Health))
+        }
         setCurrentRound(data.currentRound)
 
         // Reset action count after processing
@@ -319,9 +328,8 @@ export function BattleAnimation({
         setComboCount(0)
       }, 2000)
 
-      // Visual feedback
-      const isPlayer1 = user?.id === player1.id
-      setCurrentAttacker(isPlayer1 ? 1 : 2)
+      // Visual feedback - current user is always shown as player1 in UI
+      setCurrentAttacker(1)
       setTimeout(() => setCurrentAttacker(null), 300)
 
       // Show visual effect for user action

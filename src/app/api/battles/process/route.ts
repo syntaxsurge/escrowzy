@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 
-import { and, eq, sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 
 import { getSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
-import { battles, battleStates, battleRounds } from '@/lib/db/schema'
+import { battles, battleStates } from '@/lib/db/schema'
 import { sendBattleEvent } from '@/lib/pusher-server'
 import { rewardsService } from '@/services/rewards'
 
@@ -163,222 +163,232 @@ export async function POST(request: Request) {
           BATTLE_CONSTANTS.ROUND_INTERVAL
 
       if (shouldProcessRound) {
-        const newRound = battleState.currentRound + 1
-
-        // Calculate damage for this round
-        const attacker = Math.random() > 0.5 ? 1 : 2
-        const defender = attacker === 1 ? 2 : 1
-        const attackPower = attacker === 1 ? battle.player1CP : battle.player2CP
-        const defensePower =
-          attacker === 1 ? battle.player2CP : battle.player1CP
-
-        // Factor in player actions
-        const attackerActions =
-          attacker === 1
-            ? (battleState.player1Actions as BattleAction[]) || []
-            : (battleState.player2Actions as BattleAction[]) || []
-
-        const defenderActions =
-          defender === 1
-            ? (battleState.player1Actions as BattleAction[]) || []
-            : (battleState.player2Actions as BattleAction[]) || []
-
-        const actionBonus = attackerActions.length * 2 // Bonus for being active
-
-        // Check if defender is defending
-        const recentDefenderActions = defenderActions.filter(
-          (a: BattleAction) => Date.now() - a.timestamp < 3000
-        )
-        const isDefending = recentDefenderActions.some(
-          (a: BattleAction) => a.type === 'defend'
+        // Use advisory lock to prevent concurrent round processing
+        const lockId = battleId * 1000000 // Create unique lock ID from battleId
+        const lockResult = await db.execute<{ acquired: boolean }>(
+          sql`SELECT pg_try_advisory_lock(${lockId}) as acquired`
         )
 
-        // Check for dodge
-        const isDodged = Math.random() < BATTLE_CONSTANTS.DODGE_CHANCE
-
-        let damage = 0
-        let actionResult: 'hit' | 'defended' | 'dodged' | 'blocked' = 'hit'
-        let isCritical = false
-
-        if (isDodged) {
-          damage = 0
-          actionResult = 'dodged'
-        } else {
-          // Calculate base damage
-          const baseDamage =
-            BATTLE_CONSTANTS.BASE_DAMAGE +
-            Math.random() * BATTLE_CONSTANTS.DAMAGE_VARIANCE
-          const powerRatio =
-            (attackPower + actionBonus) / (attackPower + defensePower)
-          const damageMultiplier = 0.5 + powerRatio
-
-          isCritical = Math.random() < BATTLE_CONSTANTS.CRITICAL_HIT_CHANCE
-          const critMultiplier = isCritical
-            ? BATTLE_CONSTANTS.CRITICAL_MULTIPLIER
-            : 1
-
-          damage = Math.floor(baseDamage * damageMultiplier * critMultiplier)
-
-          // Apply defense reduction
-          if (isDefending && !isCritical) {
-            damage = Math.floor(damage * BATTLE_CONSTANTS.DEFEND_REDUCTION)
-            actionResult = 'defended'
-          }
-        }
-
-        // Apply damage
-        let player1Health = battleState.player1Health
-        let player2Health = battleState.player2Health
-
-        if (attacker === 1) {
-          player2Health = Math.max(0, player2Health - damage)
-        } else {
-          player1Health = Math.max(0, player1Health - damage)
-        }
-
-        // Update battle log
-        const battleLog = (battleState.battleLog as any[]) || []
-        battleLog.push({
-          round: newRound,
-          attacker,
-          damage,
-          isCritical,
-          actionResult,
-          player1Health,
-          player2Health,
-          timestamp: new Date().toISOString()
-        })
-
-        // Check if round already exists before inserting
-        const [existingRound] = await db
-          .select()
-          .from(battleRounds)
-          .where(
-            and(
-              eq(battleRounds.battleId, battleId),
-              eq(battleRounds.roundNumber, newRound)
-            )
-          )
-          .limit(1)
-
-        if (!existingRound) {
-          try {
-            await db.insert(battleRounds).values({
+        if (!(lockResult[0] as any)?.acquired) {
+          // Another request is processing this battle, skip
+          return NextResponse.json({
+            success: true,
+            data: {
               battleId,
-              roundNumber: newRound,
-              attacker,
-              damage,
-              isCritical,
-              player1Health,
-              player2Health
-            })
-          } catch (error: any) {
-            // If duplicate key error due to race condition, skip insertion
-            if (error?.code !== '23505') {
-              console.error('Error inserting battle round:', error)
+              status: battle.status,
+              currentRound: battleState.currentRound,
+              player1Health: battleState.player1Health,
+              player2Health: battleState.player2Health,
+              battleLog: battleState.battleLog || [],
+              isPlayer1
+            }
+          })
+        }
+
+        try {
+          const newRound = battleState.currentRound + 1
+
+          // Calculate damage for this round
+          const attacker = Math.random() > 0.5 ? 1 : 2
+          const defender = attacker === 1 ? 2 : 1
+          const attackPower =
+            attacker === 1 ? battle.player1CP : battle.player2CP
+          const defensePower =
+            attacker === 1 ? battle.player2CP : battle.player1CP
+
+          // Factor in player actions
+          const attackerActions =
+            attacker === 1
+              ? (battleState.player1Actions as BattleAction[]) || []
+              : (battleState.player2Actions as BattleAction[]) || []
+
+          const defenderActions =
+            defender === 1
+              ? (battleState.player1Actions as BattleAction[]) || []
+              : (battleState.player2Actions as BattleAction[]) || []
+
+          const actionBonus = attackerActions.length * 2 // Bonus for being active
+
+          // Check if defender is defending
+          const recentDefenderActions = defenderActions.filter(
+            (a: BattleAction) => Date.now() - a.timestamp < 3000
+          )
+          const isDefending = recentDefenderActions.some(
+            (a: BattleAction) => a.type === 'defend'
+          )
+
+          // Check for dodge
+          const isDodged = Math.random() < BATTLE_CONSTANTS.DODGE_CHANCE
+
+          let damage = 0
+          let actionResult: 'hit' | 'defended' | 'dodged' | 'blocked' = 'hit'
+          let isCritical = false
+
+          if (isDodged) {
+            damage = 0
+            actionResult = 'dodged'
+          } else {
+            // Calculate base damage
+            const baseDamage =
+              BATTLE_CONSTANTS.BASE_DAMAGE +
+              Math.random() * BATTLE_CONSTANTS.DAMAGE_VARIANCE
+            const powerRatio =
+              (attackPower + actionBonus) / (attackPower + defensePower)
+            const damageMultiplier = 0.5 + powerRatio
+
+            isCritical = Math.random() < BATTLE_CONSTANTS.CRITICAL_HIT_CHANCE
+            const critMultiplier = isCritical
+              ? BATTLE_CONSTANTS.CRITICAL_MULTIPLIER
+              : 1
+
+            damage = Math.floor(baseDamage * damageMultiplier * critMultiplier)
+
+            // Apply defense reduction
+            if (isDefending && !isCritical) {
+              damage = Math.floor(damage * BATTLE_CONSTANTS.DEFEND_REDUCTION)
+              actionResult = 'defended'
             }
           }
-        }
 
-        // Update battle state
-        await db
-          .update(battleStates)
-          .set({
-            currentRound: newRound,
-            player1Health,
-            player2Health,
-            battleLog,
-            lastActionAt: new Date(),
-            updatedAt: new Date()
-          })
-          .where(eq(battleStates.battleId, battleId))
+          // Apply damage
+          let player1Health = battleState.player1Health
+          let player2Health = battleState.player2Health
 
-        // Send real-time update with action result
-        await sendBattleEvent('battle-update', {
-          battleId,
-          round: newRound,
-          attacker,
-          damage,
-          isCritical,
-          actionResult,
-          player1Health,
-          player2Health,
-          player1Id: battle.player1Id,
-          player2Id: battle.player2Id
-        })
-
-        // Check if battle should end
-        if (
-          player1Health <= 0 ||
-          player2Health <= 0 ||
-          newRound >= BATTLE_CONSTANTS.ROUNDS_PER_BATTLE
-        ) {
-          // Determine winner
-          const winnerId =
-            player1Health > player2Health ? battle.player1Id : battle.player2Id
-          const loserId =
-            winnerId === battle.player1Id ? battle.player2Id : battle.player1Id
-
-          // Check if winner already has an active discount
-          const now = new Date().toISOString()
-          const [existingDiscount] = await db
-            .select()
-            .from(battles)
-            .where(
-              sql`${battles.winnerId} = ${winnerId} AND ${battles.discountExpiresAt} > ${now}`
-            )
-            .limit(1)
-
-          // Only set discount if no active discount exists
-          let discountExpiresAt = null
-          let grantDiscount = false
-          if (!existingDiscount) {
-            discountExpiresAt = new Date()
-            discountExpiresAt.setHours(
-              discountExpiresAt.getHours() +
-                BATTLE_CONSTANTS.DISCOUNT_DURATION_HOURS
-            )
-            grantDiscount = true
+          if (attacker === 1) {
+            player2Health = Math.max(0, player2Health - damage)
+          } else {
+            player1Health = Math.max(0, player1Health - damage)
           }
 
-          // Update battle
-          await db
-            .update(battles)
-            .set({
-              winnerId,
-              status: 'completed',
-              completedAt: new Date(),
-              discountExpiresAt
-            })
-            .where(eq(battles.id, battleId))
+          // Update battle log
+          const battleLog = (battleState.battleLog as any[]) || []
+          battleLog.push({
+            round: newRound,
+            attacker,
+            damage,
+            isCritical,
+            actionResult,
+            player1Health,
+            player2Health,
+            timestamp: new Date().toISOString()
+          })
 
-          // Update player stats
-          const loserGameData =
-            await rewardsService.getOrCreateGameData(loserId)
-          await rewardsService.handleBattleWin(
-            winnerId,
-            loserGameData.combatPower
+          // Use INSERT ... ON CONFLICT DO NOTHING to handle race conditions atomically
+          await db.execute(
+            sql`
+            INSERT INTO battle_rounds (battle_id, round_number, attacker, damage, is_critical, player1_health, player2_health)
+            VALUES (${battleId}, ${newRound}, ${attacker}, ${damage}, ${isCritical}, ${player1Health}, ${player2Health})
+            ON CONFLICT (battle_id, round_number) DO NOTHING
+          `
           )
-          await rewardsService.handleBattleLoss(loserId)
 
-          // Send completion event
-          await sendBattleEvent('battle-completed', {
+          // Update battle state
+          await db
+            .update(battleStates)
+            .set({
+              currentRound: newRound,
+              player1Health,
+              player2Health,
+              battleLog,
+              lastActionAt: new Date(),
+              updatedAt: new Date()
+            })
+            .where(eq(battleStates.battleId, battleId))
+
+          // Send real-time update with action result
+          await sendBattleEvent('battle-update', {
             battleId,
-            winnerId,
-            loserId,
-            feeDiscountPercent: grantDiscount
-              ? BATTLE_CONSTANTS.WINNER_DISCOUNT_PERCENT
-              : 0,
+            round: newRound,
+            attacker,
+            damage,
+            isCritical,
+            actionResult,
+            player1Health,
+            player2Health,
             player1Id: battle.player1Id,
             player2Id: battle.player2Id
           })
-        }
 
-        // Update state for response
-        battleState.currentRound = newRound
-        battleState.player1Health = player1Health
-        battleState.player2Health = player2Health
-        battleState.battleLog = battleLog
+          // Check if battle should end
+          if (
+            player1Health <= 0 ||
+            player2Health <= 0 ||
+            newRound >= BATTLE_CONSTANTS.ROUNDS_PER_BATTLE
+          ) {
+            // Determine winner
+            const winnerId =
+              player1Health > player2Health
+                ? battle.player1Id
+                : battle.player2Id
+            const loserId =
+              winnerId === battle.player1Id
+                ? battle.player2Id
+                : battle.player1Id
+
+            // Check if winner already has an active discount
+            const now = new Date().toISOString()
+            const [existingDiscount] = await db
+              .select()
+              .from(battles)
+              .where(
+                sql`${battles.winnerId} = ${winnerId} AND ${battles.discountExpiresAt} > ${now}`
+              )
+              .limit(1)
+
+            // Only set discount if no active discount exists
+            let discountExpiresAt = null
+            let grantDiscount = false
+            if (!existingDiscount) {
+              discountExpiresAt = new Date()
+              discountExpiresAt.setHours(
+                discountExpiresAt.getHours() +
+                  BATTLE_CONSTANTS.DISCOUNT_DURATION_HOURS
+              )
+              grantDiscount = true
+            }
+
+            // Update battle
+            await db
+              .update(battles)
+              .set({
+                winnerId,
+                status: 'completed',
+                completedAt: new Date(),
+                discountExpiresAt
+              })
+              .where(eq(battles.id, battleId))
+
+            // Update player stats
+            const loserGameData =
+              await rewardsService.getOrCreateGameData(loserId)
+            await rewardsService.handleBattleWin(
+              winnerId,
+              loserGameData.combatPower
+            )
+            await rewardsService.handleBattleLoss(loserId)
+
+            // Send completion event
+            await sendBattleEvent('battle-completed', {
+              battleId,
+              winnerId,
+              loserId,
+              feeDiscountPercent: grantDiscount
+                ? BATTLE_CONSTANTS.WINNER_DISCOUNT_PERCENT
+                : 0,
+              player1Id: battle.player1Id,
+              player2Id: battle.player2Id
+            })
+          }
+
+          // Update state for response
+          battleState.currentRound = newRound
+          battleState.player1Health = player1Health
+          battleState.player2Health = player2Health
+          battleState.battleLog = battleLog
+        } finally {
+          // Always release the advisory lock
+          await db.execute(sql`SELECT pg_advisory_unlock(${lockId})`)
+        }
       }
     }
 

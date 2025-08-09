@@ -167,31 +167,43 @@ export default function BattleArenaPage() {
       if (battleStateRef.current === 'invitation-sent') {
         setBattleState('preparing')
 
-        // Format battle data for the sender
-        const isPlayer1 = data.fromUserId === user?.id
+        // Determine player positions based on who sent the invitation
+        const senderIsPlayer1 = data.fromUserId === data.player1Id
+        const currentUserIsSender = data.fromUserId === user?.id
+
+        // Format battle data for the sender with correct positioning
         const formattedData: CurrentBattleData = {
           battleId: data.battleId,
-          isPlayer1,
+          isPlayer1: senderIsPlayer1
+            ? currentUserIsSender
+            : !currentUserIsSender,
           player1: {
-            id: data.fromUserId,
+            id: data.player1Id || data.fromUserId,
             combatPower: data.player1CP || 100
           },
           player2: {
-            id: data.toUserId,
+            id: data.player2Id || data.toUserId,
             combatPower: data.player2CP || 100
           },
           opponent: {
-            id: isPlayer1 ? data.toUserId : data.fromUserId,
-            name: currentOpponent?.username || data.toUserName || 'Opponent',
-            combatPower: isPlayer1
-              ? data.player2CP || 100
-              : data.player1CP || 100
+            id: data.toUserId,
+            name: data.toUserName || currentOpponent?.username || 'Opponent',
+            combatPower: data.player2CP || 100
           },
           winnerId: data.winnerId,
           feeDiscountPercent: data.feeDiscountPercent
         }
 
         setCurrentBattleData(formattedData)
+
+        // Also set opponent info if not already set
+        if (!currentOpponent && data.toUserName) {
+          setCurrentOpponent({
+            userId: data.toUserId,
+            username: data.toUserName,
+            combatPower: data.player2CP || 100
+          })
+        }
 
         // Synchronize countdown timing with accepter
         setTimeout(() => {
@@ -219,31 +231,55 @@ export default function BattleArenaPage() {
       ) {
         setBattleState('preparing')
 
+        // Determine player positions correctly
+        const currentUserIsPlayer1 = data.player1Id === user?.id
+        const opponentId = currentUserIsPlayer1
+          ? data.player2Id
+          : data.player1Id
+        const opponentName = currentUserIsPlayer1
+          ? data.player2Name ||
+            data.toUserName ||
+            currentOpponent?.username ||
+            'Opponent'
+          : data.player1Name ||
+            data.fromUserName ||
+            currentOpponent?.username ||
+            'Opponent'
+        const opponentCP = currentUserIsPlayer1
+          ? data.player2CP
+          : data.player1CP
+
         // Format battle data properly for both users
-        const isPlayer1 = data.fromUserId === user?.id
         const formattedData: CurrentBattleData = {
           battleId: data.battleId,
-          isPlayer1,
+          isPlayer1: currentUserIsPlayer1,
           player1: {
-            id: data.fromUserId,
+            id: data.player1Id || data.fromUserId,
             combatPower: data.player1CP || 100
           },
           player2: {
-            id: data.toUserId,
+            id: data.player2Id || data.toUserId,
             combatPower: data.player2CP || 100
           },
           opponent: {
-            id: isPlayer1 ? data.toUserId : data.fromUserId,
-            name: currentOpponent?.username || data.opponentName || 'Opponent',
-            combatPower: isPlayer1
-              ? data.player2CP || 100
-              : data.player1CP || 100
+            id: opponentId,
+            name: opponentName,
+            combatPower: opponentCP || 100
           },
           winnerId: data.winnerId,
           feeDiscountPercent: data.feeDiscountPercent
         }
 
         setCurrentBattleData(formattedData)
+
+        // Set opponent info if not already set
+        if (!currentOpponent) {
+          setCurrentOpponent({
+            userId: opponentId,
+            username: opponentName,
+            combatPower: opponentCP || 100
+          })
+        }
 
         // Both players transition to countdown after preparing
         setTimeout(() => {
@@ -794,16 +830,8 @@ export default function BattleArenaPage() {
                               player2Name={
                                 currentOpponent?.username || 'Opponent'
                               }
-                              player1CP={
-                                currentBattleData.isPlayer1
-                                  ? currentBattleData.player1.combatPower
-                                  : currentBattleData.player2.combatPower
-                              }
-                              player2CP={
-                                currentBattleData.isPlayer1
-                                  ? currentBattleData.player2.combatPower
-                                  : currentBattleData.player1.combatPower
-                              }
+                              player1CP={combatPower}
+                              player2CP={currentOpponent?.combatPower || 100}
                             />
                           </motion.div>
                         )}
@@ -825,9 +853,7 @@ export default function BattleArenaPage() {
                               player1={{
                                 id: user?.id || 0,
                                 name: user?.name || 'You',
-                                combatPower: currentBattleData.isPlayer1
-                                  ? currentBattleData.player1.combatPower
-                                  : currentBattleData.player2.combatPower
+                                combatPower: combatPower
                               }}
                               player2={{
                                 id: currentBattleData.opponent.id,
