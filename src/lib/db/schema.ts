@@ -374,16 +374,47 @@ export const battles = pgTable(
     winnerId: integer('winner_id').references(() => users.id),
     player1CP: integer('player1_cp').notNull(),
     player2CP: integer('player2_cp').notNull(),
+    status: text('status')
+      .notNull()
+      .default('preparing')
+      .$type<'preparing' | 'ongoing' | 'completed'>(),
     feeDiscountPercent: integer('fee_discount_percent'),
     discountExpiresAt: timestamp('discount_expires_at'),
     winnerXP: integer('winner_xp').notNull().default(50),
     loserXP: integer('loser_xp').notNull().default(10),
+    startedAt: timestamp('started_at'),
+    completedAt: timestamp('completed_at'),
     createdAt: timestamp('created_at').notNull().defaultNow()
   },
   table => [
     index('idx_battles_player1').on(table.player1Id),
     index('idx_battles_player2').on(table.player2Id),
-    index('idx_battles_winner').on(table.winnerId)
+    index('idx_battles_winner').on(table.winnerId),
+    index('idx_battles_status').on(table.status)
+  ]
+)
+
+export const battleStates = pgTable(
+  'battle_states',
+  {
+    id: serial('id').primaryKey(),
+    battleId: integer('battle_id')
+      .notNull()
+      .references(() => battles.id)
+      .unique(),
+    currentRound: integer('current_round').notNull().default(0),
+    player1Health: integer('player1_health').notNull().default(100),
+    player2Health: integer('player2_health').notNull().default(100),
+    player1Actions: jsonb('player1_actions').notNull().default('[]'),
+    player2Actions: jsonb('player2_actions').notNull().default('[]'),
+    battleLog: jsonb('battle_log').notNull().default('[]'),
+    lastActionAt: timestamp('last_action_at').notNull().defaultNow(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_battle_states_battle').on(table.battleId),
+    index('idx_battle_states_updated').on(table.updatedAt)
   ]
 )
 
@@ -715,6 +746,17 @@ export const battlesRelations = relations(battles, ({ one }) => ({
     fields: [battles.winnerId],
     references: [users.id],
     relationName: 'winner'
+  }),
+  battleState: one(battleStates, {
+    fields: [battles.id],
+    references: [battleStates.battleId]
+  })
+}))
+
+export const battleStatesRelations = relations(battleStates, ({ one }) => ({
+  battle: one(battles, {
+    fields: [battleStates.battleId],
+    references: [battles.id]
   })
 }))
 
@@ -893,6 +935,8 @@ export type EscrowListing = typeof escrowListings.$inferSelect
 export type NewEscrowListing = typeof escrowListings.$inferInsert
 export type Battle = typeof battles.$inferSelect
 export type NewBattle = typeof battles.$inferInsert
+export type BattleState = typeof battleStates.$inferSelect
+export type NewBattleState = typeof battleStates.$inferInsert
 export type BattleQueue = typeof battleQueue.$inferSelect
 export type NewBattleQueue = typeof battleQueue.$inferInsert
 export type BattleInvitation = typeof battleInvitations.$inferSelect

@@ -5,14 +5,14 @@ export type NewBattle = typeof battles.$inferInsert
 
 export interface BattleResult {
   id: number
-  winnerId: number
-  loserId: number
+  winnerId: number | null
+  loserId: number | null
   winnerCP: number
   loserCP: number
   player1CP: number
   player2CP: number
   feeDiscountPercent: number
-  discountExpiresAt: Date
+  discountExpiresAt: Date | null
   winnerXP: number
   loserXP: number
 }

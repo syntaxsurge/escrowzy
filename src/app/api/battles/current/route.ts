@@ -4,7 +4,7 @@ import { desc, eq, or } from 'drizzle-orm'
 
 import { getSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
-import { battles, users } from '@/lib/db/schema'
+import { battles, users, battleStates } from '@/lib/db/schema'
 
 export async function GET() {
   try {
@@ -16,7 +16,7 @@ export async function GET() {
       )
     }
 
-    // Get the most recent battle that is in progress
+    // Get the most recent battle that is not completed
     const [currentBattle] = await db
       .select({
         id: battles.id,
@@ -25,7 +25,9 @@ export async function GET() {
         player1CP: battles.player1CP,
         player2CP: battles.player2CP,
         winnerId: battles.winnerId,
+        status: battles.status,
         feeDiscountPercent: battles.feeDiscountPercent,
+        startedAt: battles.startedAt,
         createdAt: battles.createdAt
       })
       .from(battles)
@@ -45,9 +47,8 @@ export async function GET() {
       })
     }
 
-    // Check if battle is recent (within last 30 seconds) and not completed
-    const battleAge = Date.now() - currentBattle.createdAt.getTime()
-    const isInProgress = battleAge < 30000 && !currentBattle.winnerId
+    // Check if battle is still active (not completed)
+    const isInProgress = currentBattle.status !== 'completed'
 
     if (!isInProgress) {
       return NextResponse.json({
@@ -85,18 +86,32 @@ export async function GET() {
       }
     }
 
+    // Get battle state if the battle is ongoing
+    let battleState = null
+    if (currentBattle.status === 'ongoing') {
+      const [state] = await db
+        .select()
+        .from(battleStates)
+        .where(eq(battleStates.battleId, currentBattle.id))
+        .limit(1)
+      battleState = state
+    }
+
     return NextResponse.json({
       success: true,
       data: {
         battleId: currentBattle.id,
+        status: currentBattle.status,
         isPlayer1: currentBattle.player1Id === session.user.id,
         player1: {
           id: currentBattle.player1Id,
-          combatPower: currentBattle.player1CP
+          combatPower: currentBattle.player1CP,
+          health: battleState?.player1Health ?? 100
         },
         player2: {
           id: currentBattle.player2Id,
-          combatPower: currentBattle.player2CP
+          combatPower: currentBattle.player2CP,
+          health: battleState?.player2Health ?? 100
         },
         opponent: {
           id: opponentId,
@@ -105,7 +120,9 @@ export async function GET() {
             currentBattle.player1Id === session.user.id
               ? currentBattle.player2CP
               : currentBattle.player1CP
-        }
+        },
+        currentRound: battleState?.currentRound ?? 0,
+        battleLog: battleState?.battleLog ?? []
       }
     })
   } catch (error) {

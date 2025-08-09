@@ -14,10 +14,12 @@ import {
   Sparkles,
   Star
 } from 'lucide-react'
+import useSWR from 'swr'
 
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib'
+import { api } from '@/lib/api/http-client'
 
 interface BattleAnimationProps {
   player1: {
@@ -30,6 +32,7 @@ interface BattleAnimationProps {
     name: string
     combatPower: number
   }
+  battleId?: number
   onComplete?: (winnerId: number) => void
 }
 
@@ -44,6 +47,7 @@ interface DamageNumber {
 export function BattleAnimation({
   player1,
   player2,
+  battleId,
   onComplete
 }: BattleAnimationProps) {
   const [phase, setPhase] = useState<
@@ -56,6 +60,17 @@ export function BattleAnimation({
   const [comboCount, setComboCount] = useState(0)
   const [winner, setWinner] = useState<1 | 2 | null>(null)
   const [screenShake, setScreenShake] = useState(false)
+  const [currentRound, setCurrentRound] = useState(0)
+
+  // Poll for battle state updates from server
+  const { data: battleData } = useSWR(
+    battleId && phase === 'fighting' ? `/api/battles/current` : null,
+    (url: string) => api.get(url).then(res => res.data),
+    {
+      refreshInterval: 2000, // Poll every 2 seconds
+      revalidateOnFocus: false
+    }
+  )
 
   // Victory confetti effect
   const triggerVictoryConfetti = () => {
@@ -108,107 +123,143 @@ export function BattleAnimation({
     }, 1500)
   }
 
+  // Update battle state from server data
+  useEffect(() => {
+    if (battleData?.data && phase === 'fighting') {
+      const {
+        player1: p1,
+        player2: p2,
+        currentRound: round,
+        status
+      } = battleData.data
+
+      // Update health
+      if (p1?.health !== undefined) setPlayer1Health(p1.health)
+      if (p2?.health !== undefined) setPlayer2Health(p2.health)
+      if (round !== undefined) setCurrentRound(round)
+
+      // Check if battle is completed
+      if (status === 'completed' || p1?.health <= 0 || p2?.health <= 0) {
+        const battleWinner = p1?.health > p2?.health ? 1 : 2
+        setWinner(battleWinner)
+        setPhase('victory')
+
+        if (battleWinner === 1) {
+          triggerVictoryConfetti()
+        }
+
+        // Victory phase duration
+        setTimeout(() => {
+          setPhase('complete')
+          if (onComplete) {
+            onComplete(battleWinner === 1 ? player1.id : player2.id)
+          }
+        }, 4000)
+      }
+
+      // Show attack animations based on battle log
+      const battleLog = battleData.data.battleLog || []
+      if (battleLog.length > currentRound && battleLog[currentRound - 1]) {
+        const lastRound = battleLog[currentRound - 1]
+        if (lastRound.attacker) {
+          setCurrentAttacker(lastRound.attacker)
+
+          // Add damage number
+          if (lastRound.damage) {
+            addDamageNumber(
+              lastRound.damage,
+              lastRound.attacker === 1 ? 2 : 1,
+              lastRound.isCritical || false
+            )
+          }
+
+          // Screen shake on critical
+          if (lastRound.isCritical) {
+            setScreenShake(true)
+            setTimeout(() => setScreenShake(false), 300)
+          }
+
+          // Clear attacker after animation
+          setTimeout(() => setCurrentAttacker(null), 1000)
+        }
+      }
+    }
+  }, [battleData, phase, currentRound, player1.id, player2.id, onComplete])
+
   useEffect(() => {
     const battleSequence = async () => {
       // Preparing phase
       await new Promise(resolve => setTimeout(resolve, 2000))
       setPhase('fighting')
 
-      // Fighting phase - continue until someone reaches 0 health
-      let round = 0
-      let currentP1Health = 100
-      let currentP2Health = 100
-      let consecutiveHits = 0
+      // For battles without server processing (fallback)
+      if (!battleId) {
+        // Simple animation for 3 minutes
+        const totalRounds = 30 // 30 rounds over 3 minutes
+        const roundDuration = 6000 // 6 seconds per round
 
-      while (currentP1Health > 0 && currentP2Health > 0) {
-        round++
+        for (let round = 1; round <= totalRounds; round++) {
+          setCurrentRound(round)
 
-        // Alternate attacks with some randomness
-        const attacker = Math.random() > 0.5 ? 1 : 2
-        setCurrentAttacker(attacker)
+          // Random attacker
+          const attacker = Math.random() > 0.5 ? 1 : 2
+          setCurrentAttacker(attacker)
 
-        // Calculate damage
-        const attackPower =
-          attacker === 1 ? player1.combatPower : player2.combatPower
-        const defensePower =
-          attacker === 1 ? player2.combatPower : player1.combatPower
+          // Simulate damage
+          const damage = Math.floor(3 + Math.random() * 5) // Smaller damage for longer battle
+          const isCritical = Math.random() < 0.2
 
-        // Base damage calculation with more variance
-        const baseDamage = 15 + Math.random() * 10
-        const powerRatio = attackPower / (attackPower + defensePower)
-        const damageMultiplier = 0.5 + powerRatio + Math.random() * 0.5
-
-        // Critical hit chance (20%)
-        const isCritical = Math.random() < 0.2
-        const critMultiplier = isCritical ? 2 : 1
-
-        // Calculate final damage
-        let damage = Math.floor(baseDamage * damageMultiplier * critMultiplier)
-
-        // Combo bonus
-        if (attacker === 1 && round > 1 && round % 2 === 1) {
-          consecutiveHits++
-          if (consecutiveHits > 1) {
-            damage = Math.floor(damage * (1 + consecutiveHits * 0.1))
-            setComboCount(consecutiveHits)
+          if (attacker === 1) {
+            setPlayer2Health(prev => {
+              const newHealth = Math.max(0, prev - damage)
+              if (newHealth <= 0) {
+                setWinner(1)
+                setPhase('victory')
+                triggerVictoryConfetti()
+                setTimeout(() => {
+                  setPhase('complete')
+                  if (onComplete) onComplete(player1.id)
+                }, 4000)
+              }
+              return newHealth
+            })
+            addDamageNumber(damage, 2, isCritical)
+          } else {
+            setPlayer1Health(prev => {
+              const newHealth = Math.max(0, prev - damage)
+              if (newHealth <= 0) {
+                setWinner(2)
+                setPhase('victory')
+                setTimeout(() => {
+                  setPhase('complete')
+                  if (onComplete) onComplete(player2.id)
+                }, 4000)
+              }
+              return newHealth
+            })
+            addDamageNumber(damage, 1, isCritical)
           }
-        } else if (attacker === 2 && round > 1 && round % 2 === 0) {
-          consecutiveHits++
-          if (consecutiveHits > 1) {
-            damage = Math.floor(damage * (1 + consecutiveHits * 0.1))
-            setComboCount(consecutiveHits)
+
+          if (isCritical) {
+            setScreenShake(true)
+            setTimeout(() => setScreenShake(false), 300)
           }
-        } else {
-          consecutiveHits = 0
-          setComboCount(0)
+
+          // Wait for round duration
+          await new Promise(resolve =>
+            setTimeout(resolve, roundDuration - 1000)
+          )
+          setCurrentAttacker(null)
+          await new Promise(resolve => setTimeout(resolve, 1000))
+
+          // Check if battle should end
+          if (phase !== 'fighting') break
         }
-
-        // Apply damage
-        if (attacker === 1) {
-          currentP2Health = Math.max(0, currentP2Health - damage)
-          setPlayer2Health(currentP2Health)
-          addDamageNumber(damage, 2, isCritical)
-        } else {
-          currentP1Health = Math.max(0, currentP1Health - damage)
-          setPlayer1Health(currentP1Health)
-          addDamageNumber(damage, 1, isCritical)
-        }
-
-        // Screen shake on critical hits
-        if (isCritical) {
-          setScreenShake(true)
-          setTimeout(() => setScreenShake(false), 300)
-        }
-
-        // Attack animation duration
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        setCurrentAttacker(null)
-        await new Promise(resolve => setTimeout(resolve, 300))
-      }
-
-      // Determine winner
-      const battleWinner = currentP1Health > 0 ? 1 : 2
-      setWinner(battleWinner)
-      setPhase('victory')
-
-      // Trigger victory effects
-      if (battleWinner === 1) {
-        triggerVictoryConfetti()
-      }
-
-      // Victory phase duration
-      await new Promise(resolve => setTimeout(resolve, 4000))
-
-      setPhase('complete')
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      if (onComplete) {
-        onComplete(battleWinner === 1 ? player1.id : player2.id)
       }
     }
 
     battleSequence()
-  }, [player1, player2, onComplete])
+  }, [battleId, player1, player2, onComplete])
 
   return (
     <div
