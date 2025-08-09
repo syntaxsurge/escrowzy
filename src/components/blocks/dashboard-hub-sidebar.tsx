@@ -155,7 +155,7 @@ export function DashboardHubSidebar({
         )}
 
         {/* Navigation */}
-        <nav className='flex-1 space-y-1 overflow-y-auto p-4'>
+        <nav className='min-h-0 flex-1 space-y-1 overflow-y-auto p-4'>
           {navigationItems.map(item => {
             const Icon = item.icon
             const isActive = pathname === item.href
@@ -224,7 +224,7 @@ export function DashboardHubSidebar({
         </nav>
 
         {/* Footer Go to Main Dashboard Button */}
-        <div className='border-border/50 border-t p-4'>
+        <div className='border-border/50 flex-shrink-0 border-t p-4'>
           <Link href={appRoutes.dashboard.base}>
             {isCollapsed ? (
               <Button
