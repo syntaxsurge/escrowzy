@@ -146,9 +146,6 @@ export default function BattleArenaPage() {
           }
         />
 
-        {/* Live Platform Stats */}
-        <LiveStatsDisplay className='mb-6' />
-
         {/* Stats Overview */}
         <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
           <Card className='group relative overflow-hidden border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 transition-all hover:scale-105'>
@@ -242,6 +239,8 @@ export default function BattleArenaPage() {
             </div>
           </CardHeader>
           <CardContent>
+            {/* Live Platform Stats - Moved inside the card */}
+            <LiveStatsDisplay className='mb-6' compact />
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
               <TabsList className='grid w-full grid-cols-2'>
                 <TabsTrigger value='arena' className='flex items-center gap-2'>

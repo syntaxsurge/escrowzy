@@ -86,18 +86,34 @@ export async function POST(request: Request) {
       })
     }
 
-    // Get opponent's username
+    // Get opponent's details for display
     const [opponent] = await db
-      .select({ name: users.name })
+      .select({
+        name: users.name,
+        email: users.email,
+        walletAddress: users.walletAddress
+      })
       .from(users)
       .where(eq(users.id, match.userId))
       .limit(1)
+
+    // Determine display name with proper fallback
+    let displayName = 'Anonymous Warrior'
+    if (opponent) {
+      if (opponent.name && opponent.name !== 'Unknown Player') {
+        displayName = opponent.name
+      } else if (opponent.email) {
+        displayName = opponent.email
+      } else if (opponent.walletAddress) {
+        displayName = `${opponent.walletAddress.slice(0, 6)}...${opponent.walletAddress.slice(-4)}`
+      }
+    }
 
     return NextResponse.json({
       opponent: {
         userId: match.userId,
         combatPower: match.combatPower,
-        username: opponent?.name || 'Unknown Player'
+        username: displayName
       },
       inQueue: false
     })

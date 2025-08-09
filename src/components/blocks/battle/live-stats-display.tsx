@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 
-import { motion, AnimatePresence, useAnimation } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Users, Swords, Timer } from 'lucide-react'
 import useSWR from 'swr'
 
@@ -34,7 +34,6 @@ export function LiveStatsDisplay({
   })
   const [pulseStats, setPulseStats] = useState<Set<string>>(new Set())
   const prevStatsRef = useRef(stats)
-  const animationControls = useAnimation()
 
   // Fetch initial stats and setup polling
   const { data: liveStats } = useSWR(
@@ -219,7 +218,7 @@ export function LiveStatsDisplay({
   }
 
   return (
-    <div className={cn('grid grid-cols-3 gap-3', className)}>
+    <div className={cn('grid grid-cols-3 gap-2', className)}>
       {statItems.map((stat, index) => {
         const statKey = stat.label.toLowerCase().split(' ')[0]
         const isPulsing = pulseStats.has(statKey)
@@ -257,26 +256,28 @@ export function LiveStatsDisplay({
                 )}
               </AnimatePresence>
 
-              <div className='relative p-4'>
-                <div className='mb-2 flex items-center justify-between'>
-                  <div
-                    className={cn(
-                      'rounded-lg bg-white/10 p-2 backdrop-blur-sm',
-                      'transition-transform group-hover:scale-110'
-                    )}
-                  >
-                    <div className={stat.color}>{stat.icon}</div>
+              <div className='relative p-3'>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-2'>
+                    <div
+                      className={cn(
+                        'rounded-lg bg-white/10 p-1.5 backdrop-blur-sm',
+                        'transition-transform group-hover:scale-110'
+                      )}
+                    >
+                      <div className={stat.color}>{stat.icon}</div>
+                    </div>
+                    <div>
+                      <AnimatedNumber
+                        value={stat.value}
+                        className='text-lg font-bold'
+                      />
+                      <p className='text-muted-foreground text-[10px] tracking-wide uppercase'>
+                        {stat.label}
+                      </p>
+                    </div>
                   </div>
                   <LiveIndicator active={stat.value > 0} />
-                </div>
-                <div className='space-y-1'>
-                  <AnimatedNumber
-                    value={stat.value}
-                    className='text-2xl font-black'
-                  />
-                  <p className='text-muted-foreground text-xs tracking-wide uppercase'>
-                    {stat.label}
-                  </p>
                 </div>
               </div>
 
