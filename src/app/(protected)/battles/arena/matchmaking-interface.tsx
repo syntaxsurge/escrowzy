@@ -7,7 +7,6 @@ import {
   Search,
   AlertTriangle,
   Zap,
-  Info,
   Swords,
   User,
   UserX,
@@ -72,10 +71,6 @@ export function MatchmakingInterface({
 
   const minCP = Math.floor(combatPower * (1 - matchRange / 100))
   const maxCP = Math.ceil(combatPower * (1 + matchRange / 100))
-
-  const remainingBattles = dailyLimit
-    ? dailyLimit.maxBattles - dailyLimit.battlesUsed
-    : 3
 
   const getTimeUntilReset = () => {
     if (!dailyLimit?.resetsAt) return ''
@@ -333,44 +328,14 @@ export function MatchmakingInterface({
         </CardContent>
       </Card>
 
-      {/* Daily Limit Status */}
-      {dailyLimit && (
-        <Card>
-          <CardContent className='pt-6'>
-            <div className='space-y-3'>
-              <div className='flex items-center justify-between'>
-                <span className='text-sm font-medium'>Daily Battles</span>
-                <span className='text-sm'>
-                  {dailyLimit.battlesUsed} / {dailyLimit.maxBattles}
-                </span>
-              </div>
-
-              <Progress
-                value={(dailyLimit.battlesUsed / dailyLimit.maxBattles) * 100}
-                className='h-2'
-              />
-
-              {!canBattle && (
-                <Alert>
-                  <AlertTriangle className='h-4 w-4' />
-                  <AlertDescription>
-                    Daily battle limit reached. Resets in {getTimeUntilReset()}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {canBattle && remainingBattles <= 1 && (
-                <Alert>
-                  <Info className='h-4 w-4' />
-                  <AlertDescription>
-                    {remainingBattles} battle{remainingBattles !== 1 ? 's' : ''}{' '}
-                    remaining today
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Show alert only if daily limit reached */}
+      {!canBattle && dailyLimit && (
+        <Alert>
+          <AlertTriangle className='h-4 w-4' />
+          <AlertDescription>
+            Daily battle limit reached. Resets in {getTimeUntilReset()}
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Find Match Button */}

@@ -9,7 +9,8 @@ import {
   Award,
   Shield,
   Flame,
-  LayoutDashboard
+  LayoutDashboard,
+  History
 } from 'lucide-react'
 import useSWR from 'swr'
 
@@ -33,6 +34,13 @@ const navigationItems = [
     badge: 'activeBattles',
     color: 'text-red-600 dark:text-red-400',
     bgColor: 'hover:bg-red-500/10'
+  },
+  {
+    title: 'Battle History',
+    href: appRoutes.battles.history,
+    icon: History,
+    color: 'text-indigo-600 dark:text-indigo-400',
+    bgColor: 'hover:bg-indigo-500/10'
   },
   {
     title: 'Battle Leaderboard',

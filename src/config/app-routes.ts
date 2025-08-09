@@ -65,6 +65,7 @@ export const appRoutes = {
   battles: {
     base: '/battles',
     arena: '/battles/arena',
+    history: '/battles/history',
     leaderboard: '/battles/leaderboard',
     quests: '/battles/quests',
     achievements: '/battles/achievements'

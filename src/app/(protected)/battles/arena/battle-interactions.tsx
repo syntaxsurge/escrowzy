@@ -14,13 +14,15 @@ interface BattleInteractionsProps {
   onAction?: (action: 'attack' | 'defend' | 'special') => void
   isActive: boolean
   playerNumber: 1 | 2
+  opponentActions?: Array<{ action: string; value?: number; timestamp: number }>
 }
 
 export function BattleInteractions({
   onPowerBoost,
   onAction,
   isActive,
-  playerNumber
+  playerNumber,
+  opponentActions = []
 }: BattleInteractionsProps) {
   const [powerLevel, setPowerLevel] = useState(0)
   const [clicks, setClicks] = useState(0)
@@ -87,7 +89,7 @@ export function BattleInteractions({
     }
   }
 
-  // Power decay over time
+  // Power decay over time (only for active player)
   useEffect(() => {
     if (!isActive) return
 
@@ -100,6 +102,26 @@ export function BattleInteractions({
 
     return () => clearInterval(decayInterval)
   }, [isActive, powerLevel])
+
+  // Handle opponent actions (visual feedback only)
+  useEffect(() => {
+    if (isActive || opponentActions.length === 0) return
+
+    const latestAction = opponentActions[opponentActions.length - 1]
+    if (!latestAction) return
+
+    // Update visual state based on opponent's action
+    if (latestAction.action === 'power-boost' && latestAction.value) {
+      setPowerLevel(prev => Math.min(prev + latestAction.value!, 100))
+      setClicks(prev => prev + 1)
+    } else if (latestAction.action === 'special') {
+      setSpecialReady(true)
+      setTimeout(() => {
+        setSpecialReady(false)
+        setPowerLevel(0)
+      }, 500)
+    }
+  }, [opponentActions, isActive])
 
   return (
     <div className='space-y-4'>

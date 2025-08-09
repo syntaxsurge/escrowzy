@@ -4,15 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Swords,
-  Trophy,
-  Shield,
-  Flame,
-  Calendar,
-  User,
-  Sparkles
-} from 'lucide-react'
+import { Swords, Trophy, Shield, Flame, User, Sparkles } from 'lucide-react'
 import useSWR from 'swr'
 
 import { LiveStatsDisplay } from '@/components/blocks/battle/live-stats-display'
@@ -20,7 +12,6 @@ import { GamifiedHeader } from '@/components/blocks/trading'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useBattleInvitations } from '@/hooks/use-battle-invitations'
 import { useBattleRealtime } from '@/hooks/use-battle-realtime'
@@ -111,26 +102,11 @@ export default function BattleArenaPage() {
     },
     onInvitationAccepted: data => {
       // Sender receives this when their invitation is accepted
-      // This is now handled by onBattleStarted for both users
-    },
-    onInvitationRejected: _data => {
+      // Transition to preparing state for the sender
       if (battleState === 'invitation-sent') {
-        setBattleState('idle')
-        setCurrentOpponent(null)
-        setCurrentInvitationId(null)
-        // No toast - UI already shows the state change
-      }
-    },
-    onBattleStarted: data => {
-      // Both users receive this when battle starts
-      if (
-        battleState === 'invitation-received' ||
-        battleState === 'invitation-sent' ||
-        battleState === 'idle'
-      ) {
         setBattleState('preparing')
 
-        // Format battle data properly for both users
+        // Format battle data for the sender
         const isPlayer1 = data.fromUserId === user?.id
         const formattedData: CurrentBattleData = {
           battleId: data.battleId,
@@ -145,7 +121,7 @@ export default function BattleArenaPage() {
           },
           opponent: {
             id: isPlayer1 ? data.toUserId : data.fromUserId,
-            name: currentOpponent?.username || 'Opponent',
+            name: currentOpponent?.username || data.toUserName || 'Opponent',
             combatPower: isPlayer1
               ? data.player2CP || 100
               : data.player1CP || 100
@@ -162,6 +138,66 @@ export default function BattleArenaPage() {
         }, 1000)
       }
     },
+    onInvitationRejected: _data => {
+      if (battleState === 'invitation-sent') {
+        setBattleState('idle')
+        setCurrentOpponent(null)
+        setCurrentInvitationId(null)
+        // No toast - UI already shows the state change
+      }
+    },
+    onBattleStarted: data => {
+      // Both users receive this when battle starts
+      // This is primarily for the accepter, but can also handle edge cases
+      if (
+        battleState === 'invitation-received' ||
+        battleState === 'invitation-sent' ||
+        battleState === 'idle' ||
+        battleState === 'preparing'
+      ) {
+        // Only set to preparing if not already in a later state
+        if (
+          battleState === 'invitation-received' ||
+          battleState === 'invitation-sent' ||
+          battleState === 'idle'
+        ) {
+          setBattleState('preparing')
+        }
+
+        // Format battle data properly for both users
+        const isPlayer1 = data.fromUserId === user?.id
+        const formattedData: CurrentBattleData = {
+          battleId: data.battleId,
+          isPlayer1,
+          player1: {
+            id: data.fromUserId,
+            combatPower: data.player1CP || 100
+          },
+          player2: {
+            id: data.toUserId,
+            combatPower: data.player2CP || 100
+          },
+          opponent: {
+            id: isPlayer1 ? data.toUserId : data.fromUserId,
+            name: currentOpponent?.username || data.opponentName || 'Opponent',
+            combatPower: isPlayer1
+              ? data.player2CP || 100
+              : data.player1CP || 100
+          },
+          winnerId: data.winnerId,
+          feeDiscountPercent: data.feeDiscountPercent
+        }
+
+        setCurrentBattleData(formattedData)
+
+        // Start countdown after a short delay if not already in countdown
+        if (battleState === 'preparing') {
+          setTimeout(() => {
+            setBattleState('countdown')
+          }, 1000)
+        }
+      }
+    },
     onBattleCompleted: data => {
       if (battleState === 'battling') {
         setBattleState('result')
@@ -173,7 +209,11 @@ export default function BattleArenaPage() {
       }
     },
     onOpponentAction: data => {
+      // Update opponent's battle interaction display
       setPlayerActions(prev => [...prev, { ...data, isOpponent: true }])
+
+      // Trigger visual feedback on opponent's interaction component
+      // This will be reflected in the BattleInteractions component
     }
   })
 
@@ -367,7 +407,7 @@ export default function BattleArenaPage() {
         />
 
         {/* Stats Overview */}
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
           <Card className='group relative overflow-hidden border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 transition-all hover:scale-105'>
             <CardContent className='p-6'>
               <div className='flex items-center justify-between'>
@@ -419,30 +459,6 @@ export default function BattleArenaPage() {
                   </p>
                 </div>
                 <Flame className='h-8 w-8 text-orange-500' />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className='group relative overflow-hidden border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-pink-500/10 transition-all hover:scale-105'>
-            <CardContent className='p-6'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-xs font-bold text-purple-600 uppercase dark:text-purple-400'>
-                    Daily Battles
-                  </p>
-                  <p className='text-2xl font-black'>
-                    {dailyLimit?.battlesUsed || 0}/{dailyLimit?.maxBattles || 3}
-                  </p>
-                  <Progress
-                    value={
-                      ((dailyLimit?.battlesUsed || 0) /
-                        (dailyLimit?.maxBattles || 3)) *
-                      100
-                    }
-                    className='mt-2 h-2'
-                  />
-                </div>
-                <Calendar className='h-8 w-8 text-purple-500' />
               </div>
             </CardContent>
           </Card>
@@ -824,6 +840,9 @@ export default function BattleArenaPage() {
                                 <BattleInteractions
                                   isActive={false}
                                   playerNumber={2}
+                                  opponentActions={playerActions.filter(
+                                    a => a.isOpponent
+                                  )}
                                 />
                               </div>
                             </div>
@@ -1069,9 +1088,15 @@ export default function BattleArenaPage() {
                                 </div>
                                 <div className='text-right'>
                                   {isWinner ? (
-                                    <Badge className='bg-green-500/20 text-green-600 dark:text-green-400'>
-                                      +{battle.winnerXP || 50} XP
-                                    </Badge>
+                                    <div className='flex flex-col gap-1'>
+                                      <Badge className='bg-yellow-500/20 text-yellow-600 dark:text-yellow-400'>
+                                        {battle.feeDiscountPercent || 25}%
+                                        Discount
+                                      </Badge>
+                                      <Badge className='bg-green-500/20 text-green-600 dark:text-green-400'>
+                                        +{battle.winnerXP || 50} XP
+                                      </Badge>
+                                    </div>
                                   ) : (
                                     <Badge className='bg-blue-500/20 text-blue-600 dark:text-blue-400'>
                                       +{battle.loserXP || 10} XP
