@@ -17,7 +17,6 @@ import {
 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { useBattleRealtime } from '@/hooks/use-battle-realtime'
 import { useSession } from '@/hooks/use-session'
@@ -120,12 +119,10 @@ export function BattleAnimation({
         triggerVictoryConfetti()
       }
 
-      setTimeout(() => {
-        setPhase('complete')
-        if (onComplete) {
-          onComplete(data.winnerId)
-        }
-      }, 4000)
+      // Don't auto-transition - let user stay on victory screen
+      if (onComplete) {
+        onComplete(data.winnerId)
+      }
     }
   })
 
@@ -684,43 +681,124 @@ export function BattleAnimation({
               </motion.div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Action Buttons - Gamified Design */}
             {phase === 'fighting' && !winner && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                className='mt-8 flex justify-center gap-4'
+                transition={{ type: 'spring', stiffness: 200 }}
+                className='mt-8 flex justify-center gap-6'
               >
-                <Button
+                {/* Attack Button */}
+                <motion.button
                   onClick={() => handlePlayerAction('attack')}
                   disabled={isProcessing}
-                  className='gap-2 bg-gradient-to-r from-red-600 to-orange-600 font-bold text-white hover:from-red-700 hover:to-orange-700'
+                  whileHover={{ scale: 1.05, rotate: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className='group relative h-20 w-32 overflow-hidden rounded-2xl border-2 border-red-500/50 bg-gradient-to-br from-red-600 via-orange-600 to-red-700 p-1 shadow-2xl transition-all hover:border-red-400 hover:shadow-red-500/50 disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <Swords className='h-4 w-4' />
-                  ATTACK!
-                </Button>
-                <Button
+                  <div className='absolute inset-0 bg-gradient-to-t from-transparent via-red-500/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100' />
+                  <div className='absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-orange-400/30 to-transparent' />
+                  <div className='relative flex h-full flex-col items-center justify-center rounded-xl bg-gradient-to-b from-red-900/50 to-orange-900/50 backdrop-blur-sm'>
+                    <motion.div
+                      animate={{ rotate: [0, 10, -10, 10, 0] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <Swords className='mb-1 h-8 w-8 text-white drop-shadow-lg' />
+                    </motion.div>
+                    <span className='text-sm font-black tracking-wider text-white drop-shadow-lg'>
+                      ATTACK!
+                    </span>
+                    <div className='absolute right-0 -bottom-1 left-0 h-1 bg-gradient-to-r from-transparent via-red-400 to-transparent opacity-80' />
+                  </div>
+                  {/* Particle effects */}
+                  <div className='pointer-events-none absolute inset-0'>
+                    <div className='absolute top-2 left-2 h-1 w-1 animate-ping rounded-full bg-orange-400' />
+                    <div className='animation-delay-200 absolute top-4 right-4 h-1 w-1 animate-ping rounded-full bg-red-400' />
+                    <div className='animation-delay-400 absolute bottom-3 left-6 h-1 w-1 animate-ping rounded-full bg-yellow-400' />
+                  </div>
+                </motion.button>
+
+                {/* Defend Button */}
+                <motion.button
                   onClick={() => handlePlayerAction('defend')}
                   disabled={isProcessing}
-                  variant='outline'
-                  className='gap-2 border-blue-500/30 hover:bg-blue-500/10'
+                  whileHover={{ scale: 1.05, rotate: 2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className='group relative h-20 w-32 overflow-hidden rounded-2xl border-2 border-blue-500/50 bg-gradient-to-br from-blue-600 via-cyan-600 to-blue-700 p-1 shadow-2xl transition-all hover:border-blue-400 hover:shadow-blue-500/50 disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <Shield className='h-4 w-4' />
-                  DEFEND
-                </Button>
-                <Button
+                  <div className='absolute inset-0 bg-gradient-to-t from-transparent via-blue-500/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100' />
+                  <div className='absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent' />
+                  <div className='relative flex h-full flex-col items-center justify-center rounded-xl bg-gradient-to-b from-blue-900/50 to-cyan-900/50 backdrop-blur-sm'>
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <Shield className='mb-1 h-8 w-8 text-white drop-shadow-lg' />
+                    </motion.div>
+                    <span className='text-sm font-black tracking-wider text-white drop-shadow-lg'>
+                      DEFEND
+                    </span>
+                    <div className='absolute right-0 -bottom-1 left-0 h-1 bg-gradient-to-r from-transparent via-blue-400 to-transparent opacity-80' />
+                  </div>
+                  {/* Shield ripple effect */}
+                  <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
+                    <div className='h-16 w-16 animate-ping rounded-full border border-cyan-400/30' />
+                  </div>
+                </motion.button>
+
+                {/* Special Button */}
+                <motion.button
                   onClick={() => handlePlayerAction('special')}
                   disabled={isProcessing || comboCount < 3}
+                  whileHover={
+                    comboCount >= 3 ? { scale: 1.05, rotate: -2 } : {}
+                  }
+                  whileTap={comboCount >= 3 ? { scale: 0.95 } : {}}
                   className={cn(
-                    'gap-2',
+                    'group relative h-20 w-32 overflow-hidden rounded-2xl border-2 p-1 shadow-2xl transition-all',
                     comboCount >= 3
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white hover:from-purple-700 hover:to-pink-700'
-                      : 'cursor-not-allowed opacity-50'
+                      ? 'border-purple-500/50 bg-gradient-to-br from-purple-600 via-pink-600 to-purple-700 hover:border-purple-400 hover:shadow-purple-500/50'
+                      : 'cursor-not-allowed border-gray-500/30 bg-gradient-to-br from-gray-600 to-gray-700 opacity-50'
                   )}
                 >
-                  <Sparkle className='h-4 w-4' />
-                  SPECIAL
-                </Button>
+                  {comboCount >= 3 && (
+                    <>
+                      <div className='absolute inset-0 bg-gradient-to-t from-transparent via-purple-500/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100' />
+                      <div className='absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-pink-400/30 to-transparent' />
+                    </>
+                  )}
+                  <div className='relative flex h-full flex-col items-center justify-center rounded-xl bg-gradient-to-b from-purple-900/50 to-pink-900/50 backdrop-blur-sm'>
+                    <motion.div
+                      animate={comboCount >= 3 ? { rotate: 360 } : {}}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: 'linear'
+                      }}
+                    >
+                      <Sparkle className='mb-1 h-8 w-8 text-white drop-shadow-lg' />
+                    </motion.div>
+                    <span className='text-sm font-black tracking-wider text-white drop-shadow-lg'>
+                      SPECIAL
+                    </span>
+                    {comboCount < 3 && (
+                      <span className='text-xs text-white/70'>
+                        {3 - comboCount} more
+                      </span>
+                    )}
+                    <div className='absolute right-0 -bottom-1 left-0 h-1 bg-gradient-to-r from-transparent via-purple-400 to-transparent opacity-80' />
+                  </div>
+                  {/* Lightning effects for active special */}
+                  {comboCount >= 3 && (
+                    <div className='pointer-events-none absolute inset-0'>
+                      <div className='absolute top-3 left-4 h-2 w-2 animate-pulse rounded-full bg-purple-300' />
+                      <div className='animation-delay-200 absolute right-3 bottom-4 h-2 w-2 animate-pulse rounded-full bg-pink-300' />
+                      <div className='animation-delay-400 absolute bottom-5 left-8 h-1 w-1 animate-pulse rounded-full bg-purple-400' />
+                      <div className='animation-delay-600 absolute top-5 right-6 h-1 w-1 animate-pulse rounded-full bg-pink-400' />
+                    </div>
+                  )}
+                </motion.button>
               </motion.div>
             )}
 

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { Swords, Trophy, Shield, Flame, User, Sparkles } from 'lucide-react'
@@ -69,12 +69,18 @@ export default function BattleArenaPage() {
 
   // Battle state management
   const [battleState, setBattleState] = useState<BattleState>('idle')
+  const battleStateRef = useRef<BattleState>('idle')
   const [currentOpponent, setCurrentOpponent] = useState<any>(null)
   const [currentInvitationId, setCurrentInvitationId] = useState<number | null>(
     null
   )
   const [currentBattleData, setCurrentBattleData] =
     useState<CurrentBattleData | null>(null)
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    battleStateRef.current = battleState
+  }, [battleState])
   const [selectedTab, setSelectedTab] = useState('arena')
 
   const {
@@ -151,14 +157,14 @@ export default function BattleArenaPage() {
   // Setup real-time battle events
   useBattleRealtime(user?.id, {
     onInvitationReceived: data => {
-      if (battleState === 'idle') {
+      if (battleStateRef.current === 'idle') {
         setBattleState('invitation-received')
       }
     },
     onInvitationAccepted: data => {
       // Sender receives this when their invitation is accepted
       // Immediately transition to preparing then countdown
-      if (battleState === 'invitation-sent') {
+      if (battleStateRef.current === 'invitation-sent') {
         setBattleState('preparing')
 
         // Format battle data for the sender
@@ -194,7 +200,7 @@ export default function BattleArenaPage() {
       }
     },
     onInvitationRejected: _data => {
-      if (battleState === 'invitation-sent') {
+      if (battleStateRef.current === 'invitation-sent') {
         setBattleState('idle')
         setCurrentOpponent(null)
         setCurrentInvitationId(null)
@@ -204,11 +210,12 @@ export default function BattleArenaPage() {
     onBattleStarted: data => {
       // Both users receive this when battle starts
       // Immediately transition to preparing then countdown for both players
+      const currentState = battleStateRef.current
       if (
-        battleState === 'invitation-received' ||
-        battleState === 'invitation-sent' ||
-        battleState === 'idle' ||
-        battleState === 'preparing'
+        currentState === 'invitation-received' ||
+        currentState === 'invitation-sent' ||
+        currentState === 'idle' ||
+        currentState === 'preparing'
       ) {
         setBattleState('preparing')
 
@@ -245,7 +252,7 @@ export default function BattleArenaPage() {
       }
     },
     onBattleCompleted: data => {
-      if (battleState === 'battling') {
+      if (battleStateRef.current === 'battling') {
         setBattleState('result')
         setCurrentBattleData(prev => ({
           ...prev!,
@@ -380,10 +387,7 @@ export default function BattleArenaPage() {
           : null
       )
 
-      // Auto-reset to lobby after showing result
-      setTimeout(() => {
-        resetBattle()
-      }, 8000) // Show result for 8 seconds
+      // No auto-reset - user must manually return to lobby
     },
     [user?.id]
   )
@@ -867,13 +871,20 @@ export default function BattleArenaPage() {
                                     VICTORY!
                                   </h3>
                                   <div className='mt-3 flex flex-col items-center gap-2'>
-                                    <Badge className='bg-green-500/20 px-4 py-2 text-green-600 dark:text-green-400'>
-                                      <Sparkles className='mr-2 h-4 w-4' />
-                                      {currentBattleData?.feeDiscountPercent ||
-                                        battleResult?.feeDiscountPercent ||
-                                        25}
-                                      % FEE DISCOUNT FOR 24 HOURS!
-                                    </Badge>
+                                    {currentBattleData?.feeDiscountPercent ||
+                                    battleResult?.feeDiscountPercent ? (
+                                      <Badge className='bg-green-500/20 px-4 py-2 text-green-600 dark:text-green-400'>
+                                        <Sparkles className='mr-2 h-4 w-4' />
+                                        {currentBattleData?.feeDiscountPercent ||
+                                          battleResult?.feeDiscountPercent}
+                                        % FEE DISCOUNT FOR 24 HOURS!
+                                      </Badge>
+                                    ) : (
+                                      <Badge className='bg-yellow-500/20 px-4 py-2 text-yellow-600 dark:text-yellow-400'>
+                                        <Shield className='mr-2 h-4 w-4' />
+                                        DISCOUNT ALREADY ACTIVE
+                                      </Badge>
+                                    )}
                                     <Badge className='bg-blue-500/20 px-4 py-2 text-blue-600 dark:text-blue-400'>
                                       <Trophy className='mr-2 h-4 w-4' />+
                                       {battleResult?.winnerXP || 50} XP EARNED!
@@ -909,20 +920,27 @@ export default function BattleArenaPage() {
                               )}
                             </motion.div>
 
-                            <div className='flex justify-center'>
+                            <div className='flex justify-center gap-4'>
                               <Button
                                 onClick={resetBattle}
-                                disabled={!canBattle}
-                                className={
-                                  canBattle
-                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white hover:from-purple-700 hover:to-pink-700'
-                                    : 'cursor-not-allowed opacity-50'
-                                }
+                                variant='outline'
+                                className='gap-2 border-gray-500/30 hover:bg-gray-500/10'
                               >
-                                {canBattle
-                                  ? 'FIND ANOTHER MATCH'
-                                  : 'DAILY LIMIT REACHED'}
+                                RETURN TO LOBBY
                               </Button>
+                              {canBattle && (
+                                <Button
+                                  onClick={() => {
+                                    resetBattle()
+                                    setBattleState('searching')
+                                    handleFindMatch()
+                                  }}
+                                  className='gap-2 bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white hover:from-purple-700 hover:to-pink-700'
+                                >
+                                  <Swords className='h-4 w-4' />
+                                  FIND ANOTHER MATCH
+                                </Button>
+                              )}
                             </div>
                           </motion.div>
                         )}

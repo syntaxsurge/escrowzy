@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 
 import { getSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
@@ -248,12 +248,27 @@ export async function POST(request: Request) {
           const loserId =
             winnerId === battle.player1Id ? battle.player2Id : battle.player1Id
 
-          // Calculate discount expiration
-          const discountExpiresAt = new Date()
-          discountExpiresAt.setHours(
-            discountExpiresAt.getHours() +
-              BATTLE_CONSTANTS.DISCOUNT_DURATION_HOURS
-          )
+          // Check if winner already has an active discount
+          const now = new Date()
+          const [existingDiscount] = await db
+            .select()
+            .from(battles)
+            .where(
+              sql`${battles.winnerId} = ${winnerId} AND ${battles.discountExpiresAt} > ${now}`
+            )
+            .limit(1)
+
+          // Only set discount if no active discount exists
+          let discountExpiresAt = null
+          let grantDiscount = false
+          if (!existingDiscount) {
+            discountExpiresAt = new Date()
+            discountExpiresAt.setHours(
+              discountExpiresAt.getHours() +
+                BATTLE_CONSTANTS.DISCOUNT_DURATION_HOURS
+            )
+            grantDiscount = true
+          }
 
           // Update battle
           await db
@@ -280,7 +295,9 @@ export async function POST(request: Request) {
             battleId,
             winnerId,
             loserId,
-            feeDiscountPercent: BATTLE_CONSTANTS.WINNER_DISCOUNT_PERCENT,
+            feeDiscountPercent: grantDiscount
+              ? BATTLE_CONSTANTS.WINNER_DISCOUNT_PERCENT
+              : 0,
             player1Id: battle.player1Id,
             player2Id: battle.player2Id
           })
