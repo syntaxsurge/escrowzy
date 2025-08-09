@@ -418,6 +418,57 @@ export const battleStates = pgTable(
   ]
 )
 
+export const jobQueue = pgTable(
+  'job_queue',
+  {
+    id: serial('id').primaryKey(),
+    type: varchar('type', { length: 100 }).notNull(),
+    payload: jsonb('payload').notNull().default('{}'),
+    status: varchar('status', { length: 20 })
+      .notNull()
+      .default('pending')
+      .$type<'pending' | 'processing' | 'completed' | 'failed'>(),
+    attempts: integer('attempts').notNull().default(0),
+    maxAttempts: integer('max_attempts').notNull().default(3),
+    scheduledAt: timestamp('scheduled_at').notNull().defaultNow(),
+    availableAt: timestamp('available_at').notNull().defaultNow(),
+    processedAt: timestamp('processed_at'),
+    failedAt: timestamp('failed_at'),
+    completedAt: timestamp('completed_at'),
+    error: text('error'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_job_queue_status').on(table.status),
+    index('idx_job_queue_type').on(table.type),
+    index('idx_job_queue_available').on(table.availableAt, table.status),
+    index('idx_job_queue_scheduled').on(table.scheduledAt)
+  ]
+)
+
+export const battleRounds = pgTable(
+  'battle_rounds',
+  {
+    id: serial('id').primaryKey(),
+    battleId: integer('battle_id')
+      .notNull()
+      .references(() => battles.id),
+    roundNumber: integer('round_number').notNull(),
+    attacker: integer('attacker').notNull(), // 1 or 2
+    damage: integer('damage').notNull(),
+    isCritical: boolean('is_critical').notNull().default(false),
+    player1Health: integer('player1_health').notNull(),
+    player2Health: integer('player2_health').notNull(),
+    processedAt: timestamp('processed_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_battle_rounds_battle').on(table.battleId),
+    index('idx_battle_rounds_number').on(table.battleId, table.roundNumber),
+    unique('unique_battle_round').on(table.battleId, table.roundNumber)
+  ]
+)
+
 export const battleQueue = pgTable(
   'battle_queue',
   {
@@ -760,6 +811,15 @@ export const battleStatesRelations = relations(battleStates, ({ one }) => ({
   })
 }))
 
+export const jobQueueRelations = relations(jobQueue, () => ({}))
+
+export const battleRoundsRelations = relations(battleRounds, ({ one }) => ({
+  battle: one(battles, {
+    fields: [battleRounds.battleId],
+    references: [battles.id]
+  })
+}))
+
 export const battleQueueRelations = relations(battleQueue, ({ one }) => ({
   user: one(users, {
     fields: [battleQueue.userId],
@@ -937,6 +997,10 @@ export type Battle = typeof battles.$inferSelect
 export type NewBattle = typeof battles.$inferInsert
 export type BattleState = typeof battleStates.$inferSelect
 export type NewBattleState = typeof battleStates.$inferInsert
+export type JobQueue = typeof jobQueue.$inferSelect
+export type NewJobQueue = typeof jobQueue.$inferInsert
+export type BattleRound = typeof battleRounds.$inferSelect
+export type NewBattleRound = typeof battleRounds.$inferInsert
 export type BattleQueue = typeof battleQueue.$inferSelect
 export type NewBattleQueue = typeof battleQueue.$inferInsert
 export type BattleInvitation = typeof battleInvitations.$inferSelect

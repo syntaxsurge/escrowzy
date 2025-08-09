@@ -57,6 +57,13 @@
       "when": 1754747865486,
       "tag": "0007_open_domino",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1754749359826,
+      "tag": "0008_majestic_talos",
+      "breakpoints": true
     }
   ]
 }

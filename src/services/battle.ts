@@ -11,13 +11,14 @@ import {
 import {
   battles,
   battleStates,
+  battleRounds,
   userGameData,
   userSubscriptions,
   battleInvitations,
   battleSessionRejections
 } from '@/lib/db/schema'
 import { broadcastQueueUpdate, broadcastBattleStats } from '@/lib/pusher-server'
-import { rewardsService } from '@/services/rewards'
+import { dispatch } from '@/lib/queue/manager'
 import type {
   Battle,
   BattleDiscount,
@@ -284,10 +285,17 @@ export async function createBattle(
       battleLog: []
     })
 
-    // Schedule battle processing to start after countdown
-    setTimeout(() => {
-      startBattleProcessing(createdBattle.id).catch(console.error)
-    }, 5000) // Start after 5 second countdown
+    // Queue the first battle round to start after countdown
+    await dispatch(
+      'battle.round',
+      {
+        battleId: createdBattle.id,
+        roundNumber: 1
+      },
+      {
+        delay: 5000 // Start after 5 second countdown
+      }
+    )
 
     // Return initial battle result (no winner yet)
     return {
@@ -310,182 +318,20 @@ export async function createBattle(
 }
 
 /**
- * Start server-side battle processing
+ * Get battle rounds for a specific battle
  */
-export async function startBattleProcessing(battleId: number): Promise<void> {
+export async function getBattleRounds(battleId: number) {
   try {
-    // Update battle status to ongoing
-    const [battle] = await db
-      .update(battles)
-      .set({
-        status: 'ongoing',
-        startedAt: new Date()
-      })
-      .where(eq(battles.id, battleId))
-      .returning()
-
-    if (!battle) {
-      throw new Error('Battle not found')
-    }
-
-    // Process battle rounds
-    await processBattleRounds(battleId)
-  } catch (error) {
-    console.error('Error starting battle processing:', error)
-  }
-}
-
-/**
- * Process battle rounds server-side
- */
-export async function processBattleRounds(battleId: number): Promise<void> {
-  try {
-    const [battleState] = await db
+    const rounds = await db
       .select()
-      .from(battleStates)
-      .where(eq(battleStates.battleId, battleId))
-      .limit(1)
+      .from(battleRounds)
+      .where(eq(battleRounds.battleId, battleId))
+      .orderBy(battleRounds.roundNumber)
 
-    if (!battleState) {
-      throw new Error('Battle state not found')
-    }
-
-    const [battle] = await db
-      .select()
-      .from(battles)
-      .where(eq(battles.id, battleId))
-      .limit(1)
-
-    if (!battle || battle.status !== 'ongoing') {
-      return
-    }
-
-    let player1Health = battleState.player1Health
-    let player2Health = battleState.player2Health
-    let currentRound = battleState.currentRound
-    const battleLog: any[] = battleState.battleLog as any[]
-
-    // Process rounds until someone wins or max rounds reached
-    const roundInterval = setInterval(async () => {
-      currentRound++
-
-      // Determine attacker for this round
-      const attacker = Math.random() > 0.5 ? 1 : 2
-      const attackPower = attacker === 1 ? battle.player1CP : battle.player2CP
-      const defensePower = attacker === 1 ? battle.player2CP : battle.player1CP
-
-      // Calculate damage
-      const baseDamage =
-        BATTLE_CONSTANTS.BASE_DAMAGE +
-        Math.random() * BATTLE_CONSTANTS.DAMAGE_VARIANCE
-      const powerRatio = attackPower / (attackPower + defensePower)
-      const damageMultiplier = 0.5 + powerRatio + Math.random() * 0.5
-
-      // Critical hit calculation
-      const isCritical = Math.random() < BATTLE_CONSTANTS.CRITICAL_HIT_CHANCE
-      const critMultiplier = isCritical
-        ? BATTLE_CONSTANTS.CRITICAL_MULTIPLIER
-        : 1
-
-      const damage = Math.floor(baseDamage * damageMultiplier * critMultiplier)
-
-      // Apply damage
-      if (attacker === 1) {
-        player2Health = Math.max(0, player2Health - damage)
-      } else {
-        player1Health = Math.max(0, player1Health - damage)
-      }
-
-      // Log the round
-      battleLog.push({
-        round: currentRound,
-        attacker,
-        damage,
-        isCritical,
-        player1Health,
-        player2Health,
-        timestamp: new Date().toISOString()
-      })
-
-      // Update battle state
-      await db
-        .update(battleStates)
-        .set({
-          currentRound,
-          player1Health,
-          player2Health,
-          battleLog,
-          lastActionAt: new Date(),
-          updatedAt: new Date()
-        })
-        .where(eq(battleStates.battleId, battleId))
-
-      // Check for winner or max rounds
-      if (
-        player1Health <= 0 ||
-        player2Health <= 0 ||
-        currentRound >= BATTLE_CONSTANTS.ROUNDS_PER_BATTLE
-      ) {
-        clearInterval(roundInterval)
-        await completeBattle(
-          battleId,
-          player1Health,
-          player2Health,
-          battle.player1Id,
-          battle.player2Id
-        )
-      }
-    }, 6000) // 6 seconds per round for 3-minute battles
+    return rounds
   } catch (error) {
-    console.error('Error processing battle rounds:', error)
-  }
-}
-
-/**
- * Complete the battle and determine winner
- */
-export async function completeBattle(
-  battleId: number,
-  player1Health: number,
-  player2Health: number,
-  player1Id: number,
-  player2Id: number
-): Promise<void> {
-  try {
-    // Determine winner based on remaining health
-    const winnerId = player1Health > player2Health ? player1Id : player2Id
-    const loserId = winnerId === player1Id ? player2Id : player1Id
-
-    // Calculate discount expiration
-    const discountExpiresAt = new Date()
-    discountExpiresAt.setHours(
-      discountExpiresAt.getHours() + BATTLE_CONSTANTS.DISCOUNT_DURATION_HOURS
-    )
-
-    // Update battle with winner
-    await db
-      .update(battles)
-      .set({
-        winnerId,
-        status: 'completed',
-        completedAt: new Date(),
-        discountExpiresAt
-      })
-      .where(eq(battles.id, battleId))
-
-    // Get player game data for rewards
-    const loserGameData = await rewardsService.getOrCreateGameData(loserId)
-
-    // Update winner's stats
-    await rewardsService.handleBattleWin(winnerId, loserGameData.combatPower)
-
-    // Update loser's stats
-    await rewardsService.handleBattleLoss(loserId)
-
-    // Broadcast stats update
-    await broadcastBattleStats()
-  } catch (error) {
-    console.error('Error completing battle:', error)
+    console.error('Error getting battle rounds:', error)
+    return []
   }
 }
 
