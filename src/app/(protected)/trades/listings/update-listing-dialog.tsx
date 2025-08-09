@@ -175,7 +175,7 @@ export function UpdateListingDialog({
               control={form.control}
               name='isActive'
               render={({ field }) => (
-                <FormItem className='border-primary/20 from-primary/5 to-primary/10 hover:border-primary/30 flex flex-row items-center justify-between rounded-lg border-2 bg-gradient-to-r p-4 transition-all'>
+                <FormItem className='border-primary/20 from-primary/5 to-primary/10 hover:border-primary/30 rounded-lg border-2 bg-gradient-to-r p-4 transition-all'>
                   <div className='space-y-0.5'>
                     <FormLabel className='text-base font-semibold'>
                       Active Status
@@ -185,7 +185,7 @@ export function UpdateListingDialog({
                     </FormDescription>
                   </div>
                   <FormControl>
-                    <div className='flex items-center gap-2'>
+                    <div className='mt-3 flex items-center gap-2'>
                       <span
                         className={`text-sm font-medium ${field.value ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}
                       >

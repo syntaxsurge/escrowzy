@@ -154,7 +154,11 @@ export const acceptListingSchema = z.object({
   paymentMethod: z
     .string()
     .min(1, 'Payment method is required')
-    .refine(isValidPaymentMethod, 'Invalid payment method'),
+    .refine(method => {
+      // For domain listings, paymentMethod is actually a token (ETH, BTC, etc.)
+      // For P2P listings, it's a payment method from PAYMENT_METHODS
+      return isValidPaymentMethod(method) || isValidToken(method)
+    }, 'Invalid payment method'),
   chainId: z.number().int().positive('Chain ID is required')
 })
 

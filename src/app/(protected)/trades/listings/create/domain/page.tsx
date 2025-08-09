@@ -14,6 +14,7 @@ import {
   Users
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import { mutate } from 'swr'
 
 import { GamifiedHeader } from '@/components/blocks/trading'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -78,6 +79,8 @@ export default function CreateDomainListingPage() {
 
       if (response.success) {
         handleFormSuccess(toast, 'Domain listing created successfully!')
+        // Invalidate the listings cache to ensure new listing shows
+        await mutate(apiEndpoints.listings.user)
         router.push(appRoutes.trades.myListings)
       } else {
         throw new Error(response.error || 'Failed to create listing')

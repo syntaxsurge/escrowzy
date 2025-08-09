@@ -13,6 +13,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import { mutate } from 'swr'
 
 import { GamifiedHeader } from '@/components/blocks/trading'
 import { Button } from '@/components/ui/button'
@@ -87,6 +88,8 @@ export default function CreateP2PListingPage() {
 
       if (response.success) {
         handleFormSuccess(toast, 'P2P listing created successfully!')
+        // Invalidate the listings cache to ensure new listing shows
+        await mutate(apiEndpoints.listings.user)
         router.push(appRoutes.trades.myListings)
       } else {
         throw new Error(response.error || 'Failed to create listing')

@@ -335,9 +335,19 @@ export async function acceptListingAndCreateTrade(
   }
 
   // Validate payment method
-  const paymentMethods = listing.paymentMethods as string[]
-  if (!paymentMethods.includes(input.paymentMethod)) {
-    throw new Error('Payment method not accepted')
+  // For domain listings, the paymentMethod is the token (crypto) used for payment
+  // For P2P listings, it's a traditional payment method
+  if (listing.listingCategory === 'domain') {
+    // For domain listings, ensure the token matches what the seller accepts
+    if (listing.tokenOffered !== input.paymentMethod) {
+      throw new Error('Payment token not accepted')
+    }
+  } else {
+    // For P2P listings, validate against the payment methods array
+    const paymentMethods = listing.paymentMethods as string[]
+    if (!paymentMethods.includes(input.paymentMethod)) {
+      throw new Error('Payment method not accepted')
+    }
   }
 
   // Determine buyer and seller based on listing type

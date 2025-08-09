@@ -353,8 +353,8 @@ export function GamifiedListingCard({
             </div>
           )}
 
-          {/* Gaming Payment Methods */}
-          {paymentMethods.length > 0 && (
+          {/* Gaming Payment Methods - Only show for P2P listings */}
+          {!isDomainListing && paymentMethods.length > 0 && (
             <div className='from-muted/50 to-muted/30 border-border/50 rounded-xl border bg-gradient-to-br p-4 backdrop-blur-sm'>
               <p className='text-muted-foreground mb-3 text-center text-xs font-bold tracking-wider uppercase'>
                 <CreditCard className='mr-1 inline h-3 w-3' />
