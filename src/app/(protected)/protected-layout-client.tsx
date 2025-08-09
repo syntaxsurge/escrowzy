@@ -27,7 +27,7 @@ function LayoutWithSubscriptionValidation({
 
 export default function ProtectedLayoutClient({
   children,
-  user
+  user: _user
 }: {
   children: React.ReactNode
   user: User

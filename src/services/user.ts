@@ -25,9 +25,8 @@ export async function getUser() {
   let sessionData
   try {
     sessionData = await verifyToken(sessionCookie.value)
-  } catch (error) {
-    // Invalid JWT - clear the cookie
-    cookieStore.delete('session')
+  } catch (_error) {
+    // Invalid JWT - just return null, middleware will handle cookie cleanup
     return null
   }
 
@@ -39,13 +38,11 @@ export async function getUser() {
     !sessionData.sessionToken ||
     !sessionData.expires
   ) {
-    cookieStore.delete('session')
     return null
   }
 
   // Check JWT expiry
   if (new Date(sessionData.expires) < new Date()) {
-    cookieStore.delete('session')
     return null
   }
 
@@ -53,14 +50,12 @@ export async function getUser() {
     // Validate session exists in database and is not expired
     const dbSession = await validateSession(sessionData.sessionToken)
     if (!dbSession) {
-      // Session doesn't exist in DB or is expired - clear cookie
-      cookieStore.delete('session')
+      // Session doesn't exist in DB or is expired
       return null
     }
 
     // Check if user ID matches
     if (dbSession.userId !== sessionData.user.id) {
-      cookieStore.delete('session')
       return null
     }
 
@@ -72,8 +67,7 @@ export async function getUser() {
       .limit(1)
 
     if (user.length === 0) {
-      // User doesn't exist - clear session
-      cookieStore.delete('session')
+      // User doesn't exist
       return null
     }
 

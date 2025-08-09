@@ -9,9 +9,15 @@ import { apiResponses } from '@/lib/api/server-utils'
 import { authRateLimit } from '@/lib/auth/rate-limit'
 import { setSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
-import { createSession } from '@/lib/db/queries/sessions'
+import { createSession, deleteSession } from '@/lib/db/queries/sessions'
 import { findUserByWalletAddress, createUser } from '@/lib/db/queries/users'
-import { teams, teamMembers, ActivityType, activityLogs } from '@/lib/db/schema'
+import {
+  teams,
+  teamMembers,
+  ActivityType,
+  activityLogs,
+  users
+} from '@/lib/db/schema'
 
 export async function POST(request: NextRequest) {
   // Apply rate limiting
@@ -175,14 +181,39 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Ensure user exists and has a valid ID
+    if (!user || !user.id) {
+      return apiResponses.error('Failed to authenticate user', 500)
+    }
+
+    // Verify user exists in database before creating session
+    const verifyUser = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1)
+
+    if (verifyUser.length === 0) {
+      return apiResponses.error('User verification failed', 500)
+    }
+
     // Create database session
-    const dbSession = await createSession(user.id, ipAddress, userAgent)
+    let dbSession
+    try {
+      dbSession = await createSession(user.id, ipAddress, userAgent)
+    } catch (error) {
+      console.error('Failed to create database session:', error)
+      return apiResponses.error('Failed to create session', 500)
+    }
 
     // Set session cookie with database session token
     try {
       await setSession(user, dbSession.sessionToken)
-    } catch (_) {
-      throw new Error('Failed to create session')
+    } catch (error) {
+      console.error('Failed to set session cookie:', error)
+      // Clean up the database session if cookie setting fails
+      await deleteSession(dbSession.sessionToken)
+      return apiResponses.error('Failed to establish session', 500)
     }
 
     return apiResponses.success({ success: true, user })

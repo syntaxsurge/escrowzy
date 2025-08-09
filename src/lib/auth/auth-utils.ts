@@ -6,11 +6,13 @@ import { z } from 'zod'
 
 import { envServer } from '@/config/env.server'
 import type { User } from '@/lib/db/schema'
-import { getUser } from '@/services/user'
 
-// API authentication check helper
+import { getUserForRoute } from './get-user-route'
+
+// API authentication check helper for route handlers
 export async function requireAuth() {
-  const user = await getUser()
+  // Use getUserForRoute in API routes which can modify cookies
+  const user = await getUserForRoute()
 
   if (!user) {
     return {
@@ -118,7 +120,8 @@ export function validatedActionWithUser<S extends z.ZodType<any, any>, T>(
   action: ValidatedActionWithUserFunction<S, T>
 ) {
   return async (prevState: ActionState, formData: FormData) => {
-    const user = await getUser()
+    // Server actions can modify cookies, so use getUserForRoute
+    const user = await getUserForRoute()
     if (!user) {
       throw new Error('User is not authenticated')
     }
