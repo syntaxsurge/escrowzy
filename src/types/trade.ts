@@ -81,6 +81,13 @@ export interface TradeMetadata {
   expiryDate?: string
   monthlyTraffic?: string
   monthlyRevenue?: string
+  // Nested domain info (for compatibility with service layer)
+  domainInfo?: {
+    domainName: string
+    registrar: string
+    expirationDate?: string
+    transferMethod?: string
+  }
 }
 
 // Trade action types

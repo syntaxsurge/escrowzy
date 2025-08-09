@@ -10,9 +10,7 @@ import {
   MessageSquare,
   Shield,
   Image as ImageIcon,
-  Wallet,
   DollarSign,
-  Send,
   AlertTriangle,
   Trophy,
   ExternalLink,
@@ -85,106 +83,6 @@ export function GamifiedTradeCard({
     if (currentIndex === -1) return 0
     return ((currentIndex + 1) / statusOrder.length) * 100
   }
-
-  // Get action button config - ensure visibility for all statuses
-  const getActionButton = () => {
-    const isDomainTrade = trade.tradeType === 'domain'
-
-    // For P2P trades: sellers with awaiting_deposit status
-    if (trade.status === 'awaiting_deposit' && isSeller && !isDomainTrade) {
-      return {
-        action: 'deposit',
-        label: 'Deposit Crypto to Escrow',
-        icon: <Wallet className='h-5 w-5' />,
-        variant: 'default' as const,
-        className:
-          'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0',
-        pulse: true
-      }
-    }
-
-    // For domain trades: buyers send payment directly when trade is created
-    if (trade.status === 'created' && isBuyer && isDomainTrade) {
-      return {
-        action: 'payment_sent',
-        label: 'Send Payment',
-        icon: <Send className='h-5 w-5' />,
-        variant: 'default' as const,
-        className:
-          'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0',
-        pulse: true
-      }
-    }
-
-    // For P2P trades: buyers mark payment sent after crypto is funded
-    if (trade.status === 'funded' && isBuyer && !isDomainTrade) {
-      return {
-        action: 'payment_sent',
-        label: 'Mark Payment Sent',
-        icon: <Send className='h-5 w-5' />,
-        variant: 'default' as const,
-        className:
-          'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0',
-        pulse: true
-      }
-    }
-
-    // For domain trades: sellers initiate domain transfer after payment
-    if (trade.status === 'funded' && isSeller && isDomainTrade) {
-      return {
-        action: 'deliver',
-        label: 'Initiate Domain Transfer',
-        icon: <Send className='h-5 w-5' />,
-        variant: 'default' as const,
-        className:
-          'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0',
-        pulse: true
-      }
-    }
-
-    // For sellers to confirm payment (P2P) or domain transfer completed (Domain)
-    if (trade.status === 'payment_sent' && isSeller && !isDomainTrade) {
-      return {
-        action: 'confirm',
-        label: 'Confirm Payment Received',
-        icon: <CheckCircle className='h-5 w-5' />,
-        variant: 'default' as const,
-        className:
-          'bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white border-0',
-        pulse: true
-      }
-    }
-
-    // For domain trades: buyers confirm domain receipt
-    if (trade.status === 'delivered' && isBuyer && isDomainTrade) {
-      return {
-        action: 'confirm',
-        label: 'Confirm Domain Received',
-        icon: <CheckCircle className='h-5 w-5' />,
-        variant: 'default' as const,
-        className:
-          'bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white border-0',
-        pulse: true
-      }
-    }
-
-    // For buyers who accepted a P2P trade (initial state)
-    if (trade.status === 'created' && isBuyer && !isDomainTrade) {
-      return {
-        action: 'fund',
-        label: 'Fund Escrow',
-        icon: <Shield className='h-5 w-5' />,
-        variant: 'default' as const,
-        className:
-          'bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white border-0',
-        pulse: false
-      }
-    }
-
-    return null
-  }
-
-  const actionButton = getActionButton()
 
   // Get status color and icon
   const getStatusConfig = () => {
@@ -293,21 +191,7 @@ export function GamifiedTradeCard({
           </div>
         </div>
 
-        {/* Gaming Action Badge - Full Width */}
-        {actionButton && (
-          <div className='absolute top-5 right-0 left-0 z-10'>
-            <div className='relative mx-4'>
-              <div className='absolute inset-0 animate-pulse rounded-lg bg-gradient-to-r from-yellow-500 to-orange-600 opacity-75 blur-md' />
-              <div className='relative flex items-center justify-center rounded-lg border-2 border-white/30 bg-gradient-to-r from-orange-600 to-red-600 py-3 text-sm font-black uppercase shadow-2xl'>
-                <span className='text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]'>
-                  ⚡ ACTION REQUIRED NOW ⚡
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <CardHeader className={cn('pb-4', actionButton ? 'pt-14' : 'pt-8')}>
+        <CardHeader className='pt-8 pb-4'>
           <div className='flex items-start justify-between gap-3'>
             <div className='flex items-center gap-4'>
               <div className='relative'>
@@ -498,72 +382,19 @@ export function GamifiedTradeCard({
         </CardContent>
 
         <CardFooter className='border-border/50 bg-muted/30 mt-auto flex flex-col gap-3 border-t pt-6 pb-6'>
-          {/* Gaming Deposit Action for Sellers */}
-          {trade.status === 'awaiting_deposit' && isSeller && (
-            <div className='relative w-full overflow-hidden rounded-xl border-2 border-blue-500/50 bg-gradient-to-br from-blue-500/20 via-purple-600/20 to-indigo-600/20 p-4 backdrop-blur-sm'>
-              <div className='absolute inset-0 animate-pulse bg-gradient-to-r from-blue-600/10 to-purple-600/10' />
-              <div className='relative'>
-                <p className='mb-3 text-center text-sm font-black tracking-wider text-blue-600 uppercase dark:text-blue-400'>
-                  ⚡ ACTION REQUIRED: DEPOSIT CRYPTO
-                </p>
-                <Button
-                  size='lg'
-                  className='group relative h-12 w-full overflow-hidden border-0 bg-gradient-to-r from-blue-500 via-purple-600 to-indigo-600 text-base font-black text-white shadow-xl transition-all hover:scale-105 hover:from-blue-600 hover:to-indigo-700 hover:shadow-2xl'
-                  onClick={() => handleAction('deposit')}
-                >
-                  <div className='absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full' />
-                  <Wallet className='mr-2 h-5 w-5' />
-                  DEPOSIT CRYPTO NOW
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Gaming Confirm Payment Action for Sellers */}
-          {trade.status === 'payment_sent' && isSeller && (
-            <div className='relative w-full overflow-hidden rounded-xl border-2 border-green-500/50 bg-gradient-to-br from-green-500/20 via-emerald-600/20 to-teal-600/20 p-4 backdrop-blur-sm'>
-              <div className='absolute inset-0 animate-pulse bg-gradient-to-r from-green-600/10 to-emerald-600/10' />
-              <div className='relative'>
-                <p className='mb-3 text-center text-sm font-black tracking-wider text-green-600 uppercase dark:text-green-400'>
-                  ⚡ ACTION REQUIRED: CONFIRM PAYMENT
-                </p>
-                <Button
-                  size='lg'
-                  className='group relative h-12 w-full overflow-hidden border-0 bg-gradient-to-r from-green-500 to-teal-600 text-base font-black text-white shadow-xl transition-all hover:scale-105 hover:from-green-600 hover:to-teal-700 hover:shadow-2xl'
-                  onClick={() => handleAction('confirm')}
-                >
-                  <div className='absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full' />
-                  <CheckCircle className='mr-2 h-5 w-5' />
-                  CONFIRM PAYMENT RECEIVED
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Gaming Primary Action Button - Show above chat/dispute */}
-          {actionButton &&
-            !(trade.status === 'awaiting_deposit' && isSeller) &&
-            !(trade.status === 'payment_sent' && isSeller) && (
-              <div className='relative w-full'>
-                {actionButton.pulse && (
-                  <div className='absolute inset-0 animate-pulse rounded-lg bg-gradient-to-r from-yellow-400 to-orange-500 opacity-50 blur-md'></div>
-                )}
-                <Button
-                  size='lg'
-                  className={cn(
-                    'group relative h-12 w-full overflow-hidden text-base font-black shadow-xl transition-all hover:scale-105 hover:shadow-2xl',
-                    actionButton.className
-                  )}
-                  onClick={() => handleAction(actionButton.action)}
-                >
-                  <div className='absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full' />
-                  {actionButton.icon}
-                  <span className='ml-2 tracking-wider uppercase'>
-                    {actionButton.label}
-                  </span>
-                </Button>
-              </div>
-            )}
+          {/* View Details Button - Primary Action */}
+          <Button
+            size='lg'
+            className='group relative h-12 w-full overflow-hidden border-0 bg-gradient-to-r from-blue-500 via-purple-600 to-indigo-600 text-base font-black text-white shadow-xl transition-all hover:scale-105 hover:from-blue-600 hover:to-indigo-700 hover:shadow-2xl'
+            onClick={() => {
+              navigationProgress.start()
+              router.push(`/trades/history/${trade.id}`)
+            }}
+          >
+            <div className='absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full' />
+            <Eye className='mr-2 h-5 w-5' />
+            VIEW DETAILS
+          </Button>
 
           {/* Chat and Dispute Buttons Row */}
           <div className='flex w-full gap-3'>

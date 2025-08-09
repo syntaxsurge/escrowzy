@@ -9,7 +9,8 @@ import {
   CheckCircle,
   Clock,
   Wallet,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Globe
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import Lightbox from 'yet-another-react-lightbox'
@@ -211,7 +212,8 @@ export function TradeActionDialog({
         // For deposit, we don't need form validation since we handle it via blockchain
         return z.object({})
       case 'fund':
-        return fundSchema
+        // For domain trades, we don't need transactionHash since we handle payment via wallet
+        return trade.tradeType === 'domain' ? z.object({}) : fundSchema
       case 'payment_sent':
         return paymentSentSchema
       case 'confirm':
@@ -322,8 +324,60 @@ export function TradeActionDialog({
           break
 
         case 'fund':
-          endpoint = apiEndpoints.trades.fund(trade.id)
-          payload = { transactionHash: data.transactionHash }
+          // For domain trades, handle wallet payment directly
+          if (trade.tradeType === 'domain') {
+            if (!address) {
+              toast({
+                title: 'Wallet Not Connected',
+                description: 'Please connect your wallet to send payment',
+                variant: 'destructive'
+              })
+              return
+            }
+
+            try {
+              setIsCreatingEscrow(true)
+
+              // For domain trades, buyer creates and funds escrow
+              const sellerAddress =
+                trade.seller?.walletAddress || trade.sellerId
+
+              // Create and fund escrow in one transaction
+              const createResult = await createEscrow({
+                seller: sellerAddress as string, // Domain seller will receive payment
+                amount: trade.amount,
+                disputeWindow: 7 * 24 * 60 * 60, // 7 days
+                metadata: `Domain Trade #${trade.id}`,
+                autoFund: true // Fund in the same transaction
+              })
+
+              if (
+                !createResult.txHash ||
+                createResult.escrowId === null ||
+                createResult.escrowId === undefined
+              ) {
+                throw new Error('Failed to create and fund escrow')
+              }
+
+              // Update backend with transaction details
+              endpoint = apiEndpoints.trades.fund(trade.id)
+              payload = {
+                transactionHash: createResult.txHash,
+                escrowId: createResult.escrowId
+              }
+              method = 'POST'
+
+              setIsCreatingEscrow(false)
+            } catch (blockchainError) {
+              console.error('Blockchain error:', blockchainError)
+              setIsCreatingEscrow(false)
+              throw new Error('Failed to send payment to escrow')
+            }
+          } else {
+            // P2P trades use manual transaction hash
+            endpoint = apiEndpoints.trades.fund(trade.id)
+            payload = { transactionHash: data.transactionHash }
+          }
           break
 
         case 'payment_sent':
@@ -781,33 +835,111 @@ export function TradeActionDialog({
 
               {actionType === 'fund' && (
                 <>
-                  <Alert>
-                    <Shield className='h-4 w-4' />
-                    <AlertDescription>
-                      Send exactly{' '}
-                      {formatCurrency(trade.amount, trade.currency)} to the
-                      escrow contract. The transaction hash will be verified
-                      on-chain.
-                    </AlertDescription>
-                  </Alert>
+                  {trade.tradeType === 'domain' ? (
+                    <>
+                      <Alert>
+                        <Shield className='h-4 w-4' />
+                        <AlertDescription>
+                          <div className='space-y-2'>
+                            <p>
+                              You will send{' '}
+                              <span className='font-bold'>
+                                {formatCurrency(trade.amount, trade.currency)}
+                              </span>{' '}
+                              to the escrow smart contract.
+                            </p>
+                            <p className='text-sm'>
+                              The payment will be held securely until you
+                              confirm receiving the domain.
+                            </p>
+                          </div>
+                        </AlertDescription>
+                      </Alert>
 
-                  <FormField
-                    control={form.control}
-                    name='transactionHash'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Transaction Hash</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder='0x...' />
-                        </FormControl>
-                        <FormDescription>
-                          Enter the transaction hash after sending funds to
-                          escrow
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                      {/* Domain Details */}
+                      {(trade.metadata as TradeMetadata)?.domainInfo && (
+                        <Card className='border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/20'>
+                          <div className='space-y-2'>
+                            <div className='flex items-center gap-2'>
+                              <Globe className='h-4 w-4 text-blue-600 dark:text-blue-400' />
+                              <span className='font-semibold text-blue-700 dark:text-blue-300'>
+                                Domain Information
+                              </span>
+                            </div>
+                            <div className='space-y-1 text-sm'>
+                              <div className='flex justify-between'>
+                                <span>Domain:</span>
+                                <span className='font-medium'>
+                                  {
+                                    (trade.metadata as TradeMetadata).domainInfo
+                                      ?.domainName
+                                  }
+                                </span>
+                              </div>
+                              <div className='flex justify-between'>
+                                <span>Registrar:</span>
+                                <span className='font-medium'>
+                                  {
+                                    (trade.metadata as TradeMetadata).domainInfo
+                                      ?.registrar
+                                  }
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      )}
+
+                      {/* Instructions */}
+                      <Alert>
+                        <AlertCircle className='h-4 w-4' />
+                        <AlertDescription>
+                          <ol className='list-inside list-decimal space-y-1 text-sm'>
+                            <li>
+                              Click "Send Payment" below to start the
+                              transaction
+                            </li>
+                            <li>Approve the transaction in your wallet</li>
+                            <li>Wait for blockchain confirmation</li>
+                            <li>
+                              Once confirmed, wait for seller to transfer the
+                              domain
+                            </li>
+                          </ol>
+                        </AlertDescription>
+                      </Alert>
+                    </>
+                  ) : (
+                    <>
+                      <Alert>
+                        <Shield className='h-4 w-4' />
+                        <AlertDescription>
+                          Send exactly{' '}
+                          {formatCurrency(trade.amount, trade.currency)} to the
+                          escrow contract. The transaction hash will be verified
+                          on-chain.
+                        </AlertDescription>
+                      </Alert>
+
+                      <FormField
+                        control={form.control}
+                        name='transactionHash'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Transaction Hash</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder='0x...' />
+                            </FormControl>
+                            <FormDescription>
+                              Enter the transaction hash after sending funds to
+                              escrow
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
                 </>
               )}
 
@@ -1072,7 +1204,12 @@ export function TradeActionDialog({
                   }
                 >
                   {actionType === 'deposit' && 'Deposit to Escrow'}
-                  {actionType === 'fund' && 'Confirm Funding'}
+                  {actionType === 'fund' &&
+                    (trade.tradeType === 'domain'
+                      ? isCreatingEscrow
+                        ? 'Processing Payment...'
+                        : 'Send Payment'
+                      : 'Confirm Funding')}
                   {actionType === 'payment_sent' && 'Mark Payment as Sent'}
                   {actionType === 'confirm' &&
                     (trade.status === 'payment_sent' ? (
