@@ -1,7 +1,6 @@
 import { apiEndpoints } from '@/config/api-endpoints'
 import { serverFetch } from '@/lib/api/server-utils'
 
-import { TradeHistoryFilters } from './trade-history-filters'
 import { TradeHistoryTable } from './trade-history-table'
 
 interface TradeHistoryContentProps {
@@ -14,12 +13,22 @@ async function getTradeHistory(
 ) {
   const params = new URLSearchParams()
 
-  // Forward all search params to the API
-  Object.entries(searchParams || {}).forEach(([key, value]) => {
-    if (value) {
-      params.append(key, String(value))
-    }
-  })
+  // Forward only pagination params to the API
+  if (searchParams.page) {
+    params.append('page', String(searchParams.page))
+  }
+  if (searchParams.limit) {
+    params.append('limit', String(searchParams.limit))
+  }
+  if (searchParams.sortBy) {
+    params.append('sortBy', String(searchParams.sortBy))
+  }
+  if (searchParams.sortOrder) {
+    params.append('sortOrder', String(searchParams.sortOrder))
+  }
+  if (searchParams.globalFilter) {
+    params.append('globalFilter', String(searchParams.globalFilter))
+  }
 
   return serverFetch(`${apiEndpoints.trades.table}?${params.toString()}`, {
     cache: 'no-store'
@@ -36,18 +45,12 @@ export async function TradeHistoryContent({
     })
 
     return (
-      <>
-        {/* Filters Section */}
-        <TradeHistoryFilters searchParams={searchParams} />
-
-        {/* Trade History Table */}
-        <TradeHistoryTable
-          data={tradesData.data}
-          pageCount={tradesData.pageCount}
-          totalCount={tradesData.totalCount}
-          userId={userId}
-        />
-      </>
+      <TradeHistoryTable
+        data={tradesData.data}
+        pageCount={tradesData.pageCount}
+        totalCount={tradesData.totalCount}
+        userId={userId}
+      />
     )
   } catch (_error) {
     return (

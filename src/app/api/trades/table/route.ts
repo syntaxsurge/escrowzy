@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     // Parse query parameters
     const { searchParams } = new URL(request.url)
 
-    // Extract table parameters
+    // Extract table parameters only (no filters)
     const page = searchParams.get('page')
       ? parseInt(searchParams.get('page')!)
       : 1
@@ -28,21 +28,13 @@ export async function GET(request: Request) {
       (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
     const globalFilter = searchParams.get('globalFilter') || ''
 
-    // Extract filter parameters
-    const status = searchParams.get('status') || 'all'
-    const period = searchParams.get('period') || 'all'
-    const listingCategory = searchParams.get('listingCategory') || 'all'
-
-    // Get trades with server-side pagination and filtering
+    // Get trades with server-side pagination only (no filters)
     const result = await getTradesForTable(session.user.id, {
       page,
       limit,
       sortBy,
       sortOrder,
-      globalFilter,
-      status: status !== 'all' ? status : undefined,
-      period: period !== 'all' ? period : undefined,
-      listingCategory: listingCategory !== 'all' ? listingCategory : undefined
+      globalFilter
     })
 
     return NextResponse.json(result)

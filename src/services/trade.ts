@@ -1080,9 +1080,6 @@ export async function getTradesForTable(
     sortBy: string
     sortOrder: 'asc' | 'desc'
     globalFilter?: string
-    status?: string
-    period?: string
-    listingCategory?: string
   }
 ) {
   try {
@@ -1092,56 +1089,9 @@ export async function getTradesForTable(
     const buyer = aliasedTable(users, 'buyer')
     const seller = aliasedTable(users, 'seller')
 
-    // Build where conditions
+    // Build where conditions - only check user is buyer or seller
     const conditions = []
-
-    // User is either buyer or seller
     conditions.push(or(eq(trades.buyerId, userId), eq(trades.sellerId, userId)))
-
-    // Status filter
-    if (params.status) {
-      if (params.status === 'pending') {
-        const pendingStatuses = [
-          TRADE_STATUS.CREATED,
-          TRADE_STATUS.AWAITING_DEPOSIT,
-          TRADE_STATUS.FUNDED,
-          TRADE_STATUS.PAYMENT_SENT,
-          TRADE_STATUS.PAYMENT_CONFIRMED,
-          TRADE_STATUS.DELIVERED,
-          TRADE_STATUS.CONFIRMED
-        ]
-        conditions.push(inArray(trades.status, pendingStatuses))
-      } else {
-        conditions.push(eq(trades.status, params.status))
-      }
-    }
-
-    // Period filter
-    if (params.period) {
-      const now = new Date()
-      let startDate: Date | undefined
-
-      switch (params.period) {
-        case '7days':
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-          break
-        case '30days':
-          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-          break
-        case '90days':
-          startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
-          break
-      }
-
-      if (startDate) {
-        conditions.push(gte(trades.createdAt, startDate))
-      }
-    }
-
-    // Listing category filter
-    if (params.listingCategory && params.listingCategory !== 'all') {
-      conditions.push(eq(trades.listingCategory, params.listingCategory))
-    }
 
     // Get total count
     const [{ totalCount }] = await db

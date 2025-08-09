@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 
-import { Clock, Globe } from 'lucide-react'
+import { Clock, CheckCircle, Trophy, History } from 'lucide-react'
 
 import { TableSkeleton } from '@/components/blocks/table/table-skeleton'
 import {
@@ -18,23 +18,6 @@ interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-async function getTradeHistory(
-  searchParams: Record<string, string | string[] | undefined>
-) {
-  const params = new URLSearchParams()
-
-  // Forward all search params to the API
-  Object.entries(searchParams || {}).forEach(([key, value]) => {
-    if (value) {
-      params.append(key, String(value))
-    }
-  })
-
-  return serverFetch(`${apiEndpoints.trades.table}?${params.toString()}`, {
-    cache: 'no-store'
-  })
-}
-
 export default async function TradeHistoryPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams
   const session = await getSession()
@@ -44,29 +27,16 @@ export default async function TradeHistoryPage({ searchParams }: PageProps) {
     cache: 'no-store'
   }).catch(() => null)
 
-  const listingCategoryFilter =
-    (resolvedSearchParams.listingCategory as string) || 'all'
-
   // Prepare stats cards
   const statsCards: StatCard[] = statsData
     ? [
         {
-          title:
-            listingCategoryFilter === 'domain'
-              ? 'Domain Trades'
-              : listingCategoryFilter === 'p2p'
-                ? 'P2P Trades'
-                : 'Total Trades',
+          title: 'Total Trades',
           value: statsData.totalTrades || 0,
           subtitle: 'All-time trades',
-          icon:
-            listingCategoryFilter === 'domain' ? (
-              <Globe className='h-5 w-5 text-white' />
-            ) : (
-              <Clock className='h-5 w-5 text-white' />
-            ),
+          icon: <History className='h-5 w-5 text-white' />,
           badge: 'HISTORY',
-          colorScheme: listingCategoryFilter === 'domain' ? 'purple' : 'blue'
+          colorScheme: 'blue'
         },
         {
           title: 'Pending',
@@ -80,7 +50,7 @@ export default async function TradeHistoryPage({ searchParams }: PageProps) {
           title: 'Completed',
           value: statsData.completedTrades || 0,
           subtitle: 'Successfully finished',
-          icon: <Clock className='h-5 w-5 text-white' />,
+          icon: <CheckCircle className='h-5 w-5 text-white' />,
           badge: 'SUCCESS',
           colorScheme: 'green'
         },
@@ -88,7 +58,7 @@ export default async function TradeHistoryPage({ searchParams }: PageProps) {
           title: 'Success Rate',
           value: `${statsData.successRate || 100}%`,
           subtitle: 'Completion rate',
-          icon: <Clock className='h-5 w-5 text-white' />,
+          icon: <Trophy className='h-5 w-5 text-white' />,
           badge: 'PERFORMANCE',
           colorScheme: 'yellow'
         }
@@ -101,13 +71,7 @@ export default async function TradeHistoryPage({ searchParams }: PageProps) {
         {/* Gaming Header */}
         <GamifiedHeader
           title='TRADE HISTORY'
-          subtitle={
-            listingCategoryFilter === 'domain'
-              ? 'View your domain escrow transaction history'
-              : listingCategoryFilter === 'p2p'
-                ? 'View your P2P crypto transaction history'
-                : 'View all your escrow transactions'
-          }
+          subtitle='View all your escrow transactions'
           icon={<Clock className='h-8 w-8 text-white' />}
         />
 
