@@ -7,7 +7,7 @@ import { verifyMessage } from 'viem'
 import { truncateAddress } from '@/lib'
 import { apiResponses } from '@/lib/api/server-utils'
 import { authRateLimit } from '@/lib/auth/rate-limit'
-import { setSession } from '@/lib/auth/session'
+import { setSession, getSession, clearSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
 import { createSession, deleteSession } from '@/lib/db/queries/sessions'
 import { findUserByWalletAddress, createUser } from '@/lib/db/queries/users'
@@ -242,4 +242,23 @@ export async function GET(_request: NextRequest) {
   const nonce = generateSecureNonce()
 
   return apiResponses.success({ nonce })
+}
+
+export async function DELETE(_request: NextRequest) {
+  try {
+    // Get current session
+    const session = await getSession()
+
+    if (session) {
+      // Delete database session
+      await deleteSession(session.sessionToken)
+    }
+
+    // Clear session cookie
+    await clearSession()
+
+    return apiResponses.success({ success: true })
+  } catch (error) {
+    return apiResponses.handleError(error, 'Failed to clear session')
+  }
 }

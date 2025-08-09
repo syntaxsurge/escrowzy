@@ -1,6 +1,12 @@
 'use client'
 
-import { createContext, useContext, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  type ReactNode
+} from 'react'
 
 import {
   useActiveAccount,
@@ -39,6 +45,11 @@ interface BlockchainContextValue {
   // Transaction functions
   walletClient?: any
   switchChain?: (chainId: number) => Promise<void>
+
+  // Account change detection
+  onAddressChange?: (
+    callback: (newAddress?: string, oldAddress?: string) => void
+  ) => void
 }
 
 const BlockchainContext = createContext<BlockchainContextValue | null>(null)
@@ -50,10 +61,36 @@ function ThirdwebBlockchainProvider({ children }: { children: ReactNode }) {
   const activeChain = useActiveWalletChain()
   const { disconnect: thirdwebDisconnect } = useThirdwebDisconnect()
 
+  // Track previous address to detect changes
+  const prevAddressRef = useRef<string | undefined>(undefined)
+  const addressChangeCallbackRef = useRef<
+    ((newAddress?: string, oldAddress?: string) => void) | null
+  >(null)
+
   const chainId = activeChain?.id
   const nativeCurrencySymbol = chainId
     ? getNativeCurrencySymbol(chainId)
     : 'ETH'
+
+  // Detect address changes
+  useEffect(() => {
+    const currentAddress = thirdwebAccount?.address
+    const prevAddress = prevAddressRef.current
+
+    if (currentAddress !== prevAddress) {
+      console.log('ThirdWeb account changed:', {
+        from: prevAddress,
+        to: currentAddress
+      })
+
+      // Call the registered callback if it exists
+      if (addressChangeCallbackRef.current) {
+        addressChangeCallbackRef.current(currentAddress, prevAddress)
+      }
+
+      prevAddressRef.current = currentAddress
+    }
+  }, [thirdwebAccount?.address])
 
   const contextValue: BlockchainContextValue = {
     address: thirdwebAccount?.address,
@@ -89,6 +126,9 @@ function ThirdwebBlockchainProvider({ children }: { children: ReactNode }) {
         throw new Error(`Chain ${newChainId} not supported`)
       }
       throw new Error('Chain switching not supported')
+    },
+    onAddressChange: callback => {
+      addressChangeCallbackRef.current = callback
     }
   }
 
@@ -111,9 +151,35 @@ function WagmiBlockchainProvider({ children }: { children: ReactNode }) {
     ? useBalance({ address: wagmiAccount.address })
     : null
 
+  // Track previous address to detect changes
+  const prevAddressRef = useRef<string | undefined>(undefined)
+  const addressChangeCallbackRef = useRef<
+    ((newAddress?: string, oldAddress?: string) => void) | null
+  >(null)
+
   const nativeCurrencySymbol = wagmiChainId
     ? getNativeCurrencySymbol(wagmiChainId)
     : 'ETH'
+
+  // Detect address changes
+  useEffect(() => {
+    const currentAddress = wagmiAccount?.address
+    const prevAddress = prevAddressRef.current
+
+    if (currentAddress !== prevAddress) {
+      console.log('Wagmi account changed:', {
+        from: prevAddress,
+        to: currentAddress
+      })
+
+      // Call the registered callback if it exists
+      if (addressChangeCallbackRef.current) {
+        addressChangeCallbackRef.current(currentAddress, prevAddress)
+      }
+
+      prevAddressRef.current = currentAddress
+    }
+  }, [wagmiAccount?.address])
 
   const contextValue: BlockchainContextValue = {
     address: wagmiAccount?.address,
@@ -133,7 +199,10 @@ function WagmiBlockchainProvider({ children }: { children: ReactNode }) {
       ? async (chainId: number) => {
           await switchChainAsync({ chainId })
         }
-      : undefined
+      : undefined,
+    onAddressChange: callback => {
+      addressChangeCallbackRef.current = callback
+    }
   }
 
   return (
@@ -168,9 +237,22 @@ export function useBlockchain() {
 
 // Export specific hooks for convenience
 export function useUnifiedWalletInfo() {
-  const { address, isConnected, balance, formattedBalance, disconnect } =
-    useBlockchain()
-  return { address, isConnected, balance, formattedBalance, disconnect }
+  const {
+    address,
+    isConnected,
+    balance,
+    formattedBalance,
+    disconnect,
+    onAddressChange
+  } = useBlockchain()
+  return {
+    address,
+    isConnected,
+    balance,
+    formattedBalance,
+    disconnect,
+    onAddressChange
+  }
 }
 
 export function useUnifiedChainInfo() {

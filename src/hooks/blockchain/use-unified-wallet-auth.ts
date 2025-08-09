@@ -20,6 +20,7 @@ export function useUnifiedWalletAuth() {
   const router = useRouter()
   const [isAuthenticating, setIsAuthenticating] = useState(false)
   const [wasConnected, setWasConnected] = useState(false)
+  const [sessionValidated, setSessionValidated] = useState(false)
 
   // Use blockchain provider for unified wallet access
   const { address, isConnected, signMessage, chainId, disconnect } =
@@ -186,12 +187,48 @@ export function useUnifiedWalletAuth() {
     }
   }
 
+  // Validate session matches current wallet address
+  const validateSession = async () => {
+    if (!address || !isConnected) return
+
+    try {
+      // Check if current session matches the connected wallet
+      const response = await api.get<{ user: any }>(apiEndpoints.user.profile, {
+        shouldShowErrorToast: false
+      })
+
+      if (response.success && response.data?.user) {
+        const sessionWallet = response.data.user.walletAddress?.toLowerCase()
+        const currentWallet = address.toLowerCase()
+
+        if (sessionWallet !== currentWallet) {
+          console.log('Session wallet mismatch, clearing session:', {
+            session: sessionWallet,
+            current: currentWallet
+          })
+
+          // Clear the mismatched session
+          await fetch(apiEndpoints.auth.wallet, { method: 'DELETE' })
+
+          // Clear user data
+          await mutate(apiEndpoints.user.profile, { user: null }, false)
+
+          setSessionValidated(false)
+        } else {
+          setSessionValidated(true)
+        }
+      }
+    } catch (error) {
+      console.error('Session validation error:', error)
+    }
+  }
+
   // Effect to handle wallet connection state (but not authentication)
   useEffect(() => {
     if (isConnected && address) {
       setWasConnected(true)
-      // Don't automatically authenticate, just check if session exists
-      // User must click "Sign to Access Dashboard" button to authenticate
+      // Validate session when wallet connects
+      validateSession()
     }
 
     if (wasConnected && !isConnected) {
@@ -199,5 +236,5 @@ export function useUnifiedWalletAuth() {
     }
   }, [isConnected, address, wasConnected])
 
-  return { isAuthenticating, authenticate }
+  return { isAuthenticating, authenticate, sessionValidated }
 }

@@ -91,7 +91,7 @@ function ThemeToggle() {
 
 function UserMenu() {
   const menuState = useDialogState()
-  const { address, isConnected } = useUnifiedWalletInfo()
+  const { address, isConnected, onAddressChange } = useUnifiedWalletInfo()
   const { isAuthenticating } = useUnifiedWalletAuth()
   const {
     data: userData,
@@ -99,7 +99,7 @@ function UserMenu() {
     error: _error,
     mutate: mutateUser
   } = useSWR<{ user: User | null }>(
-    isConnected ? apiEndpoints.user.profile : null,
+    isConnected && address ? apiEndpoints.user.profile : null,
     swrFetcher,
     {
       revalidateOnFocus: true,
@@ -109,6 +109,7 @@ function UserMenu() {
   const user = userData?.user
   const [isWalletInitializing, setIsWalletInitializing] = useState(true)
   const [prevConnected, setPrevConnected] = useState(false)
+  const [prevAddress, setPrevAddress] = useState<string | undefined>()
 
   // Wait for wallet provider to initialize and determine connection state
   useEffect(() => {
@@ -156,6 +157,61 @@ function UserMenu() {
     }
     setPrevConnected(isConnected)
   }, [isConnected, prevConnected, mutateUser])
+
+  // Detect wallet address changes and handle user synchronization
+  useEffect(() => {
+    if (address !== prevAddress && prevAddress !== undefined) {
+      console.log('Address changed in header:', {
+        from: prevAddress,
+        to: address
+      })
+
+      // Clear current user data immediately
+      mutateUser({ user: null }, false)
+
+      // If we have a new address, fetch the new user
+      if (address) {
+        // Force re-fetch user data for the new address
+        mutateUser()
+      }
+    }
+    setPrevAddress(address)
+  }, [address, prevAddress, mutateUser])
+
+  // Register address change callback
+  useEffect(() => {
+    if (onAddressChange) {
+      onAddressChange(async (newAddress?: string, oldAddress?: string) => {
+        console.log('Address change callback triggered:', {
+          from: oldAddress,
+          to: newAddress
+        })
+
+        // Clear user data and session when address changes
+        if (oldAddress !== newAddress && oldAddress !== undefined) {
+          // Clear user data immediately
+          mutateUser({ user: null }, false)
+
+          // Clear the session on the server
+          try {
+            const response = await fetch(apiEndpoints.auth.wallet, {
+              method: 'DELETE'
+            })
+            if (response.ok) {
+              console.log('Session cleared successfully')
+            }
+          } catch (error) {
+            console.error('Failed to clear session:', error)
+          }
+
+          // Force re-authentication for the new address
+          if (newAddress) {
+            mutateUser()
+          }
+        }
+      })
+    }
+  }, [onAddressChange, mutateUser])
 
   // Determine if we're ready to show the UI
   const isReady =
