@@ -96,7 +96,7 @@ export function BattleHistory({ battles, userId }: BattleHistoryProps) {
                   <TableHead>Your CP</TableHead>
                   <TableHead>Opponent CP</TableHead>
                   <TableHead>CP Difference</TableHead>
-                  <TableHead>Reward</TableHead>
+                  <TableHead>Rewards</TableHead>
                   <TableHead>Time</TableHead>
                 </TableRow>
               </TableHeader>
@@ -149,16 +149,27 @@ export function BattleHistory({ battles, userId }: BattleHistoryProps) {
                       </TableCell>
                       <TableCell>
                         {battle.winnerId === userId ? (
-                          <div className='flex items-center gap-1'>
-                            <Award className='h-4 w-4 text-yellow-500' />
-                            <span className='text-sm'>
-                              {battle.feeDiscountPercent}% discount
-                            </span>
+                          <div className='flex flex-col gap-1'>
+                            <div className='flex items-center gap-1'>
+                              <Award className='h-3 w-3 text-yellow-500' />
+                              <span className='text-sm'>
+                                {battle.feeDiscountPercent || 25}% discount
+                              </span>
+                            </div>
+                            <div className='flex items-center gap-1'>
+                              <Trophy className='h-3 w-3 text-blue-500' />
+                              <span className='text-sm text-blue-600 dark:text-blue-400'>
+                                +{battle.winnerXP || 50} XP
+                              </span>
+                            </div>
                           </div>
                         ) : (
-                          <span className='text-muted-foreground text-sm'>
-                            10 XP
-                          </span>
+                          <div className='flex items-center gap-1'>
+                            <Shield className='h-3 w-3 text-gray-500' />
+                            <span className='text-muted-foreground text-sm'>
+                              +{battle.loserXP || 10} XP
+                            </span>
+                          </div>
                         )}
                       </TableCell>
                       <TableCell>

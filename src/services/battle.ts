@@ -264,6 +264,10 @@ export async function createBattle(
       discountExpiresAt.getHours() + BATTLE_CONSTANTS.DISCOUNT_DURATION_HOURS
     )
 
+    // Set XP rewards
+    const winnerXP = 50
+    const loserXP = 10
+
     // Create battle record
     const newBattle: NewBattle = {
       player1Id,
@@ -272,7 +276,9 @@ export async function createBattle(
       player1CP,
       player2CP,
       feeDiscountPercent: BATTLE_CONSTANTS.WINNER_DISCOUNT_PERCENT,
-      discountExpiresAt
+      discountExpiresAt,
+      winnerXP,
+      loserXP
     }
 
     const [createdBattle] = await db
@@ -299,7 +305,9 @@ export async function createBattle(
       player1CP,
       player2CP,
       feeDiscountPercent: BATTLE_CONSTANTS.WINNER_DISCOUNT_PERCENT,
-      discountExpiresAt
+      discountExpiresAt,
+      winnerXP,
+      loserXP
     }
   } catch (error) {
     console.error('Error creating battle:', error)

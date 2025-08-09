@@ -13,6 +13,8 @@ export interface BattleResult {
   player2CP: number
   feeDiscountPercent: number
   discountExpiresAt: Date
+  winnerXP: number
+  loserXP: number
 }
 
 export interface BattleMatchmakingParams {

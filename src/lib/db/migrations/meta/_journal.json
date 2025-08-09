@@ -43,6 +43,13 @@
       "when": 1754738474689,
       "tag": "0005_smiling_cloak",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1754745709646,
+      "tag": "0006_lucky_puck",
+      "breakpoints": true
     }
   ]
 }

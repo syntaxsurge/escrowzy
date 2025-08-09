@@ -1,7 +1,137 @@
-import { eq, and, gte, sql, isNull, or, lt, ne, lte } from 'drizzle-orm'
+import {
+  eq,
+  and,
+  gte,
+  sql,
+  isNull,
+  or,
+  lt,
+  ne,
+  lte,
+  desc,
+  asc
+} from 'drizzle-orm'
+
+import { type TableRequest, type TableResponse } from '@/lib/table/table'
+import { type Battle } from '@/types/battle'
 
 import { db } from '../drizzle'
 import { battles, users, userGameData, sessions, battleQueue } from '../schema'
+import { createDateRangeFilter, executeTableQuery } from './table-queries'
+
+export interface BattleWithDetails extends Battle {
+  player1?: {
+    id: number
+    name?: string | null
+    walletAddress?: string | null
+  }
+  player2?: {
+    id: number
+    name?: string | null
+    walletAddress?: string | null
+  }
+  winner?: {
+    id: number
+    name?: string | null
+    walletAddress?: string | null
+  }
+}
+
+/**
+ * Get battle history with server-side pagination and filtering
+ */
+export async function getBattleHistoryTable(
+  request: TableRequest,
+  userId: number
+): Promise<TableResponse<BattleWithDetails>> {
+  // No search columns for battles - we'll rely on filters
+  const searchColumns: string[] = []
+
+  const filterHandlers = {
+    result: (value: string) => {
+      if (value === 'win') {
+        return eq(battles.winnerId, userId)
+      } else if (value === 'loss') {
+        return and(
+          or(eq(battles.player1Id, userId), eq(battles.player2Id, userId)),
+          ne(battles.winnerId, userId)
+        )
+      }
+      return undefined
+    },
+    createdAt: createDateRangeFilter(battles.createdAt),
+    dateFrom: (value: string) => {
+      if (!value) return undefined
+      return gte(battles.createdAt, new Date(value))
+    },
+    dateTo: (value: string) => {
+      if (!value) return undefined
+      return lte(battles.createdAt, new Date(value))
+    }
+  }
+
+  // Base condition - only show battles for this user
+  const baseConditions: any[] = [
+    or(eq(battles.player1Id, userId), eq(battles.player2Id, userId))
+  ]
+
+  // Default sorting by createdAt desc
+  const defaultSorting: any[] =
+    request.sorting.length === 0
+      ? [desc(battles.createdAt)]
+      : request.sorting.map(sort => {
+          const column = (battles as any)[sort.id]
+          if (column) {
+            return sort.desc ? desc(column) : asc(column)
+          }
+          return desc(battles.createdAt)
+        })
+
+  const { data, pageCount, totalCount } = await executeTableQuery({
+    table: battles,
+    request,
+    searchColumns: searchColumns as any,
+    filterHandlers,
+    baseConditions,
+    customOrderBy: defaultSorting as any
+  })
+
+  // Fetch player details for all battles
+  const userIds = new Set<number>()
+  data.forEach((battle: any) => {
+    userIds.add(battle.player1Id)
+    userIds.add(battle.player2Id)
+    if (battle.winnerId) userIds.add(battle.winnerId)
+  })
+
+  const usersData =
+    userIds.size > 0
+      ? await db
+          .select({
+            id: users.id,
+            name: users.name,
+            walletAddress: users.walletAddress
+          })
+          .from(users)
+          .where(or(...Array.from(userIds).map(id => eq(users.id, id))))
+      : []
+
+  const userMap = new Map(usersData.map(u => [u.id, u]))
+
+  // Enhance battles with user details
+  const enhancedBattles: BattleWithDetails[] = data.map((battle: any) => ({
+    ...battle,
+    player1: userMap.get(battle.player1Id),
+    player2: userMap.get(battle.player2Id),
+    winner: battle.winnerId ? userMap.get(battle.winnerId) : undefined
+  }))
+
+  return {
+    data: enhancedBattles,
+    pageCount,
+    totalCount
+  }
+}
 
 /**
  * Get real-time battle statistics

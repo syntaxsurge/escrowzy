@@ -376,6 +376,8 @@ export const battles = pgTable(
     player2CP: integer('player2_cp').notNull(),
     feeDiscountPercent: integer('fee_discount_percent'),
     discountExpiresAt: timestamp('discount_expires_at'),
+    winnerXP: integer('winner_xp').notNull().default(50),
+    loserXP: integer('loser_xp').notNull().default(10),
     createdAt: timestamp('created_at').notNull().defaultNow()
   },
   table => [

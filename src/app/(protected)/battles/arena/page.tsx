@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 
 import { motion, AnimatePresence } from 'framer-motion'
@@ -31,8 +32,8 @@ import { formatNumber } from '@/lib/utils/string'
 
 import { BattleAnimation } from './battle-animation'
 import { BattleCountdown } from './battle-countdown'
-import { BattleHistory } from './battle-history'
 import { BattleInteractions } from './battle-interactions'
+import { DailyLimitTimer } from './daily-limit-timer'
 import { DiscountTimer } from './discount-timer'
 import { MatchmakingInterface } from './matchmaking-interface'
 
@@ -347,7 +348,21 @@ export default function BattleArenaPage() {
           subtitle='Challenge opponents and earn fee discounts'
           icon={<Swords className='h-8 w-8 text-white' />}
           actions={
-            activeDiscount && <DiscountTimer discount={activeDiscount} />
+            <div className='flex gap-4'>
+              {activeDiscount && <DiscountTimer discount={activeDiscount} />}
+              {dailyLimit && (
+                <DailyLimitTimer
+                  dailyLimit={dailyLimit}
+                  userId={user?.id || 0}
+                  onLimitReset={() => {
+                    // Reset battle state when daily limit resets
+                    if (battleState !== 'idle') {
+                      resetBattle()
+                    }
+                  }}
+                />
+              )}
+            </div>
           }
         />
 
@@ -459,11 +474,11 @@ export default function BattleArenaPage() {
                   Battle Arena
                 </TabsTrigger>
                 <TabsTrigger
-                  value='history'
+                  value='quick-stats'
                   className='flex items-center gap-2'
                 >
                   <Trophy className='h-4 w-4' />
-                  Battle History
+                  Quick Stats
                 </TabsTrigger>
               </TabsList>
 
@@ -843,13 +858,19 @@ export default function BattleArenaPage() {
                                 <h3 className='bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 bg-clip-text text-4xl font-black text-transparent'>
                                   VICTORY!
                                 </h3>
-                                <Badge className='mt-3 bg-green-500/20 px-4 py-2 text-green-600 dark:text-green-400'>
-                                  <Sparkles className='mr-2 h-4 w-4' />
-                                  {currentBattleData?.feeDiscountPercent ||
-                                    battleResult?.feeDiscountPercent ||
-                                    25}
-                                  % FEE DISCOUNT FOR 24 HOURS!
-                                </Badge>
+                                <div className='mt-3 flex flex-col items-center gap-2'>
+                                  <Badge className='bg-green-500/20 px-4 py-2 text-green-600 dark:text-green-400'>
+                                    <Sparkles className='mr-2 h-4 w-4' />
+                                    {currentBattleData?.feeDiscountPercent ||
+                                      battleResult?.feeDiscountPercent ||
+                                      25}
+                                    % FEE DISCOUNT FOR 24 HOURS!
+                                  </Badge>
+                                  <Badge className='bg-blue-500/20 px-4 py-2 text-blue-600 dark:text-blue-400'>
+                                    <Trophy className='mr-2 h-4 w-4' />+
+                                    {battleResult?.winnerXP || 50} XP EARNED!
+                                  </Badge>
+                                </div>
                                 <p className='text-muted-foreground mt-2'>
                                   Congratulations, warrior! You've conquered
                                   your opponent!
@@ -868,7 +889,9 @@ export default function BattleArenaPage() {
                                   DEFEAT
                                 </h3>
                                 <Badge className='mt-3 bg-blue-500/20 px-4 py-2 text-blue-600 dark:text-blue-400'>
-                                  +10 XP FOR PARTICIPATING
+                                  <Shield className='mr-2 h-4 w-4' />+
+                                  {battleResult?.loserXP || 10} XP FOR
+                                  PARTICIPATING
                                 </Badge>
                                 <p className='text-muted-foreground mt-2'>
                                   Better luck next time, warrior! Keep training!
@@ -960,11 +983,128 @@ export default function BattleArenaPage() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value='history' className='mt-6'>
-                <BattleHistory
-                  battles={battleHistory || []}
-                  userId={user?.id || 0}
-                />
+              <TabsContent value='quick-stats' className='mt-6 space-y-6'>
+                {/* Quick Battle Stats */}
+                <Card className='group relative overflow-hidden border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-pink-500/10'>
+                  <CardHeader>
+                    <CardTitle className='flex items-center justify-between'>
+                      <span className='from-primary bg-gradient-to-r to-purple-600 bg-clip-text text-xl font-bold text-transparent'>
+                        YOUR BATTLE STATISTICS
+                      </span>
+                      <Link href='/battles/history'>
+                        <Button variant='outline' size='sm' className='gap-2'>
+                          <Trophy className='h-4 w-4' />
+                          View Full History
+                        </Button>
+                      </Link>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+                      <div className='rounded-lg border border-green-500/20 bg-green-500/5 p-4'>
+                        <p className='text-xs font-bold text-green-600 uppercase dark:text-green-400'>
+                          Total Battles
+                        </p>
+                        <p className='text-3xl font-black'>
+                          {battleStats?.totalBattles || 0}
+                        </p>
+                      </div>
+                      <div className='rounded-lg border border-blue-500/20 bg-blue-500/5 p-4'>
+                        <p className='text-xs font-bold text-blue-600 uppercase dark:text-blue-400'>
+                          Win Rate
+                        </p>
+                        <p className='text-3xl font-black'>
+                          {battleStats?.winRate.toFixed(1) || 0}%
+                        </p>
+                        <p className='text-muted-foreground mt-1 text-xs'>
+                          {battleStats?.wins || 0}W / {battleStats?.losses || 0}
+                          L
+                        </p>
+                      </div>
+                      <div className='rounded-lg border border-orange-500/20 bg-orange-500/5 p-4'>
+                        <p className='text-xs font-bold text-orange-600 uppercase dark:text-orange-400'>
+                          Discounts Earned
+                        </p>
+                        <p className='text-3xl font-black'>
+                          {battleStats?.totalDiscountsEarned || 0}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Recent Battles Preview */}
+                    {battleHistory && battleHistory.length > 0 && (
+                      <div className='mt-6'>
+                        <h3 className='text-muted-foreground mb-3 font-bold'>
+                          Recent Battles
+                        </h3>
+                        <div className='space-y-2'>
+                          {battleHistory.slice(0, 5).map((battle: any) => {
+                            const isWinner = battle.winnerId === user?.id
+                            return (
+                              <div
+                                key={battle.id}
+                                className='flex items-center justify-between rounded-lg border p-3'
+                              >
+                                <div className='flex items-center gap-3'>
+                                  {isWinner ? (
+                                    <Trophy className='h-5 w-5 text-green-500' />
+                                  ) : (
+                                    <Shield className='h-5 w-5 text-red-500' />
+                                  )}
+                                  <div>
+                                    <p className='font-medium'>
+                                      {isWinner ? 'Victory' : 'Defeat'}
+                                    </p>
+                                    <p className='text-muted-foreground text-xs'>
+                                      CP:{' '}
+                                      {battle.player1Id === user?.id
+                                        ? battle.player1CP
+                                        : battle.player2CP}{' '}
+                                      vs{' '}
+                                      {battle.player1Id === user?.id
+                                        ? battle.player2CP
+                                        : battle.player1CP}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className='text-right'>
+                                  {isWinner ? (
+                                    <Badge className='bg-green-500/20 text-green-600 dark:text-green-400'>
+                                      +{battle.winnerXP || 50} XP
+                                    </Badge>
+                                  ) : (
+                                    <Badge className='bg-blue-500/20 text-blue-600 dark:text-blue-400'>
+                                      +{battle.loserXP || 10} XP
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        {battleHistory.length > 5 && (
+                          <div className='mt-4 text-center'>
+                            <Link href='/battles/history'>
+                              <Button variant='outline' className='gap-2'>
+                                View All {battleHistory.length} Battles
+                              </Button>
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {(!battleHistory || battleHistory.length === 0) && (
+                      <div className='mt-6 rounded-lg border border-dashed p-6 text-center'>
+                        <Shield className='text-muted-foreground mx-auto mb-3 h-12 w-12' />
+                        <p className='text-muted-foreground'>
+                          No battles yet. Start battling to see your history!
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
           </CardContent>
