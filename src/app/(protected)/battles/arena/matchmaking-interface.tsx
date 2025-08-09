@@ -31,6 +31,9 @@ interface MatchmakingInterfaceProps {
   dailyLimit: DailyBattleLimit | undefined
   onFindMatch: (matchRange?: number) => Promise<any>
   onLeaveQueue: () => Promise<void>
+  activeMinCP?: number | null
+  activeMaxCP?: number | null
+  activeRange?: number | null
 }
 
 const SEARCH_MESSAGES = [
@@ -49,7 +52,10 @@ export function MatchmakingInterface({
   isInQueue,
   dailyLimit,
   onFindMatch,
-  onLeaveQueue
+  onLeaveQueue,
+  activeMinCP: propMinCP,
+  activeMaxCP: propMaxCP,
+  activeRange: propRange
 }: MatchmakingInterfaceProps) {
   const [matchRange, setMatchRange] = useState(20)
   const [searchingAnimation, setSearchingAnimation] = useState(0)
@@ -69,8 +75,29 @@ export function MatchmakingInterface({
     { refreshInterval: 2000 } // Refresh every 2 seconds when in queue
   )
 
-  const minCP = Math.floor(combatPower * (1 - matchRange / 100))
-  const maxCP = Math.ceil(combatPower * (1 + matchRange / 100))
+  // Calculate current range based on slider
+  const currentMinCP = Math.floor(combatPower * (1 - matchRange / 100))
+  const currentMaxCP = Math.ceil(combatPower * (1 + matchRange / 100))
+
+  // Use prop values when available (from parent), otherwise calculate from current range
+  const displayMinCP =
+    (isLocalSearching || isSearching || isInQueue) &&
+    propMinCP !== null &&
+    propMinCP !== undefined
+      ? propMinCP
+      : currentMinCP
+  const displayMaxCP =
+    (isLocalSearching || isSearching || isInQueue) &&
+    propMaxCP !== null &&
+    propMaxCP !== undefined
+      ? propMaxCP
+      : currentMaxCP
+  const displayRange =
+    (isLocalSearching || isSearching || isInQueue) &&
+    propRange !== null &&
+    propRange !== undefined
+      ? propRange
+      : matchRange
 
   const getTimeUntilReset = () => {
     if (!dailyLimit?.resetsAt) return ''
@@ -90,7 +117,7 @@ export function MatchmakingInterface({
     setIsLocalSearching(true)
     setCurrentMessage(0)
 
-    // Start the actual search
+    // Start the actual search - parent will handle storing the values
     const result = await onFindMatch(matchRange)
 
     if (result) {
@@ -114,10 +141,10 @@ export function MatchmakingInterface({
 
   // Reset state when isSearching changes
   useEffect(() => {
-    if (!isSearching && !isLocalSearching) {
+    if (!isSearching && !isLocalSearching && !isInQueue) {
       setSearchingAnimation(0)
     }
-  }, [isSearching, isLocalSearching])
+  }, [isSearching, isLocalSearching, isInQueue])
 
   // Show searching overlay when looking for match
   if (isLocalSearching || isSearching || isInQueue) {
@@ -192,12 +219,16 @@ export function MatchmakingInterface({
               </motion.p>
             </AnimatePresence>
             <p className='text-muted-foreground text-xs'>
-              Finding warriors within {minCP} - {maxCP} CP range
+              Finding warriors within{' '}
+              <strong className='text-primary'>
+                {displayMinCP} - {displayMaxCP} CP
+              </strong>{' '}
+              range (±{displayRange}%)
             </p>
             <Button
-              onClick={() => {
+              onClick={async () => {
                 if (isInQueue) {
-                  onLeaveQueue()
+                  await onLeaveQueue()
                 } else {
                   setIsLocalSearching(false)
                   setSearchingAnimation(0)
@@ -320,8 +351,8 @@ export function MatchmakingInterface({
 
             <div className='bg-muted rounded-lg p-3'>
               <p className='text-sm'>
-                Opponents will have between <strong>{minCP}</strong> and{' '}
-                <strong>{maxCP}</strong> Combat Power
+                Opponents will have between <strong>{currentMinCP}</strong> and{' '}
+                <strong>{currentMaxCP}</strong> Combat Power
               </p>
             </div>
           </div>

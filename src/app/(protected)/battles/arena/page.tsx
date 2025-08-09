@@ -4,7 +4,15 @@ import Link from 'next/link'
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { Swords, Trophy, Shield, Flame, User, Sparkles } from 'lucide-react'
+import {
+  Swords,
+  Trophy,
+  Shield,
+  Flame,
+  User,
+  Sparkles,
+  RefreshCw
+} from 'lucide-react'
 import useSWR from 'swr'
 
 import { LiveStatsDisplay } from '@/components/blocks/battle/live-stats-display'
@@ -76,6 +84,17 @@ export default function BattleArenaPage() {
   )
   const [currentBattleData, setCurrentBattleData] =
     useState<CurrentBattleData | null>(null)
+
+  // Match range state - lifted from MatchmakingInterface to persist across component instances
+  const [activeSearchMinCP, setActiveSearchMinCP] = useState<number | null>(
+    null
+  )
+  const [activeSearchMaxCP, setActiveSearchMaxCP] = useState<number | null>(
+    null
+  )
+  const [activeSearchRange, setActiveSearchRange] = useState<number | null>(
+    null
+  )
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -303,6 +322,15 @@ export default function BattleArenaPage() {
   const handleFindMatch = async (matchRange?: number) => {
     if (!canBattle) return null
 
+    // Store the search parameters when search starts
+    if (matchRange !== undefined) {
+      const minCP = Math.floor(combatPower * (1 - matchRange / 100))
+      const maxCP = Math.ceil(combatPower * (1 + matchRange / 100))
+      setActiveSearchMinCP(minCP)
+      setActiveSearchMaxCP(maxCP)
+      setActiveSearchRange(matchRange)
+    }
+
     setBattleState('searching')
     const opponent = await findMatch(matchRange)
 
@@ -439,6 +467,10 @@ export default function BattleArenaPage() {
     setCurrentOpponent(null)
     setCurrentInvitationId(null)
     setCurrentBattleData(null)
+    // Reset search parameters
+    setActiveSearchMinCP(null)
+    setActiveSearchMaxCP(null)
+    setActiveSearchRange(null)
   }
 
   const combatPower = stats?.gameData?.combatPower || 100
@@ -580,15 +612,41 @@ export default function BattleArenaPage() {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -20 }}
                         >
-                          <MatchmakingInterface
-                            combatPower={combatPower}
-                            canBattle={canBattle}
-                            isSearching={false}
-                            isInQueue={isInQueue}
-                            dailyLimit={dailyLimit}
-                            onFindMatch={handleFindMatch}
-                            onLeaveQueue={leaveQueue}
-                          />
+                          {!stats ? (
+                            // Loading state while fetching combat power
+                            <div className='flex flex-col items-center justify-center py-12'>
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{
+                                  duration: 1,
+                                  repeat: Infinity,
+                                  ease: 'linear'
+                                }}
+                                className='mb-4'
+                              >
+                                <RefreshCw className='text-primary h-8 w-8' />
+                              </motion.div>
+                              <p className='text-lg font-semibold'>
+                                Loading Combat Stats...
+                              </p>
+                              <p className='text-muted-foreground mt-2 text-sm'>
+                                Calculating your combat power
+                              </p>
+                            </div>
+                          ) : (
+                            <MatchmakingInterface
+                              combatPower={combatPower}
+                              canBattle={canBattle}
+                              isSearching={false}
+                              isInQueue={isInQueue}
+                              dailyLimit={dailyLimit}
+                              onFindMatch={handleFindMatch}
+                              onLeaveQueue={leaveQueue}
+                              activeMinCP={activeSearchMinCP}
+                              activeMaxCP={activeSearchMaxCP}
+                              activeRange={activeSearchRange}
+                            />
+                          )}
                         </motion.div>
                       )}
 
@@ -610,7 +668,14 @@ export default function BattleArenaPage() {
                             onLeaveQueue={async () => {
                               await leaveQueue()
                               setBattleState('idle')
+                              // Reset search parameters when leaving queue
+                              setActiveSearchMinCP(null)
+                              setActiveSearchMaxCP(null)
+                              setActiveSearchRange(null)
                             }}
+                            activeMinCP={activeSearchMinCP}
+                            activeMaxCP={activeSearchMaxCP}
+                            activeRange={activeSearchRange}
                           />
                         </motion.div>
                       )}
