@@ -9,7 +9,6 @@ import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 import type {
   BattleDiscount,
-  BattleHistory,
   BattleResult,
   BattleStats,
   DailyBattleLimit
@@ -40,9 +39,10 @@ export function useBattles(userId?: number) {
     )
 
   // Fetch battle history
-  const { data: battleHistory, error: historyError } = useSWR<BattleHistory>(
+  const { data: battleHistoryResponse, error: historyError } = useSWR<any>(
     userId ? apiEndpoints.battles.history : null,
-    (url: string) => api.get(url).then((res: any) => res.data)
+    (url: string) => api.get(url).then((res: any) => res.data),
+    { refreshInterval: 30000 } // Refresh every 30 seconds for real-time updates
   )
 
   // Fetch daily limit
@@ -189,9 +189,18 @@ export function useBattles(userId?: number) {
     }
   }, [isInQueue, userId])
 
+  // Extract the actual battle history from the response
+  // The API returns { success: true, data: { history: { battles: [...], totalBattles, ... }, ... } }
+  const battleHistoryData =
+    battleHistoryResponse?.data?.history ||
+    battleHistoryResponse?.history ||
+    battleHistoryResponse
+  const battleHistory = battleHistoryData?.battles || []
+
   return {
     activeDiscount,
     battleHistory,
+    battleHistoryStats: battleHistoryData, // Full history object with stats
     dailyLimit,
     battleStats,
     canBattle,
@@ -202,7 +211,7 @@ export function useBattles(userId?: number) {
     findMatch,
     createBattle,
     leaveQueue,
-    isLoading: !battleHistory && !historyError,
+    isLoading: !battleHistoryResponse && !historyError,
     error: discountError || historyError || limitError
   }
 }

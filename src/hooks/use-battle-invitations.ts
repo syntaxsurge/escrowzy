@@ -53,11 +53,14 @@ export function useBattleInvitations(userId?: number) {
           return response.data.data
         }
       } catch (error: any) {
-        toast({
-          title: 'Failed to accept',
-          description: error.response?.data?.error || 'Something went wrong',
-          variant: 'destructive'
-        })
+        // Don't show toast for invalid invitations - let the UI handle it
+        if (error.response?.data?.error !== 'Invalid or expired invitation') {
+          toast({
+            title: 'Failed to accept',
+            description: error.response?.data?.error || 'Something went wrong',
+            variant: 'destructive'
+          })
+        }
         return null
       }
     },

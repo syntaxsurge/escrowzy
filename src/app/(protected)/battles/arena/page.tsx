@@ -10,8 +10,7 @@ import {
   Flame,
   Calendar,
   User,
-  Sparkles,
-  Loader2
+  Sparkles
 } from 'lucide-react'
 import useSWR from 'swr'
 
@@ -43,6 +42,7 @@ type BattleState =
   | 'searching'
   | 'invitation-sent'
   | 'invitation-received'
+  | 'invitation-invalid'
   | 'preparing'
   | 'countdown'
   | 'battling'
@@ -65,6 +65,7 @@ export default function BattleArenaPage() {
   const {
     activeDiscount,
     battleHistory,
+    battleHistoryStats,
     dailyLimit,
     battleStats,
     canBattle,
@@ -228,8 +229,10 @@ export default function BattleArenaPage() {
         setBattleState('countdown')
       }, 1000)
     } else {
-      setBattleState('idle')
+      // Invitation was invalid or expired
+      setBattleState('invitation-invalid')
       setCurrentOpponent(null)
+      setCurrentInvitationId(null)
     }
   }
 
@@ -377,10 +380,10 @@ export default function BattleArenaPage() {
                     Win Streak
                   </p>
                   <p className='text-2xl font-black'>
-                    {battleHistory?.currentStreak || 0}
+                    {battleHistoryStats?.currentStreak || 0}
                   </p>
                   <p className='text-muted-foreground text-xs'>
-                    Best: {battleHistory?.bestStreak || 0}
+                    Best: {battleHistoryStats?.bestStreak || 0}
                   </p>
                 </div>
                 <Flame className='h-8 w-8 text-orange-500' />
@@ -477,32 +480,26 @@ export default function BattleArenaPage() {
                         </motion.div>
                       )}
 
-                      {/* Searching State */}
+                      {/* Searching State - Use original matchmaking UI */}
                       {battleState === 'searching' && (
                         <motion.div
                           key='searching'
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          className='py-12 text-center'
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
                         >
-                          <Loader2 className='text-primary mx-auto mb-4 h-16 w-16 animate-spin' />
-                          <h3 className='text-2xl font-bold'>
-                            SEARCHING FOR OPPONENT...
-                          </h3>
-                          <p className='text-muted-foreground mt-2'>
-                            Looking for a worthy warrior to battle
-                          </p>
-                          <Button
-                            onClick={() => {
-                              leaveQueue()
+                          <MatchmakingInterface
+                            combatPower={combatPower}
+                            canBattle={canBattle}
+                            isSearching={true}
+                            isInQueue={isInQueue}
+                            dailyLimit={dailyLimit}
+                            onFindMatch={handleFindMatch}
+                            onLeaveQueue={async () => {
+                              await leaveQueue()
                               setBattleState('idle')
                             }}
-                            variant='outline'
-                            className='mt-6'
-                          >
-                            Cancel Search
-                          </Button>
+                          />
                         </motion.div>
                       )}
 
@@ -635,6 +632,50 @@ export default function BattleArenaPage() {
                             </div>
                           </motion.div>
                         )}
+
+                      {/* Invalid Invitation State */}
+                      {battleState === 'invitation-invalid' && (
+                        <motion.div
+                          key='invitation-invalid'
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          className='space-y-6'
+                        >
+                          <div className='text-center'>
+                            <motion.div
+                              animate={{ y: [0, 10, 0] }}
+                              transition={{ duration: 1, repeat: 2 }}
+                            >
+                              <Shield className='mx-auto mb-4 h-20 w-20 text-gray-500' />
+                            </motion.div>
+                            <h3 className='text-2xl font-black text-gray-600 dark:text-gray-400'>
+                              INVITATION EXPIRED
+                            </h3>
+                            <p className='text-muted-foreground mt-2'>
+                              The battle invitation has expired or is no longer
+                              valid.
+                            </p>
+                            <p className='text-muted-foreground mt-1'>
+                              Search for a new opponent to battle!
+                            </p>
+                          </div>
+
+                          <div className='flex justify-center'>
+                            <Button
+                              onClick={() => {
+                                setBattleState('searching')
+                                handleFindMatch()
+                              }}
+                              disabled={!canBattle}
+                              className='gap-2 bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white hover:from-purple-700 hover:to-pink-700'
+                            >
+                              <Swords className='h-4 w-4' />
+                              SEARCH FOR NEW OPPONENT
+                            </Button>
+                          </div>
+                        </motion.div>
+                      )}
 
                       {/* Preparing State */}
                       {battleState === 'preparing' && (
@@ -897,7 +938,7 @@ export default function BattleArenaPage() {
 
               <TabsContent value='history' className='mt-6'>
                 <BattleHistory
-                  battles={battleHistory?.battles || []}
+                  battles={battleHistory || []}
                   userId={user?.id || 0}
                 />
               </TabsContent>
