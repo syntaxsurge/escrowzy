@@ -118,7 +118,7 @@ export async function createTrade(
         sellerId,
         amount: input.amount,
         currency: listing.tokenOffered || 'USD',
-        tradeType: 'p2p',
+        listingCategory: 'p2p',
         status: TRADE_STATUS.CREATED,
         metadata
       })
@@ -529,7 +529,7 @@ export async function cancelTrade(
       .returning()
 
     // If this is a domain trade, reactivate the original listing
-    if (metadata.listingCategory === 'domain' && metadata.originalListingId) {
+    if (trade.listingCategory === 'domain' && metadata.originalListingId) {
       await db
         .update(escrowListings)
         .set({ isActive: true })

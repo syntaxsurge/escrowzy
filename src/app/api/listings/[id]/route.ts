@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server'
 import { apiResponses } from '@/lib/api/server-utils'
 import { getSession } from '@/lib/auth/session'
 import { updateListingSchema } from '@/lib/schemas/listings'
-import { updateP2PListing, deactivateListing } from '@/services/listings'
+import { updateListing, deactivateListing } from '@/services/listings'
 
 export async function PUT(
   request: NextRequest,
@@ -34,7 +34,7 @@ export async function PUT(
     const input = validationResult.data
 
     // Update the listing
-    const updatedListing = await updateP2PListing(
+    const updatedListing = await updateListing(
       listingId,
       session.user.id,
       input

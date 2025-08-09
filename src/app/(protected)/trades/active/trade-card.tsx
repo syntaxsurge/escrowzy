@@ -317,7 +317,9 @@ export function TradeCard({ trade, onUpdate }: TradeCardProps) {
             )}
             <div className='flex justify-between text-sm'>
               <span className='text-muted-foreground'>Trade Type</span>
-              <span className='font-medium'>{String(trade.tradeType)}</span>
+              <span className='font-medium'>
+                {String(trade.listingCategory)}
+              </span>
             </div>
             <div className='flex justify-between text-sm'>
               <span className='text-muted-foreground'>Chain</span>

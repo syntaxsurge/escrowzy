@@ -338,7 +338,7 @@ export default function TradeDetailPage() {
               completedAt={trade.completedAt}
               metadata={metadata}
               chainId={trade.chainId}
-              tradeType={trade.tradeType}
+              listingCategory={trade.listingCategory}
             />
 
             {/* Trade Details Card */}
@@ -602,7 +602,7 @@ export default function TradeDetailPage() {
                   )}
 
                   {/* Cancel button for domain trades in created status */}
-                  {trade.tradeType === 'domain' &&
+                  {trade.listingCategory === 'domain' &&
                     trade.status === 'created' &&
                     isBuyer && (
                       <Button

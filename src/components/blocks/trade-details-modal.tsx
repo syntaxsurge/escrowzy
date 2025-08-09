@@ -100,7 +100,7 @@ export function TradeDetailsModal({
               <div className='flex justify-between'>
                 <span className='text-muted-foreground'>Trade Type:</span>
                 <span className='font-medium capitalize'>
-                  {trade.tradeType}
+                  {trade.listingCategory}
                 </span>
               </div>
               {trade.metadata?.escrowContractAddress && (

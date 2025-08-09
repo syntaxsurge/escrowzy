@@ -65,17 +65,6 @@ export async function createListing(
   return listing
 }
 
-// Legacy function for backward compatibility
-export async function createP2PListing(
-  userId: number,
-  input: CreateListingInput
-): Promise<EscrowListing> {
-  return createListing(userId, {
-    ...input,
-    listingCategory: 'p2p'
-  } as CreateListingInput)
-}
-
 // Get active listings with filters and pagination
 export async function getActiveListings(
   query: GetListingsQuery
@@ -274,15 +263,6 @@ export async function updateListing(
   return updatedListing
 }
 
-// Legacy function for backward compatibility
-export async function updateP2PListing(
-  listingId: number,
-  userId: number,
-  input: UpdateListingInput
-): Promise<EscrowListing | null> {
-  return updateListing(listingId, userId, input)
-}
-
 // Deactivate a listing
 export async function deactivateListing(
   listingId: number,
@@ -382,7 +362,7 @@ export async function acceptListingAndCreateTrade(
       sellerId: actualSellerId,
       amount: input.amount,
       currency: isDomainTrade ? 'USD' : listing.tokenOffered || 'USD',
-      tradeType: listing.listingCategory || 'p2p',
+      listingCategory: listing.listingCategory || 'p2p',
       status: tradeStatus,
       depositDeadline: depositDeadline,
       metadata: {

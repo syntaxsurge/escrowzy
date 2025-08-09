@@ -32,7 +32,7 @@ import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 import { handleFormError, handleFormSuccess } from '@/lib/utils/form'
 import { formatRelativeTime } from '@/lib/utils/string'
-import type { P2PListing } from '@/types/listings'
+import type { EscrowListing } from '@/types/listings'
 
 import { UpdateListingDialog } from './update-listing-dialog'
 
@@ -42,7 +42,7 @@ interface MyListingsProps {
 
 export function MyListings({ onRefresh }: MyListingsProps) {
   const { toast } = useToast()
-  const [selectedListing, setSelectedListing] = useState<P2PListing | null>(
+  const [selectedListing, setSelectedListing] = useState<EscrowListing | null>(
     null
   )
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
@@ -50,7 +50,7 @@ export function MyListings({ onRefresh }: MyListingsProps) {
   const [isDeleting, setIsDeleting] = useState(false)
 
   // Fetch user's listings
-  const { data, error, isLoading, mutate } = useSWR<P2PListing[]>(
+  const { data, error, isLoading, mutate } = useSWR<EscrowListing[]>(
     apiEndpoints.listings.user,
     async () => {
       const res = await api.get(apiEndpoints.listings.user)
@@ -69,7 +69,7 @@ export function MyListings({ onRefresh }: MyListingsProps) {
   // Ensure listings is always an array
   const listings = Array.isArray(data) ? data : []
 
-  const handleToggleStatus = async (listing: P2PListing) => {
+  const handleToggleStatus = async (listing: EscrowListing) => {
     try {
       const response = await api.put(
         apiEndpoints.listings.byId(listing.id.toString()),

@@ -114,7 +114,7 @@ export function TradeTable({ trades, onUpdate }: TradeTableProps) {
                 <TableCell>
                   {formatCurrency(trade.amount, trade.currency)}
                 </TableCell>
-                <TableCell>{trade.tradeType}</TableCell>
+                <TableCell>{trade.listingCategory}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(trade.status)}>
                     {TRADE_STATUS[trade.status]}

@@ -41,7 +41,11 @@ import {
   type CreateP2PListingInput
 } from '@/lib/schemas/listings'
 import { handleFormError, handleFormSuccess } from '@/lib/utils/form'
-import { SUPPORTED_TOKENS, PAYMENT_METHODS } from '@/types/listings'
+import {
+  SUPPORTED_TOKENS,
+  PAYMENT_METHODS,
+  TradeCategory
+} from '@/types/listings'
 
 interface CreateListingDialogProps {
   open: boolean
@@ -60,7 +64,7 @@ export function CreateListingDialog({
   const form = useForm<CreateP2PListingInput>({
     resolver: zodResolver(createP2PListingSchema),
     defaultValues: {
-      listingCategory: 'p2p',
+      listingCategory: TradeCategory.P2P,
       listingType: 'sell',
       tokenOffered: 'XTZ',
       amount: '',
@@ -77,7 +81,11 @@ export function CreateListingDialog({
       setIsSubmitting(true)
 
       // Validate min/max amounts (only for P2P listings)
-      if (data.listingCategory === 'p2p' && data.minAmount && data.maxAmount) {
+      if (
+        data.listingCategory === TradeCategory.P2P &&
+        data.minAmount &&
+        data.maxAmount
+      ) {
         const min = parseFloat(data.minAmount)
         const max = parseFloat(data.maxAmount)
         if (min > max) {
@@ -352,7 +360,9 @@ export function CreateListingDialog({
                             if (checked) {
                               field.onChange([...current, value])
                             } else {
-                              field.onChange(current.filter(v => v !== value))
+                              field.onChange(
+                                current.filter((v: string) => v !== value)
+                              )
                             }
                           }}
                         />

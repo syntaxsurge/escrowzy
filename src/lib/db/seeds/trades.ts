@@ -79,7 +79,7 @@ export async function seedTrades(users: {
       sellerId: users.testUser1.id,
       amount: '0.5',
       currency: 'ETH',
-      tradeType: 'p2p',
+      listingCategory: 'p2p',
       status: 'completed',
       metadata: {
         paymentMethod: 'bank_transfer',
@@ -95,7 +95,7 @@ export async function seedTrades(users: {
       sellerId: users.testUser1.id,
       amount: '1.0',
       currency: 'ETH',
-      tradeType: 'p2p',
+      listingCategory: 'p2p',
       status: 'completed',
       metadata: {
         paymentMethod: 'paypal',
@@ -111,7 +111,7 @@ export async function seedTrades(users: {
       sellerId: users.proUser.id,
       amount: '0.1',
       currency: 'BTC',
-      tradeType: 'p2p',
+      listingCategory: 'p2p',
       status: 'completed',
       metadata: {
         paymentMethod: 'wise',
@@ -127,7 +127,7 @@ export async function seedTrades(users: {
       sellerId: users.enterpriseUser.id,
       amount: '500',
       currency: 'USDT',
-      tradeType: 'p2p',
+      listingCategory: 'p2p',
       status: 'funded',
       metadata: {
         paymentMethod: 'bank_transfer'
@@ -140,7 +140,7 @@ export async function seedTrades(users: {
       sellerId: users.adminUser.id,
       amount: '100',
       currency: 'XTZ',
-      tradeType: 'p2p',
+      listingCategory: 'p2p',
       status: 'disputed',
       metadata: {
         paymentMethod: 'crypto',

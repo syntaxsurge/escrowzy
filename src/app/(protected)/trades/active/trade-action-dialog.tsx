@@ -219,7 +219,7 @@ export function TradeActionDialog({
         return z.object({})
       case 'fund':
         // For domain trades, we don't need transactionHash since we handle payment via wallet
-        return trade.tradeType === 'domain' ? z.object({}) : fundSchema
+        return trade.listingCategory === 'domain' ? z.object({}) : fundSchema
       case 'payment_sent':
         return paymentSentSchema
       case 'confirm':
@@ -335,7 +335,7 @@ export function TradeActionDialog({
 
         case 'fund':
           // For domain trades, handle wallet payment directly
-          if (trade.tradeType === 'domain') {
+          if (trade.listingCategory === 'domain') {
             if (!address) {
               toast({
                 title: 'Wallet Not Connected',
@@ -543,7 +543,7 @@ export function TradeActionDialog({
           toast({
             title: 'Escrow Funded Successfully',
             description:
-              trade.tradeType === 'domain'
+              trade.listingCategory === 'domain'
                 ? 'Payment sent to escrow successfully. Waiting for seller to transfer the domain.'
                 : 'Trade has been funded successfully.',
             variant: 'default'
@@ -899,7 +899,7 @@ export function TradeActionDialog({
 
               {actionType === 'fund' && (
                 <>
-                  {trade.tradeType === 'domain' ? (
+                  {trade.listingCategory === 'domain' ? (
                     <>
                       <Alert>
                         <Shield className='h-4 w-4' />
@@ -1307,7 +1307,7 @@ export function TradeActionDialog({
                 >
                   {actionType === 'deposit' && 'Deposit to Escrow'}
                   {actionType === 'fund' &&
-                    (trade.tradeType === 'domain'
+                    (trade.listingCategory === 'domain'
                       ? isCreatingEscrow
                         ? 'Processing Payment...'
                         : 'Send Payment'

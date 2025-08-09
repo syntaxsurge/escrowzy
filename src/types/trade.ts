@@ -2,6 +2,25 @@ import type { trades, users, userTradingStats } from '@/lib/db/schema'
 
 import type { TradeStatus } from './listings'
 
+/**
+ * Trade Categories - Defines what type of asset is being traded
+ * These values are stored in both escrowListings.listingCategory and trades.listingCategory
+ */
+export enum TradeCategory {
+  P2P = 'p2p', // Peer-to-peer crypto/fiat trades
+  DOMAIN = 'domain' // Domain name trades
+  // Future extensions: NFT = 'nft', SERVICE = 'service', etc.
+}
+
+/**
+ * Listing Types - Defines the direction of the trade from the listing creator's perspective
+ * Used in escrowListings.listingType
+ */
+export enum ListingType {
+  BUY = 'buy', // Listing creator wants to buy (has fiat, wants crypto/domain)
+  SELL = 'sell' // Listing creator wants to sell (has crypto/domain, wants fiat)
+}
+
 // Re-export TRADE_STATUS for convenience with better typing
 export const TRADE_STATUS: Record<string, string> = {
   created: 'Created',
@@ -18,17 +37,20 @@ export const TRADE_STATUS: Record<string, string> = {
   refunded: 'Refunded'
 }
 
-// Base trade type from database
+/**
+ * Base trade type from database
+ */
 export type Trade = typeof trades.$inferSelect
 export type NewTrade = typeof trades.$inferInsert
 
-// Extended trade types with relations - override metadata to be properly typed
-export interface TradeWithUsers
-  extends Omit<Trade, 'metadata' | 'listingCategory'> {
+/**
+ * Extended trade type with user relations
+ * Includes full user objects for buyer and seller, and properly typed metadata
+ */
+export interface TradeWithUsers extends Omit<Trade, 'metadata'> {
   buyer: typeof users.$inferSelect
   seller: typeof users.$inferSelect
   metadata: TradeMetadata | null
-  listingCategory: 'p2p' | 'domain'
 }
 
 export interface TradeWithStats extends TradeWithUsers {
@@ -50,10 +72,15 @@ export interface TradeFilters {
   limit?: number
 }
 
-// Trade metadata structure
+/**
+ * Trade metadata structure - stores additional trade information in JSONB
+ * This is stored in the trades.metadata column as JSON
+ */
 export interface TradeMetadata {
+  // Reference to the original listing that created this trade
   originalListingId?: number
-  listingCategory?: 'p2p' | 'domain'
+
+  // Payment method used for this trade (e.g., 'bank_transfer', 'paypal', 'USDT', etc.)
   paymentMethod?: string
   paymentProof?: string[]
   paymentProofImages?: string[] // URLs to payment proof screenshots

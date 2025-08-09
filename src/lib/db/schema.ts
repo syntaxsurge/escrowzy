@@ -293,7 +293,7 @@ export const trades = pgTable(
       .references(() => users.id),
     amount: varchar('amount', { length: 50 }).notNull(),
     currency: varchar('currency', { length: 10 }).notNull().default('XTZ'),
-    tradeType: varchar('trade_type', { length: 50 }).notNull(),
+    // The category of assets being traded: 'p2p' (crypto/fiat) | 'domain' (domain names)
     listingCategory: varchar('listing_category', { length: 20 })
       .notNull()
       .default('p2p'), // 'p2p' | 'domain'
@@ -323,10 +323,12 @@ export const escrowListings = pgTable(
     userId: integer('user_id')
       .notNull()
       .references(() => users.id),
+    // The category of assets being listed: 'p2p' (crypto/fiat) | 'domain' (domain names)
     listingCategory: varchar('listing_category', { length: 20 })
       .notNull()
       .default('p2p'), // 'p2p' | 'domain'
-    listingType: varchar('listing_type', { length: 10 }).notNull(), // For P2P: 'buy' | 'sell'
+    // The direction of the trade: 'buy' (creator wants to buy) | 'sell' (creator wants to sell)
+    listingType: varchar('listing_type', { length: 10 }).notNull(), // 'buy' | 'sell'
     tokenOffered: varchar('token_offered', { length: 10 }), // For P2P trading
     amount: varchar('amount', { length: 50 }), // Amount or price
     pricePerUnit: varchar('price_per_unit', { length: 50 }), // For P2P

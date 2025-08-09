@@ -38,7 +38,6 @@ export const appRoutes = {
     teamMembers: (teamId: string) => `/admin/teams/${teamId}/members`,
     activity: '/admin/activity',
     payments: '/admin/payments',
-    contractAdminPanel: '/admin/contract-admin-panel', // Deprecated - kept for backward compatibility
     contracts: {
       subscription: '/admin/contracts/subscription',
       escrow: '/admin/contracts/escrow',

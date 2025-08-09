@@ -184,7 +184,6 @@ export async function seedDomains(users: {
       sellerId: users.adminUser.id,
       amount: '5000',
       currency: 'USD',
-      tradeType: 'domain',
       listingCategory: 'domain',
       status: 'completed',
       metadata: {
@@ -203,7 +202,6 @@ export async function seedDomains(users: {
       sellerId: users.testUser1.id,
       amount: '2500',
       currency: 'USD',
-      tradeType: 'domain',
       listingCategory: 'domain',
       status: 'completed',
       metadata: {
@@ -221,7 +219,6 @@ export async function seedDomains(users: {
       sellerId: users.proUser.id,
       amount: '15000',
       currency: 'USD',
-      tradeType: 'domain',
       listingCategory: 'domain',
       status: 'funded',
       metadata: {
@@ -239,7 +236,6 @@ export async function seedDomains(users: {
       sellerId: users.enterpriseUser.id,
       amount: '50000',
       currency: 'USD',
-      tradeType: 'domain',
       listingCategory: 'domain',
       status: 'payment_sent',
       metadata: {
@@ -258,7 +254,6 @@ export async function seedDomains(users: {
       sellerId: users.testUser2.id,
       amount: '750',
       currency: 'USD',
-      tradeType: 'domain',
       listingCategory: 'domain',
       status: 'disputed',
       metadata: {
@@ -275,7 +270,6 @@ export async function seedDomains(users: {
       sellerId: users.adminUser.id,
       amount: '8500',
       currency: 'USD',
-      tradeType: 'domain',
       listingCategory: 'domain',
       status: 'completed',
       metadata: {
@@ -296,7 +290,6 @@ export async function seedDomains(users: {
       sellerId: users.proUser.id,
       amount: '3200',
       currency: 'USD',
-      tradeType: 'domain',
       listingCategory: 'domain',
       status: 'cancelled',
       metadata: {
@@ -313,7 +306,6 @@ export async function seedDomains(users: {
       sellerId: users.enterpriseUser.id,
       amount: '125000',
       currency: 'USD',
-      tradeType: 'domain',
       listingCategory: 'domain',
       status: 'completed',
       metadata: {

@@ -44,7 +44,7 @@ export default function ActiveTradesPage() {
   const { user } = useSession()
   const [view, setView] = useState<'grid' | 'table'>('grid')
   const [filter, setFilter] = useState<'all' | 'buyer' | 'seller'>('all')
-  const [tradeTypeFilter, setTradeTypeFilter] = useState<
+  const [listingCategoryFilter, setListingCategoryFilter] = useState<
     'all' | 'p2p' | 'domain'
   >('all')
 
@@ -125,7 +125,10 @@ export default function ActiveTradesPage() {
   // Filter trades based on user role and trade type
   const filteredTrades = trades.filter((trade: TradeWithUsers) => {
     // Trade type filter
-    if (tradeTypeFilter !== 'all' && trade.tradeType !== tradeTypeFilter) {
+    if (
+      listingCategoryFilter !== 'all' &&
+      trade.listingCategory !== listingCategoryFilter
+    ) {
       return false
     }
 
@@ -180,9 +183,9 @@ export default function ActiveTradesPage() {
         <GamifiedHeader
           title='ACTIVE TRADES'
           subtitle={
-            tradeTypeFilter === 'domain'
+            listingCategoryFilter === 'domain'
               ? 'Manage your domain escrow transactions'
-              : tradeTypeFilter === 'p2p'
+              : listingCategoryFilter === 'p2p'
                 ? 'Manage your P2P crypto transactions'
                 : 'Manage all your escrow transactions'
           }
@@ -203,8 +206,8 @@ export default function ActiveTradesPage() {
 
         {/* Trade Type Tabs */}
         <Tabs
-          value={tradeTypeFilter}
-          onValueChange={v => setTradeTypeFilter(v as any)}
+          value={listingCategoryFilter}
+          onValueChange={v => setListingCategoryFilter(v as any)}
           className='w-full'
         >
           <TabsList className='bg-background/50 border-primary/20 grid h-14 w-full grid-cols-3 border-2 backdrop-blur-sm'>
@@ -237,20 +240,21 @@ export default function ActiveTradesPage() {
             [
               {
                 title:
-                  tradeTypeFilter === 'domain'
+                  listingCategoryFilter === 'domain'
                     ? 'Domain Trades'
-                    : tradeTypeFilter === 'p2p'
+                    : listingCategoryFilter === 'p2p'
                       ? 'P2P Trades'
                       : 'Active Trades',
                 value: activeTrades.length,
                 icon:
-                  tradeTypeFilter === 'domain' ? (
+                  listingCategoryFilter === 'domain' ? (
                     <Globe className='h-5 w-5 text-white' />
                   ) : (
                     <Zap className='h-5 w-5 text-white' />
                   ),
                 badge: 'ACTIVE',
-                colorScheme: tradeTypeFilter === 'domain' ? 'purple' : 'yellow'
+                colorScheme:
+                  listingCategoryFilter === 'domain' ? 'purple' : 'yellow'
               },
               {
                 title: 'In Escrow',

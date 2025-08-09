@@ -3,7 +3,7 @@ import { z } from 'zod'
 import {
   isValidPaymentMethod,
   isValidToken,
-  LISTING_CATEGORIES
+  TradeCategory
 } from '@/types/listings'
 
 import {
@@ -32,7 +32,7 @@ const baseListingSchema = z.object({
 
 // P2P-specific listing schema
 export const createP2PListingSchema = baseListingSchema.extend({
-  listingCategory: z.literal(LISTING_CATEGORIES.P2P),
+  listingCategory: z.literal(TradeCategory.P2P),
   listingType: z.enum(['buy', 'sell']),
   tokenOffered: z
     .string()
@@ -46,7 +46,7 @@ export const createP2PListingSchema = baseListingSchema.extend({
 
 // Domain-specific listing schema with cryptocurrency selection
 export const createDomainListingSchema = z.object({
-  listingCategory: z.literal(LISTING_CATEGORIES.DOMAIN),
+  listingCategory: z.literal(TradeCategory.DOMAIN),
   listingType: z.literal('sell'), // Domains are always for sale
   domainName: z
     .string()
@@ -87,7 +87,7 @@ const baseCreateListingSchema = z.discriminatedUnion('listingCategory', [
 // Then add refinements at the top level
 export const createListingSchema = baseCreateListingSchema.superRefine(
   (data, ctx) => {
-    if (data.listingCategory === LISTING_CATEGORIES.P2P) {
+    if (data.listingCategory === TradeCategory.P2P) {
       // P2P-specific validations
       if (data.minAmount && data.maxAmount) {
         if (parseFloat(data.minAmount) > parseFloat(data.maxAmount)) {

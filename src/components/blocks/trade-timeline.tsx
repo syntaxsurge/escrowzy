@@ -39,7 +39,7 @@ interface TradeTimelineProps {
   metadata?: any
   chainId?: number
   className?: string
-  tradeType?: 'p2p' | 'domain'
+  listingCategory?: 'p2p' | 'domain'
 }
 
 export function TradeTimeline({
@@ -49,12 +49,12 @@ export function TradeTimeline({
   metadata,
   chainId,
   className,
-  tradeType = 'p2p'
+  listingCategory: listingType = 'p2p'
 }: TradeTimelineProps) {
   // Define all possible steps
   const getAllSteps = (): TimelineStep[] => {
     // Different steps for domain vs P2P trades
-    const isDomain = (tradeType as string) === 'domain'
+    const isDomain = (listingType as string) === 'domain'
     if (isDomain) {
       const steps: TimelineStep[] = [
         {
@@ -159,7 +159,7 @@ export function TradeTimeline({
     ]
 
     // Update step statuses based on current trade status
-    const isDomainTrade = (tradeType as string) === 'domain'
+    const isDomainTrade = (listingType as string) === 'domain'
     const statusOrder = isDomainTrade
       ? ['created', 'payment_sent', 'funded', 'delivered', 'confirmed']
       : [

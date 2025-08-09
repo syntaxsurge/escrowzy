@@ -40,13 +40,13 @@ import {
   handleFormSuccess,
   hasFormChanged
 } from '@/lib/utils/form'
-import type { P2PListing } from '@/types/listings'
+import type { EscrowListing } from '@/types/listings'
 import { PAYMENT_METHODS } from '@/types/listings'
 
 interface UpdateListingDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  listing: P2PListing
+  listing: EscrowListing
   onSuccess: () => void
 }
 

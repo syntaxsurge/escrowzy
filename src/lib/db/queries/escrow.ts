@@ -246,7 +246,7 @@ export async function createEscrow(data: {
       amount: data.amount,
       currency: data.currency,
       chainId: data.chainId,
-      tradeType: 'escrow',
+      listingCategory: 'p2p',
       status: 'created',
       metadata: data.metadata,
       depositDeadline: data.disputeWindow

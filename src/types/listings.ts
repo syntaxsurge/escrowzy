@@ -1,21 +1,10 @@
 import type { escrowListings, trades, users } from '@/lib/db/schema'
 
-// Listing categories
-export const LISTING_CATEGORIES = {
-  P2P: 'p2p',
-  DOMAIN: 'domain'
-} as const
-
-export type ListingCategory =
-  (typeof LISTING_CATEGORIES)[keyof typeof LISTING_CATEGORIES]
+export { TradeCategory, ListingType } from './trade'
 
 // Base listing type from database
 export type EscrowListing = typeof escrowListings.$inferSelect
 export type NewEscrowListing = typeof escrowListings.$inferInsert
-
-// Legacy type aliases for backward compatibility
-export type P2PListing = EscrowListing
-export type NewP2PListing = NewEscrowListing
 
 // Trade type from database
 export type Trade = typeof trades.$inferSelect
@@ -39,12 +28,9 @@ export interface EscrowListingWithUser extends EscrowListing {
   user: typeof users.$inferSelect
 }
 
-// Legacy alias for backward compatibility
-export interface P2PListingWithUser extends EscrowListingWithUser {}
-
 // Listing filters for search
 export interface ListingFilters {
-  listingCategory?: ListingCategory
+  listingCategory?: string
   listingType?: 'buy' | 'sell' // For P2P
   tokenOffered?: string // For P2P
   minAmount?: string
@@ -55,13 +41,6 @@ export interface ListingFilters {
   domainName?: string // For domains
   registrar?: string // For domains
 }
-
-// Legacy alias for backward compatibility
-export interface P2PListingFilters
-  extends Omit<
-    ListingFilters,
-    'listingCategory' | 'domainName' | 'registrar'
-  > {}
 
 // Payment methods enum - for P2P trades
 export const PAYMENT_METHODS = {
@@ -140,10 +119,8 @@ export interface AcceptListingResponse {
 }
 
 // Type guards
-export function isValidListingCategory(
-  category: string
-): category is ListingCategory {
-  return Object.values(LISTING_CATEGORIES).includes(category as ListingCategory)
+export function isValidListingCategory(category: string): boolean {
+  return category === 'p2p' || category === 'domain'
 }
 
 export function isValidListingType(type: string): type is 'buy' | 'sell' {

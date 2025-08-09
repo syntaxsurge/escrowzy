@@ -69,7 +69,7 @@ export default function TradeHistoryPage() {
   const { user } = useSession()
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
   const [filterPeriod, setFilterPeriod] = useState<string>('all')
-  const [tradeTypeFilter, setTradeTypeFilter] = useState<
+  const [listingCategoryFilter, setListingCategoryFilter] = useState<
     'all' | 'p2p' | 'domain'
   >('all')
 
@@ -103,7 +103,10 @@ export default function TradeHistoryPage() {
   // Apply filters
   const filteredTrades = allTrades.filter((trade: TradeWithUsers) => {
     // Trade type filter
-    if (tradeTypeFilter !== 'all' && trade.tradeType !== tradeTypeFilter) {
+    if (
+      listingCategoryFilter !== 'all' &&
+      trade.listingCategory !== listingCategoryFilter
+    ) {
       return false
     }
 
@@ -168,21 +171,21 @@ export default function TradeHistoryPage() {
   const statsCards: StatCard[] = [
     {
       title:
-        tradeTypeFilter === 'domain'
+        listingCategoryFilter === 'domain'
           ? 'Domain Trades'
-          : tradeTypeFilter === 'p2p'
+          : listingCategoryFilter === 'p2p'
             ? 'P2P Trades'
             : 'Total Trades',
       value: stats.totalTrades,
       subtitle: 'All-time trades',
       icon:
-        tradeTypeFilter === 'domain' ? (
+        listingCategoryFilter === 'domain' ? (
           <Globe className='h-5 w-5 text-white' />
         ) : (
           <History className='h-5 w-5 text-white' />
         ),
       badge: 'HISTORY',
-      colorScheme: tradeTypeFilter === 'domain' ? 'purple' : 'blue'
+      colorScheme: listingCategoryFilter === 'domain' ? 'purple' : 'blue'
     },
     {
       title: 'Pending',
@@ -275,9 +278,9 @@ export default function TradeHistoryPage() {
         <GamifiedHeader
           title='TRADE HISTORY'
           subtitle={
-            tradeTypeFilter === 'domain'
+            listingCategoryFilter === 'domain'
               ? 'View your domain escrow transaction history'
-              : tradeTypeFilter === 'p2p'
+              : listingCategoryFilter === 'p2p'
                 ? 'View your P2P crypto transaction history'
                 : 'View all your escrow transactions'
           }
@@ -286,8 +289,8 @@ export default function TradeHistoryPage() {
 
         {/* Trade Type Tabs */}
         <Tabs
-          value={tradeTypeFilter}
-          onValueChange={v => setTradeTypeFilter(v as any)}
+          value={listingCategoryFilter}
+          onValueChange={v => setListingCategoryFilter(v as any)}
           className='w-full'
         >
           <TabsList className='bg-background/50 border-primary/20 grid h-14 w-full grid-cols-3 border-2 backdrop-blur-sm'>
@@ -384,7 +387,7 @@ export default function TradeHistoryPage() {
                     {filteredTrades.map((trade: TradeWithUsers) => {
                       const isBuyer = user?.id === trade.buyerId
                       const otherParty = isBuyer ? trade.seller : trade.buyer
-                      const tradeType = isBuyer ? 'Buy' : 'Sell'
+                      const listingType = isBuyer ? 'Buy' : 'Sell'
 
                       return (
                         <TableRow key={trade.id}>
@@ -400,7 +403,7 @@ export default function TradeHistoryPage() {
                                   : 'border-blue-500/30 text-blue-600 dark:text-blue-400'
                               }
                             >
-                              {tradeType}
+                              {listingType}
                             </Badge>
                           </TableCell>
                           <TableCell>
