@@ -357,6 +357,40 @@ export async function cleanupExpiredQueueEntries(): Promise<void> {
 }
 
 /**
+ * Update queue positions and estimated wait times
+ */
+export async function updateQueuePositions(): Promise<void> {
+  const now = new Date()
+
+  // Get all active queue entries ordered by join time
+  const queueEntries = await db
+    .select({
+      id: battleQueue.id,
+      userId: battleQueue.userId,
+      searchStartedAt: battleQueue.searchStartedAt
+    })
+    .from(battleQueue)
+    .where(
+      and(eq(battleQueue.status, 'searching'), gte(battleQueue.expiresAt, now))
+    )
+    .orderBy(battleQueue.searchStartedAt)
+
+  // Update each entry with its position
+  for (let i = 0; i < queueEntries.length; i++) {
+    const position = i + 1
+    const estimatedWait = Math.max(10, position * 15) // 15 seconds per position, min 10 seconds
+
+    await db
+      .update(battleQueue)
+      .set({
+        queuePosition: position,
+        estimatedWaitTime: estimatedWait
+      })
+      .where(eq(battleQueue.id, queueEntries[i].id))
+  }
+}
+
+/**
  * Update session activity
  */
 export async function updateSessionActivity(

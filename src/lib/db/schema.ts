@@ -402,13 +402,72 @@ export const battleQueue = pgTable(
     status: varchar('status', { length: 20 }).notNull().default('searching'), // searching, matched, expired
     matchedWithUserId: integer('matched_with_user_id').references(
       () => users.id
-    )
+    ),
+    queuePosition: integer('queue_position'), // Position in queue for display
+    estimatedWaitTime: integer('estimated_wait_time') // Estimated wait in seconds
   },
   table => [
     index('idx_battle_queue_user').on(table.userId),
     index('idx_battle_queue_status').on(table.status),
     index('idx_battle_queue_cp_range').on(table.minCP, table.maxCP),
     index('idx_battle_queue_expires').on(table.expiresAt)
+  ]
+)
+
+export const battleInvitations = pgTable(
+  'battle_invitations',
+  {
+    id: serial('id').primaryKey(),
+    fromUserId: integer('from_user_id')
+      .notNull()
+      .references(() => users.id),
+    toUserId: integer('to_user_id')
+      .notNull()
+      .references(() => users.id),
+    fromUserCP: integer('from_user_cp').notNull(),
+    toUserCP: integer('to_user_cp').notNull(),
+    status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, accepted, rejected, expired, cancelled
+    expiresAt: timestamp('expires_at').notNull(), // Auto-expire after 30 seconds
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    respondedAt: timestamp('responded_at')
+  },
+  table => [
+    index('idx_battle_invitations_from').on(table.fromUserId),
+    index('idx_battle_invitations_to').on(table.toUserId),
+    index('idx_battle_invitations_status').on(table.status),
+    index('idx_battle_invitations_expires').on(table.expiresAt),
+    unique('unique_active_invitation').on(
+      table.fromUserId,
+      table.toUserId,
+      table.status
+    )
+  ]
+)
+
+export const battleSessionRejections = pgTable(
+  'battle_session_rejections',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    rejectedUserId: integer('rejected_user_id')
+      .notNull()
+      .references(() => users.id),
+    sessionId: varchar('session_id', { length: 255 }).notNull(), // Track by session
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    expiresAt: timestamp('expires_at').notNull() // Auto-cleanup old rejections
+  },
+  table => [
+    index('idx_battle_rejections_user').on(table.userId),
+    index('idx_battle_rejections_rejected').on(table.rejectedUserId),
+    index('idx_battle_rejections_session').on(table.sessionId),
+    index('idx_battle_rejections_expires').on(table.expiresAt),
+    unique('unique_session_rejection').on(
+      table.userId,
+      table.rejectedUserId,
+      table.sessionId
+    )
   ]
 )
 
@@ -668,6 +727,38 @@ export const battleQueueRelations = relations(battleQueue, ({ one }) => ({
   })
 }))
 
+export const battleInvitationsRelations = relations(
+  battleInvitations,
+  ({ one }) => ({
+    fromUser: one(users, {
+      fields: [battleInvitations.fromUserId],
+      references: [users.id],
+      relationName: 'invitationFrom'
+    }),
+    toUser: one(users, {
+      fields: [battleInvitations.toUserId],
+      references: [users.id],
+      relationName: 'invitationTo'
+    })
+  })
+)
+
+export const battleSessionRejectionsRelations = relations(
+  battleSessionRejections,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [battleSessionRejections.userId],
+      references: [users.id],
+      relationName: 'rejectionUser'
+    }),
+    rejectedUser: one(users, {
+      fields: [battleSessionRejections.rejectedUserId],
+      references: [users.id],
+      relationName: 'rejectedUser'
+    })
+  })
+)
+
 export const userTradingStatsRelations = relations(
   userTradingStats,
   ({ one }) => ({
@@ -800,5 +891,12 @@ export type EscrowListing = typeof escrowListings.$inferSelect
 export type NewEscrowListing = typeof escrowListings.$inferInsert
 export type Battle = typeof battles.$inferSelect
 export type NewBattle = typeof battles.$inferInsert
+export type BattleQueue = typeof battleQueue.$inferSelect
+export type NewBattleQueue = typeof battleQueue.$inferInsert
+export type BattleInvitation = typeof battleInvitations.$inferSelect
+export type NewBattleInvitation = typeof battleInvitations.$inferInsert
+export type BattleSessionRejection = typeof battleSessionRejections.$inferSelect
+export type NewBattleSessionRejection =
+  typeof battleSessionRejections.$inferInsert
 export type UserTradingStats = typeof userTradingStats.$inferSelect
 export type NewUserTradingStats = typeof userTradingStats.$inferInsert

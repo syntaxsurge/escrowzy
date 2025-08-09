@@ -5,7 +5,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search,
-  Shield,
   AlertTriangle,
   Zap,
   Info,
@@ -67,11 +66,17 @@ export function MatchmakingInterface({
   const [showNoMatchFound, setShowNoMatchFound] = useState(false)
   const [isLocalSearching, setIsLocalSearching] = useState(false)
 
-  // Fetch live battle stats
+  // Fetch live battle stats and queue info
   const { data: liveStats } = useSWR(
     '/api/battles/live-stats',
     (url: string) => fetch(url).then(res => res.json()),
     { refreshInterval: 5000 } // Refresh every 5 seconds
+  )
+
+  const { data: queueInfo } = useSWR(
+    isInQueue ? '/api/battles/queue-info' : null,
+    (url: string) => fetch(url).then(res => res.json()),
+    { refreshInterval: 2000 } // Refresh every 2 seconds when in queue
   )
 
   const minCP = Math.floor(combatPower * (1 - matchRange / 100))
@@ -416,31 +421,33 @@ export function MatchmakingInterface({
             </motion.div>
           </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 2 }}
-            className='mt-6 grid grid-cols-3 gap-2 text-center'
-          >
-            <div className='rounded-lg border border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 p-2'>
-              <p className='text-2xl font-bold text-blue-500'>
-                {liveStats?.data?.warriorsOnline || 0}
-              </p>
-              <p className='text-muted-foreground text-xs'>Warriors Online</p>
-            </div>
-            <div className='rounded-lg border border-green-500/20 bg-gradient-to-br from-green-500/5 to-emerald-500/5 p-2'>
-              <p className='text-2xl font-bold text-green-500'>
-                {liveStats?.data?.activeBattles || 0}
-              </p>
-              <p className='text-muted-foreground text-xs'>Active Battles</p>
-            </div>
-            <div className='rounded-lg border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-pink-500/5 p-2'>
-              <p className='text-2xl font-bold text-purple-500'>
-                {liveStats?.data?.inQueue || 0}
-              </p>
-              <p className='text-muted-foreground text-xs'>In Queue</p>
-            </div>
-          </motion.div>
+          {queueInfo?.data && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+              className='mt-6 rounded-lg border border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-pink-500/10 p-4'
+            >
+              <div className='grid grid-cols-2 gap-4 text-center'>
+                <div>
+                  <p className='text-muted-foreground text-xs uppercase'>
+                    Queue Position
+                  </p>
+                  <p className='text-2xl font-bold text-purple-500'>
+                    #{queueInfo.data.queuePosition || 1}
+                  </p>
+                </div>
+                <div>
+                  <p className='text-muted-foreground text-xs uppercase'>
+                    Est. Wait Time
+                  </p>
+                  <p className='text-2xl font-bold text-pink-500'>
+                    {queueInfo.data.estimatedWaitTime || 10}s
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </motion.div>
       </div>
     )
@@ -448,24 +455,37 @@ export function MatchmakingInterface({
 
   return (
     <div className='space-y-6'>
-      {/* Combat Power Display */}
-      <div className='text-center'>
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className='inline-block'
-        >
-          <div className='relative'>
-            <Shield className='text-primary mx-auto h-24 w-24' />
-            <div className='absolute inset-0 flex items-center justify-center'>
-              <span className='text-2xl font-bold'>{combatPower}</span>
-            </div>
-          </div>
-        </motion.div>
-        <p className='mt-2 text-lg font-semibold'>Your Combat Power</p>
-        <p className='text-muted-foreground text-sm'>
-          Matches will be found within your power range
-        </p>
+      {/* Live Platform Stats */}
+      <div className='grid grid-cols-3 gap-3'>
+        <Card className='group relative overflow-hidden border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-cyan-500/5'>
+          <CardContent className='p-4 text-center'>
+            <Users className='mx-auto mb-2 h-6 w-6 text-blue-500' />
+            <p className='text-2xl font-bold text-blue-500'>
+              {liveStats?.data?.warriorsOnline || 0}
+            </p>
+            <p className='text-muted-foreground text-xs'>Warriors Online</p>
+          </CardContent>
+        </Card>
+
+        <Card className='group relative overflow-hidden border-green-500/20 bg-gradient-to-br from-green-500/5 to-emerald-500/5'>
+          <CardContent className='p-4 text-center'>
+            <Swords className='mx-auto mb-2 h-6 w-6 text-green-500' />
+            <p className='text-2xl font-bold text-green-500'>
+              {liveStats?.data?.activeBattles || 0}
+            </p>
+            <p className='text-muted-foreground text-xs'>Active Battles</p>
+          </CardContent>
+        </Card>
+
+        <Card className='group relative overflow-hidden border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-pink-500/5'>
+          <CardContent className='p-4 text-center'>
+            <Timer className='mx-auto mb-2 h-6 w-6 text-purple-500' />
+            <p className='text-2xl font-bold text-purple-500'>
+              {liveStats?.data?.inQueue || 0}
+            </p>
+            <p className='text-muted-foreground text-xs'>In Queue</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Match Range Selector */}

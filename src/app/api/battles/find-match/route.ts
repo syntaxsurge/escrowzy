@@ -122,7 +122,7 @@ export async function POST(request: Request) {
 }
 
 // Add DELETE endpoint to remove user from queue
-export async function DELETE(request: Request) {
+export async function DELETE() {
   try {
     const session = await getSession()
     if (!session) {

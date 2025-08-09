@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import { motion } from 'framer-motion'
 import {
@@ -12,6 +12,7 @@ import {
   User,
   Sparkles
 } from 'lucide-react'
+import useSWR from 'swr'
 
 import { GamifiedHeader } from '@/components/blocks/trading'
 import { Badge } from '@/components/ui/badge'
@@ -19,6 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useBattleInvitations } from '@/hooks/use-battle-invitations'
 import { useBattles } from '@/hooks/use-battles'
 import { useRewards } from '@/hooks/use-rewards'
 import { useSession } from '@/hooks/use-session'
@@ -43,28 +45,75 @@ export default function BattleArenaPage() {
     battleResult,
     isInQueue,
     findMatch,
-    createBattle,
     leaveQueue
   } = useBattles(user?.id)
 
   const [selectedTab, setSelectedTab] = useState('arena')
   const [currentOpponent, setCurrentOpponent] = useState<any>(null)
+  const [waitingForResponse, setWaitingForResponse] = useState(false)
+  const [currentInvitationId, setCurrentInvitationId] = useState<number | null>(
+    null
+  )
+
+  const {
+    pendingInvitations,
+    acceptInvitation,
+    rejectInvitation,
+    sendInvitation
+  } = useBattleInvitations(user?.id)
+
+  // Fetch live battle stats
+  const { data: liveStats } = useSWR(
+    '/api/battles/live-stats',
+    (url: string) => fetch(url).then(res => res.json()),
+    { refreshInterval: 5000 }
+  )
 
   const handleFindMatch = async (matchRange?: number) => {
     if (!canBattle) return null
     const opponent = await findMatch(matchRange)
     if (opponent) {
-      setCurrentOpponent(opponent)
+      // Send invitation to matched opponent
+      const invitation = await sendInvitation(opponent.userId)
+      if (invitation) {
+        setCurrentOpponent(opponent)
+        setCurrentInvitationId(invitation.invitationId)
+        setWaitingForResponse(true)
+      }
     }
     return opponent
   }
 
-  const handleStartBattle = async () => {
-    if (!currentOpponent || !user) return
-    const result = await createBattle(currentOpponent.userId)
-    if (result) {
-      setCurrentOpponent(null)
+  // Handle incoming battle invitations
+  useEffect(() => {
+    if (pendingInvitations.length > 0 && !currentOpponent && !isBattling) {
+      const latestInvitation = pendingInvitations[0]
+      setCurrentOpponent({
+        userId: latestInvitation.fromUserId,
+        username: latestInvitation.fromUser.name,
+        combatPower: latestInvitation.fromUserCP
+      })
+      setCurrentInvitationId(latestInvitation.id)
+      setWaitingForResponse(false)
     }
+  }, [pendingInvitations, currentOpponent, isBattling])
+
+  const handleAcceptBattle = async () => {
+    if (!currentInvitationId) return
+    const result = await acceptInvitation(currentInvitationId)
+    if (result) {
+      setWaitingForResponse(false)
+      setCurrentInvitationId(null)
+      // Battle will start automatically
+    }
+  }
+
+  const handleRejectBattle = async () => {
+    if (!currentInvitationId) return
+    await rejectInvitation(currentInvitationId)
+    setCurrentOpponent(null)
+    setWaitingForResponse(false)
+    setCurrentInvitationId(null)
   }
 
   const combatPower = stats?.gameData?.combatPower || 100
@@ -191,11 +240,48 @@ export default function BattleArenaPage() {
               </TabsList>
 
               <TabsContent value='arena' className='mt-6 space-y-6'>
+                {/* Live Platform Stats */}
+                <div className='grid grid-cols-3 gap-4'>
+                  <Card className='group relative overflow-hidden border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/10'>
+                    <CardContent className='p-4 text-center'>
+                      <User className='mx-auto mb-2 h-6 w-6 text-blue-500' />
+                      <p className='text-2xl font-bold text-blue-500'>
+                        {liveStats?.data?.warriorsOnline || 0}
+                      </p>
+                      <p className='text-muted-foreground text-xs'>
+                        Warriors Online
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className='group relative overflow-hidden border-green-500/20 bg-gradient-to-br from-green-500/10 to-emerald-500/10'>
+                    <CardContent className='p-4 text-center'>
+                      <Swords className='mx-auto mb-2 h-6 w-6 text-green-500' />
+                      <p className='text-2xl font-bold text-green-500'>
+                        {liveStats?.data?.activeBattles || 0}
+                      </p>
+                      <p className='text-muted-foreground text-xs'>
+                        Active Battles
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className='group relative overflow-hidden border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-pink-500/10'>
+                    <CardContent className='p-4 text-center'>
+                      <Flame className='mx-auto mb-2 h-6 w-6 text-purple-500' />
+                      <p className='text-2xl font-bold text-purple-500'>
+                        {liveStats?.data?.inQueue || 0}
+                      </p>
+                      <p className='text-muted-foreground text-xs'>In Queue</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
                 {/* Battle Interface */}
                 <Card className='group border-primary/20 from-primary/10 relative overflow-hidden bg-gradient-to-br to-purple-600/10 transition-all hover:scale-[1.01]'>
                   <CardHeader>
                     <CardTitle className='from-primary bg-gradient-to-r to-purple-600 bg-clip-text text-xl font-bold text-transparent'>
-                      FIND OPPONENT
+                      BATTLE ARENA
                     </CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-6'>
@@ -215,10 +301,14 @@ export default function BattleArenaPage() {
                       <div className='space-y-6'>
                         <div className='text-center'>
                           <h3 className='from-primary bg-gradient-to-r to-purple-600 bg-clip-text text-2xl font-black text-transparent'>
-                            MATCH FOUND!
+                            {waitingForResponse
+                              ? 'INVITATION SENT!'
+                              : 'BATTLE CHALLENGE!'}
                           </h3>
                           <p className='text-muted-foreground mt-2'>
-                            Your opponent has been selected
+                            {waitingForResponse
+                              ? 'Waiting for opponent to accept...'
+                              : `${currentOpponent.username} wants to battle you!`}
                           </p>
                         </div>
 
@@ -273,20 +363,36 @@ export default function BattleArenaPage() {
                         </div>
 
                         <div className='flex justify-center gap-4'>
-                          <Button
-                            variant='outline'
-                            onClick={() => setCurrentOpponent(null)}
-                            className='border-red-500/30 hover:bg-red-500/10'
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            onClick={handleStartBattle}
-                            className='gap-2 bg-gradient-to-r from-green-600 to-emerald-700 font-bold text-white hover:from-green-700 hover:to-emerald-800'
-                          >
-                            <Swords className='h-4 w-4' />
-                            START BATTLE
-                          </Button>
+                          {waitingForResponse ? (
+                            <Button
+                              variant='outline'
+                              onClick={() => {
+                                setCurrentOpponent(null)
+                                setWaitingForResponse(false)
+                                setCurrentInvitationId(null)
+                              }}
+                              className='border-red-500/30 hover:bg-red-500/10'
+                            >
+                              Cancel Invitation
+                            </Button>
+                          ) : (
+                            <>
+                              <Button
+                                variant='outline'
+                                onClick={handleRejectBattle}
+                                className='border-red-500/30 hover:bg-red-500/10'
+                              >
+                                Reject
+                              </Button>
+                              <Button
+                                onClick={handleAcceptBattle}
+                                className='gap-2 bg-gradient-to-r from-green-600 to-emerald-700 font-bold text-white hover:from-green-700 hover:to-emerald-800'
+                              >
+                                <Swords className='h-4 w-4' />
+                                ACCEPT BATTLE
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                     )}

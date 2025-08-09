@@ -4,11 +4,17 @@ import { db } from '@/lib/db/drizzle'
 import {
   addToQueue,
   findMatchesInQueue,
-  markAsMatched,
   removeFromQueue,
-  cleanupExpiredQueueEntries
+  cleanupExpiredQueueEntries,
+  updateQueuePositions
 } from '@/lib/db/queries/battles'
-import { battles, userGameData, userSubscriptions } from '@/lib/db/schema'
+import {
+  battles,
+  userGameData,
+  userSubscriptions,
+  battleInvitations,
+  battleSessionRejections
+} from '@/lib/db/schema'
 import { rewardsService } from '@/services/rewards'
 import type {
   Battle,
@@ -162,10 +168,15 @@ export async function findMatch(
     if (queueMatches.length > 0) {
       const match = queueMatches[0]
 
-      // Mark both users as matched
-      await markAsMatched(userId, match.userId)
+      // Send battle invitation instead of immediate match
+      await sendBattleInvitation(
+        userId,
+        match.userId,
+        combatPower,
+        match.combatPower
+      )
 
-      // Remove both from queue (they're matched now)
+      // Remove both from queue after invitation sent
       await removeFromQueue(userId)
       await removeFromQueue(match.userId)
 
@@ -178,65 +189,10 @@ export async function findMatch(
     // No match found in queue, add current user to queue
     await addToQueue(userId, combatPower, matchRange)
 
-    // Get recent opponent IDs to avoid (last 24 hours) for fallback search
-    const cooldownTime = new Date()
-    cooldownTime.setHours(
-      cooldownTime.getHours() - BATTLE_CONSTANTS.SAME_OPPONENT_COOLDOWN_HOURS
-    )
+    // Calculate queue position and estimated wait time
+    await updateQueuePositions()
 
-    const recentOpponents = await db
-      .select({
-        opponentId: sql<number>`
-          CASE 
-            WHEN ${battles.player1Id} = ${userId} THEN ${battles.player2Id}
-            ELSE ${battles.player1Id}
-          END
-        `
-      })
-      .from(battles)
-      .where(
-        and(
-          or(eq(battles.player1Id, userId), eq(battles.player2Id, userId)),
-          gte(battles.createdAt, cooldownTime)
-        )
-      )
-
-    const excludeIds = [
-      userId,
-      ...recentOpponents.map((r: { opponentId: number }) => r.opponentId)
-    ]
-
-    // Calculate CP range for matching
-    const minCP = Math.floor(combatPower * (1 - matchRange / 100))
-    const maxCP = Math.ceil(combatPower * (1 + matchRange / 100))
-
-    // Try to find potential opponents not in queue (fallback for inactive users)
-    const potentialOpponents = await db
-      .select({
-        userId: userGameData.userId,
-        combatPower: userGameData.combatPower
-      })
-      .from(userGameData)
-      .where(
-        and(
-          sql`${userGameData.userId} NOT IN (${sql.join(
-            excludeIds.map(id => sql`${id}`),
-            sql`, `
-          )})`,
-          gte(userGameData.combatPower, minCP),
-          lte(userGameData.combatPower, maxCP)
-        )
-      )
-      .orderBy(sql`RANDOM()`)
-      .limit(1)
-
-    // If we found a fallback opponent, remove ourselves from queue and return the match
-    if (potentialOpponents[0]) {
-      await removeFromQueue(userId)
-      return potentialOpponents[0]
-    }
-
-    // No match found at all - user stays in queue
+    // No match found - user stays in queue waiting for real players
     return null
   } catch (error) {
     console.error('Error finding match:', error)
@@ -445,5 +401,240 @@ export async function canBattleToday(userId: number): Promise<boolean> {
   } catch (error) {
     console.error('Error checking battle eligibility:', error)
     return false
+  }
+}
+
+/**
+ * Send a battle invitation
+ */
+export async function sendBattleInvitation(
+  fromUserId: number,
+  toUserId: number,
+  fromUserCP: number,
+  toUserCP: number
+): Promise<number> {
+  try {
+    // Check for existing pending invitation
+    const existingInvite = await db
+      .select()
+      .from(battleInvitations)
+      .where(
+        and(
+          eq(battleInvitations.fromUserId, fromUserId),
+          eq(battleInvitations.toUserId, toUserId),
+          eq(battleInvitations.status, 'pending'),
+          gte(battleInvitations.expiresAt, new Date())
+        )
+      )
+      .limit(1)
+
+    if (existingInvite.length > 0) {
+      return existingInvite[0].id
+    }
+
+    // Create new invitation with 30 second expiry
+    const expiresAt = new Date()
+    expiresAt.setSeconds(expiresAt.getSeconds() + 30)
+
+    const [invitation] = await db
+      .insert(battleInvitations)
+      .values({
+        fromUserId,
+        toUserId,
+        fromUserCP,
+        toUserCP,
+        status: 'pending',
+        expiresAt
+      })
+      .returning()
+
+    return invitation.id
+  } catch (error) {
+    console.error('Error sending battle invitation:', error)
+    throw error
+  }
+}
+
+/**
+ * Accept a battle invitation
+ */
+export async function acceptBattleInvitation(
+  invitationId: number,
+  userId: number
+): Promise<BattleResult | null> {
+  try {
+    // Get and validate invitation
+    const [invitation] = await db
+      .select()
+      .from(battleInvitations)
+      .where(
+        and(
+          eq(battleInvitations.id, invitationId),
+          eq(battleInvitations.toUserId, userId),
+          eq(battleInvitations.status, 'pending'),
+          gte(battleInvitations.expiresAt, new Date())
+        )
+      )
+      .limit(1)
+
+    if (!invitation) {
+      return null
+    }
+
+    // Update invitation status
+    await db
+      .update(battleInvitations)
+      .set({
+        status: 'accepted',
+        respondedAt: new Date()
+      })
+      .where(eq(battleInvitations.id, invitationId))
+
+    // Create the battle
+    const result = await createBattle(
+      invitation.fromUserId,
+      invitation.toUserId
+    )
+
+    return result
+  } catch (error) {
+    console.error('Error accepting battle invitation:', error)
+    throw error
+  }
+}
+
+/**
+ * Reject a battle invitation
+ */
+export async function rejectBattleInvitation(
+  invitationId: number,
+  userId: number,
+  sessionId: string
+): Promise<boolean> {
+  try {
+    // Get invitation
+    const [invitation] = await db
+      .select()
+      .from(battleInvitations)
+      .where(
+        and(
+          eq(battleInvitations.id, invitationId),
+          eq(battleInvitations.toUserId, userId),
+          eq(battleInvitations.status, 'pending')
+        )
+      )
+      .limit(1)
+
+    if (!invitation) {
+      return false
+    }
+
+    // Update invitation status
+    await db
+      .update(battleInvitations)
+      .set({
+        status: 'rejected',
+        respondedAt: new Date()
+      })
+      .where(eq(battleInvitations.id, invitationId))
+
+    // Add to session rejections
+    const expiresAt = new Date()
+    expiresAt.setHours(expiresAt.getHours() + 1) // Expire after 1 hour
+
+    await db
+      .insert(battleSessionRejections)
+      .values({
+        userId,
+        rejectedUserId: invitation.fromUserId,
+        sessionId,
+        expiresAt
+      })
+      .onConflictDoNothing()
+
+    return true
+  } catch (error) {
+    console.error('Error rejecting battle invitation:', error)
+    throw error
+  }
+}
+
+/**
+ * Get pending battle invitations for a user
+ */
+export async function getPendingInvitations(userId: number) {
+  try {
+    const invitations = await db
+      .select()
+      .from(battleInvitations)
+      .where(
+        and(
+          eq(battleInvitations.toUserId, userId),
+          eq(battleInvitations.status, 'pending'),
+          gte(battleInvitations.expiresAt, new Date())
+        )
+      )
+      .orderBy(desc(battleInvitations.createdAt))
+
+    return invitations
+  } catch (error) {
+    console.error('Error getting pending invitations:', error)
+    throw error
+  }
+}
+
+/**
+ * Check if users have rejected each other in current session
+ */
+export async function hasSessionRejection(
+  user1Id: number,
+  user2Id: number,
+  sessionId: string
+): Promise<boolean> {
+  try {
+    const rejections = await db
+      .select()
+      .from(battleSessionRejections)
+      .where(
+        and(
+          or(
+            and(
+              eq(battleSessionRejections.userId, user1Id),
+              eq(battleSessionRejections.rejectedUserId, user2Id)
+            ),
+            and(
+              eq(battleSessionRejections.userId, user2Id),
+              eq(battleSessionRejections.rejectedUserId, user1Id)
+            )
+          ),
+          eq(battleSessionRejections.sessionId, sessionId),
+          gte(battleSessionRejections.expiresAt, new Date())
+        )
+      )
+      .limit(1)
+
+    return rejections.length > 0
+  } catch (error) {
+    console.error('Error checking session rejection:', error)
+    return false
+  }
+}
+
+/**
+ * Clean up expired invitations
+ */
+export async function cleanupExpiredInvitations(): Promise<void> {
+  try {
+    await db
+      .update(battleInvitations)
+      .set({ status: 'expired' })
+      .where(
+        and(
+          eq(battleInvitations.status, 'pending'),
+          lte(battleInvitations.expiresAt, new Date())
+        )
+      )
+  } catch (error) {
+    console.error('Error cleaning up expired invitations:', error)
   }
 }
