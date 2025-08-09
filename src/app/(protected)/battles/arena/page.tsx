@@ -26,7 +26,6 @@ import { useBattleRealtime } from '@/hooks/use-battle-realtime'
 import { useBattles } from '@/hooks/use-battles'
 import { useRewards } from '@/hooks/use-rewards'
 import { useSession } from '@/hooks/use-session'
-// Removed useToast - all notifications handled in UI
 import { api } from '@/lib/api/http-client'
 import { formatNumber } from '@/lib/utils/string'
 

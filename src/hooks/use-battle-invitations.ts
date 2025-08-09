@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react'
 
 import useSWR from 'swr'
 
-// Removed useToast - all notifications handled in UI
 import { api } from '@/lib/api/http-client'
 import type { BattleInvitation } from '@/lib/db/schema'
 import { pusherClient } from '@/lib/pusher'

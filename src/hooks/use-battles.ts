@@ -5,7 +5,6 @@ import { useCallback, useState, useEffect } from 'react'
 import useSWR, { mutate } from 'swr'
 
 import { apiEndpoints } from '@/config/api-endpoints'
-// Removed useToast - all notifications handled in UI
 import { api } from '@/lib/api/http-client'
 import type {
   BattleDiscount,
