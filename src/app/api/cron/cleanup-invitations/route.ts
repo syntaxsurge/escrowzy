@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server'
 
-import { lt, eq } from 'drizzle-orm'
+import { lt, eq, or, and } from 'drizzle-orm'
 
 import { envServer } from '@/config/env.server'
 import { apiResponses } from '@/lib/api/server-utils'
 import { db } from '@/lib/db/drizzle'
-import { teamInvitations } from '@/lib/db/schema'
+import { teamInvitations, battleInvitations } from '@/lib/db/schema'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,22 +17,51 @@ export async function GET(request: NextRequest) {
       return apiResponses.unauthorized()
     }
 
-    // Delete expired invitations
-    const result = await db
+    // Delete expired team invitations
+    const expiredTeamResult = await db
       .delete(teamInvitations)
       .where(lt(teamInvitations.expiresAt, new Date()))
       .returning({ id: teamInvitations.id })
 
-    // Also delete declined invitations (status = 'declined')
-    const declinedResult = await db
+    // Also delete declined team invitations (status = 'declined')
+    const declinedTeamResult = await db
       .delete(teamInvitations)
       .where(eq(teamInvitations.status, 'declined'))
       .returning({ id: teamInvitations.id })
 
+    // Clean up expired or rejected battle invitations
+    const battleCleanupResult = await db
+      .delete(battleInvitations)
+      .where(
+        or(
+          // Expired invitations
+          and(
+            eq(battleInvitations.status, 'pending'),
+            lt(battleInvitations.expiresAt, new Date())
+          ),
+          // Rejected invitations
+          eq(battleInvitations.status, 'rejected'),
+          // Old accepted invitations (older than 1 hour)
+          and(
+            eq(battleInvitations.status, 'accepted'),
+            lt(
+              battleInvitations.respondedAt,
+              new Date(Date.now() - 60 * 60 * 1000)
+            )
+          )
+        )
+      )
+      .returning({ id: battleInvitations.id })
+
     return apiResponses.success({
       success: true,
-      deletedExpired: result.length,
-      deletedDeclined: declinedResult.length,
+      team: {
+        deletedExpired: expiredTeamResult.length,
+        deletedDeclined: declinedTeamResult.length
+      },
+      battle: {
+        deletedTotal: battleCleanupResult.length
+      },
       timestamp: new Date().toISOString()
     })
   } catch (error) {

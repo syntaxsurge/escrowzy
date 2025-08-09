@@ -169,26 +169,32 @@ export async function findMatch(
     if (queueMatches.length > 0) {
       const match = queueMatches[0]
 
-      // Send battle invitation instead of immediate match
-      await sendBattleInvitation(
-        userId,
-        match.userId,
-        combatPower,
-        match.combatPower
-      )
+      try {
+        // Send battle invitation instead of immediate match
+        await sendBattleInvitation(
+          userId,
+          match.userId,
+          combatPower,
+          match.combatPower
+        )
 
-      // Remove both from queue after invitation sent
-      await removeFromQueue(userId)
-      await removeFromQueue(match.userId)
+        // Remove both from queue after invitation sent
+        await removeFromQueue(userId)
+        await removeFromQueue(match.userId)
 
-      // Broadcast queue updates for both users
-      await broadcastQueueUpdate(userId, 'matched')
-      await broadcastQueueUpdate(match.userId, 'matched')
-      await broadcastBattleStats()
+        // Broadcast queue updates for both users
+        await broadcastQueueUpdate(userId, 'matched')
+        await broadcastQueueUpdate(match.userId, 'matched')
+        await broadcastBattleStats()
 
-      return {
-        userId: match.userId,
-        combatPower: match.combatPower
+        return {
+          userId: match.userId,
+          combatPower: match.combatPower
+        }
+      } catch (inviteError) {
+        // If invitation fails (e.g., due to constraint), continue to queue
+        console.error('Error sending invitation in findMatch:', inviteError)
+        // Continue to add user to queue below
       }
     }
 
@@ -427,22 +433,76 @@ export async function sendBattleInvitation(
   toUserCP: number
 ): Promise<number> {
   try {
-    // Check for existing pending invitation
-    const existingInvite = await db
+    // First, clean up any expired invitations to prevent constraint issues
+    await db
+      .delete(battleInvitations)
+      .where(
+        and(
+          or(
+            and(
+              eq(battleInvitations.fromUserId, fromUserId),
+              eq(battleInvitations.toUserId, toUserId)
+            ),
+            and(
+              eq(battleInvitations.fromUserId, toUserId),
+              eq(battleInvitations.toUserId, fromUserId)
+            )
+          ),
+          eq(battleInvitations.status, 'pending'),
+          lte(battleInvitations.expiresAt, new Date())
+        )
+      )
+
+    // Check for existing pending invitation in both directions
+    const existingInvites = await db
       .select()
       .from(battleInvitations)
       .where(
         and(
-          eq(battleInvitations.fromUserId, fromUserId),
-          eq(battleInvitations.toUserId, toUserId),
+          or(
+            // Check for invitation from current user to target
+            and(
+              eq(battleInvitations.fromUserId, fromUserId),
+              eq(battleInvitations.toUserId, toUserId)
+            ),
+            // Check for invitation from target to current user
+            and(
+              eq(battleInvitations.fromUserId, toUserId),
+              eq(battleInvitations.toUserId, fromUserId)
+            )
+          ),
           eq(battleInvitations.status, 'pending'),
           gte(battleInvitations.expiresAt, new Date())
         )
       )
       .limit(1)
 
-    if (existingInvite.length > 0) {
-      return existingInvite[0].id
+    if (existingInvites.length > 0) {
+      const existingInvite = existingInvites[0]
+
+      // If there's already an invitation from the target user to us,
+      // we should accept it instead of creating a new one
+      if (
+        existingInvite.fromUserId === toUserId &&
+        existingInvite.toUserId === fromUserId
+      ) {
+        // Accept the existing invitation automatically
+        await db
+          .update(battleInvitations)
+          .set({
+            status: 'accepted',
+            respondedAt: new Date()
+          })
+          .where(eq(battleInvitations.id, existingInvite.id))
+
+        // Create the battle
+        await createBattle(existingInvite.fromUserId, existingInvite.toUserId)
+
+        return existingInvite.id
+      }
+
+      // If it's our own invitation, just return it
+      return existingInvite.id
     }
 
     // Create new invitation with 30 second expiry
