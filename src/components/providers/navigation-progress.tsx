@@ -111,6 +111,12 @@ export function NavigationProgress() {
     // Listen to form submissions
     const handleSubmit = (e: Event) => {
       const form = e.target as HTMLFormElement
+
+      // Skip forms that explicitly opt out of progress bar
+      if (form.dataset.noProgress === 'true') {
+        return
+      }
+
       const action = form.action
 
       if (action && !isApiPath(action)) {

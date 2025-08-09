@@ -288,7 +288,7 @@ export function NotificationDropdown() {
                 <span className='absolute -top-[2px] -right-[2px] h-2 w-2 animate-pulse rounded-full bg-red-500' />
                 <Badge
                   variant='destructive'
-                  className='animate-in zoom-in-50 absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs font-bold duration-300'
+                  className='animate-in zoom-in-50 absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs font-bold duration-300'
                 >
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </Badge>
