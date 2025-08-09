@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm'
 
 import { getSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
-import { battleInvitations } from '@/lib/db/schema'
+import { battleInvitations, users } from '@/lib/db/schema'
 import {
   broadcastBattleAccepted,
   broadcastBattleStats
@@ -58,12 +58,32 @@ export async function POST(request: Request) {
       )
     }
 
+    // Get accepter's details for the sender
+    const [accepterUser] = await db
+      .select({
+        name: users.name,
+        email: users.email,
+        walletAddress: users.walletAddress
+      })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1)
+
+    const accepterName =
+      accepterUser?.name ||
+      accepterUser?.email ||
+      (accepterUser?.walletAddress
+        ? `${accepterUser.walletAddress.slice(0, 6)}...${accepterUser.walletAddress.slice(-4)}`
+        : null) ||
+      'Opponent'
+
     // Broadcast acceptance to both users with full battle data
     const battleData = {
       battleId: battleResult.id,
       invitationId,
       fromUserId: invitation.fromUserId,
       toUserId: invitation.toUserId,
+      toUserName: accepterName, // Add accepter's name for the sender
       winnerId: battleResult.winnerId,
       player1CP: battleResult.player1CP,
       player2CP: battleResult.player2CP,

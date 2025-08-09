@@ -192,16 +192,23 @@ export async function POST(request: Request) {
           timestamp: new Date().toISOString()
         })
 
-        // Save round
-        await db.insert(battleRounds).values({
-          battleId,
-          roundNumber: newRound,
-          attacker,
-          damage,
-          isCritical,
-          player1Health,
-          player2Health
-        })
+        // Save round - check if it already exists first
+        try {
+          await db.insert(battleRounds).values({
+            battleId,
+            roundNumber: newRound,
+            attacker,
+            damage,
+            isCritical,
+            player1Health,
+            player2Health
+          })
+        } catch (error: any) {
+          // If duplicate key error, skip insertion but continue processing
+          if (error?.code !== '23505') {
+            console.error('Error inserting battle round:', error)
+          }
+        }
 
         // Update battle state
         await db

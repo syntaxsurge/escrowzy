@@ -68,15 +68,17 @@ export function BattleAnimation({
   const [actionCount, setActionCount] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
   const [lastProcessTime, setLastProcessTime] = useState(0)
+  const [lastAutoActionTime, setLastAutoActionTime] = useState(0)
+  const [userActionBonus, setUserActionBonus] = useState(0)
 
   // Real-time battle updates
   useBattleRealtime(user?.id, {
     onBattleUpdate: data => {
       if (data.battleId !== battleId) return
 
-      // Update health
-      setPlayer1Health(data.player1Health)
-      setPlayer2Health(data.player2Health)
+      // Update health - ensure it shows 0 when defeated
+      setPlayer1Health(Math.max(0, data.player1Health))
+      setPlayer2Health(Math.max(0, data.player2Health))
       setCurrentRound(data.round)
 
       // Show attack animation
@@ -106,6 +108,13 @@ export function BattleAnimation({
       const battleWinner = data.winnerId === player1.id ? 1 : 2
       setWinner(battleWinner)
       setPhase('victory')
+
+      // Set final health to 0 for defeated player
+      if (battleWinner === 1) {
+        setPlayer2Health(0)
+      } else {
+        setPlayer1Health(0)
+      }
 
       if (data.winnerId === user?.id) {
         triggerVictoryConfetti()
@@ -171,7 +180,26 @@ export function BattleAnimation({
     }, 1500)
   }
 
-  // Process battle round
+  // Generate automatic action
+  const generateAutoAction = useCallback(() => {
+    if (phase !== 'fighting' || winner) return null
+
+    const random = Math.random()
+    let actionType: 'attack' | 'defend' | 'special'
+
+    // 70% attack, 20% defend, 10% special
+    if (random < 0.7) {
+      actionType = 'attack'
+    } else if (random < 0.9) {
+      actionType = 'defend'
+    } else {
+      actionType = 'special'
+    }
+
+    return actionType
+  }, [phase, winner])
+
+  // Process battle round with automatic actions
   const processBattleRound = useCallback(async () => {
     if (!battleId || isProcessing || phase !== 'fighting') return
 
@@ -181,21 +209,45 @@ export function BattleAnimation({
     setIsProcessing(true)
     setLastProcessTime(now)
 
+    // Generate automatic action if no recent user action
+    const shouldAutoAction = now - lastAutoActionTime > 2000
+    let actionType = null
+    let totalPower = actionCount + userActionBonus
+
+    if (shouldAutoAction && actionCount === 0) {
+      actionType = generateAutoAction()
+      setLastAutoActionTime(now)
+
+      // Visual feedback for auto action
+      const isPlayer1 = user?.id === player1.id
+      setCurrentAttacker(isPlayer1 ? 1 : 2)
+      setTimeout(() => setCurrentAttacker(null), 300)
+
+      // Base power for auto actions
+      totalPower = 1
+    }
+
     try {
       const response = await api.post('/api/battles/process', {
         battleId,
-        action: actionCount > 0 ? { type: 'attack', power: actionCount } : null
+        action:
+          totalPower > 0
+            ? { type: actionType || 'attack', power: totalPower }
+            : null
       })
 
       if (response.data?.data) {
         const data = response.data.data
-        setPlayer1Health(data.player1Health)
-        setPlayer2Health(data.player2Health)
+        setPlayer1Health(Math.max(0, data.player1Health))
+        setPlayer2Health(Math.max(0, data.player2Health))
         setCurrentRound(data.currentRound)
 
         // Reset action count after processing
         if (actionCount > 0) {
           setActionCount(0)
+        }
+        if (userActionBonus > 0) {
+          setUserActionBonus(Math.max(0, userActionBonus - 1))
         }
       }
     } catch (error) {
@@ -203,15 +255,29 @@ export function BattleAnimation({
     } finally {
       setIsProcessing(false)
     }
-  }, [battleId, isProcessing, phase, actionCount, lastProcessTime])
+  }, [
+    battleId,
+    isProcessing,
+    phase,
+    actionCount,
+    userActionBonus,
+    lastProcessTime,
+    lastAutoActionTime,
+    generateAutoAction,
+    user?.id,
+    player1.id
+  ])
 
   // Handle player action (clicking/tapping for attacks)
   const handlePlayerAction = useCallback(
     (actionType: 'attack' | 'defend' | 'special') => {
       if (phase !== 'fighting' || winner) return
 
+      // Track user actions - these increase win probability
       setActionCount(prev => prev + 1)
+      setUserActionBonus(prev => prev + 2) // Each click adds bonus power
       setComboCount(prev => prev + 1)
+      setLastAutoActionTime(Date.now()) // Reset auto action timer
 
       // Reset combo after 2 seconds
       setTimeout(() => {
@@ -222,8 +288,14 @@ export function BattleAnimation({
       const isPlayer1 = user?.id === player1.id
       setCurrentAttacker(isPlayer1 ? 1 : 2)
       setTimeout(() => setCurrentAttacker(null), 300)
+
+      // Show visual effect for user action
+      if (actionType === 'special' && comboCount >= 3) {
+        setScreenShake(true)
+        setTimeout(() => setScreenShake(false), 500)
+      }
     },
-    [phase, winner, user?.id, player1.id]
+    [phase, winner, user?.id, player1.id, comboCount]
   )
 
   // Start battle sequence
@@ -253,6 +325,44 @@ export function BattleAnimation({
 
     return () => clearInterval(interval)
   }, [phase, battleId, processBattleRound])
+
+  // Auto-generate actions for visual effect
+  useEffect(() => {
+    if (phase !== 'fighting' || !battleId || winner) return
+
+    const autoActionInterval = setInterval(() => {
+      const now = Date.now()
+
+      // Only auto-generate if user hasn't clicked recently
+      if (now - lastAutoActionTime > 2000 && actionCount === 0) {
+        const actionType = generateAutoAction()
+        if (actionType) {
+          // Show visual feedback for automatic action
+          const randomPlayer = Math.random() > 0.5 ? 1 : 2
+          setCurrentAttacker(randomPlayer)
+
+          // Add small damage number for visual effect
+          const damage = Math.floor(5 + Math.random() * 10)
+          addDamageNumber(
+            damage,
+            randomPlayer === 1 ? 2 : 1,
+            Math.random() < 0.1
+          )
+
+          setTimeout(() => setCurrentAttacker(null), 500)
+        }
+      }
+    }, 2000) // Check every 2 seconds
+
+    return () => clearInterval(autoActionInterval)
+  }, [
+    phase,
+    battleId,
+    winner,
+    lastAutoActionTime,
+    actionCount,
+    generateAutoAction
+  ])
 
   return (
     <div
@@ -614,17 +724,30 @@ export function BattleAnimation({
               </motion.div>
             )}
 
-            {/* Action Counter */}
-            {actionCount > 0 && phase === 'fighting' && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className='text-center'
-              >
-                <Badge className='bg-gradient-to-r from-blue-500 to-cyan-500 px-4 py-2 text-white'>
-                  ACTION POWER: {actionCount}
-                </Badge>
-              </motion.div>
+            {/* Action Counter and Auto Battle Indicator */}
+            {phase === 'fighting' && (
+              <div className='space-y-2'>
+                {actionCount > 0 && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className='text-center'
+                  >
+                    <Badge className='bg-gradient-to-r from-blue-500 to-cyan-500 px-4 py-2 text-white'>
+                      ACTION POWER: {actionCount + userActionBonus}
+                    </Badge>
+                  </motion.div>
+                )}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className='text-center'
+                >
+                  <Badge className='bg-gradient-to-r from-purple-500/80 to-pink-500/80 px-3 py-1 text-xs text-white'>
+                    ⚔️ AUTO-BATTLE ACTIVE • CLICK TO BOOST POWER!
+                  </Badge>
+                </motion.div>
+              </div>
             )}
           </motion.div>
         )}

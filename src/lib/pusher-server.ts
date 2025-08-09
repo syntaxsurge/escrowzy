@@ -274,12 +274,14 @@ export async function broadcastBattleAccepted(
   if (!pusherServer) return
 
   try {
-    // Notify both users with the same event so they stay synchronized
+    // Send different events to sender and accepter for proper state transitions
     await Promise.all([
-      pusherServer.trigger(`user-${fromUserId}`, 'battle-started', {
+      // Sender receives 'battle-accepted' to transition from invitation-sent state
+      pusherServer.trigger(`user-${fromUserId}`, 'battle-accepted', {
         ...battleData,
         timestamp: new Date().toISOString()
       }),
+      // Accepter receives 'battle-started' to begin the battle
       pusherServer.trigger(`user-${toUserId}`, 'battle-started', {
         ...battleData,
         timestamp: new Date().toISOString()
