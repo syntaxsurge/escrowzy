@@ -58,7 +58,13 @@ export default function TradeDetailPage() {
 
   const [actionDialogOpen, setActionDialogOpen] = useState(false)
   const [actionType, setActionType] = useState<
-    'deposit' | 'fund' | 'payment_sent' | 'confirm' | 'dispute' | null
+    | 'deposit'
+    | 'fund'
+    | 'payment_sent'
+    | 'confirm'
+    | 'dispute'
+    | 'cancel'
+    | null
   >(null)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxImages, setLightboxImages] = useState<Array<{ src: string }>>(
@@ -594,6 +600,20 @@ export default function TradeDetailPage() {
                       Raise Dispute
                     </Button>
                   )}
+
+                  {/* Cancel button for domain trades in created status */}
+                  {trade.tradeType === 'domain' &&
+                    trade.status === 'created' &&
+                    isBuyer && (
+                      <Button
+                        variant='ghost'
+                        className='text-muted-foreground w-full justify-start font-bold hover:bg-orange-500/10 hover:text-orange-500'
+                        onClick={() => handleAction('cancel')}
+                      >
+                        <AlertCircle className='mr-2 h-4 w-4' />
+                        Cancel Trade
+                      </Button>
+                    )}
                 </div>
               </CardContent>
             </Card>

@@ -270,7 +270,7 @@ export default function MyListingsPage() {
                 </span>
               </div>
             </div>
-            <div className='grid gap-6 opacity-60 md:grid-cols-2 lg:grid-cols-3'>
+            <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
               {inactiveListings.map((listing: EscrowListingWithUser) => (
                 <GamifiedListingCard
                   key={listing.id}

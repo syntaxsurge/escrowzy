@@ -122,7 +122,8 @@ export const apiEndpoints = {
     paymentSent: (id: string | number) => `/api/trades/${id}/payment-sent`,
     paymentProof: (id: string | number) => `/api/trades/${id}/payment-proof`,
     confirm: (id: string | number) => `/api/trades/${id}/confirm`,
-    dispute: (id: string | number) => `/api/trades/${id}/dispute`
+    dispute: (id: string | number) => `/api/trades/${id}/dispute`,
+    cancel: (id: string | number) => `/api/trades/${id}/cancel`
   },
   listings: {
     base: '/api/listings',

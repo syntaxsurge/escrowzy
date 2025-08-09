@@ -56,7 +56,13 @@ interface TradeActionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   trade: TradeWithUsers
-  actionType: 'deposit' | 'fund' | 'payment_sent' | 'confirm' | 'dispute'
+  actionType:
+    | 'deposit'
+    | 'fund'
+    | 'payment_sent'
+    | 'confirm'
+    | 'dispute'
+    | 'cancel'
   onSuccess: () => void
 }
 
@@ -220,6 +226,10 @@ export function TradeActionDialog({
         return confirmSchema
       case 'dispute':
         return disputeSchema
+      case 'cancel':
+        return z.object({
+          reason: z.string().optional()
+        })
       default:
         return z.object({})
     }
@@ -484,6 +494,12 @@ export function TradeActionDialog({
           endpoint = apiEndpoints.trades.dispute(trade.id)
           payload = { reason: data.reason, evidence: data.evidence }
           break
+
+        case 'cancel':
+          endpoint = apiEndpoints.trades.cancel(trade.id)
+          payload = { reason: data.reason || 'Trade cancelled by user' }
+          method = 'POST'
+          break
       }
 
       const response =
@@ -522,6 +538,8 @@ export function TradeActionDialog({
             : 'Confirm Receipt'
       case 'dispute':
         return 'Raise Dispute'
+      case 'cancel':
+        return 'Cancel Trade'
       default:
         return 'Trade Action'
     }
@@ -543,6 +561,8 @@ export function TradeActionDialog({
             : 'Confirm that you have received the goods/services from the seller'
       case 'dispute':
         return 'Raise a dispute if there are issues with this trade'
+      case 'cancel':
+        return 'Cancel this trade. This action cannot be undone.'
       default:
         return ''
     }
@@ -1159,6 +1179,40 @@ export function TradeActionDialog({
                 </>
               )}
 
+              {actionType === 'cancel' && (
+                <>
+                  <Alert>
+                    <AlertCircle className='h-4 w-4' />
+                    <AlertDescription>
+                      Are you sure you want to cancel this trade? This action
+                      cannot be undone.
+                    </AlertDescription>
+                  </Alert>
+                  <FormField
+                    control={form.control}
+                    name='reason'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Reason for Cancellation (Optional)
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            {...field}
+                            placeholder='Please provide a reason for cancelling...'
+                            rows={3}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Let the other party know why you're cancelling
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+
               <Separator />
 
               <div className='flex justify-end space-x-2'>
@@ -1178,7 +1232,11 @@ export function TradeActionDialog({
                     isBlockchainLoading ||
                     isCreatingEscrow
                   }
-                  variant={actionType === 'dispute' ? 'destructive' : 'default'}
+                  variant={
+                    actionType === 'dispute' || actionType === 'cancel'
+                      ? 'destructive'
+                      : 'default'
+                  }
                   className=''
                   disabled={
                     (actionType === 'payment_sent' &&
@@ -1221,6 +1279,7 @@ export function TradeActionDialog({
                       'Confirm'
                     ))}
                   {actionType === 'dispute' && 'Raise Dispute'}
+                  {actionType === 'cancel' && 'Cancel Trade'}
                 </LoadingButton>
               </div>
             </form>

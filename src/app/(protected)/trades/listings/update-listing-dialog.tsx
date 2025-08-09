@@ -62,7 +62,7 @@ export function UpdateListingDialog({
   // Parse existing payment methods
   const existingPaymentMethods = Array.isArray(listing.paymentMethods)
     ? listing.paymentMethods
-    : typeof listing.paymentMethods === 'string'
+    : typeof listing.paymentMethods === 'string' && listing.paymentMethods
       ? JSON.parse(listing.paymentMethods)
       : []
 
@@ -164,7 +164,13 @@ export function UpdateListingDialog({
   const domainMetadata =
     isDomainListing && listing.metadata
       ? typeof listing.metadata === 'string'
-        ? JSON.parse(listing.metadata)
+        ? (() => {
+            try {
+              return JSON.parse(listing.metadata)
+            } catch {
+              return null
+            }
+          })()
         : listing.metadata
       : null
 
