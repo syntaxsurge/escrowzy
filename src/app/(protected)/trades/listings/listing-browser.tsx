@@ -27,7 +27,7 @@ import {
 import { Spinner } from '@/components/ui/spinner'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { api } from '@/lib/api/http-client'
-import type { P2PListingWithUser } from '@/types/listings'
+import type { EscrowListingWithUser } from '@/types/listings'
 import { SUPPORTED_TOKENS, PAYMENT_METHODS } from '@/types/listings'
 
 import { ListingCard } from './listing-card'
@@ -296,7 +296,7 @@ export function ListingBrowser() {
       ) : (
         <>
           <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
-            {listings.map((listing: P2PListingWithUser) => (
+            {listings.map((listing: EscrowListingWithUser) => (
               <ListingCard
                 key={listing.id}
                 listing={listing}

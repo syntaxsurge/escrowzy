@@ -237,7 +237,7 @@ export function GamifiedListingCard({
                     <Globe className='mr-1 inline h-3 w-3' />
                     Domain Name
                   </p>
-                  <p className='from-primary bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text text-2xl font-black text-transparent'>
+                  <p className='from-primary truncate bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text px-2 text-2xl font-black text-transparent'>
                     {domainMetadata?.domainName || 'N/A'}
                   </p>
                 </div>
@@ -251,12 +251,12 @@ export function GamifiedListingCard({
                       ${listing.amount}
                     </p>
                   </div>
-                  <div className='text-center'>
+                  <div className='overflow-hidden text-center'>
                     <p className='text-muted-foreground mb-1 text-xs font-bold tracking-wider uppercase'>
                       <Users className='mr-1 inline h-3 w-3' />
                       Registrar
                     </p>
-                    <p className='from-primary bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text text-xl font-black text-transparent'>
+                    <p className='from-primary truncate bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text px-2 text-xl font-black text-transparent'>
                       {domainMetadata?.registrar || 'Unknown'}
                     </p>
                   </div>

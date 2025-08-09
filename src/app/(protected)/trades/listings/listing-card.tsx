@@ -10,7 +10,8 @@ import {
   CreditCard,
   TrendingUp,
   TrendingDown,
-  Shield
+  Shield,
+  Globe
 } from 'lucide-react'
 
 import { UserAvatar } from '@/components/blocks/user-avatar'
@@ -22,13 +23,13 @@ import { appRoutes } from '@/config/app-routes'
 import { useSession } from '@/hooks/use-session'
 import { formatRelativeTime } from '@/lib/utils/string'
 import { getUserDisplayName } from '@/lib/utils/user'
-import type { P2PListingWithUser } from '@/types/listings'
+import type { EscrowListingWithUser, DomainMetadata } from '@/types/listings'
 import { PAYMENT_METHODS } from '@/types/listings'
 
 import { AcceptListingDialog } from './accept-listing-dialog'
 
 interface ListingCardProps {
-  listing: P2PListingWithUser
+  listing: EscrowListingWithUser
   onAccept?: () => void
 }
 
@@ -38,8 +39,15 @@ export function ListingCard({ listing, onAccept }: ListingCardProps) {
   const [acceptDialogOpen, setAcceptDialogOpen] = useState(false)
 
   const isOwnListing = user?.id === listing.userId
-  const totalValue =
-    parseFloat(listing.amount ?? '0') * parseFloat(listing.pricePerUnit ?? '0')
+  const isDomainListing = listing.listingCategory === 'domain'
+  const domainMetadata = isDomainListing
+    ? (listing.metadata as DomainMetadata)
+    : null
+
+  const totalValue = isDomainListing
+    ? parseFloat(listing.amount ?? '0')
+    : parseFloat(listing.amount ?? '0') *
+      parseFloat(listing.pricePerUnit ?? '0')
 
   // Parse payment methods from JSON
   const paymentMethods = Array.isArray(listing.paymentMethods)
@@ -66,27 +74,46 @@ export function ListingCard({ listing, onAccept }: ListingCardProps) {
                   {getUserDisplayName(listing.user)}
                 </p>
                 <div className='mt-1 flex items-center gap-2'>
-                  <Badge
-                    variant={
-                      listing.listingType === 'sell' ? 'default' : 'secondary'
-                    }
-                    className='text-xs'
-                  >
-                    {listing.listingType === 'sell' ? (
-                      <>
-                        <TrendingDown className='mr-1 h-3 w-3' />
-                        Selling
-                      </>
-                    ) : (
-                      <>
-                        <TrendingUp className='mr-1 h-3 w-3' />
-                        Buying
-                      </>
-                    )}
-                  </Badge>
-                  <Badge variant='outline' className='text-xs'>
-                    {listing.tokenOffered}
-                  </Badge>
+                  {isDomainListing ? (
+                    <>
+                      <Badge variant='default' className='text-xs'>
+                        <Globe className='mr-1 h-3 w-3' />
+                        Domain
+                      </Badge>
+                      <Badge
+                        variant='outline'
+                        className='max-w-[150px] truncate text-xs'
+                      >
+                        {domainMetadata?.registrar || 'Unknown'}
+                      </Badge>
+                    </>
+                  ) : (
+                    <>
+                      <Badge
+                        variant={
+                          listing.listingType === 'sell'
+                            ? 'default'
+                            : 'secondary'
+                        }
+                        className='text-xs'
+                      >
+                        {listing.listingType === 'sell' ? (
+                          <>
+                            <TrendingDown className='mr-1 h-3 w-3' />
+                            Selling
+                          </>
+                        ) : (
+                          <>
+                            <TrendingUp className='mr-1 h-3 w-3' />
+                            Buying
+                          </>
+                        )}
+                      </Badge>
+                      <Badge variant='outline' className='text-xs'>
+                        {listing.tokenOffered}
+                      </Badge>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -100,19 +127,46 @@ export function ListingCard({ listing, onAccept }: ListingCardProps) {
         </CardHeader>
 
         <CardContent className='space-y-3'>
-          {/* Amount and Price */}
-          <div className='grid grid-cols-2 gap-3'>
-            <div>
-              <p className='text-muted-foreground mb-1 text-xs'>Amount</p>
-              <p className='font-semibold'>
-                {listing.amount} {listing.tokenOffered}
-              </p>
+          {/* Domain or P2P Info */}
+          {isDomainListing ? (
+            <div className='space-y-3'>
+              <div>
+                <p className='text-muted-foreground mb-1 text-xs'>
+                  Domain Name
+                </p>
+                <p className='truncate font-semibold'>
+                  {domainMetadata?.domainName || 'N/A'}
+                </p>
+              </div>
+              <div className='grid grid-cols-2 gap-3'>
+                <div>
+                  <p className='text-muted-foreground mb-1 text-xs'>Price</p>
+                  <p className='font-semibold'>${listing.amount}</p>
+                </div>
+                <div>
+                  <p className='text-muted-foreground mb-1 text-xs'>Expires</p>
+                  <p className='text-sm font-semibold'>
+                    {domainMetadata?.expiryDate
+                      ? new Date(domainMetadata.expiryDate).toLocaleDateString()
+                      : 'N/A'}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className='text-muted-foreground mb-1 text-xs'>Price/Unit</p>
-              <p className='font-semibold'>${listing.pricePerUnit}</p>
+          ) : (
+            <div className='grid grid-cols-2 gap-3'>
+              <div>
+                <p className='text-muted-foreground mb-1 text-xs'>Amount</p>
+                <p className='font-semibold'>
+                  {listing.amount} {listing.tokenOffered}
+                </p>
+              </div>
+              <div>
+                <p className='text-muted-foreground mb-1 text-xs'>Price/Unit</p>
+                <p className='font-semibold'>${listing.pricePerUnit}</p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Total Value */}
           <div className='bg-muted rounded-lg p-3'>
@@ -124,8 +178,8 @@ export function ListingCard({ listing, onAccept }: ListingCardProps) {
             </div>
           </div>
 
-          {/* Limits */}
-          {(listing.minAmount || listing.maxAmount) && (
+          {/* Limits - only for P2P */}
+          {!isDomainListing && (listing.minAmount || listing.maxAmount) && (
             <div className='flex items-center gap-2 text-sm'>
               <ArrowRightLeft className='text-muted-foreground h-4 w-4' />
               <span className='text-muted-foreground'>Limits:</span>
@@ -144,22 +198,35 @@ export function ListingCard({ listing, onAccept }: ListingCardProps) {
               </p>
               <div className='flex flex-wrap gap-1'>
                 {paymentMethods.map((method: string) => {
-                  // Find the key for this payment method value
-                  const methodKey = Object.keys(PAYMENT_METHODS).find(
-                    key =>
-                      PAYMENT_METHODS[key as keyof typeof PAYMENT_METHODS] ===
-                      method
-                  )
-                  const displayName = methodKey
-                    ? methodKey
-                        .split('_')
-                        .map(
-                          word =>
-                            word.charAt(0).toUpperCase() +
-                            word.slice(1).toLowerCase()
-                        )
-                        .join(' ')
-                    : method
+                  let displayName: string
+                  if (isDomainListing) {
+                    // For domain listings, use domain-specific payment method names
+                    displayName =
+                      method === 'crypto'
+                        ? 'Direct Cryptocurrency'
+                        : method === 'usdt'
+                          ? 'USDT (Tether)'
+                          : method === 'usdc'
+                            ? 'USDC (USD Coin)'
+                            : method
+                  } else {
+                    // For P2P listings, use the original logic
+                    const methodKey = Object.keys(PAYMENT_METHODS).find(
+                      key =>
+                        PAYMENT_METHODS[key as keyof typeof PAYMENT_METHODS] ===
+                        method
+                    )
+                    displayName = methodKey
+                      ? methodKey
+                          .split('_')
+                          .map(
+                            word =>
+                              word.charAt(0).toUpperCase() +
+                              word.slice(1).toLowerCase()
+                          )
+                          .join(' ')
+                      : method
+                  }
                   return (
                     <Badge key={method} variant='secondary' className='text-xs'>
                       <CreditCard className='mr-1 h-3 w-3' />
@@ -202,7 +269,11 @@ export function ListingCard({ listing, onAccept }: ListingCardProps) {
               className='w-full'
               onClick={() => setAcceptDialogOpen(true)}
             >
-              {listing.listingType === 'sell' ? 'Buy Now' : 'Sell Now'}
+              {isDomainListing
+                ? 'Buy Domain'
+                : listing.listingType === 'sell'
+                  ? 'Buy Now'
+                  : 'Sell Now'}
             </Button>
           )}
         </CardFooter>

@@ -46,22 +46,28 @@ import {
   parseNumericInput
 } from '@/lib/utils/form'
 import { getUserDisplayName } from '@/lib/utils/user'
-import type { P2PListingWithUser } from '@/types/listings'
-import { PAYMENT_METHODS } from '@/types/listings'
+import type { EscrowListingWithUser, DomainMetadata } from '@/types/listings'
+import { PAYMENT_METHODS, DOMAIN_PAYMENT_METHODS } from '@/types/listings'
 
 interface AcceptListingDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  listing: P2PListingWithUser
+  listing: EscrowListingWithUser
   onSuccess: () => void
 }
 
-const acceptListingSchema = z.object({
+const acceptP2PListingSchema = z.object({
   tradeAmount: positiveNumberString,
   paymentMethod: z.string().min(1, 'Payment method is required')
 })
 
-type AcceptListingInput = z.infer<typeof acceptListingSchema>
+const acceptDomainListingSchema = z.object({
+  paymentMethod: z.string().min(1, 'Payment method is required')
+})
+
+type AcceptP2PListingInput = z.infer<typeof acceptP2PListingSchema>
+type AcceptDomainListingInput = z.infer<typeof acceptDomainListingSchema>
+type AcceptListingInput = AcceptP2PListingInput | AcceptDomainListingInput
 
 export function AcceptListingDialog({
   open,
@@ -76,25 +82,44 @@ export function AcceptListingDialog({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [step, setStep] = useState<'details' | 'confirm'>('details')
 
+  const isDomainListing = listing.listingCategory === 'domain'
+  const domainMetadata = isDomainListing
+    ? (listing.metadata as DomainMetadata)
+    : null
+
   const form = useForm<AcceptListingInput>({
-    resolver: zodResolver(acceptListingSchema),
-    defaultValues: {
-      tradeAmount: '',
-      paymentMethod: ''
-    }
+    resolver: zodResolver(
+      isDomainListing ? acceptDomainListingSchema : acceptP2PListingSchema
+    ),
+    defaultValues: isDomainListing
+      ? {
+          paymentMethod: ''
+        }
+      : {
+          tradeAmount: '',
+          paymentMethod: ''
+        }
   })
 
-  const tradeAmount = form.watch('tradeAmount')
+  const tradeAmount = !isDomainListing
+    ? (form.watch('tradeAmount' as any) as string | undefined)
+    : undefined
   const selectedPaymentMethod = form.watch('paymentMethod')
 
   // Calculate total cost
-  const totalCost = tradeAmount
-    ? (
-        parseFloat(tradeAmount) * parseFloat(listing.pricePerUnit ?? '0')
-      ).toFixed(2)
-    : '0.00'
+  const totalCost = isDomainListing
+    ? listing.amount || '0'
+    : tradeAmount
+      ? (
+          parseFloat(tradeAmount) * parseFloat(listing.pricePerUnit ?? '0')
+        ).toFixed(2)
+      : '0.00'
 
-  // Parse payment methods
+  // Parse payment methods - use domain payment methods for domains
+  const availablePaymentMethods = isDomainListing
+    ? DOMAIN_PAYMENT_METHODS
+    : PAYMENT_METHODS
+
   const paymentMethods = Array.isArray(listing.paymentMethods)
     ? listing.paymentMethods
     : typeof listing.paymentMethods === 'string'
@@ -102,6 +127,7 @@ export function AcceptListingDialog({
       : []
 
   const validateAmount = () => {
+    if (!tradeAmount) return 'Please enter a valid amount'
     const amount = parseNumericInput(tradeAmount)
     if (!amount) return 'Please enter a valid amount'
 
@@ -123,13 +149,15 @@ export function AcceptListingDialog({
   }
 
   const handleContinue = () => {
-    const error = validateAmount()
-    if (error) {
-      form.setError('tradeAmount', {
-        type: 'manual',
-        message: error
-      })
-      return
+    if (!isDomainListing) {
+      const error = validateAmount()
+      if (error) {
+        form.setError('tradeAmount', {
+          type: 'manual',
+          message: error
+        })
+        return
+      }
     }
 
     if (!selectedPaymentMethod) {
@@ -158,7 +186,9 @@ export function AcceptListingDialog({
       const response = await api.post(
         apiEndpoints.listings.accept(listing.id.toString()),
         {
-          amount: data.tradeAmount, // Map tradeAmount to amount
+          amount: isDomainListing
+            ? listing.amount
+            : (data as AcceptP2PListingInput).tradeAmount, // Map tradeAmount to amount for P2P, use listing amount for domains
           paymentMethod: data.paymentMethod,
           chainId: currentChainId
         }
@@ -204,7 +234,9 @@ export function AcceptListingDialog({
           </DialogTitle>
           <DialogDescription>
             {step === 'details'
-              ? `You are about to ${listing.listingType === 'sell' ? 'buy' : 'sell'} ${listing.tokenOffered} from ${getUserDisplayName(listing.user)}`
+              ? isDomainListing
+                ? `You are about to purchase the domain ${domainMetadata?.domainName} from ${getUserDisplayName(listing.user)}`
+                : `You are about to ${listing.listingType === 'sell' ? 'buy' : 'sell'} ${listing.tokenOffered} from ${getUserDisplayName(listing.user)}`
               : 'Review your trade details before confirming'}
           </DialogDescription>
         </DialogHeader>
@@ -224,117 +256,162 @@ export function AcceptListingDialog({
                         {getUserDisplayName(listing.user)}
                       </span>
                     </div>
-                    <div className='flex justify-between'>
-                      <span className='text-muted-foreground text-sm'>
-                        Available
-                      </span>
-                      <span className='font-medium'>
-                        {listing.amount} {listing.tokenOffered}
-                      </span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span className='text-muted-foreground text-sm'>
-                        Price per unit
-                      </span>
-                      <span className='font-medium'>
-                        ${listing.pricePerUnit}
-                      </span>
-                    </div>
-                    {(listing.minAmount || listing.maxAmount) && (
-                      <div className='flex justify-between'>
-                        <span className='text-muted-foreground text-sm'>
-                          Trade limits
-                        </span>
-                        <span className='font-medium'>
-                          {listing.minAmount || '0'} -{' '}
-                          {listing.maxAmount || '∞'} {listing.tokenOffered}
-                        </span>
-                      </div>
+                    {isDomainListing ? (
+                      <>
+                        <div className='flex justify-between'>
+                          <span className='text-muted-foreground text-sm'>
+                            Domain Name
+                          </span>
+                          <span className='max-w-[200px] truncate font-medium'>
+                            {domainMetadata?.domainName || 'N/A'}
+                          </span>
+                        </div>
+                        <div className='flex justify-between'>
+                          <span className='text-muted-foreground text-sm'>
+                            Price
+                          </span>
+                          <span className='font-medium'>${listing.amount}</span>
+                        </div>
+                        <div className='flex justify-between'>
+                          <span className='text-muted-foreground text-sm'>
+                            Registrar
+                          </span>
+                          <span className='max-w-[200px] truncate font-medium'>
+                            {domainMetadata?.registrar || 'Unknown'}
+                          </span>
+                        </div>
+                        {domainMetadata?.expiryDate && (
+                          <div className='flex justify-between'>
+                            <span className='text-muted-foreground text-sm'>
+                              Expires
+                            </span>
+                            <span className='font-medium'>
+                              {new Date(
+                                domainMetadata.expiryDate
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <div className='flex justify-between'>
+                          <span className='text-muted-foreground text-sm'>
+                            Available
+                          </span>
+                          <span className='font-medium'>
+                            {listing.amount} {listing.tokenOffered}
+                          </span>
+                        </div>
+                        <div className='flex justify-between'>
+                          <span className='text-muted-foreground text-sm'>
+                            Price per unit
+                          </span>
+                          <span className='font-medium'>
+                            ${listing.pricePerUnit}
+                          </span>
+                        </div>
+                        {(listing.minAmount || listing.maxAmount) && (
+                          <div className='flex justify-between'>
+                            <span className='text-muted-foreground text-sm'>
+                              Trade limits
+                            </span>
+                            <span className='font-medium'>
+                              {listing.minAmount || '0'} -{' '}
+                              {listing.maxAmount || '∞'} {listing.tokenOffered}
+                            </span>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </Card>
 
-                {/* Trade Amount */}
-                <FormField
-                  control={form.control}
-                  name='tradeAmount'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Amount to{' '}
-                        {listing.listingType === 'sell' ? 'buy' : 'sell'}
-                      </FormLabel>
-                      <FormControl>
-                        <div className='relative'>
-                          <Input
-                            {...field}
-                            placeholder='0.00'
-                            type='number'
-                            step='0.000001'
-                            min={listing.minAmount ?? '0'}
-                            max={listing.maxAmount ?? listing.amount ?? '0'}
-                            className='pr-16'
-                            onChange={e => {
-                              field.onChange(e)
+                {/* Trade Amount - Only for P2P */}
+                {!isDomainListing && (
+                  <FormField
+                    control={form.control}
+                    name='tradeAmount'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Amount to{' '}
+                          {listing.listingType === 'sell' ? 'buy' : 'sell'}
+                        </FormLabel>
+                        <FormControl>
+                          <div className='relative'>
+                            <Input
+                              {...field}
+                              placeholder='0.00'
+                              type='number'
+                              step='0.000001'
+                              min={listing.minAmount ?? '0'}
+                              max={listing.maxAmount ?? listing.amount ?? '0'}
+                              className='pr-16'
+                              onChange={e => {
+                                field.onChange(e)
 
-                              // Real-time validation
-                              const value = e.target.value
-                              if (value) {
-                                const amount = parseFloat(value)
-                                if (!isNaN(amount) && amount > 0) {
-                                  const minAmount = parseFloat(
-                                    listing.minAmount || '0'
-                                  )
-                                  const maxAmount = Math.min(
-                                    parseFloat(
-                                      listing.maxAmount ?? listing.amount ?? '0'
-                                    ),
-                                    parseFloat(listing.amount ?? '0')
-                                  )
+                                // Real-time validation
+                                const value = e.target.value
+                                if (value) {
+                                  const amount = parseFloat(value)
+                                  if (!isNaN(amount) && amount > 0) {
+                                    const minAmount = parseFloat(
+                                      listing.minAmount || '0'
+                                    )
+                                    const maxAmount = Math.min(
+                                      parseFloat(
+                                        listing.maxAmount ??
+                                          listing.amount ??
+                                          '0'
+                                      ),
+                                      parseFloat(listing.amount ?? '0')
+                                    )
 
-                                  if (amount < minAmount) {
-                                    form.setError('tradeAmount', {
-                                      type: 'manual',
-                                      message: `Minimum amount is ${minAmount} ${listing.tokenOffered}`
-                                    })
-                                  } else if (amount > maxAmount) {
-                                    form.setError('tradeAmount', {
-                                      type: 'manual',
-                                      message: `Maximum amount is ${maxAmount} ${listing.tokenOffered}`
-                                    })
-                                  } else {
-                                    form.clearErrors('tradeAmount')
+                                    if (amount < minAmount) {
+                                      form.setError('tradeAmount', {
+                                        type: 'manual',
+                                        message: `Minimum amount is ${minAmount} ${listing.tokenOffered}`
+                                      })
+                                    } else if (amount > maxAmount) {
+                                      form.setError('tradeAmount', {
+                                        type: 'manual',
+                                        message: `Maximum amount is ${maxAmount} ${listing.tokenOffered}`
+                                      })
+                                    } else {
+                                      form.clearErrors('tradeAmount')
+                                    }
                                   }
+                                } else {
+                                  form.clearErrors('tradeAmount')
                                 }
-                              } else {
-                                form.clearErrors('tradeAmount')
-                              }
-                            }}
-                          />
-                          <span className='text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm'>
-                            {listing.tokenOffered}
-                          </span>
+                              }}
+                            />
+                            <span className='text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm'>
+                              {listing.tokenOffered}
+                            </span>
+                          </div>
+                        </FormControl>
+                        <FormDescription>
+                          Enter the amount of {listing.tokenOffered} you want to
+                          trade
+                        </FormDescription>
+                        <div className='text-muted-foreground mt-1 text-xs'>
+                          Min: {listing.minAmount ?? '0'} {listing.tokenOffered}{' '}
+                          • Max:{' '}
+                          {Math.min(
+                            parseFloat(
+                              listing.maxAmount ?? listing.amount ?? '0'
+                            ),
+                            parseFloat(listing.amount ?? '0')
+                          )}{' '}
+                          {listing.tokenOffered}
                         </div>
-                      </FormControl>
-                      <FormDescription>
-                        Enter the amount of {listing.tokenOffered} you want to
-                        trade
-                      </FormDescription>
-                      <div className='text-muted-foreground mt-1 text-xs'>
-                        Min: {listing.minAmount ?? '0'} {listing.tokenOffered} •
-                        Max:{' '}
-                        {Math.min(
-                          parseFloat(
-                            listing.maxAmount ?? listing.amount ?? '0'
-                          ),
-                          parseFloat(listing.amount ?? '0')
-                        )}{' '}
-                        {listing.tokenOffered}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 {/* Payment Method */}
                 <FormField
@@ -351,22 +428,32 @@ export function AcceptListingDialog({
                           <option value=''>Select payment method</option>
                           {paymentMethods.map((method: string) => {
                             // Find the key for this payment method value
-                            const methodKey = Object.keys(PAYMENT_METHODS).find(
+                            const methodKey = Object.keys(
+                              availablePaymentMethods
+                            ).find(
                               key =>
-                                PAYMENT_METHODS[
-                                  key as keyof typeof PAYMENT_METHODS
+                                availablePaymentMethods[
+                                  key as keyof typeof availablePaymentMethods
                                 ] === method
                             )
-                            const displayName = methodKey
-                              ? methodKey
-                                  .split('_')
-                                  .map(
-                                    word =>
-                                      word.charAt(0).toUpperCase() +
-                                      word.slice(1).toLowerCase()
-                                  )
-                                  .join(' ')
-                              : method
+                            const displayName = isDomainListing
+                              ? method === 'crypto'
+                                ? 'Direct Cryptocurrency'
+                                : method === 'usdt'
+                                  ? 'USDT (Tether)'
+                                  : method === 'usdc'
+                                    ? 'USDC (USD Coin)'
+                                    : method
+                              : methodKey
+                                ? methodKey
+                                    .split('_')
+                                    .map(
+                                      word =>
+                                        word.charAt(0).toUpperCase() +
+                                        word.slice(1).toLowerCase()
+                                    )
+                                    .join(' ')
+                                : method
                             return (
                               <option key={method} value={method}>
                                 {displayName}
@@ -384,10 +471,12 @@ export function AcceptListingDialog({
                 />
 
                 {/* Total Cost Display */}
-                {tradeAmount && (
+                {(isDomainListing || tradeAmount) && (
                   <Card className='bg-primary/5 border-primary/20 p-4'>
                     <div className='flex items-center justify-between'>
-                      <span className='text-sm font-medium'>Total Cost</span>
+                      <span className='text-sm font-medium'>
+                        {isDomainListing ? 'Domain Price' : 'Total Cost'}
+                      </span>
                       <span className='text-xl font-bold'>
                         ${totalCost} USD
                       </span>
@@ -408,7 +497,11 @@ export function AcceptListingDialog({
                   <Button
                     type='button'
                     onClick={handleContinue}
-                    disabled={!tradeAmount || !selectedPaymentMethod}
+                    disabled={
+                      isDomainListing
+                        ? !selectedPaymentMethod
+                        : !tradeAmount || !selectedPaymentMethod
+                    }
                   >
                     Continue
                     <ArrowRight className='ml-2 h-4 w-4' />
@@ -431,36 +524,67 @@ export function AcceptListingDialog({
                 <Card className='p-4'>
                   <h3 className='mb-3 font-semibold'>Trade Summary</h3>
                   <div className='space-y-2'>
-                    <div className='flex justify-between'>
-                      <span className='text-muted-foreground text-sm'>
-                        Type
-                      </span>
-                      <Badge
-                        variant={
-                          listing.listingType === 'sell'
-                            ? 'default'
-                            : 'secondary'
-                        }
-                      >
-                        {listing.listingType === 'sell' ? 'Buying' : 'Selling'}
-                      </Badge>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span className='text-muted-foreground text-sm'>
-                        Amount
-                      </span>
-                      <span className='font-medium'>
-                        {tradeAmount} {listing.tokenOffered}
-                      </span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span className='text-muted-foreground text-sm'>
-                        Price per unit
-                      </span>
-                      <span className='font-medium'>
-                        ${listing.pricePerUnit}
-                      </span>
-                    </div>
+                    {isDomainListing ? (
+                      <>
+                        <div className='flex justify-between'>
+                          <span className='text-muted-foreground text-sm'>
+                            Type
+                          </span>
+                          <Badge variant='default'>Domain Purchase</Badge>
+                        </div>
+                        <div className='flex justify-between'>
+                          <span className='text-muted-foreground text-sm'>
+                            Domain Name
+                          </span>
+                          <span className='max-w-[200px] truncate font-medium'>
+                            {domainMetadata?.domainName || 'N/A'}
+                          </span>
+                        </div>
+                        <div className='flex justify-between'>
+                          <span className='text-muted-foreground text-sm'>
+                            Registrar
+                          </span>
+                          <span className='max-w-[200px] truncate font-medium'>
+                            {domainMetadata?.registrar || 'Unknown'}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className='flex justify-between'>
+                          <span className='text-muted-foreground text-sm'>
+                            Type
+                          </span>
+                          <Badge
+                            variant={
+                              listing.listingType === 'sell'
+                                ? 'default'
+                                : 'secondary'
+                            }
+                          >
+                            {listing.listingType === 'sell'
+                              ? 'Buying'
+                              : 'Selling'}
+                          </Badge>
+                        </div>
+                        <div className='flex justify-between'>
+                          <span className='text-muted-foreground text-sm'>
+                            Amount
+                          </span>
+                          <span className='font-medium'>
+                            {tradeAmount} {listing.tokenOffered}
+                          </span>
+                        </div>
+                        <div className='flex justify-between'>
+                          <span className='text-muted-foreground text-sm'>
+                            Price per unit
+                          </span>
+                          <span className='font-medium'>
+                            ${listing.pricePerUnit}
+                          </span>
+                        </div>
+                      </>
+                    )}
                     <Separator className='my-2' />
                     <div className='flex justify-between'>
                       <span className='text-muted-foreground text-sm'>
@@ -476,22 +600,32 @@ export function AcceptListingDialog({
                       </span>
                       <Badge variant='outline'>
                         {(() => {
-                          const methodKey = Object.keys(PAYMENT_METHODS).find(
-                            key =>
-                              PAYMENT_METHODS[
-                                key as keyof typeof PAYMENT_METHODS
-                              ] === selectedPaymentMethod
-                          )
-                          return methodKey
-                            ? methodKey
-                                .split('_')
-                                .map(
-                                  word =>
-                                    word.charAt(0).toUpperCase() +
-                                    word.slice(1).toLowerCase()
-                                )
-                                .join(' ')
-                            : selectedPaymentMethod
+                          if (isDomainListing) {
+                            return selectedPaymentMethod === 'crypto'
+                              ? 'Direct Cryptocurrency'
+                              : selectedPaymentMethod === 'usdt'
+                                ? 'USDT (Tether)'
+                                : selectedPaymentMethod === 'usdc'
+                                  ? 'USDC (USD Coin)'
+                                  : selectedPaymentMethod
+                          } else {
+                            const methodKey = Object.keys(PAYMENT_METHODS).find(
+                              key =>
+                                PAYMENT_METHODS[
+                                  key as keyof typeof PAYMENT_METHODS
+                                ] === selectedPaymentMethod
+                            )
+                            return methodKey
+                              ? methodKey
+                                  .split('_')
+                                  .map(
+                                    word =>
+                                      word.charAt(0).toUpperCase() +
+                                      word.slice(1).toLowerCase()
+                                  )
+                                  .join(' ')
+                              : selectedPaymentMethod
+                          }
                         })()}
                       </Badge>
                     </div>
