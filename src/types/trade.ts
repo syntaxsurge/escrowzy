@@ -53,6 +53,7 @@ export interface TradeFilters {
 // Trade metadata structure
 export interface TradeMetadata {
   originalListingId?: number
+  listingCategory?: 'p2p' | 'domain'
   paymentMethod?: string
   paymentProof?: string[]
   paymentProofImages?: string[] // URLs to payment proof screenshots

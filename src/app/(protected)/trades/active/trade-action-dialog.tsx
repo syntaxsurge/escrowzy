@@ -539,6 +539,15 @@ export function TradeActionDialog({
                 : 'Trade has been confirmed successfully.',
             variant: 'default'
           })
+        } else if (actionType === 'fund') {
+          toast({
+            title: 'Escrow Funded Successfully',
+            description:
+              trade.tradeType === 'domain'
+                ? 'Payment sent to escrow successfully. Waiting for seller to transfer the domain.'
+                : 'Trade has been funded successfully.',
+            variant: 'default'
+          })
         }
 
         onSuccess()

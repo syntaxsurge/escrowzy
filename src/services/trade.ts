@@ -529,7 +529,7 @@ export async function cancelTrade(
       .returning()
 
     // If this is a domain trade, reactivate the original listing
-    if (trade.tradeType === 'domain' && metadata.originalListingId) {
+    if (metadata.listingCategory === 'domain' && metadata.originalListingId) {
       await db
         .update(escrowListings)
         .set({ isActive: true })
