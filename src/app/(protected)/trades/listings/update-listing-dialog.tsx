@@ -3,6 +3,7 @@
 import { useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Globe, DollarSign } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 
 import { Button } from '@/components/ui/button'
@@ -158,13 +159,26 @@ export function UpdateListingDialog({
       ? (parseFloat(amount) * parseFloat(pricePerUnit)).toFixed(2)
       : '0.00'
 
+  // Check if this is a domain listing
+  const isDomainListing = listing.listingCategory === 'domain'
+  const domainMetadata =
+    isDomainListing && listing.metadata
+      ? typeof listing.metadata === 'string'
+        ? JSON.parse(listing.metadata)
+        : listing.metadata
+      : null
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>Update Listing</DialogTitle>
+          <DialogTitle>
+            Update {isDomainListing ? 'Domain' : 'P2P'} Listing
+          </DialogTitle>
           <DialogDescription>
-            Modify your {listing.listingType} offer for {listing.tokenOffered}
+            {isDomainListing
+              ? `Modify your domain listing for ${domainMetadata?.domainName || 'domain'}`
+              : `Modify your ${listing.listingType} offer for ${listing.tokenOffered}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -202,57 +216,143 @@ export function UpdateListingDialog({
               )}
             />
 
-            <div className='grid grid-cols-2 gap-4'>
-              {/* Amount */}
-              <FormField
-                control={form.control}
-                name='amount'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Amount</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder='0.00'
-                        type='number'
-                        step='0.000001'
-                        min='0'
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Quantity of {listing.tokenOffered}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Domain-specific fields */}
+            {isDomainListing ? (
+              <>
+                {/* Domain Price */}
+                <FormField
+                  control={form.control}
+                  name='amount'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='flex items-center gap-2'>
+                        <DollarSign className='h-4 w-4' />
+                        Domain Price (USD)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder='0.00'
+                          type='number'
+                          step='0.01'
+                          min='0'
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        The selling price for{' '}
+                        {domainMetadata?.domainName || 'the domain'}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Price Per Unit */}
-              <FormField
-                control={form.control}
-                name='pricePerUnit'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price per unit (USD)</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder='0.00'
-                        type='number'
-                        step='0.01'
-                        min='0'
-                      />
-                    </FormControl>
-                    <FormDescription>Price in USD per token</FormDescription>
-                    <FormMessage />
-                  </FormItem>
+                {/* Domain Information Display */}
+                {domainMetadata && (
+                  <div className='bg-muted/50 space-y-3 rounded-lg border p-4'>
+                    <h4 className='flex items-center gap-2 font-medium'>
+                      <Globe className='h-4 w-4' />
+                      Domain Information
+                    </h4>
+                    <div className='grid grid-cols-2 gap-4 text-sm'>
+                      <div>
+                        <span className='text-muted-foreground'>Domain:</span>
+                        <p className='font-medium'>
+                          {domainMetadata.domainName}
+                        </p>
+                      </div>
+                      <div>
+                        <span className='text-muted-foreground'>
+                          Registrar:
+                        </span>
+                        <p className='font-medium'>
+                          {domainMetadata.registrar}
+                        </p>
+                      </div>
+                      {domainMetadata.expirationDate && (
+                        <div>
+                          <span className='text-muted-foreground'>
+                            Expiration:
+                          </span>
+                          <p className='font-medium'>
+                            {new Date(
+                              domainMetadata.expirationDate
+                            ).toLocaleDateString()}
+                          </p>
+                        </div>
+                      )}
+                      {domainMetadata.monthlyTraffic && (
+                        <div>
+                          <span className='text-muted-foreground'>
+                            Monthly Traffic:
+                          </span>
+                          <p className='font-medium'>
+                            {domainMetadata.monthlyTraffic} visitors
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
-              />
-            </div>
+              </>
+            ) : (
+              <>
+                <div className='grid grid-cols-2 gap-4'>
+                  {/* Amount */}
+                  <FormField
+                    control={form.control}
+                    name='amount'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Amount</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder='0.00'
+                            type='number'
+                            step='0.000001'
+                            min='0'
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Quantity of {listing.tokenOffered}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            {/* Total Value Display */}
-            {amount && pricePerUnit && (
+                  {/* Price Per Unit */}
+                  <FormField
+                    control={form.control}
+                    name='pricePerUnit'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Price per unit (USD)</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder='0.00'
+                            type='number'
+                            step='0.01'
+                            min='0'
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Price in USD per token
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Total Value Display - Only for P2P */}
+            {!isDomainListing && amount && pricePerUnit && (
               <div className='bg-muted rounded-lg p-4'>
                 <div className='flex items-center justify-between'>
                   <span className='text-muted-foreground text-sm'>
@@ -265,99 +365,104 @@ export function UpdateListingDialog({
               </div>
             )}
 
-            <div className='grid grid-cols-2 gap-4'>
-              {/* Min Amount */}
-              <FormField
-                control={form.control}
-                name='minAmount'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Minimum Amount (Optional)</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder='0.00'
-                        type='number'
-                        step='0.000001'
-                        min='0'
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormDescription>Minimum trade amount</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Max Amount */}
-              <FormField
-                control={form.control}
-                name='maxAmount'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Maximum Amount (Optional)</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder='0.00'
-                        type='number'
-                        step='0.000001'
-                        min='0'
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormDescription>Maximum trade amount</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Payment Methods */}
-            <FormField
-              control={form.control}
-              name='paymentMethods'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Accepted Payment Methods</FormLabel>
-                  <FormDescription>
-                    Select the payment methods you accept
-                  </FormDescription>
-                  <div className='mt-2 grid grid-cols-2 gap-4'>
-                    {Object.entries(PAYMENT_METHODS).map(([key, value]) => (
-                      <div key={key} className='flex items-center space-x-2'>
-                        <Checkbox
-                          id={key}
-                          checked={field.value?.includes(value)}
-                          onCheckedChange={checked => {
-                            const current = field.value || []
-                            if (checked) {
-                              field.onChange([...current, value])
-                            } else {
-                              field.onChange(current.filter(v => v !== value))
-                            }
-                          }}
+            {/* Min/Max Amounts - Only for P2P */}
+            {!isDomainListing && (
+              <div className='grid grid-cols-2 gap-4'>
+                {/* Min Amount */}
+                <FormField
+                  control={form.control}
+                  name='minAmount'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Minimum Amount (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder='0.00'
+                          type='number'
+                          step='0.000001'
+                          min='0'
+                          value={field.value || ''}
                         />
-                        <Label
-                          htmlFor={key}
-                          className='cursor-pointer text-sm font-normal'
-                        >
-                          {key
-                            .split('_')
-                            .map(
-                              word =>
-                                word.charAt(0).toUpperCase() +
-                                word.slice(1).toLowerCase()
-                            )
-                            .join(' ')}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                      </FormControl>
+                      <FormDescription>Minimum trade amount</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Max Amount */}
+                <FormField
+                  control={form.control}
+                  name='maxAmount'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Maximum Amount (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder='0.00'
+                          type='number'
+                          step='0.000001'
+                          min='0'
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <FormDescription>Maximum trade amount</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+
+            {/* Payment Methods - Only for P2P */}
+            {!isDomainListing && (
+              <FormField
+                control={form.control}
+                name='paymentMethods'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Accepted Payment Methods</FormLabel>
+                    <FormDescription>
+                      Select the payment methods you accept
+                    </FormDescription>
+                    <div className='mt-2 grid grid-cols-2 gap-4'>
+                      {Object.entries(PAYMENT_METHODS).map(([key, value]) => (
+                        <div key={key} className='flex items-center space-x-2'>
+                          <Checkbox
+                            id={key}
+                            checked={field.value?.includes(value)}
+                            onCheckedChange={checked => {
+                              const current = field.value || []
+                              if (checked) {
+                                field.onChange([...current, value])
+                              } else {
+                                field.onChange(current.filter(v => v !== value))
+                              }
+                            }}
+                          />
+                          <Label
+                            htmlFor={key}
+                            className='cursor-pointer text-sm font-normal'
+                          >
+                            {key
+                              .split('_')
+                              .map(
+                                word =>
+                                  word.charAt(0).toUpperCase() +
+                                  word.slice(1).toLowerCase()
+                              )
+                              .join(' ')}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Submit Button */}
             <div className='flex justify-end space-x-2 pt-4'>
