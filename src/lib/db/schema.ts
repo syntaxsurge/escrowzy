@@ -796,6 +796,9 @@ export const jobPostings = pgTable(
     metadata: jsonb('metadata').notNull().default('{}'),
     viewCount: integer('view_count').notNull().default(0),
     bidCount: integer('bid_count').notNull().default(0),
+    avgBidAmount: varchar('avg_bid_amount', { length: 50 }),
+    isFeatured: boolean('is_featured').notNull().default(false),
+    featuredUntil: timestamp('featured_until'),
     freelancerId: integer('freelancer_id').references(() => users.id, {
       onDelete: 'set null'
     }), // Selected freelancer

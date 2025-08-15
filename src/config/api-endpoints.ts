@@ -199,6 +199,16 @@ export const apiEndpoints = {
     base: '/api/upload',
     getFile: (path: string) => `/api/uploads/${path}`
   },
+  jobs: {
+    base: '/api/jobs',
+    byId: (id: string | number) => `/api/jobs/${id}`,
+    categories: '/api/jobs/categories',
+    drafts: '/api/jobs/drafts',
+    featured: '/api/jobs/featured',
+    search: '/api/jobs/search',
+    save: (id: string | number) => `/api/jobs/${id}/save`,
+    apply: (id: string | number) => `/api/jobs/${id}/apply`
+  },
   swap: {
     chains: '/api/swap/chains',
     balances: '/api/swap/balances',

@@ -1,32 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { eq } from 'drizzle-orm'
+import { getJobCategoriesWithCounts } from '@/lib/db/queries/jobs'
 
-import { db } from '@/lib/db/drizzle'
-import { jobCategories } from '@/lib/db/schema'
-
-// GET /api/jobs/categories - Get all job categories
+// GET /api/jobs/categories - Get all job categories with job counts
 export async function GET(_request: NextRequest) {
   try {
-    // Get all active categories
-    const categories = await db
-      .select()
-      .from(jobCategories)
-      .where(eq(jobCategories.isActive, true))
-      .orderBy(jobCategories.sortOrder)
+    const categories = await getJobCategoriesWithCounts()
 
-    // Organize into hierarchy
-    const rootCategories = categories.filter((c: any) => !c.parentCategoryId)
-    const categoriesWithChildren = rootCategories.map((parent: any) => ({
+    // Organize into hierarchy with counts
+    const rootCategories = categories.filter(c => !c.parentCategoryId)
+    const categoriesWithChildren = rootCategories.map(parent => ({
       ...parent,
-      subCategories: categories.filter(
-        (c: any) => c.parentCategoryId === parent.id
-      )
+      subCategories: categories.filter(c => c.parentCategoryId === parent.id)
     }))
 
     return NextResponse.json({
       success: true,
-      categories: categoriesWithChildren
+      categories: categoriesWithChildren,
+      total: categories.reduce((sum, cat) => sum + cat.jobCount, 0)
     })
   } catch (error) {
     console.error('Error fetching categories:', error)

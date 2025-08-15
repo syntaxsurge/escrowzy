@@ -61,6 +61,13 @@ export const appRoutes = {
       base: '/trades/listings',
       create: '/trades/listings/create',
       withTab: (tab: string) => `/trades/listings?tab=${tab}`
+    },
+    jobs: {
+      base: '/trades/jobs',
+      detail: (id: string | number) => `/trades/jobs/${id}`,
+      create: '/trades/listings/create/service',
+      saved: '/trades/jobs/saved',
+      drafts: '/trades/jobs/drafts'
     }
   },
 

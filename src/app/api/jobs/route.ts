@@ -1,48 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { eq, and, or, ilike, desc, asc } from 'drizzle-orm'
-
 import { db } from '@/lib/db/drizzle'
+import { getJobsWithFilters, type JobFilters } from '@/lib/db/queries/jobs'
 import { jobPostings } from '@/lib/db/schema'
 import { getUser } from '@/services/user'
 
-// GET /api/jobs - List job postings
+// GET /api/jobs - List job postings with advanced filtering
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const status = searchParams.get('status') || 'open'
-    const categoryId = searchParams.get('categoryId')
-    const search = searchParams.get('search')
-    const sortOrder = searchParams.get('sortOrder') || 'desc'
 
-    // Build query conditions
-    const conditions = [eq(jobPostings.status, status)]
-
-    if (categoryId) {
-      conditions.push(eq(jobPostings.categoryId, parseInt(categoryId)))
+    // Build filters from query params
+    const filters: JobFilters = {
+      status: searchParams.get('status') || 'open',
+      search: searchParams.get('search') || undefined,
+      categoryId: searchParams.get('categoryId')
+        ? parseInt(searchParams.get('categoryId')!)
+        : undefined,
+      budgetMin: searchParams.get('budgetMin') || undefined,
+      budgetMax: searchParams.get('budgetMax') || undefined,
+      experienceLevel: searchParams.get('experienceLevel') || undefined,
+      skillsRequired: searchParams.get('skills')
+        ? searchParams.get('skills')!.split(',')
+        : undefined,
+      sortBy: (searchParams.get('sortBy') as JobFilters['sortBy']) || 'newest',
+      limit: searchParams.get('limit')
+        ? parseInt(searchParams.get('limit')!)
+        : 20,
+      offset: searchParams.get('offset')
+        ? parseInt(searchParams.get('offset')!)
+        : 0
     }
 
-    if (search) {
-      conditions.push(
-        or(
-          ilike(jobPostings.title, `%${search}%`),
-          ilike(jobPostings.description, `%${search}%`)
-        )!
-      )
-    }
-
-    // Get jobs with related data
-    const orderColumn = jobPostings.createdAt // Default to createdAt for ordering
-    const jobs = await db
-      .select()
-      .from(jobPostings)
-      .where(and(...conditions))
-      .orderBy(sortOrder === 'asc' ? asc(orderColumn) : desc(orderColumn))
-      .limit(50)
+    const { jobs, total } = await getJobsWithFilters(filters)
 
     return NextResponse.json({
       success: true,
-      jobs
+      jobs,
+      total,
+      pagination: {
+        limit: filters.limit,
+        offset: filters.offset,
+        hasMore: (filters.offset || 0) + (filters.limit || 20) < total
+      }
     })
   } catch (error) {
     console.error('Error fetching jobs:', error)
