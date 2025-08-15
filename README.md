@@ -280,8 +280,7 @@ escrowzy-core/
 
 ## Project Resources
 
-- 🌐 **Live Platform**:
-  [escrowzy.com](https://escrowzy.com/)
+- 🌐 **Live Platform**: [escrowzy.com](https://escrowzy.com/)
 - 📹 **Demo Video**: [youtu.be/xxxxxxx](https://youtu.be/xxxxxxx)
 - 💻 **GitHub**:
   [github.com/syntaxsurge/escrowzy](https://github.com/syntaxsurge/escrowzy)

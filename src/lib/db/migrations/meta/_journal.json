@@ -8,6 +8,27 @@
       "when": 1755075087957,
       "tag": "0000_nervous_victor_mancha",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1755287086034,
+      "tag": "0001_boring_rumiko_fujikawa",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1755288192537,
+      "tag": "0002_hot_tarot",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1755288716380,
+      "tag": "0003_ambitious_komodo",
+      "breakpoints": true
     }
   ]
 }

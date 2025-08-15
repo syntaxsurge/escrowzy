@@ -123,7 +123,7 @@ export interface AcceptListingResponse {
 
 // Type guards
 export function isValidListingCategory(category: string): boolean {
-  return category === 'p2p' || category === 'domain'
+  return category === 'p2p' || category === 'domain' || category === 'service'
 }
 
 export function isValidListingType(type: string): type is 'buy' | 'sell' {

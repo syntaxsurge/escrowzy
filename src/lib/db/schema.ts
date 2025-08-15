@@ -181,7 +181,7 @@ export const messages = pgTable(
   'messages',
   {
     id: serial('id').primaryKey(),
-    contextType: varchar('context_type', { length: 50 }).notNull(),
+    contextType: varchar('context_type', { length: 50 }).notNull(), // Extended to support: 'trade' | 'team' | 'direct' | 'job_proposal' | 'job_workspace'
     contextId: varchar('context_id', { length: 255 }).notNull(),
     senderId: integer('sender_id')
       .notNull()
@@ -189,15 +189,22 @@ export const messages = pgTable(
     content: text('content'),
     messageType: varchar('message_type', { length: 50 })
       .notNull()
-      .default('text'),
-    metadata: jsonb('metadata'),
+      .default('text'), // Extended to support: 'text' | 'image' | 'file' | 'proposal' | 'milestone_submission' | 'revision_request'
+    metadata: jsonb('metadata'), // Extended to include proposal details, milestone info, etc.
     createdAt: timestamp('created_at').notNull().defaultNow(),
     editedAt: timestamp('edited_at'),
-    deletedAt: timestamp('deleted_at')
+    deletedAt: timestamp('deleted_at'),
+    // Freelancer marketplace specific fields
+    jobPostingId: integer('job_posting_id').references(() => jobPostings.id),
+    bidId: integer('bid_id').references(() => jobBids.id),
+    milestoneId: integer('milestone_id').references(() => jobMilestones.id),
+    isSystemMessage: boolean('is_system_message').notNull().default(false)
   },
   table => [
     index('idx_messages_context').on(table.contextType, table.contextId),
-    index('idx_messages_created').on(table.createdAt)
+    index('idx_messages_created').on(table.createdAt),
+    index('idx_messages_job_posting').on(table.jobPostingId),
+    index('idx_messages_bid').on(table.bidId)
   ]
 )
 
@@ -255,7 +262,18 @@ export const userGameData = pgTable(
     questProgress: jsonb('quest_progress').notNull().default('{}'),
     stats: jsonb('stats').notNull().default('{}'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow()
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    // Freelancer marketplace specific fields
+    freelancerStats: jsonb('freelancer_stats')
+      .notNull()
+      .default(
+        '{"jobsCompleted": 0, "totalEarnings": "0", "avgRating": 0, "onTimeDelivery": 0, "repeatClients": 0}'
+      ),
+    freelancerAchievements: jsonb('freelancer_achievements')
+      .notNull()
+      .default('[]'),
+    freelancerLevel: integer('freelancer_level').notNull().default(1),
+    freelancerXp: integer('freelancer_xp').notNull().default(0)
   },
   table => [index('idx_user_game_data_user').on(table.userId)]
 )
@@ -307,10 +325,10 @@ export const trades = pgTable(
     amount: varchar('amount', { length: 50 }).notNull(),
     // Default currency should match the primary chain's native currency
     currency: varchar('currency', { length: 10 }).notNull().default(''),
-    // The category of assets being traded: 'p2p' (crypto/fiat) | 'domain' (domain names)
+    // The category of assets being traded: 'p2p' (crypto/fiat) | 'domain' (domain names) | 'service' (freelance services)
     listingCategory: varchar('listing_category', { length: 20 })
       .notNull()
-      .default('p2p'), // 'p2p' | 'domain'
+      .default('p2p'), // 'p2p' | 'domain' | 'service'
     status: varchar('status', { length: 50 }).notNull().default('created'),
     metadata: jsonb('metadata'),
     depositDeadline: timestamp('deposit_deadline'),
@@ -318,7 +336,17 @@ export const trades = pgTable(
     paymentSentAt: timestamp('payment_sent_at'),
     paymentConfirmedAt: timestamp('payment_confirmed_at'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
-    completedAt: timestamp('completed_at')
+    completedAt: timestamp('completed_at'),
+    // Freelancer marketplace specific fields
+    jobPostingId: integer('job_posting_id').references(() => jobPostings.id),
+    bidId: integer('bid_id').references(() => jobBids.id),
+    milestoneId: integer('milestone_id').references(() => jobMilestones.id),
+    deliverables: jsonb('deliverables').default('[]'),
+    revisionCount: integer('revision_count').default(0),
+    freelancerDeliveredAt: timestamp('freelancer_delivered_at'),
+    clientApprovedAt: timestamp('client_approved_at'),
+    disputeReason: text('dispute_reason'),
+    disputedAt: timestamp('disputed_at')
   },
   table => [
     index('idx_trades_escrow').on(table.chainId, table.escrowId),
@@ -326,7 +354,10 @@ export const trades = pgTable(
     index('idx_trades_buyer').on(table.buyerId),
     index('idx_trades_seller').on(table.sellerId),
     index('idx_trades_deposit_deadline').on(table.depositDeadline),
-    index('idx_trades_category').on(table.listingCategory)
+    index('idx_trades_category').on(table.listingCategory),
+    index('idx_trades_job_posting').on(table.jobPostingId),
+    index('idx_trades_bid').on(table.bidId),
+    index('idx_trades_milestone').on(table.milestoneId)
   ]
 )
 
@@ -337,10 +368,10 @@ export const escrowListings = pgTable(
     userId: integer('user_id')
       .notNull()
       .references(() => users.id),
-    // The category of assets being listed: 'p2p' (crypto/fiat) | 'domain' (domain names)
+    // The category of assets being listed: 'p2p' (crypto/fiat) | 'domain' (domain names) | 'service' (freelance services)
     listingCategory: varchar('listing_category', { length: 20 })
       .notNull()
-      .default('p2p'), // 'p2p' | 'domain'
+      .default('p2p'), // 'p2p' | 'domain' | 'service'
     // The direction of the trade: 'buy' (creator wants to buy) | 'sell' (creator wants to sell)
     listingType: varchar('listing_type', { length: 10 }).notNull(), // 'buy' | 'sell'
     chainId: varchar('chain_id', { length: 20 }), // Chain ID for the listing
@@ -354,13 +385,25 @@ export const escrowListings = pgTable(
     paymentWindow: integer('payment_window').notNull().default(15), // in minutes
     metadata: jsonb('metadata').notNull().default('{}'), // Domain-specific data
     isActive: boolean('is_active').notNull().default(true),
-    createdAt: timestamp('created_at').notNull().defaultNow()
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    // Freelancer marketplace specific fields
+    jobPostingId: integer('job_posting_id').references(() => jobPostings.id),
+    serviceTitle: varchar('service_title', { length: 200 }),
+    serviceDescription: text('service_description'),
+    serviceCategoryId: integer('service_category_id').references(
+      () => jobCategories.id
+    ),
+    deliveryTime: integer('delivery_time_days'),
+    revisions: integer('revisions').default(0),
+    skillsOffered: jsonb('skills_offered').default('[]')
   },
   table => [
     index('idx_escrow_listings_user').on(table.userId),
     index('idx_escrow_listings_active').on(table.isActive),
     index('idx_escrow_listings_type').on(table.listingType),
-    index('idx_escrow_listings_category').on(table.listingCategory)
+    index('idx_escrow_listings_category').on(table.listingCategory),
+    index('idx_escrow_listings_job_posting').on(table.jobPostingId),
+    index('idx_escrow_listings_service_category').on(table.serviceCategoryId)
   ]
 )
 
@@ -615,6 +658,381 @@ export const userTradingStats = pgTable(
   table => [index('idx_user_trading_stats_user').on(table.userId)]
 )
 
+// Freelancer Marketplace Tables
+
+export const jobCategories = pgTable(
+  'job_categories',
+  {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 100 }).notNull(),
+    slug: varchar('slug', { length: 100 }).notNull().unique(),
+    description: text('description'),
+    parentCategoryId: integer('parent_category_id'),
+    icon: varchar('icon', { length: 50 }),
+    sortOrder: integer('sort_order').notNull().default(0),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_job_categories_slug').on(table.slug),
+    index('idx_job_categories_parent').on(table.parentCategoryId)
+  ]
+)
+
+export const skills = pgTable(
+  'skills',
+  {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 100 }).notNull().unique(),
+    categoryId: integer('category_id').references(() => jobCategories.id),
+    description: text('description'),
+    icon: varchar('icon', { length: 50 }),
+    isVerifiable: boolean('is_verifiable').notNull().default(false),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [index('idx_skills_category').on(table.categoryId)]
+)
+
+export const freelancerProfiles = pgTable(
+  'freelancer_profiles',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' })
+      .unique(),
+    professionalTitle: varchar('professional_title', { length: 200 }),
+    bio: text('bio'),
+    hourlyRate: varchar('hourly_rate', { length: 50 }),
+    availability: varchar('availability', { length: 50 })
+      .notNull()
+      .default('available'), // available | busy | away
+    yearsOfExperience: integer('years_of_experience').notNull().default(0),
+    languages: jsonb('languages').notNull().default('[]'), // [{language: "English", level: "native"}]
+    timezone: varchar('timezone', { length: 50 }),
+    portfolioUrl: text('portfolio_url'),
+    linkedinUrl: text('linkedin_url'),
+    githubUrl: text('github_url'),
+    verificationStatus: varchar('verification_status', { length: 50 })
+      .notNull()
+      .default('unverified'), // unverified | pending | verified
+    totalJobs: integer('total_jobs').notNull().default(0),
+    totalEarnings: varchar('total_earnings', { length: 50 })
+      .notNull()
+      .default('0'),
+    avgRating: integer('avg_rating').notNull().default(0), // Stored as integer (1-50 for 0.1-5.0)
+    completionRate: integer('completion_rate').notNull().default(100), // percentage
+    responseTime: integer('response_time'), // average in hours
+    lastActiveAt: timestamp('last_active_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_freelancer_profiles_user').on(table.userId),
+    index('idx_freelancer_profiles_availability').on(table.availability),
+    index('idx_freelancer_profiles_rating').on(table.avgRating),
+    index('idx_freelancer_profiles_verification').on(table.verificationStatus),
+    index('idx_freelancer_profiles_created').on(table.createdAt)
+  ]
+)
+
+export const freelancerSkills = pgTable(
+  'freelancer_skills',
+  {
+    id: serial('id').primaryKey(),
+    freelancerId: integer('freelancer_id')
+      .notNull()
+      .references(() => freelancerProfiles.id, { onDelete: 'cascade' }),
+    skillId: integer('skill_id')
+      .notNull()
+      .references(() => skills.id, { onDelete: 'cascade' }),
+    yearsOfExperience: integer('years_of_experience').notNull().default(0),
+    skillLevel: varchar('skill_level', { length: 20 })
+      .notNull()
+      .default('intermediate'), // beginner | intermediate | expert
+    isVerified: boolean('is_verified').notNull().default(false),
+    verifiedAt: timestamp('verified_at'),
+    endorsements: integer('endorsements').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_freelancer_skills_freelancer').on(table.freelancerId),
+    index('idx_freelancer_skills_skill').on(table.skillId),
+    index('idx_freelancer_skills_verified').on(table.isVerified),
+    index('idx_freelancer_skills_level').on(table.skillLevel),
+    unique('unique_freelancer_skill').on(table.freelancerId, table.skillId)
+  ]
+)
+
+export const jobPostings = pgTable(
+  'job_postings',
+  {
+    id: serial('id').primaryKey(),
+    clientId: integer('client_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    title: varchar('title', { length: 200 }).notNull(),
+    description: text('description').notNull(),
+    categoryId: integer('category_id')
+      .notNull()
+      .references(() => jobCategories.id, { onDelete: 'restrict' }),
+    budgetType: varchar('budget_type', { length: 20 }).notNull(), // fixed | hourly
+    budgetMin: varchar('budget_min', { length: 50 }),
+    budgetMax: varchar('budget_max', { length: 50 }),
+    currency: varchar('currency', { length: 10 }).notNull().default('USD'),
+    deadline: timestamp('deadline'),
+    skillsRequired: jsonb('skills_required').notNull().default('[]'), // Array of skill IDs
+    experienceLevel: varchar('experience_level', { length: 50 })
+      .notNull()
+      .default('intermediate'), // entry | intermediate | expert
+    projectDuration: varchar('project_duration', { length: 50 }), // hours | days | weeks | months
+    visibility: varchar('visibility', { length: 20 })
+      .notNull()
+      .default('public'), // public | private | invited
+    status: varchar('status', { length: 50 }).notNull().default('draft'), // draft | open | in_progress | completed | cancelled
+    escrowId: integer('escrow_id'), // Reference to onchain escrow
+    chainId: integer('chain_id'),
+    attachments: jsonb('attachments').notNull().default('[]'),
+    metadata: jsonb('metadata').notNull().default('{}'),
+    viewCount: integer('view_count').notNull().default(0),
+    bidCount: integer('bid_count').notNull().default(0),
+    freelancerId: integer('freelancer_id').references(() => users.id, {
+      onDelete: 'set null'
+    }), // Selected freelancer
+    startedAt: timestamp('started_at'),
+    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_job_postings_client').on(table.clientId),
+    index('idx_job_postings_category').on(table.categoryId),
+    index('idx_job_postings_status').on(table.status),
+    index('idx_job_postings_visibility').on(table.visibility),
+    index('idx_job_postings_freelancer').on(table.freelancerId),
+    index('idx_job_postings_created').on(table.createdAt),
+    index('idx_job_postings_deadline').on(table.deadline),
+    index('idx_job_postings_budget').on(table.budgetMin, table.budgetMax)
+  ]
+)
+
+export const jobMilestones = pgTable(
+  'job_milestones',
+  {
+    id: serial('id').primaryKey(),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id, { onDelete: 'cascade' }),
+    title: varchar('title', { length: 200 }).notNull(),
+    description: text('description'),
+    amount: varchar('amount', { length: 50 }).notNull(),
+    dueDate: timestamp('due_date'),
+    status: varchar('status', { length: 50 }).notNull().default('pending'), // pending | in_progress | submitted | approved | disputed | cancelled
+    submissionUrl: text('submission_url'),
+    submissionNote: text('submission_note'),
+    feedback: text('feedback'),
+    escrowMilestoneId: integer('escrow_milestone_id'), // Onchain reference
+    submittedAt: timestamp('submitted_at'),
+    approvedAt: timestamp('approved_at'),
+    paidAt: timestamp('paid_at'),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_job_milestones_job').on(table.jobId),
+    index('idx_job_milestones_status').on(table.status)
+  ]
+)
+
+export const jobBids = pgTable(
+  'job_bids',
+  {
+    id: serial('id').primaryKey(),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id, { onDelete: 'cascade' }),
+    freelancerId: integer('freelancer_id')
+      .notNull()
+      .references(() => users.id),
+    bidAmount: varchar('bid_amount', { length: 50 }).notNull(),
+    deliveryDays: integer('delivery_days').notNull(),
+    proposalText: text('proposal_text').notNull(),
+    coverLetter: text('cover_letter'),
+    attachments: jsonb('attachments').notNull().default('[]'),
+    status: varchar('status', { length: 50 }).notNull().default('pending'), // pending | shortlisted | accepted | rejected | withdrawn
+    milestones: jsonb('milestones').notNull().default('[]'), // Proposed milestones
+    metadata: jsonb('metadata').notNull().default('{}'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_job_bids_job').on(table.jobId),
+    index('idx_job_bids_freelancer').on(table.freelancerId),
+    index('idx_job_bids_status').on(table.status),
+    unique('unique_job_bid').on(table.jobId, table.freelancerId)
+  ]
+)
+
+export const jobInvitations = pgTable(
+  'job_invitations',
+  {
+    id: serial('id').primaryKey(),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id, { onDelete: 'cascade' }),
+    freelancerId: integer('freelancer_id')
+      .notNull()
+      .references(() => users.id),
+    invitedBy: integer('invited_by')
+      .notNull()
+      .references(() => users.id),
+    message: text('message'),
+    status: varchar('status', { length: 50 }).notNull().default('pending'), // pending | accepted | declined
+    respondedAt: timestamp('responded_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_job_invitations_job').on(table.jobId),
+    index('idx_job_invitations_freelancer').on(table.freelancerId),
+    unique('unique_job_invitation').on(table.jobId, table.freelancerId)
+  ]
+)
+
+export const freelancerReviews = pgTable(
+  'freelancer_reviews',
+  {
+    id: serial('id').primaryKey(),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id, { onDelete: 'cascade' }),
+    reviewerId: integer('reviewer_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }), // Client who reviews
+    freelancerId: integer('freelancer_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    rating: integer('rating').notNull(), // 1-5
+    reviewText: text('review_text'),
+    communicationRating: integer('communication_rating'), // 1-5
+    qualityRating: integer('quality_rating'), // 1-5
+    deadlineRating: integer('deadline_rating'), // 1-5
+    skillsRating: jsonb('skills_rating').notNull().default('{}'), // {skillId: rating}
+    wouldHireAgain: boolean('would_hire_again').notNull().default(true),
+    isPublic: boolean('is_public').notNull().default(true),
+    response: text('response'), // Freelancer's response
+    respondedAt: timestamp('responded_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_freelancer_reviews_job').on(table.jobId),
+    index('idx_freelancer_reviews_freelancer').on(table.freelancerId),
+    index('idx_freelancer_reviews_reviewer').on(table.reviewerId),
+    index('idx_freelancer_reviews_rating').on(table.rating),
+    unique('unique_freelancer_review').on(table.jobId, table.freelancerId)
+  ]
+)
+
+export const clientReviews = pgTable(
+  'client_reviews',
+  {
+    id: serial('id').primaryKey(),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id, { onDelete: 'cascade' }),
+    reviewerId: integer('reviewer_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }), // Freelancer who reviews
+    clientId: integer('client_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    rating: integer('rating').notNull(), // 1-5
+    reviewText: text('review_text'),
+    paymentRating: integer('payment_rating'), // 1-5
+    communicationRating: integer('communication_rating'), // 1-5
+    clarityRating: integer('clarity_rating'), // 1-5
+    wouldWorkAgain: boolean('would_work_again').notNull().default(true),
+    isPublic: boolean('is_public').notNull().default(true),
+    response: text('response'), // Client's response
+    respondedAt: timestamp('responded_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_client_reviews_job').on(table.jobId),
+    index('idx_client_reviews_client').on(table.clientId),
+    index('idx_client_reviews_reviewer').on(table.reviewerId),
+    index('idx_client_reviews_rating').on(table.rating),
+    unique('unique_client_review').on(table.jobId, table.clientId)
+  ]
+)
+
+export const portfolioItems = pgTable(
+  'portfolio_items',
+  {
+    id: serial('id').primaryKey(),
+    freelancerId: integer('freelancer_id')
+      .notNull()
+      .references(() => freelancerProfiles.id, { onDelete: 'cascade' }),
+    title: varchar('title', { length: 200 }).notNull(),
+    description: text('description'),
+    categoryId: integer('category_id').references(() => jobCategories.id),
+    skillsUsed: jsonb('skills_used').notNull().default('[]'), // Array of skill IDs
+    projectUrl: text('project_url'),
+    images: jsonb('images').notNull().default('[]'), // Array of image URLs
+    completionDate: timestamp('completion_date'),
+    clientName: varchar('client_name', { length: 100 }),
+    isHighlighted: boolean('is_highlighted').notNull().default(false),
+    viewCount: integer('view_count').notNull().default(0),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_portfolio_items_freelancer').on(table.freelancerId),
+    index('idx_portfolio_items_category').on(table.categoryId)
+  ]
+)
+
+export const savedFreelancers = pgTable(
+  'saved_freelancers',
+  {
+    id: serial('id').primaryKey(),
+    clientId: integer('client_id')
+      .notNull()
+      .references(() => users.id),
+    freelancerId: integer('freelancer_id')
+      .notNull()
+      .references(() => freelancerProfiles.id),
+    note: text('note'),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_saved_freelancers_client').on(table.clientId),
+    unique('unique_saved_freelancer').on(table.clientId, table.freelancerId)
+  ]
+)
+
+export const savedJobs = pgTable(
+  'saved_jobs',
+  {
+    id: serial('id').primaryKey(),
+    freelancerId: integer('freelancer_id')
+      .notNull()
+      .references(() => users.id),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id),
+    note: text('note'),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_saved_jobs_freelancer').on(table.freelancerId),
+    unique('unique_saved_job').on(table.freelancerId, table.jobId)
+  ]
+)
+
 /*
 Relations
 */
@@ -661,7 +1079,31 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   tradingStats: one(userTradingStats, {
     fields: [users.id],
     references: [userTradingStats.userId]
-  })
+  }),
+  // Freelancer marketplace relations
+  freelancerProfile: one(freelancerProfiles, {
+    fields: [users.id],
+    references: [freelancerProfiles.userId]
+  }),
+  jobPostings: many(jobPostings, { relationName: 'jobClient' }),
+  assignedJobs: many(jobPostings, { relationName: 'jobFreelancer' }),
+  jobBids: many(jobBids),
+  sentJobInvitations: many(jobInvitations, { relationName: 'invitedBy' }),
+  receivedJobInvitations: many(jobInvitations, {
+    relationName: 'invitedFreelancer'
+  }),
+  freelancerReviewsGiven: many(freelancerReviews, {
+    relationName: 'freelancerReviewer'
+  }),
+  freelancerReviewsReceived: many(freelancerReviews, {
+    relationName: 'reviewedFreelancer'
+  }),
+  clientReviewsGiven: many(clientReviews, { relationName: 'clientReviewer' }),
+  clientReviewsReceived: many(clientReviews, {
+    relationName: 'reviewedClient'
+  }),
+  savedFreelancers: many(savedFreelancers),
+  savedJobs: many(savedJobs)
 }))
 
 export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
@@ -744,7 +1186,19 @@ export const messagesRelations = relations(messages, ({ one, many }) => ({
     references: [users.id]
   }),
   messageReads: many(messageReads),
-  attachments: many(attachments)
+  attachments: many(attachments),
+  jobPosting: one(jobPostings, {
+    fields: [messages.jobPostingId],
+    references: [jobPostings.id]
+  }),
+  bid: one(jobBids, {
+    fields: [messages.bidId],
+    references: [jobBids.id]
+  }),
+  milestone: one(jobMilestones, {
+    fields: [messages.milestoneId],
+    references: [jobMilestones.id]
+  })
 }))
 
 export const messageReadsRelations = relations(messageReads, ({ one }) => ({
@@ -812,6 +1266,18 @@ export const tradesRelations = relations(trades, ({ one }) => ({
     fields: [trades.sellerId],
     references: [users.id],
     relationName: 'seller'
+  }),
+  jobPosting: one(jobPostings, {
+    fields: [trades.jobPostingId],
+    references: [jobPostings.id]
+  }),
+  bid: one(jobBids, {
+    fields: [trades.bidId],
+    references: [jobBids.id]
+  }),
+  milestone: one(jobMilestones, {
+    fields: [trades.milestoneId],
+    references: [jobMilestones.id]
   })
 }))
 
@@ -819,6 +1285,14 @@ export const escrowListingsRelations = relations(escrowListings, ({ one }) => ({
   user: one(users, {
     fields: [escrowListings.userId],
     references: [users.id]
+  }),
+  jobPosting: one(jobPostings, {
+    fields: [escrowListings.jobPostingId],
+    references: [jobPostings.id]
+  }),
+  serviceCategory: one(jobCategories, {
+    fields: [escrowListings.serviceCategoryId],
+    references: [jobCategories.id]
   })
 }))
 
@@ -912,6 +1386,189 @@ export const userTradingStatsRelations = relations(
     })
   })
 )
+
+// Freelancer Marketplace Relations
+
+export const jobCategoriesRelations = relations(
+  jobCategories,
+  ({ one, many }) => ({
+    parentCategory: one(jobCategories, {
+      fields: [jobCategories.parentCategoryId],
+      references: [jobCategories.id],
+      relationName: 'parentCategory'
+    }),
+    subCategories: many(jobCategories, { relationName: 'parentCategory' }),
+    skills: many(skills),
+    jobPostings: many(jobPostings),
+    portfolioItems: many(portfolioItems)
+  })
+)
+
+export const skillsRelations = relations(skills, ({ one, many }) => ({
+  category: one(jobCategories, {
+    fields: [skills.categoryId],
+    references: [jobCategories.id]
+  }),
+  freelancerSkills: many(freelancerSkills)
+}))
+
+export const freelancerProfilesRelations = relations(
+  freelancerProfiles,
+  ({ one, many }) => ({
+    user: one(users, {
+      fields: [freelancerProfiles.userId],
+      references: [users.id]
+    }),
+    skills: many(freelancerSkills),
+    portfolioItems: many(portfolioItems),
+    savedByClients: many(savedFreelancers)
+  })
+)
+
+export const freelancerSkillsRelations = relations(
+  freelancerSkills,
+  ({ one }) => ({
+    freelancer: one(freelancerProfiles, {
+      fields: [freelancerSkills.freelancerId],
+      references: [freelancerProfiles.id]
+    }),
+    skill: one(skills, {
+      fields: [freelancerSkills.skillId],
+      references: [skills.id]
+    })
+  })
+)
+
+export const jobPostingsRelations = relations(jobPostings, ({ one, many }) => ({
+  client: one(users, {
+    fields: [jobPostings.clientId],
+    references: [users.id],
+    relationName: 'jobClient'
+  }),
+  freelancer: one(users, {
+    fields: [jobPostings.freelancerId],
+    references: [users.id],
+    relationName: 'jobFreelancer'
+  }),
+  category: one(jobCategories, {
+    fields: [jobPostings.categoryId],
+    references: [jobCategories.id]
+  }),
+  milestones: many(jobMilestones),
+  bids: many(jobBids),
+  invitations: many(jobInvitations),
+  freelancerReviews: many(freelancerReviews),
+  clientReviews: many(clientReviews),
+  savedByFreelancers: many(savedJobs)
+}))
+
+export const jobMilestonesRelations = relations(jobMilestones, ({ one }) => ({
+  job: one(jobPostings, {
+    fields: [jobMilestones.jobId],
+    references: [jobPostings.id]
+  })
+}))
+
+export const jobBidsRelations = relations(jobBids, ({ one }) => ({
+  job: one(jobPostings, {
+    fields: [jobBids.jobId],
+    references: [jobPostings.id]
+  }),
+  freelancer: one(users, {
+    fields: [jobBids.freelancerId],
+    references: [users.id]
+  })
+}))
+
+export const jobInvitationsRelations = relations(jobInvitations, ({ one }) => ({
+  job: one(jobPostings, {
+    fields: [jobInvitations.jobId],
+    references: [jobPostings.id]
+  }),
+  freelancer: one(users, {
+    fields: [jobInvitations.freelancerId],
+    references: [users.id],
+    relationName: 'invitedFreelancer'
+  }),
+  invitedBy: one(users, {
+    fields: [jobInvitations.invitedBy],
+    references: [users.id],
+    relationName: 'invitedBy'
+  })
+}))
+
+export const freelancerReviewsRelations = relations(
+  freelancerReviews,
+  ({ one }) => ({
+    job: one(jobPostings, {
+      fields: [freelancerReviews.jobId],
+      references: [jobPostings.id]
+    }),
+    reviewer: one(users, {
+      fields: [freelancerReviews.reviewerId],
+      references: [users.id],
+      relationName: 'freelancerReviewer'
+    }),
+    freelancer: one(users, {
+      fields: [freelancerReviews.freelancerId],
+      references: [users.id],
+      relationName: 'reviewedFreelancer'
+    })
+  })
+)
+
+export const clientReviewsRelations = relations(clientReviews, ({ one }) => ({
+  job: one(jobPostings, {
+    fields: [clientReviews.jobId],
+    references: [jobPostings.id]
+  }),
+  reviewer: one(users, {
+    fields: [clientReviews.reviewerId],
+    references: [users.id],
+    relationName: 'clientReviewer'
+  }),
+  client: one(users, {
+    fields: [clientReviews.clientId],
+    references: [users.id],
+    relationName: 'reviewedClient'
+  })
+}))
+
+export const portfolioItemsRelations = relations(portfolioItems, ({ one }) => ({
+  freelancer: one(freelancerProfiles, {
+    fields: [portfolioItems.freelancerId],
+    references: [freelancerProfiles.id]
+  }),
+  category: one(jobCategories, {
+    fields: [portfolioItems.categoryId],
+    references: [jobCategories.id]
+  })
+}))
+
+export const savedFreelancersRelations = relations(
+  savedFreelancers,
+  ({ one }) => ({
+    client: one(users, {
+      fields: [savedFreelancers.clientId],
+      references: [users.id]
+    }),
+    freelancer: one(freelancerProfiles, {
+      fields: [savedFreelancers.freelancerId],
+      references: [freelancerProfiles.id]
+    })
+  })
+)
+
+export const savedJobsRelations = relations(savedJobs, ({ one }) => ({
+  freelancer: one(users, {
+    fields: [savedJobs.freelancerId],
+    references: [users.id]
+  }),
+  job: one(jobPostings, {
+    fields: [savedJobs.jobId],
+    references: [jobPostings.id]
+  })
+}))
 
 export type TeamDataWithMembers = Team & {
   teamMembers: (TeamMember & {
@@ -1050,3 +1707,31 @@ export type NewBattleSessionRejection =
   typeof battleSessionRejections.$inferInsert
 export type UserTradingStats = typeof userTradingStats.$inferSelect
 export type NewUserTradingStats = typeof userTradingStats.$inferInsert
+
+// Freelancer Marketplace Types
+export type JobCategory = typeof jobCategories.$inferSelect
+export type NewJobCategory = typeof jobCategories.$inferInsert
+export type Skill = typeof skills.$inferSelect
+export type NewSkill = typeof skills.$inferInsert
+export type FreelancerProfile = typeof freelancerProfiles.$inferSelect
+export type NewFreelancerProfile = typeof freelancerProfiles.$inferInsert
+export type FreelancerSkill = typeof freelancerSkills.$inferSelect
+export type NewFreelancerSkill = typeof freelancerSkills.$inferInsert
+export type JobPosting = typeof jobPostings.$inferSelect
+export type NewJobPosting = typeof jobPostings.$inferInsert
+export type JobMilestone = typeof jobMilestones.$inferSelect
+export type NewJobMilestone = typeof jobMilestones.$inferInsert
+export type JobBid = typeof jobBids.$inferSelect
+export type NewJobBid = typeof jobBids.$inferInsert
+export type JobInvitation = typeof jobInvitations.$inferSelect
+export type NewJobInvitation = typeof jobInvitations.$inferInsert
+export type FreelancerReview = typeof freelancerReviews.$inferSelect
+export type NewFreelancerReview = typeof freelancerReviews.$inferInsert
+export type ClientReview = typeof clientReviews.$inferSelect
+export type NewClientReview = typeof clientReviews.$inferInsert
+export type PortfolioItem = typeof portfolioItems.$inferSelect
+export type NewPortfolioItem = typeof portfolioItems.$inferInsert
+export type SavedFreelancer = typeof savedFreelancers.$inferSelect
+export type NewSavedFreelancer = typeof savedFreelancers.$inferInsert
+export type SavedJob = typeof savedJobs.$inferSelect
+export type NewSavedJob = typeof savedJobs.$inferInsert

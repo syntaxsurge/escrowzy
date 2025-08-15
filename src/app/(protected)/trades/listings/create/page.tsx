@@ -74,8 +74,8 @@ export default function CreateListingPage() {
       color: 'from-green-500 to-emerald-600',
       bgGradient: 'from-green-500/10 to-emerald-500/10',
       features: ['Milestone payments', 'Dispute resolution', 'Rating system'],
-      badge: 'Coming Soon',
-      available: false
+      badge: 'New',
+      available: true
     },
     {
       id: 'digital',

@@ -451,7 +451,10 @@ export default function ActiveTradesPage() {
                     id: trade.id,
                     userId: listingUser.id,
                     listingType: isBuyer ? 'sell' : 'buy',
-                    listingCategory: trade.listingCategory as 'p2p' | 'domain',
+                    listingCategory: trade.listingCategory as
+                      | 'p2p'
+                      | 'domain'
+                      | 'service',
                     chainId: trade.chainId?.toString() || null,
                     tokenAddress: null,
                     tokenOffered: trade.currency,
@@ -464,7 +467,15 @@ export default function ActiveTradesPage() {
                     isActive: true,
                     metadata: domainMetadata || metadata || null,
                     createdAt: trade.createdAt,
-                    user: listingUser
+                    user: listingUser,
+                    // New freelancer marketplace fields
+                    jobPostingId: null,
+                    serviceTitle: null,
+                    serviceDescription: null,
+                    serviceCategoryId: null,
+                    deliveryTime: null,
+                    revisions: null,
+                    skillsOffered: null
                   }
 
                   // Determine if action is required and what action
@@ -584,7 +595,10 @@ export default function ActiveTradesPage() {
                     id: trade.id,
                     userId: listingUser.id,
                     listingType: isBuyer ? 'sell' : 'buy',
-                    listingCategory: trade.listingCategory as 'p2p' | 'domain',
+                    listingCategory: trade.listingCategory as
+                      | 'p2p'
+                      | 'domain'
+                      | 'service',
                     chainId: trade.chainId?.toString() || null,
                     tokenAddress: null,
                     tokenOffered: trade.currency,
@@ -597,7 +611,15 @@ export default function ActiveTradesPage() {
                     isActive: true,
                     metadata: domainMetadata || metadata || null,
                     createdAt: trade.createdAt,
-                    user: listingUser
+                    user: listingUser,
+                    // New freelancer marketplace fields
+                    jobPostingId: null,
+                    serviceTitle: null,
+                    serviceDescription: null,
+                    serviceCategoryId: null,
+                    deliveryTime: null,
+                    revisions: null,
+                    skillsOffered: null
                   }
 
                   // For disputed trades, show dispute status

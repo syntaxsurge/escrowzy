@@ -6,14 +6,15 @@ import { db } from '../drizzle'
 import { trades, users } from '../schema'
 import { type TableRequest, type TableResponse } from './table-queries'
 
-export interface DisputedTradeWithUsers extends TradeWithUsers {
+export interface DisputedTradeWithUsers
+  extends Omit<TradeWithUsers, 'disputedAt'> {
   buyerName: string | null
   buyerEmail: string | null
   buyerWalletAddress: string | null
   sellerName: string | null
   sellerEmail: string | null
   sellerWalletAddress: string | null
-  disputedAt: string
+  disputedAt: Date | null
 }
 
 export async function getDisputesWithPagination(

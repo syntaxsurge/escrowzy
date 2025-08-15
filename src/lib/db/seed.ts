@@ -1,3 +1,4 @@
+import { seedFreelancerData } from './seed-freelancer'
 import { seedLegalDocuments } from './seeds/legal-documents'
 import { seedPlatformContracts } from './seeds/platform-contracts'
 import { seedRewards } from './seeds/rewards'
@@ -33,6 +34,10 @@ async function seed() {
     // Seed platform contracts
     await seedPlatformContracts()
     console.log('✅ Platform contracts seeded')
+
+    // Seed freelancer marketplace data
+    await seedFreelancerData()
+    console.log('✅ Freelancer marketplace data seeded')
 
     console.log('================================')
     console.log('🎉 Seed process completed successfully!')
