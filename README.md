@@ -2,7 +2,7 @@
 
 > **Core Connect Global Buildathon Submission** | Track: Socialfi & DeFi
 
-[![Escrowzy Demo](/public/images/escrowzy-demo.png)](https://youtu.be/xxxxxxx)
+[![Escrowzy Demo](/public/images/escrowzy-homepage.png)](https://youtu.be/xxxxxxx)
 
 ## 🚀 Executive Summary
 
@@ -281,7 +281,7 @@ escrowzy-core/
 ## Project Resources
 
 - 🌐 **Live Platform**:
-  [escrowzy-core.vercel.app](https://escrowzy.com/)
+  [escrowzy.com](https://escrowzy.com/)
 - 📹 **Demo Video**: [youtu.be/xxxxxxx](https://youtu.be/xxxxxxx)
 - 💻 **GitHub**:
   [github.com/syntaxsurge/escrowzy](https://github.com/syntaxsurge/escrowzy)
