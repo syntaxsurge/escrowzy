@@ -54,6 +54,24 @@ export default function JobsMarketplacePage() {
     sortBy: 'newest'
   })
 
+  // Fetch platform stats
+  const { data: platformStatsResponse } = useSWR(
+    '/api/jobs/platform-stats',
+    async (url: string) => {
+      const response = await api.get(url)
+      return response.success ? response : null
+    }
+  )
+
+  const platformStats = platformStatsResponse?.success
+    ? {
+        openJobs: (platformStatsResponse as any).openJobs,
+        averageBudget: (platformStatsResponse as any).averageBudget,
+        activeFreelancers: (platformStatsResponse as any).activeFreelancers,
+        jobsPostedToday: (platformStatsResponse as any).jobsPostedToday
+      }
+    : null
+
   // Fetch categories
   const { data: categoriesData } = useSWR(
     apiEndpoints.jobs.categories,
@@ -144,14 +162,15 @@ export default function JobsMarketplacePage() {
   const stats = [
     {
       label: 'Open Jobs',
-      value: total.toString(),
+      value: platformStats?.openJobs?.toString() || total.toString(),
       icon: Briefcase,
       color: 'text-blue-600'
     },
     {
       label: 'Avg Budget',
-      value:
-        jobs.length > 0
+      value: platformStats?.averageBudget
+        ? `$${platformStats.averageBudget.toLocaleString()}`
+        : jobs.length > 0
           ? `$${Math.round(
               jobs.reduce(
                 (sum: number, job: JobPostingWithRelations) =>
@@ -165,19 +184,21 @@ export default function JobsMarketplacePage() {
     },
     {
       label: 'Active Freelancers',
-      value: '1,234',
+      value: platformStats?.activeFreelancers?.toLocaleString() || '0',
       icon: Users,
       color: 'text-purple-600'
     },
     {
       label: 'Jobs Posted Today',
-      value: jobs
-        .filter((job: JobPostingWithRelations) => {
-          const today = new Date()
-          const jobDate = new Date(job.createdAt)
-          return jobDate.toDateString() === today.toDateString()
-        })
-        .length.toString(),
+      value:
+        platformStats?.jobsPostedToday?.toString() ||
+        jobs
+          .filter((job: JobPostingWithRelations) => {
+            const today = new Date()
+            const jobDate = new Date(job.createdAt)
+            return jobDate.toDateString() === today.toDateString()
+          })
+          .length.toString(),
       icon: TrendingUp,
       color: 'text-orange-600'
     }

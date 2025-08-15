@@ -105,6 +105,25 @@ export default function JobDetailsPage() {
     }
   )
 
+  // Fetch client stats
+  const { data: clientStatsResponse } = useSWR(
+    job?.clientId ? `/api/users/${job.clientId}/stats` : null,
+    async (url: string) => {
+      const response = await api.get(url)
+      return response.success ? response : null
+    }
+  )
+
+  const clientStats = clientStatsResponse?.success
+    ? {
+        avgRating: (clientStatsResponse as any).avgRating,
+        reviewCount: (clientStatsResponse as any).reviewCount,
+        jobsPosted: (clientStatsResponse as any).jobsPosted,
+        hireRate: (clientStatsResponse as any).hireRate,
+        location: (clientStatsResponse as any).location
+      }
+    : null
+
   // Check if user has already saved this job
   const isSaved = false // Will be implemented later
 
@@ -671,13 +690,16 @@ export default function JobDetailsPage() {
                 </Avatar>
                 <div>
                   <p className='font-medium'>{job.client.name}</p>
-                  <div className='flex items-center gap-1'>
-                    <Star className='h-3 w-3 fill-yellow-500 text-yellow-500' />
-                    <span className='text-sm'>4.8</span>
-                    <span className='text-muted-foreground text-sm'>
-                      (23 reviews)
-                    </span>
-                  </div>
+                  {clientStats && clientStats.reviewCount > 0 && (
+                    <div className='flex items-center gap-1'>
+                      <Star className='h-3 w-3 fill-yellow-500 text-yellow-500' />
+                      <span className='text-sm'>{clientStats.avgRating}</span>
+                      <span className='text-muted-foreground text-sm'>
+                        ({clientStats.reviewCount} review
+                        {clientStats.reviewCount !== 1 ? 's' : ''})
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -690,19 +712,23 @@ export default function JobDetailsPage() {
                 </div>
                 <div className='flex items-center justify-between'>
                   <span className='text-muted-foreground'>Jobs posted</span>
-                  <span>12</span>
+                  <span>{clientStats?.jobsPosted || 0}</span>
                 </div>
-                <div className='flex items-center justify-between'>
-                  <span className='text-muted-foreground'>Hire rate</span>
-                  <span>85%</span>
-                </div>
-                <div className='flex items-center justify-between'>
-                  <span className='text-muted-foreground'>Location</span>
-                  <span className='flex items-center gap-1'>
-                    <MapPin className='h-3 w-3' />
-                    United States
-                  </span>
-                </div>
+                {clientStats && clientStats.jobsPosted > 0 && (
+                  <div className='flex items-center justify-between'>
+                    <span className='text-muted-foreground'>Hire rate</span>
+                    <span>{clientStats.hireRate}%</span>
+                  </div>
+                )}
+                {clientStats?.location && (
+                  <div className='flex items-center justify-between'>
+                    <span className='text-muted-foreground'>Location</span>
+                    <span className='flex items-center gap-1'>
+                      <MapPin className='h-3 w-3' />
+                      {clientStats.location}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {!isOwner && (

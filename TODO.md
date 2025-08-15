@@ -148,18 +148,20 @@ milestone-based project management.
   - [x] Required skills multi-select
   - [x] Deadline picker
   - [x] Milestone configuration
-  - [ ] ~~Attachment uploads~~ (deferred to Phase 4)
+  - [ ] Attachment uploads (deferred to Phase 4)
 - [x] Create service listing validation schema
 - [x] Implement job posting API endpoint
-- [ ] ~~Add job draft saving functionality~~ (API created, UI integration pending)
+- [ ] Add job draft saving functionality (API created, UI integration pending)
 
 ### Service Listing Display
 
 - [x] Create service-specific listing card component
-- [x] Build job details page
+- [x] Build job details page (with real-time stats fetching)
 - [x] Implement job search and filters
 - [x] Add category-based browsing
 - [x] Create featured jobs section
+- [x] Platform statistics API endpoints
+- [x] Client statistics API endpoints
 
 ---
 
