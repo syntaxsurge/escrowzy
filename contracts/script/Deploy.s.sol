@@ -7,6 +7,8 @@ import "forge-std/Script.sol";
 import "../src/SubscriptionManager.sol";
 import "../src/EscrowCore.sol";
 import "../src/AchievementNFT.sol";
+import "../src/MilestoneEscrow.sol";
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Prices} from "../src/generated/Prices.sol";
 
 contract DeployScript is Script {
@@ -79,6 +81,29 @@ contract DeployScript is Script {
         escrowCore.setSubscriptionManager(address(subscriptionManager));
         console.log("EscrowCore linked to SubscriptionManager successfully!");
         
+        // Stop and restart broadcast for MilestoneEscrow deployment
+        vm.stopBroadcast();
+        vm.startBroadcast();
+        
+        // Deploy MilestoneEscrow implementation
+        console.log("Deploying MilestoneEscrow implementation...");
+        MilestoneEscrow milestoneEscrowImplementation = new MilestoneEscrow();
+        console.log("MilestoneEscrow implementation deployed at:", address(milestoneEscrowImplementation));
+        
+        // Deploy proxy for MilestoneEscrow
+        console.log("Deploying MilestoneEscrow proxy...");
+        bytes memory initData = abi.encodeWithSelector(
+            MilestoneEscrow.initialize.selector,
+            address(escrowCore),
+            adminAddress
+        );
+        
+        ERC1967Proxy milestoneEscrowProxy = new ERC1967Proxy(
+            address(milestoneEscrowImplementation),
+            initData
+        );
+        console.log("MilestoneEscrow proxy deployed at:", address(milestoneEscrowProxy));
+        
         vm.stopBroadcast();
         
         // Get native currency symbol from generated Prices library
@@ -91,6 +116,9 @@ contract DeployScript is Script {
         console.log("EscrowCore:", address(escrowCore));
         console.log("  -> Linked to SubscriptionManager");
         console.log("AchievementNFT:", address(achievementNFT));
+        console.log("MilestoneEscrow Implementation:", address(milestoneEscrowImplementation));
+        console.log("MilestoneEscrow Proxy:", address(milestoneEscrowProxy));
+        console.log("  -> Upgradeable with UUPS pattern");
         console.log("Admin:", adminAddress);
         console.log(string(abi.encodePacked("Pro price (wei):", " ")), proPriceWei);
         console.log(string(abi.encodePacked("Enterprise price (wei):", " ")), enterprisePriceWei);
@@ -104,6 +132,8 @@ contract DeployScript is Script {
             '  "subscriptionManager": "', vm.toString(address(subscriptionManager)), '",\n',
             '  "escrowCore": "', vm.toString(address(escrowCore)), '",\n',
             '  "achievementNFT": "', vm.toString(address(achievementNFT)), '",\n',
+            '  "milestoneEscrowImplementation": "', vm.toString(address(milestoneEscrowImplementation)), '",\n',
+            '  "milestoneEscrowProxy": "', vm.toString(address(milestoneEscrowProxy)), '",\n',
             '  "chainId": ', vm.toString(block.chainid), ',\n',
             '  "adminAddress": "', vm.toString(adminAddress), '",\n',
             '  "timestamp": ', vm.toString(block.timestamp), ',\n',
@@ -121,11 +151,13 @@ contract DeployScript is Script {
         console.log("  SubscriptionManager:", address(subscriptionManager));
         console.log("  EscrowCore:", address(escrowCore));
         console.log("  AchievementNFT:", address(achievementNFT));
+        console.log("  MilestoneEscrow Proxy:", address(milestoneEscrowProxy));
         console.log("");
         console.log("Update blockchains.yaml with:");
         console.log("contractAddresses:");
         console.log("  subscriptionManager:", vm.toString(address(subscriptionManager)));
         console.log("  escrowCore:", vm.toString(address(escrowCore)));
         console.log("  achievementNFT:", vm.toString(address(achievementNFT)));
+        console.log("  milestoneEscrow:", vm.toString(address(milestoneEscrowProxy)));
     }
 }
