@@ -68,7 +68,7 @@ export function MilestoneChat({
     })
 
     return () => {
-      pusherClient.unsubscribe(`milestone-${milestoneId}`)
+      pusherClient?.unsubscribe(`milestone-${milestoneId}`)
     }
   }, [milestoneId])
 

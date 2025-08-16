@@ -46,7 +46,7 @@ export function JobRecommendations() {
     `/api/jobs/recommendations?minMatchScore=${minMatchScore}`,
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? response.recommendations : []
+      return response.success && response.data ? response.data : []
     }
   )
 

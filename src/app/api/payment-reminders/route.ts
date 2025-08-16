@@ -7,6 +7,7 @@ import { db } from '@/lib/db/drizzle'
 import {
   invoices,
   jobMilestones,
+  jobPostings,
   paymentReminders,
   users
 } from '@/lib/db/schema'
@@ -132,10 +133,14 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      if (
-        milestone.clientId !== user.id &&
-        jobPostings.freelancerId !== user.id
-      ) {
+      // Check if user is either the client or the freelancer for this milestone's job
+      const [job] = await db
+        .select()
+        .from(jobPostings)
+        .where(eq(jobPostings.id, milestone.milestone.jobId))
+        .limit(1)
+
+      if (milestone.clientId !== user.id && job?.freelancerId !== user.id) {
         return NextResponse.json(
           { success: false, error: 'Access denied' },
           { status: 403 }

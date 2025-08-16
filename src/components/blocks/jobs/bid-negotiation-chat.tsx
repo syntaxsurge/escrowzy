@@ -75,7 +75,7 @@ export function BidNegotiationChat({
     isOpen ? `/api/jobs/${bid.jobId}/bids/${bid.id}/messages` : null,
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? response.messages : []
+      return response.success && response.data ? response.data : []
     },
     {
       refreshInterval: 0,
@@ -87,6 +87,7 @@ export function BidNegotiationChat({
   useEffect(() => {
     if (!isOpen || !user) return
 
+    if (!pusherClient) return
     const channel = pusherClient.subscribe(`bid-${bid.id}`)
 
     channel.bind('new-message', (data: BidMessage) => {
@@ -100,7 +101,7 @@ export function BidNegotiationChat({
     })
 
     return () => {
-      pusherClient.unsubscribe(`bid-${bid.id}`)
+      pusherClient?.unsubscribe(`bid-${bid.id}`)
     }
   }, [isOpen, bid.id, user, mutateMessages])
 
