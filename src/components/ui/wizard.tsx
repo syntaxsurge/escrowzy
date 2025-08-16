@@ -5,7 +5,8 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect
+  useEffect,
+  useCallback
 } from 'react'
 
 import { motion, AnimatePresence } from 'framer-motion'
@@ -108,11 +109,11 @@ export function WizardProvider({
     }
   }
 
-  const setStepValid = (stepId: string, isValid: boolean) => {
+  const setStepValid = useCallback((stepId: string, isValid: boolean) => {
     setSteps(prevSteps =>
       prevSteps.map(step => (step.id === stepId ? { ...step, isValid } : step))
     )
-  }
+  }, [])
 
   useEffect(() => {
     setSteps(initialSteps)

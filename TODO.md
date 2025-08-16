@@ -230,30 +230,30 @@ milestone-based project management.
 
 ### Milestone Management
 
-- [x] Create milestone creation interface
-- [x] Build milestone tracker component
-- [x] Implement submission system
-- [x] Add approval workflow
-- [x] Create revision requests
-- [x] Build milestone chat
+- [x] ~~Create milestone creation interface~~
+- [x] ~~Build milestone tracker component~~
+- [x] ~~Implement submission system~~
+- [x] ~~Add approval workflow~~
+- [x] ~~Create revision requests~~
+- [x] ~~Build milestone chat~~
 
 ### Escrow Integration
 
-- [x] Adapt EscrowCore.sol for milestones
-- [x] Implement partial fund release
-- [x] Create milestone-based escrow
-- [ ] Add auto-release timers
-- [ ] Build refund mechanisms
-- [x] Implement tip functionality
+- [x] ~~Adapt EscrowCore.sol for milestones~~
+- [x] ~~Implement partial fund release~~
+- [x] ~~Create milestone-based escrow~~
+- [x] ~~Add auto-release timers~~
+- [x] ~~Build refund mechanisms~~
+- [x] ~~Implement tip functionality~~
 
 ### Payment Processing
 
-- [x] Create invoice generation
-- [x] Build payment history
-- [x] Add earnings dashboard
-- [x] Implement withdrawal system
-- [x] Create payment reminders
-- [x] Add tax reporting
+- [x] ~~Create invoice generation~~
+- [x] ~~Build payment history~~
+- [x] ~~Add earnings dashboard~~
+- [x] ~~Implement withdrawal system~~
+- [x] ~~Create payment reminders~~
+- [x] ~~Add tax reporting~~
 
 ---
 

@@ -95,13 +95,13 @@ export async function GET(
         userId: milestoneChats.senderId,
         message: milestoneChats.message,
         attachments: milestoneChats.attachments,
-        isSystem: milestoneChats.messageType === 'system' ? true : false,
+        messageType: milestoneChats.messageType,
         createdAt: milestoneChats.createdAt,
         user: {
           id: users.id,
           name: users.name,
           email: users.email,
-          image: users.image
+          image: users.avatarPath
         }
       })
       .from(milestoneChats)
@@ -125,9 +125,15 @@ export async function GET(
         )
       )
 
+    // Transform messages to include isSystem field
+    const transformedMessages = messages.map(msg => ({
+      ...msg,
+      isSystem: msg.messageType === 'system'
+    }))
+
     return NextResponse.json({
       success: true,
-      messages,
+      messages: transformedMessages,
       hasMore: messages.length === limit
     })
   } catch (error) {
@@ -227,7 +233,7 @@ export async function POST(
           id: user.id,
           name: user.name,
           email: user.email,
-          image: user.image
+          image: user.avatarPath
         },
         createdAt: message.createdAt
       })
@@ -252,7 +258,7 @@ export async function POST(
           id: user.id,
           name: user.name,
           email: user.email,
-          image: user.image
+          image: user.avatarPath
         }
       }
     })

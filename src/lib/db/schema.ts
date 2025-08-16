@@ -856,6 +856,10 @@ export const jobMilestones = pgTable(
     approvedAt: timestamp('approved_at'),
     paidAt: timestamp('paid_at'),
     sortOrder: integer('sort_order').notNull().default(0),
+    autoReleaseEnabled: boolean('auto_release_enabled').notNull().default(true),
+    disputedAt: timestamp('disputed_at'),
+    refundedAt: timestamp('refunded_at'),
+    metadata: jsonb('metadata'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow()
   },
