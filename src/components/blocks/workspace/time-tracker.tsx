@@ -1,0 +1,370 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+
+import { format } from 'date-fns'
+import { Calendar, Clock, DollarSign, Pause, Play, Save, Square } from 'lucide-react'
+import useSWR from 'swr'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { api } from '@/lib/api/http-client'
+import { cn } from '@/lib/utils'
+
+interface TimeEntry {
+  id: number
+  startTime: Date
+  endTime: Date | null
+  duration: number | null
+  description: string | null
+  isBillable: boolean
+  hourlyRate: string
+  totalAmount: string
+  status: string
+  createdAt: Date
+}
+
+interface TimeTrackerProps {
+  jobId: number
+  hourlyRate: string
+}
+
+export function TimeTracker({ jobId, hourlyRate }: TimeTrackerProps) {
+  const [isTracking, setIsTracking] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [startTime, setStartTime] = useState<Date | null>(null)
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [description, setDescription] = useState('')
+  const [manualEntry, setManualEntry] = useState({
+    date: format(new Date(), 'yyyy-MM-dd'),
+    startTime: '',
+    endTime: '',
+    description: ''
+  })
+  const [showManualDialog, setShowManualDialog] = useState(false)
+
+  // Fetch time entries
+  const { data: entries = [], mutate } = useSWR(
+    `/api/jobs/${jobId}/time-tracking`,
+    async (url: string) => {
+      const response = await api.get(url)
+      return response.success ? (response as any).entries : []
+    }
+  )
+
+  // Update timer every second
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+
+    if (isTracking && !isPaused) {
+      interval = setInterval(() => {
+        setCurrentTime(prev => prev + 1)
+      }, 1000)
+    }
+
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [isTracking, isPaused])
+
+  // Start tracking
+  const handleStart = () => {
+    setIsTracking(true)
+    setIsPaused(false)
+    setStartTime(new Date())
+    setCurrentTime(0)
+  }
+
+  // Pause tracking
+  const handlePause = () => {
+    setIsPaused(!isPaused)
+  }
+
+  // Stop tracking
+  const handleStop = () => {
+    setShowSaveDialog(true)
+  }
+
+  // Save time entry
+  const handleSave = async () => {
+    if (!startTime) return
+
+    try {
+      await api.post(`/api/jobs/${jobId}/time-tracking`, {
+        startTime: startTime.toISOString(),
+        endTime: new Date().toISOString(),
+        duration: Math.floor(currentTime / 60), // Convert to minutes
+        description,
+        isBillable: true,
+        hourlyRate
+      })
+
+      // Reset tracker
+      setIsTracking(false)
+      setIsPaused(false)
+      setCurrentTime(0)
+      setStartTime(null)
+      setDescription('')
+      setShowSaveDialog(false)
+      mutate()
+    } catch (error) {
+      console.error('Failed to save time entry:', error)
+    }
+  }
+
+  // Save manual entry
+  const handleManualSave = async () => {
+    const start = new Date(`${manualEntry.date}T${manualEntry.startTime}`)
+    const end = new Date(`${manualEntry.date}T${manualEntry.endTime}`)
+    const duration = Math.floor((end.getTime() - start.getTime()) / (1000 * 60))
+
+    try {
+      await api.post(`/api/jobs/${jobId}/time-tracking`, {
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        duration,
+        description: manualEntry.description,
+        isBillable: true,
+        hourlyRate
+      })
+
+      setShowManualDialog(false)
+      setManualEntry({
+        date: format(new Date(), 'yyyy-MM-dd'),
+        startTime: '',
+        endTime: '',
+        description: ''
+      })
+      mutate()
+    } catch (error) {
+      console.error('Failed to save manual entry:', error)
+    }
+  }
+
+  // Format time display
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = seconds % 60
+
+    return `${hours.toString().padStart(2, '0')}:${minutes
+      .toString()
+      .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
+
+  // Calculate earnings
+  const calculateEarnings = (seconds: number) => {
+    const hours = seconds / 3600
+    return (hours * parseFloat(hourlyRate)).toFixed(2)
+  }
+
+  // Calculate today's total
+  const todayTotal = entries
+    .filter((e: TimeEntry) => {
+      const entryDate = format(new Date(e.startTime), 'yyyy-MM-dd')
+      const today = format(new Date(), 'yyyy-MM-dd')
+      return entryDate === today
+    })
+    .reduce((sum: number, e: TimeEntry) => sum + (e.duration || 0), 0)
+
+  return (
+    <>
+      {/* Floating Timer Widget */}
+      <Card className={cn(
+        'shadow-lg transition-all',
+        isTracking && 'ring-2 ring-primary'
+      )}>
+        <CardContent className='p-4'>
+          <div className='space-y-3'>
+            {/* Timer Display */}
+            <div className='text-center'>
+              <div className='text-3xl font-bold tabular-nums'>
+                {formatTime(currentTime)}
+              </div>
+              {isTracking && (
+                <div className='mt-1 text-sm text-muted-foreground'>
+                  ${calculateEarnings(currentTime)} earned
+                </div>
+              )}
+            </div>
+
+            {/* Controls */}
+            <div className='flex gap-2'>
+              {!isTracking ? (
+                <>
+                  <Button onClick={handleStart} className='flex-1 gap-2'>
+                    <Play className='h-4 w-4' />
+                    Start
+                  </Button>
+                  <Button
+                    variant='outline'
+                    onClick={() => setShowManualDialog(true)}
+                    className='flex-1 gap-2'
+                  >
+                    <Clock className='h-4 w-4' />
+                    Manual
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={handlePause}
+                    variant={isPaused ? 'default' : 'outline'}
+                    className='flex-1 gap-2'
+                  >
+                    {isPaused ? (
+                      <>
+                        <Play className='h-4 w-4' />
+                        Resume
+                      </>
+                    ) : (
+                      <>
+                        <Pause className='h-4 w-4' />
+                        Pause
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handleStop}
+                    variant='destructive'
+                    className='flex-1 gap-2'
+                  >
+                    <Square className='h-4 w-4' />
+                    Stop
+                  </Button>
+                </>
+              )}
+            </div>
+
+            {/* Today's Total */}
+            <div className='rounded-lg bg-muted p-2 text-center'>
+              <p className='text-xs text-muted-foreground'>Today's Total</p>
+              <p className='text-sm font-medium'>{Math.floor(todayTotal / 60)}h {todayTotal % 60}m</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Save Entry Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Time Entry</DialogTitle>
+            <DialogDescription>
+              Add a description for this time entry
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4'>
+            <div>
+              <Label>Duration</Label>
+              <div className='mt-2 flex items-center gap-4'>
+                <Badge variant='secondary' className='text-lg'>
+                  <Clock className='mr-2 h-4 w-4' />
+                  {formatTime(currentTime)}
+                </Badge>
+                <Badge variant='outline' className='text-lg'>
+                  <DollarSign className='mr-2 h-4 w-4' />
+                  ${calculateEarnings(currentTime)}
+                </Badge>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor='description'>Description</Label>
+              <Textarea
+                id='description'
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder='What did you work on?'
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setShowSaveDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave}>
+              <Save className='mr-2 h-4 w-4' />
+              Save Entry
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manual Entry Dialog */}
+      <Dialog open={showManualDialog} onOpenChange={setShowManualDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manual Time Entry</DialogTitle>
+            <DialogDescription>
+              Add a time entry manually
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4'>
+            <div>
+              <Label htmlFor='date'>Date</Label>
+              <Input
+                id='date'
+                type='date'
+                value={manualEntry.date}
+                onChange={(e) => setManualEntry({ ...manualEntry, date: e.target.value })}
+              />
+            </div>
+            <div className='grid grid-cols-2 gap-4'>
+              <div>
+                <Label htmlFor='startTime'>Start Time</Label>
+                <Input
+                  id='startTime'
+                  type='time'
+                  value={manualEntry.startTime}
+                  onChange={(e) => setManualEntry({ ...manualEntry, startTime: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor='endTime'>End Time</Label>
+                <Input
+                  id='endTime'
+                  type='time'
+                  value={manualEntry.endTime}
+                  onChange={(e) => setManualEntry({ ...manualEntry, endTime: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor='manualDescription'>Description</Label>
+              <Textarea
+                id='manualDescription'
+                value={manualEntry.description}
+                onChange={(e) => setManualEntry({ ...manualEntry, description: e.target.value })}
+                placeholder='What did you work on?'
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setShowManualDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleManualSave}>
+              <Save className='mr-2 h-4 w-4' />
+              Save Entry
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}

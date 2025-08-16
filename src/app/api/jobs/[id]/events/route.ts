@@ -1,0 +1,118 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+import { and, desc, eq, gte } from 'drizzle-orm'
+
+import { db } from '@/lib/db'
+import { jobPostings, workspaceEvents } from '@/lib/db/schema'
+import { requireAuth } from '@/lib/middleware/auth'
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await requireAuth(request)
+    const jobId = parseInt(params.id)
+
+    // Verify access
+    const job = await db.query.jobPostings.findFirst({
+      where: eq(jobPostings.id, jobId)
+    })
+
+    if (!job) {
+      return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 })
+    }
+
+    if (job.clientId !== user.id && job.freelancerId !== user.id) {
+      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 })
+    }
+
+    // Get events for the next 90 days
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const events = await db
+      .select({
+        id: workspaceEvents.id,
+        title: workspaceEvents.title,
+        description: workspaceEvents.description,
+        eventType: workspaceEvents.eventType,
+        startTime: workspaceEvents.startTime,
+        endTime: workspaceEvents.endTime,
+        location: workspaceEvents.location,
+        meetingLink: workspaceEvents.meetingLink,
+        attendees: workspaceEvents.attendees,
+        isAllDay: workspaceEvents.isAllDay,
+        status: workspaceEvents.status,
+        createdAt: workspaceEvents.createdAt
+      })
+      .from(workspaceEvents)
+      .where(
+        and(
+          eq(workspaceEvents.jobId, jobId),
+          gte(workspaceEvents.startTime, today)
+        )
+      )
+      .orderBy(workspaceEvents.startTime)
+
+    return NextResponse.json({ success: true, events })
+  } catch (error) {
+    console.error('Failed to fetch events:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch events' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await requireAuth(request)
+    const jobId = parseInt(params.id)
+    const body = await request.json()
+
+    // Verify access
+    const job = await db.query.jobPostings.findFirst({
+      where: eq(jobPostings.id, jobId)
+    })
+
+    if (!job) {
+      return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 })
+    }
+
+    if (job.clientId !== user.id && job.freelancerId !== user.id) {
+      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 })
+    }
+
+    // Create event
+    const [event] = await db
+      .insert(workspaceEvents)
+      .values({
+        jobId,
+        title: body.title,
+        description: body.description || null,
+        eventType: body.eventType || 'meeting',
+        startTime: new Date(body.startTime),
+        endTime: body.endTime ? new Date(body.endTime) : null,
+        location: body.location || null,
+        meetingLink: body.meetingLink || null,
+        attendees: [user.id, job.clientId === user.id ? job.freelancerId : job.clientId].filter(Boolean),
+        createdBy: user.id,
+        isAllDay: body.isAllDay || false,
+        reminderMinutes: body.reminderMinutes || null,
+        status: 'scheduled'
+      })
+      .returning()
+
+    return NextResponse.json({ success: true, event })
+  } catch (error) {
+    console.error('Failed to create event:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to create event' },
+      { status: 500 }
+    )
+  }
+}

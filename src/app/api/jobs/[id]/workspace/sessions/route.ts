@@ -1,0 +1,63 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+import { and, desc, eq } from 'drizzle-orm'
+
+import { db } from '@/lib/db'
+import { jobPostings, users, workspaceSessions } from '@/lib/db/schema'
+import { requireAuth } from '@/lib/middleware/auth'
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await requireAuth(request)
+    const jobId = parseInt(params.id)
+
+    // Verify access
+    const job = await db.query.jobPostings.findFirst({
+      where: eq(jobPostings.id, jobId)
+    })
+
+    if (!job) {
+      return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 })
+    }
+
+    if (job.clientId !== user.id && job.freelancerId !== user.id) {
+      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 })
+    }
+
+    // Get active workspace sessions
+    const sessions = await db
+      .select({
+        id: workspaceSessions.id,
+        userId: workspaceSessions.userId,
+        status: workspaceSessions.status,
+        currentTab: workspaceSessions.currentTab,
+        lastActivityAt: workspaceSessions.lastActivityAt,
+        user: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          avatarUrl: users.avatarPath
+        }
+      })
+      .from(workspaceSessions)
+      .innerJoin(users, eq(workspaceSessions.userId, users.id))
+      .where(
+        and(
+          eq(workspaceSessions.jobId, jobId),
+          eq(workspaceSessions.status, 'active')
+        )
+      )
+      .orderBy(desc(workspaceSessions.lastActivityAt))
+
+    return NextResponse.json({ success: true, sessions })
+  } catch (error) {
+    console.error('Failed to fetch workspace sessions:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch sessions' },
+      { status: 500 }
+    )
+  }
+}

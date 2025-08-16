@@ -1396,6 +1396,239 @@ export const taxDocuments = pgTable(
   ]
 )
 
+// Phase 6: Workspace & Collaboration Tables
+
+export const workspaceSessions = pgTable(
+  'workspace_sessions',
+  {
+    id: serial('id').primaryKey(),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id, { onDelete: 'cascade' }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    sessionId: varchar('session_id', { length: 255 }).notNull().unique(),
+    status: varchar('status', { length: 50 }).notNull().default('active'), // active, idle, disconnected
+    lastActivityAt: timestamp('last_activity_at').notNull().defaultNow(),
+    currentTab: varchar('current_tab', { length: 50 }), // overview, files, messages, tasks, timeline
+    metadata: jsonb('metadata'), // browser info, location in workspace
+    joinedAt: timestamp('joined_at').notNull().defaultNow(),
+    leftAt: timestamp('left_at')
+  },
+  table => [
+    index('idx_workspace_sessions_job').on(table.jobId),
+    index('idx_workspace_sessions_user').on(table.userId),
+    index('idx_workspace_sessions_status').on(table.status),
+    unique('unique_active_workspace_session').on(table.jobId, table.userId, table.status)
+  ]
+)
+
+export const jobTasks = pgTable(
+  'job_tasks',
+  {
+    id: serial('id').primaryKey(),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id, { onDelete: 'cascade' }),
+    milestoneId: integer('milestone_id').references(() => jobMilestones.id, { onDelete: 'cascade' }),
+    title: varchar('title', { length: 200 }).notNull(),
+    description: text('description'),
+    status: varchar('status', { length: 50 }).notNull().default('todo'), // todo, in_progress, review, done
+    priority: varchar('priority', { length: 20 }).notNull().default('medium'), // low, medium, high, urgent
+    assignedTo: integer('assigned_to').references(() => users.id),
+    createdBy: integer('created_by')
+      .notNull()
+      .references(() => users.id),
+    dueDate: timestamp('due_date'),
+    completedAt: timestamp('completed_at'),
+    estimatedHours: integer('estimated_hours'),
+    actualHours: integer('actual_hours'),
+    tags: jsonb('tags').notNull().default('[]'),
+    attachments: jsonb('attachments').notNull().default('[]'),
+    position: integer('position').notNull().default(0), // for kanban board ordering
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_job_tasks_job').on(table.jobId),
+    index('idx_job_tasks_milestone').on(table.milestoneId),
+    index('idx_job_tasks_assigned').on(table.assignedTo),
+    index('idx_job_tasks_status').on(table.status),
+    index('idx_job_tasks_priority').on(table.priority),
+    index('idx_job_tasks_due_date').on(table.dueDate)
+  ]
+)
+
+export const fileVersions = pgTable(
+  'file_versions',
+  {
+    id: serial('id').primaryKey(),
+    originalFileId: integer('original_file_id'), // Reference to first version
+    attachmentId: integer('attachment_id')
+      .notNull()
+      .references(() => attachments.id, { onDelete: 'cascade' }),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id, { onDelete: 'cascade' }),
+    versionNumber: integer('version_number').notNull().default(1),
+    filename: text('filename').notNull(),
+    path: text('path').notNull(),
+    size: integer('size').notNull(),
+    mimeType: text('mime_type').notNull(),
+    uploadedBy: integer('uploaded_by')
+      .notNull()
+      .references(() => users.id),
+    changeDescription: text('change_description'),
+    isLatest: boolean('is_latest').notNull().default(true),
+    metadata: jsonb('metadata'), // file hash, dimensions for images, etc.
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_file_versions_original').on(table.originalFileId),
+    index('idx_file_versions_attachment').on(table.attachmentId),
+    index('idx_file_versions_job').on(table.jobId),
+    index('idx_file_versions_uploaded_by').on(table.uploadedBy),
+    index('idx_file_versions_latest').on(table.isLatest),
+    unique('unique_file_version').on(table.originalFileId, table.versionNumber)
+  ]
+)
+
+export const timeTracking = pgTable(
+  'time_tracking',
+  {
+    id: serial('id').primaryKey(),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id, { onDelete: 'cascade' }),
+    milestoneId: integer('milestone_id').references(() => jobMilestones.id),
+    taskId: integer('task_id').references(() => jobTasks.id),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    startTime: timestamp('start_time').notNull(),
+    endTime: timestamp('end_time'),
+    duration: integer('duration'), // in minutes
+    description: text('description'),
+    isBillable: boolean('is_billable').notNull().default(true),
+    hourlyRate: varchar('hourly_rate', { length: 50 }),
+    totalAmount: varchar('total_amount', { length: 50 }),
+    status: varchar('status', { length: 50 }).notNull().default('tracked'), // tracked, approved, invoiced, paid
+    approvedBy: integer('approved_by').references(() => users.id),
+    approvedAt: timestamp('approved_at'),
+    invoiceId: integer('invoice_id').references(() => invoices.id),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_time_tracking_job').on(table.jobId),
+    index('idx_time_tracking_milestone').on(table.milestoneId),
+    index('idx_time_tracking_task').on(table.taskId),
+    index('idx_time_tracking_user').on(table.userId),
+    index('idx_time_tracking_status').on(table.status),
+    index('idx_time_tracking_date').on(table.startTime)
+  ]
+)
+
+export const fileAnnotations = pgTable(
+  'file_annotations',
+  {
+    id: serial('id').primaryKey(),
+    fileVersionId: integer('file_version_id')
+      .notNull()
+      .references(() => fileVersions.id, { onDelete: 'cascade' }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    comment: text('comment').notNull(),
+    coordinates: jsonb('coordinates'), // {x, y, width, height} for visual annotations
+    pageNumber: integer('page_number'), // for PDFs
+    lineNumber: integer('line_number'), // for code files
+    status: varchar('status', { length: 50 }).notNull().default('open'), // open, resolved, archived
+    resolvedBy: integer('resolved_by').references(() => users.id),
+    resolvedAt: timestamp('resolved_at'),
+    parentAnnotationId: integer('parent_annotation_id'), // for threaded comments
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_file_annotations_file').on(table.fileVersionId),
+    index('idx_file_annotations_user').on(table.userId),
+    index('idx_file_annotations_status').on(table.status),
+    index('idx_file_annotations_parent').on(table.parentAnnotationId)
+  ]
+)
+
+export const deliveryPackages = pgTable(
+  'delivery_packages',
+  {
+    id: serial('id').primaryKey(),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id, { onDelete: 'cascade' }),
+    milestoneId: integer('milestone_id').references(() => jobMilestones.id),
+    packageName: varchar('package_name', { length: 200 }).notNull(),
+    description: text('description'),
+    files: jsonb('files').notNull().default('[]'), // Array of file version IDs
+    deliveredBy: integer('delivered_by')
+      .notNull()
+      .references(() => users.id),
+    status: varchar('status', { length: 50 }).notNull().default('draft'), // draft, delivered, accepted, rejected
+    deliveryNote: text('delivery_note'),
+    acceptanceNote: text('acceptance_note'),
+    signature: text('signature'), // Digital signature data
+    signedBy: integer('signed_by').references(() => users.id),
+    deliveredAt: timestamp('delivered_at'),
+    acceptedAt: timestamp('accepted_at'),
+    rejectedAt: timestamp('rejected_at'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_delivery_packages_job').on(table.jobId),
+    index('idx_delivery_packages_milestone').on(table.milestoneId),
+    index('idx_delivery_packages_delivered_by').on(table.deliveredBy),
+    index('idx_delivery_packages_status').on(table.status)
+  ]
+)
+
+export const workspaceEvents = pgTable(
+  'workspace_events',
+  {
+    id: serial('id').primaryKey(),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id, { onDelete: 'cascade' }),
+    title: varchar('title', { length: 200 }).notNull(),
+    description: text('description'),
+    eventType: varchar('event_type', { length: 50 }).notNull(), // meeting, deadline, milestone, review, delivery
+    startTime: timestamp('start_time').notNull(),
+    endTime: timestamp('end_time'),
+    location: text('location'),
+    meetingLink: text('meeting_link'),
+    attendees: jsonb('attendees').notNull().default('[]'), // Array of user IDs
+    createdBy: integer('created_by')
+      .notNull()
+      .references(() => users.id),
+    isAllDay: boolean('is_all_day').notNull().default(false),
+    reminderMinutes: integer('reminder_minutes'),
+    status: varchar('status', { length: 50 }).notNull().default('scheduled'), // scheduled, in_progress, completed, cancelled
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_workspace_events_job').on(table.jobId),
+    index('idx_workspace_events_type').on(table.eventType),
+    index('idx_workspace_events_start').on(table.startTime),
+    index('idx_workspace_events_created_by').on(table.createdBy)
+  ]
+)
+
 /*
 Relations
 */
@@ -2206,3 +2439,19 @@ export type SavedFreelancer = typeof savedFreelancers.$inferSelect
 export type NewSavedFreelancer = typeof savedFreelancers.$inferInsert
 export type SavedJob = typeof savedJobs.$inferSelect
 export type NewSavedJob = typeof savedJobs.$inferInsert
+
+// Phase 6: Workspace & Collaboration Types
+export type WorkspaceSession = typeof workspaceSessions.$inferSelect
+export type NewWorkspaceSession = typeof workspaceSessions.$inferInsert
+export type JobTask = typeof jobTasks.$inferSelect
+export type NewJobTask = typeof jobTasks.$inferInsert
+export type FileVersion = typeof fileVersions.$inferSelect
+export type NewFileVersion = typeof fileVersions.$inferInsert
+export type TimeTracking = typeof timeTracking.$inferSelect
+export type NewTimeTracking = typeof timeTracking.$inferInsert
+export type FileAnnotation = typeof fileAnnotations.$inferSelect
+export type NewFileAnnotation = typeof fileAnnotations.$inferInsert
+export type DeliveryPackage = typeof deliveryPackages.$inferSelect
+export type NewDeliveryPackage = typeof deliveryPackages.$inferInsert
+export type WorkspaceEvent = typeof workspaceEvents.$inferSelect
+export type NewWorkspaceEvent = typeof workspaceEvents.$inferInsert
