@@ -11,11 +11,12 @@ import { getUser } from '@/services/user'
 // GET /api/jobs/[id]/bids/[bidId] - Get a specific bid
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; bidId: string } }
+  { params }: { params: Promise<{ id: string; bidId: string }> }
 ) {
   try {
-    const jobId = parseInt(params.id)
-    const bidId = parseInt(params.bidId)
+    const { id, bidId } = await params
+    const jobId = parseInt(id)
+    const bidId = parseInt(bidId)
 
     if (isNaN(jobId) || isNaN(bidId)) {
       return NextResponse.json(
@@ -71,7 +72,7 @@ export async function GET(
 // PATCH /api/jobs/[id]/bids/[bidId] - Update a bid (freelancer only)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; bidId: string } }
+  { params }: { params: Promise<{ id: string; bidId: string }> }
 ) {
   try {
     const user = await getUser()
@@ -83,8 +84,8 @@ export async function PATCH(
       )
     }
 
-    const jobId = parseInt(params.id)
-    const bidId = parseInt(params.bidId)
+    const jobId = parseInt(id)
+    const bidId = parseInt(bidId)
 
     if (isNaN(jobId) || isNaN(bidId)) {
       return NextResponse.json(
@@ -322,7 +323,7 @@ export async function PATCH(
 // DELETE /api/jobs/[id]/bids/[bidId] - Withdraw a bid (freelancer only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; bidId: string } }
+  { params }: { params: Promise<{ id: string; bidId: string }> }
 ) {
   try {
     const user = await getUser()
@@ -334,8 +335,8 @@ export async function DELETE(
       )
     }
 
-    const jobId = parseInt(params.id)
-    const bidId = parseInt(params.bidId)
+    const jobId = parseInt(id)
+    const bidId = parseInt(bidId)
 
     if (isNaN(jobId) || isNaN(bidId)) {
       return NextResponse.json(

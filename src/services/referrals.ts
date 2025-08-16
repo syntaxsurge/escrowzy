@@ -11,7 +11,10 @@ import {
 import { findUserById } from '@/lib/db/queries/users'
 import { sendEmail } from '@/lib/email'
 
-import { checkAndAwardAchievements } from './achievement-triggers'
+import {
+  checkAndAwardAchievements,
+  type TriggerEvent
+} from './achievement-triggers'
 import { RewardsService } from './rewards'
 
 export class ReferralService {

@@ -11,7 +11,8 @@ import {
   boolean,
   jsonb,
   index,
-  unique
+  unique,
+  bigint
 } from 'drizzle-orm/pg-core'
 
 /*
@@ -1209,6 +1210,61 @@ export const verificationBadges = pgTable(
     index('idx_verification_badges_type').on(table.badgeType),
     index('idx_verification_badges_active').on(table.isActive),
     unique('unique_verification_badge').on(table.userId, table.badgeType)
+  ]
+)
+
+export const reputationRegistry = pgTable(
+  'reputation_registry',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    walletAddress: varchar('wallet_address', { length: 42 }).notNull(),
+    totalReviews: integer('total_reviews').notNull().default(0),
+    averageRating: varchar('average_rating', { length: 5 })
+      .notNull()
+      .default('0'), // Store as string for precision
+    reputationScore: integer('reputation_score').notNull().default(0),
+    isFreelancer: boolean('is_freelancer').notNull().default(true),
+    lastUpdated: timestamp('last_updated').notNull().defaultNow(),
+    metadata: jsonb('metadata').notNull().default('{}'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_reputation_registry_user').on(table.userId),
+    index('idx_reputation_registry_score').on(table.reputationScore),
+    index('idx_reputation_registry_freelancer').on(table.isFreelancer),
+    unique('unique_user_reputation').on(table.userId, table.isFreelancer)
+  ]
+)
+
+export const reputationNFTs = pgTable(
+  'reputation_nfts',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    nftType: varchar('nft_type', { length: 50 }).notNull(), // 'reputation', 'achievement', 'milestone'
+    tokenId: bigint('token_id', { mode: 'number' }).notNull().unique(),
+    metadataUri: text('metadata_uri'),
+    reputationLevel: varchar('reputation_level', { length: 20 }), // 'bronze', 'silver', 'gold', 'platinum', 'diamond'
+    mintedAt: timestamp('minted_at').notNull().defaultNow(),
+    txHash: varchar('tx_hash', { length: 66 }).notNull().unique(),
+    chainId: integer('chain_id').notNull().default(1),
+    contractAddress: varchar('contract_address', { length: 42 })
+  },
+  table => [
+    index('idx_reputation_nfts_user').on(table.userId),
+    index('idx_reputation_nfts_type').on(table.nftType),
+    index('idx_reputation_nfts_token').on(table.tokenId),
+    unique('unique_user_nft_level').on(
+      table.userId,
+      table.nftType,
+      table.reputationLevel
+    )
   ]
 )
 

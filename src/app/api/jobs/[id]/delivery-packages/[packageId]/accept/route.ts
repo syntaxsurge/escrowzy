@@ -8,12 +8,13 @@ import { requireAuth } from '@/lib/middleware/auth'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; packageId: string } }
+  { params }: { params: Promise<{ id: string; packageId: string }> }
 ) {
   try {
+    const { id, packageId } = await params
     const user = await requireAuth(request)
-    const jobId = parseInt(params.id)
-    const packageId = parseInt(params.packageId)
+    const jobId = parseInt(id)
+    const packageId = parseInt(packageId)
     const body = await request.json()
 
     // Verify client access

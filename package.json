@@ -129,6 +129,7 @@
     "eslint-plugin-prettier": "^5.5.3",
     "eslint-plugin-unused-imports": "^4.1.4",
     "ethers": "^6.15.0",
+    "glob": "^11.0.3",
     "null-loader": "^4.0.1",
     "postcss": "^8",
     "prettier": "^3.6.2",

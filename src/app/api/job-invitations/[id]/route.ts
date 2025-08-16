@@ -10,9 +10,10 @@ import { getUser } from '@/services/user'
 // GET /api/invitations/[id] - Get a specific invitation
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
 
     if (!user) {
@@ -22,7 +23,7 @@ export async function GET(
       )
     }
 
-    const invitationId = parseInt(params.id)
+    const invitationId = parseInt(id)
 
     if (isNaN(invitationId)) {
       return NextResponse.json(
@@ -90,7 +91,7 @@ export async function GET(
 // PATCH /api/invitations/[id] - Update invitation status (accept/decline)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUser()
@@ -102,7 +103,7 @@ export async function PATCH(
       )
     }
 
-    const invitationId = parseInt(params.id)
+    const invitationId = parseInt(id)
 
     if (isNaN(invitationId)) {
       return NextResponse.json(
@@ -217,7 +218,7 @@ export async function PATCH(
 // DELETE /api/invitations/[id] - Cancel an invitation (client only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUser()
@@ -229,7 +230,7 @@ export async function DELETE(
       )
     }
 
-    const invitationId = parseInt(params.id)
+    const invitationId = parseInt(id)
 
     if (isNaN(invitationId)) {
       return NextResponse.json(

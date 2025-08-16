@@ -10,9 +10,10 @@ import { getUser } from '@/services/user'
 // GET /api/interviews/[id] - Get a specific interview
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
 
     if (!user) {
@@ -22,7 +23,7 @@ export async function GET(
       )
     }
 
-    const interviewId = parseInt(params.id)
+    const interviewId = parseInt(id)
 
     if (isNaN(interviewId)) {
       return NextResponse.json(
@@ -71,7 +72,7 @@ export async function GET(
 // PATCH /api/interviews/[id] - Update an interview
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUser()
@@ -83,7 +84,7 @@ export async function PATCH(
       )
     }
 
-    const interviewId = parseInt(params.id)
+    const interviewId = parseInt(id)
 
     if (isNaN(interviewId)) {
       return NextResponse.json(
@@ -228,7 +229,7 @@ export async function PATCH(
 // DELETE /api/interviews/[id] - Delete an interview
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUser()
@@ -240,7 +241,7 @@ export async function DELETE(
       )
     }
 
-    const interviewId = parseInt(params.id)
+    const interviewId = parseInt(id)
 
     if (isNaN(interviewId)) {
       return NextResponse.json(

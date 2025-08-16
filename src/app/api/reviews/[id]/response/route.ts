@@ -6,15 +6,16 @@ import { respondToReview } from '@/services/reviews'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession()
     if (!session?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const reviewId = parseInt(params.id)
+    const reviewId = parseInt(id)
     if (isNaN(reviewId)) {
       return NextResponse.json({ error: 'Invalid review ID' }, { status: 400 })
     }

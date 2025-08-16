@@ -10,9 +10,10 @@ import { getUser } from '@/services/user'
 // GET /api/jobs/[id]/bids/[bidId]/messages - Get bid negotiation messages
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; bidId: string } }
+  { params }: { params: Promise<{ id: string; bidId: string }> }
 ) {
   try {
+    const { id, bidId } = await params
     const user = await getUser()
 
     if (!user) {
@@ -22,8 +23,8 @@ export async function GET(
       )
     }
 
-    const jobId = parseInt(params.id)
-    const bidId = parseInt(params.bidId)
+    const jobId = parseInt(id)
+    const bidId = parseInt(bidId)
 
     if (isNaN(jobId) || isNaN(bidId)) {
       return NextResponse.json(
@@ -103,7 +104,7 @@ export async function GET(
 // POST /api/jobs/[id]/bids/[bidId]/messages - Send a negotiation message
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; bidId: string } }
+  { params }: { params: Promise<{ id: string; bidId: string }> }
 ) {
   try {
     const user = await getUser()
@@ -115,8 +116,8 @@ export async function POST(
       )
     }
 
-    const jobId = parseInt(params.id)
-    const bidId = parseInt(params.bidId)
+    const jobId = parseInt(id)
+    const bidId = parseInt(bidId)
 
     if (isNaN(jobId) || isNaN(bidId)) {
       return NextResponse.json(

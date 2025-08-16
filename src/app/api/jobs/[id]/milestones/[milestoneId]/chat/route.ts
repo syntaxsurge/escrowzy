@@ -30,9 +30,10 @@ const sendMessageSchema = z.object({
 // GET /api/jobs/[id]/milestones/[milestoneId]/chat - Get milestone chat messages
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; milestoneId: string } }
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
+    const { id, milestoneId } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -41,8 +42,8 @@ export async function GET(
       )
     }
 
-    const jobId = parseInt(params.id)
-    const milestoneId = parseInt(params.milestoneId)
+    const jobId = parseInt(id)
+    const milestoneId = parseInt(milestoneId)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(
@@ -148,7 +149,7 @@ export async function GET(
 // POST /api/jobs/[id]/milestones/[milestoneId]/chat - Send message in milestone chat
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; milestoneId: string } }
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
     const user = await getUser()
@@ -159,8 +160,8 @@ export async function POST(
       )
     }
 
-    const jobId = parseInt(params.id)
-    const milestoneId = parseInt(params.milestoneId)
+    const jobId = parseInt(id)
+    const milestoneId = parseInt(milestoneId)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(
@@ -281,10 +282,10 @@ export async function POST(
 // POST /api/jobs/[id]/milestones/[milestoneId]/chat/system - Add system message
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; milestoneId: string } }
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
-    const milestoneId = parseInt(params.milestoneId)
+    const milestoneId = parseInt(milestoneId)
 
     if (isNaN(milestoneId)) {
       return NextResponse.json(

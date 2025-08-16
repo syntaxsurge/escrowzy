@@ -20,6 +20,9 @@ export type TriggerEvent =
   | 'milestone_completed'
   | 'skill_endorsed'
   | 'rating_milestone'
+  | 'reputation_milestone'
+  | 'review_milestone'
+  | 'perfect_rating'
   | 'referral_first_job'
   | 'referral_milestone_5'
   | 'referral_milestone_10'
@@ -107,6 +110,97 @@ const REPUTATION_ACHIEVEMENTS: AchievementCondition[] = [
       const { stats } = await getFreelancerReviews(userId)
       return stats.totalReviews >= 100 && stats.averageRating >= 4.7
     }
+  },
+  {
+    id: 'TRUSTED_EXPERT',
+    name: 'Trusted Expert',
+    check: async (userId: number) => {
+      const { TrustScoreService } = await import('./trust-score')
+      const service = new TrustScoreService()
+      const score = await service.calculateTrustScore(userId)
+      return score.level === 'diamond'
+    }
+  }
+]
+
+// Milestone achievements
+const MILESTONE_ACHIEVEMENTS: AchievementCondition[] = [
+  {
+    id: 'FIRST_JOB',
+    name: 'First Job',
+    check: async (userId: number) => {
+      const { getFreelancerStats } = await import(
+        '@/lib/db/queries/freelancers'
+      )
+      const stats = await getFreelancerStats(userId)
+      return stats.completedJobs >= 1
+    }
+  },
+  {
+    id: 'JOB_MILESTONE_10',
+    name: 'Rising Freelancer',
+    check: async (userId: number) => {
+      const { getFreelancerStats } = await import(
+        '@/lib/db/queries/freelancers'
+      )
+      const stats = await getFreelancerStats(userId)
+      return stats.completedJobs >= 10
+    }
+  },
+  {
+    id: 'JOB_MILESTONE_50',
+    name: 'Experienced Professional',
+    check: async (userId: number) => {
+      const { getFreelancerStats } = await import(
+        '@/lib/db/queries/freelancers'
+      )
+      const stats = await getFreelancerStats(userId)
+      return stats.completedJobs >= 50
+    }
+  },
+  {
+    id: 'JOB_MILESTONE_100',
+    name: 'Century Achiever',
+    check: async (userId: number) => {
+      const { getFreelancerStats } = await import(
+        '@/lib/db/queries/freelancers'
+      )
+      const stats = await getFreelancerStats(userId)
+      return stats.completedJobs >= 100
+    }
+  },
+  {
+    id: 'EARNINGS_MILESTONE_1K',
+    name: 'First Thousand',
+    check: async (userId: number) => {
+      const { getFreelancerStats } = await import(
+        '@/lib/db/queries/freelancers'
+      )
+      const stats = await getFreelancerStats(userId)
+      return parseFloat(stats.totalEarnings) >= 1000
+    }
+  },
+  {
+    id: 'EARNINGS_MILESTONE_10K',
+    name: 'Five Figures',
+    check: async (userId: number) => {
+      const { getFreelancerStats } = await import(
+        '@/lib/db/queries/freelancers'
+      )
+      const stats = await getFreelancerStats(userId)
+      return parseFloat(stats.totalEarnings) >= 10000
+    }
+  },
+  {
+    id: 'EARNINGS_MILESTONE_100K',
+    name: 'Six Figures',
+    check: async (userId: number) => {
+      const { getFreelancerStats } = await import(
+        '@/lib/db/queries/freelancers'
+      )
+      const stats = await getFreelancerStats(userId)
+      return parseFloat(stats.totalEarnings) >= 100000
+    }
   }
 ]
 
@@ -127,7 +221,8 @@ export async function checkAndAwardAchievements(
       achievementsToCheck = SKILL_ACHIEVEMENTS
       break
     case 'job_completed':
-      achievementsToCheck = [...REVIEW_ACHIEVEMENTS]
+    case 'milestone_completed':
+      achievementsToCheck = [...REVIEW_ACHIEVEMENTS, ...MILESTONE_ACHIEVEMENTS]
       break
     default:
       return awardedAchievements
@@ -171,7 +266,8 @@ export async function checkAllAchievements(userId: number): Promise<string[]> {
   const allAchievements = [
     ...REVIEW_ACHIEVEMENTS,
     ...SKILL_ACHIEVEMENTS,
-    ...REPUTATION_ACHIEVEMENTS
+    ...REPUTATION_ACHIEVEMENTS,
+    ...MILESTONE_ACHIEVEMENTS
   ]
 
   const awardedAchievements: string[] = []

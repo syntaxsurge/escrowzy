@@ -10,9 +10,10 @@ import { getUser } from '@/services/user'
 // GET /api/jobs/[id]/matching-freelancers - Get matching freelancers for a job
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
 
     if (!user) {
@@ -22,7 +23,7 @@ export async function GET(
       )
     }
 
-    const jobId = parseInt(params.id)
+    const jobId = parseInt(id)
 
     if (isNaN(jobId)) {
       return NextResponse.json(

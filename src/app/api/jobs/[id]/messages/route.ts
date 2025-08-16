@@ -8,11 +8,12 @@ import { requireAuth } from '@/lib/middleware/auth'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await requireAuth(request)
-    const jobId = parseInt(params.id)
+    const jobId = parseInt(id)
 
     // Verify access
     const job = await db.query.jobPostings.findFirst({
@@ -70,11 +71,11 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth(request)
-    const jobId = parseInt(params.id)
+    const jobId = parseInt(id)
     const body = await request.json()
 
     // Verify access

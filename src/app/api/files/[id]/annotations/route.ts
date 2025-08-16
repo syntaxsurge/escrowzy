@@ -8,11 +8,12 @@ import { fileAnnotations, fileVersions, users } from '@/lib/db/schema'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await requireAuth(request)
-    const fileVersionId = parseInt(params.id)
+    const fileVersionId = parseInt(id)
 
     // Verify access to file
     const fileVersion = await db.query.fileVersions.findFirst({
@@ -81,11 +82,11 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth(request)
-    const fileVersionId = parseInt(params.id)
+    const fileVersionId = parseInt(id)
     const body = await request.json()
 
     // Verify access to file

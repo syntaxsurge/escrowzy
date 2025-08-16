@@ -8,9 +8,10 @@ import { getUser } from '@/services/user'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -19,7 +20,7 @@ export async function GET(
       )
     }
 
-    const freelancerId = parseInt(params.id)
+    const freelancerId = parseInt(id)
     if (isNaN(freelancerId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid freelancer ID' },
@@ -44,7 +45,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUser()
@@ -55,7 +56,7 @@ export async function POST(
       )
     }
 
-    const freelancerId = parseInt(params.id)
+    const freelancerId = parseInt(id)
     if (isNaN(freelancerId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid freelancer ID' },

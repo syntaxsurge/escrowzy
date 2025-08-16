@@ -20,10 +20,11 @@ const updateMilestoneSchema = createMilestoneSchema.partial()
 // GET /api/jobs/[id]/milestones - Get job milestones
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const jobId = parseInt(params.id)
+    const { id } = await params
+    const jobId = parseInt(id)
 
     if (isNaN(jobId)) {
       return NextResponse.json(
@@ -55,7 +56,7 @@ export async function GET(
 // POST /api/jobs/[id]/milestones - Create a new milestone
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUser()
@@ -66,7 +67,7 @@ export async function POST(
       )
     }
 
-    const jobId = parseInt(params.id)
+    const jobId = parseInt(id)
     if (isNaN(jobId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid job ID' },
@@ -149,7 +150,7 @@ export async function POST(
 // PATCH /api/jobs/[id]/milestones - Update milestones (bulk update for reordering)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUser()
@@ -160,7 +161,7 @@ export async function PATCH(
       )
     }
 
-    const jobId = parseInt(params.id)
+    const jobId = parseInt(id)
     if (isNaN(jobId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid job ID' },

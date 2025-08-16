@@ -20,8 +20,9 @@ export async function GET(
   }
 
   try {
+    const { id } = await params
     const params = await context.params
-    const escrowId = params.id
+    const escrowId = id
 
     // Fetch escrow data from database
     const escrowData = await getEscrowById(escrowId)

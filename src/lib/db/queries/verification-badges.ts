@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { eq, and, desc, or, gte, sql, lte } from 'drizzle-orm'
+import { eq, and, desc, or, gte, sql, lte, isNull } from 'drizzle-orm'
 
 import { db } from '../drizzle'
 import { verificationBadges, users } from '../schema'
@@ -78,25 +78,23 @@ export async function getUserVerificationBadges(
   userId: number,
   activeOnly: boolean = true
 ): Promise<VerificationBadge[]> {
-  let query = db
-    .select()
-    .from(verificationBadges)
-    .where(eq(verificationBadges.userId, userId))
+  const conditions = [eq(verificationBadges.userId, userId)]
 
   if (activeOnly) {
-    query = query.where(
-      and(
-        eq(verificationBadges.userId, userId),
-        eq(verificationBadges.isActive, true),
-        or(
-          eq(verificationBadges.expiresAt, null),
-          gte(verificationBadges.expiresAt, new Date())
-        )
-      )
+    conditions.push(eq(verificationBadges.isActive, true))
+    conditions.push(
+      or(
+        isNull(verificationBadges.expiresAt),
+        gte(verificationBadges.expiresAt, new Date())
+      )!
     )
   }
 
-  return query.orderBy(desc(verificationBadges.verifiedAt))
+  return db
+    .select()
+    .from(verificationBadges)
+    .where(and(...conditions))
+    .orderBy(desc(verificationBadges.verifiedAt))
 }
 
 export async function getVerificationBadge(
@@ -139,8 +137,9 @@ export async function revokeVerificationBadge(
         eq(verificationBadges.badgeType, badgeType)
       )
     )
+    .returning()
 
-  return result.rowCount > 0
+  return result.length > 0
 }
 
 export async function isUserVerified(
@@ -236,8 +235,9 @@ export async function extendVerificationBadge(
         eq(verificationBadges.isActive, true)
       )
     )
+    .returning()
 
-  return result.rowCount > 0
+  return result.length > 0
 }
 
 export async function getExpiringBadges(

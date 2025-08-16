@@ -9,7 +9,7 @@ import { freelancerProfiles, freelancerSkills, skills } from '@/lib/db/schema'
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await getAuth()
@@ -18,7 +18,8 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const skillId = parseInt(params.id)
+    const { id } = await params
+    const skillId = parseInt(id)
 
     // Get freelancer profile
     const profile = await db
@@ -73,7 +74,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await getAuth()
@@ -81,7 +82,8 @@ export async function DELETE(
       return apiResponses.unauthorized()
     }
 
-    const skillId = parseInt(params.id)
+    const { id } = await params
+    const skillId = parseInt(id)
 
     // Get freelancer profile
     const profile = await db

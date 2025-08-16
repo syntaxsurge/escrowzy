@@ -15,9 +15,10 @@ import { getUser } from '@/services/user'
 // GET /api/jobs/[id]/invitations - Get invitations for a job
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
 
     if (!user) {
@@ -27,7 +28,7 @@ export async function GET(
       )
     }
 
-    const jobId = parseInt(params.id)
+    const jobId = parseInt(id)
 
     if (isNaN(jobId)) {
       return NextResponse.json(
@@ -103,7 +104,7 @@ export async function GET(
 // POST /api/jobs/[id]/invitations - Send invitations to freelancers
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUser()
@@ -115,7 +116,7 @@ export async function POST(
       )
     }
 
-    const jobId = parseInt(params.id)
+    const jobId = parseInt(id)
 
     if (isNaN(jobId)) {
       return NextResponse.json(

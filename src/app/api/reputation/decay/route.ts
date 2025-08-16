@@ -1,0 +1,42 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+import { getAuthSession } from '@/lib/auth'
+import { reputationSyncService } from '@/services/reputation-sync.service'
+
+/**
+ * POST /api/reputation/decay
+ * Apply reputation decay to inactive users (admin only)
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getAuthSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Only admins can trigger decay
+    if (session.user.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Forbidden. Admin access required.' },
+        { status: 403 }
+      )
+    }
+
+    const result = await reputationSyncService.applyReputationDecay()
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        affectedUsers: result.affectedUsers,
+        totalDecayApplied: result.totalDecayApplied,
+        timestamp: new Date().toISOString()
+      }
+    })
+  } catch (error) {
+    console.error('Error applying reputation decay:', error)
+    return NextResponse.json(
+      { error: 'Failed to apply reputation decay' },
+      { status: 500 }
+    )
+  }
+}

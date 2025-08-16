@@ -5,10 +5,11 @@ import { getJobById } from '@/lib/db/queries/jobs'
 // GET /api/jobs/[id] - Get single job details
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const jobId = parseInt(params.id)
+    const { id } = await params
+    const jobId = parseInt(id)
 
     if (isNaN(jobId)) {
       return NextResponse.json(

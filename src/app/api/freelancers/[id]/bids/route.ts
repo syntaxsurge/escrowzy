@@ -6,10 +6,11 @@ import { getUser } from '@/services/user'
 // GET /api/freelancers/[id]/bids - Get all bids for a freelancer
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const freelancerId = parseInt(params.id)
+    const { id } = await params
+    const freelancerId = parseInt(id)
     if (isNaN(freelancerId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid freelancer ID' },

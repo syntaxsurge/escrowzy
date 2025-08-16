@@ -12,6 +12,7 @@ export async function POST(
 ) {
   const params = await props.params
   try {
+    const { id } = await params
     const session = await getSession()
     if (!session) {
       return NextResponse.json(
@@ -20,7 +21,7 @@ export async function POST(
       )
     }
 
-    const tradeId = parseInt(params.id)
+    const tradeId = parseInt(id)
     if (isNaN(tradeId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid trade ID' },

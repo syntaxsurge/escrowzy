@@ -32,9 +32,10 @@ const refundRequestSchema = z.object({
 // POST /api/jobs/[id]/milestones/[milestoneId]/refund - Request refund
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; milestoneId: string } }
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
+    const { id, milestoneId } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -43,8 +44,8 @@ export async function POST(
       )
     }
 
-    const jobId = parseInt(params.id)
-    const milestoneId = parseInt(params.milestoneId)
+    const jobId = parseInt(id)
+    const milestoneId = parseInt(milestoneId)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(
@@ -237,7 +238,7 @@ export async function POST(
 // PUT /api/jobs/[id]/milestones/[milestoneId]/refund - Process refund (admin/resolution)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; milestoneId: string } }
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
     const user = await getUser()
@@ -248,8 +249,8 @@ export async function PUT(
       )
     }
 
-    const jobId = parseInt(params.id)
-    const milestoneId = parseInt(params.milestoneId)
+    const jobId = parseInt(id)
+    const milestoneId = parseInt(milestoneId)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(
@@ -454,7 +455,7 @@ export async function PUT(
 // GET /api/jobs/[id]/milestones/[milestoneId]/refund - Get refund status
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; milestoneId: string } }
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
     const user = await getUser()
@@ -465,8 +466,8 @@ export async function GET(
       )
     }
 
-    const jobId = parseInt(params.id)
-    const milestoneId = parseInt(params.milestoneId)
+    const jobId = parseInt(id)
+    const milestoneId = parseInt(milestoneId)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(

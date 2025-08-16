@@ -17,10 +17,11 @@ const createRevisionSchema = z.object({
 // GET /api/jobs/[id]/milestones/[milestoneId]/revisions - Get revision history
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; milestoneId: string } }
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
-    const milestoneId = parseInt(params.milestoneId)
+    const { milestoneId } = await params
+    const milestoneId = parseInt(milestoneId)
 
     if (isNaN(milestoneId)) {
       return NextResponse.json(
@@ -51,9 +52,10 @@ export async function GET(
 // POST /api/jobs/[id]/milestones/[milestoneId]/revisions - Request revision
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; milestoneId: string } }
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -62,8 +64,8 @@ export async function POST(
       )
     }
 
-    const jobId = parseInt(params.id)
-    const milestoneId = parseInt(params.milestoneId)
+    const jobId = parseInt(id)
+    const milestoneId = parseInt(milestoneId)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(
@@ -182,7 +184,7 @@ export async function POST(
 // PATCH /api/jobs/[id]/milestones/[milestoneId]/revisions - Update revision status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; milestoneId: string } }
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
     const user = await getUser()
@@ -218,7 +220,7 @@ export async function PATCH(
     }
 
     // Get the milestone and job to check permissions
-    const milestoneId = parseInt(params.milestoneId)
+    const milestoneId = parseInt(milestoneId)
     const [milestone] = await db
       .select({
         milestone: jobMilestones,

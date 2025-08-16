@@ -170,6 +170,165 @@ export const ACHIEVEMENT_DEFINITIONS: Record<string, Achievement> = {
       'ipfs://QmQfesvAL4kVAhrGqo6gBP7ntzMYdK73UfhiU/early-adopter.json',
     totalMinted: 0,
     maxSupply: 500
+  },
+  // Freelancer Achievement Badges
+  FIVE_STAR_FREELANCER: {
+    id: 'FIVE_STAR_FREELANCER',
+    name: '5-Star Freelancer',
+    description: 'Maintain 4.8+ rating with 10+ reviews',
+    category: 5, // FREELANCER
+    rarity: 2, // RARE
+    xpReward: 500,
+    combatPowerReward: 50,
+    exists: true,
+    active: true,
+    metadataURI: 'ipfs://QmQfesvAL4kVAhrGqo6gBP7ntzMYdK73UfhiU/five-star.json',
+    totalMinted: 0,
+    maxSupply: null
+  },
+  PERFECT_CLIENT: {
+    id: 'PERFECT_CLIENT',
+    name: 'Perfect Client',
+    description: 'Maintain 5.0 rating as a client with 10+ reviews',
+    category: 5, // FREELANCER
+    rarity: 2, // RARE
+    xpReward: 500,
+    combatPowerReward: 50,
+    exists: true,
+    active: true,
+    metadataURI:
+      'ipfs://QmQfesvAL4kVAhrGqo6gBP7ntzMYdK73UfhiU/perfect-client.json',
+    totalMinted: 0,
+    maxSupply: null
+  },
+  SKILL_MASTER: {
+    id: 'SKILL_MASTER',
+    name: 'Skill Master',
+    description: 'Get 20+ endorsements for a single skill',
+    category: 5, // FREELANCER
+    rarity: 3, // EPIC
+    xpReward: 750,
+    combatPowerReward: 75,
+    exists: true,
+    active: true,
+    metadataURI:
+      'ipfs://QmQfesvAL4kVAhrGqo6gBP7ntzMYdK73UfhiU/skill-master.json',
+    totalMinted: 0,
+    maxSupply: null
+  },
+  TRUSTED_EXPERT: {
+    id: 'TRUSTED_EXPERT',
+    name: 'Trusted Expert',
+    description: 'Achieve Diamond trust score',
+    category: 5, // FREELANCER
+    rarity: 4, // LEGENDARY
+    xpReward: 2000,
+    combatPowerReward: 200,
+    exists: true,
+    active: true,
+    metadataURI:
+      'ipfs://QmQfesvAL4kVAhrGqo6gBP7ntzMYdK73UfhiU/trusted-expert.json',
+    totalMinted: 0,
+    maxSupply: 100
+  },
+  // Milestone Achievements
+  FIRST_JOB: {
+    id: 'FIRST_JOB',
+    name: 'First Job',
+    description: 'Complete your first freelance job',
+    category: 6, // MILESTONE
+    rarity: 0, // COMMON
+    xpReward: 100,
+    combatPowerReward: 10,
+    exists: true,
+    active: true,
+    metadataURI: 'ipfs://QmQfesvAL4kVAhrGqo6gBP7ntzMYdK73UfhiU/first-job.json',
+    totalMinted: 0,
+    maxSupply: null
+  },
+  JOB_MILESTONE_10: {
+    id: 'JOB_MILESTONE_10',
+    name: 'Rising Freelancer',
+    description: 'Complete 10 freelance jobs',
+    category: 6, // MILESTONE
+    rarity: 1, // UNCOMMON
+    xpReward: 250,
+    combatPowerReward: 25,
+    exists: true,
+    active: true,
+    metadataURI: 'ipfs://QmQfesvAL4kVAhrGqo6gBP7ntzMYdK73UfhiU/job-10.json',
+    totalMinted: 0,
+    maxSupply: null
+  },
+  JOB_MILESTONE_50: {
+    id: 'JOB_MILESTONE_50',
+    name: 'Experienced Professional',
+    description: 'Complete 50 freelance jobs',
+    category: 6, // MILESTONE
+    rarity: 2, // RARE
+    xpReward: 500,
+    combatPowerReward: 50,
+    exists: true,
+    active: true,
+    metadataURI: 'ipfs://QmQfesvAL4kVAhrGqo6gBP7ntzMYdK73UfhiU/job-50.json',
+    totalMinted: 0,
+    maxSupply: null
+  },
+  JOB_MILESTONE_100: {
+    id: 'JOB_MILESTONE_100',
+    name: 'Century Achiever',
+    description: 'Complete 100 freelance jobs',
+    category: 6, // MILESTONE
+    rarity: 3, // EPIC
+    xpReward: 1000,
+    combatPowerReward: 100,
+    exists: true,
+    active: true,
+    metadataURI: 'ipfs://QmQfesvAL4kVAhrGqo6gBP7ntzMYdK73UfhiU/job-100.json',
+    totalMinted: 0,
+    maxSupply: null
+  },
+  EARNINGS_MILESTONE_1K: {
+    id: 'EARNINGS_MILESTONE_1K',
+    name: 'First Thousand',
+    description: 'Earn $1,000 on the platform',
+    category: 6, // MILESTONE
+    rarity: 1, // UNCOMMON
+    xpReward: 200,
+    combatPowerReward: 20,
+    exists: true,
+    active: true,
+    metadataURI: 'ipfs://QmQfesvAL4kVAhrGqo6gBP7ntzMYdK73UfhiU/earn-1k.json',
+    totalMinted: 0,
+    maxSupply: null
+  },
+  EARNINGS_MILESTONE_10K: {
+    id: 'EARNINGS_MILESTONE_10K',
+    name: 'Five Figures',
+    description: 'Earn $10,000 on the platform',
+    category: 6, // MILESTONE
+    rarity: 2, // RARE
+    xpReward: 500,
+    combatPowerReward: 50,
+    exists: true,
+    active: true,
+    metadataURI: 'ipfs://QmQfesvAL4kVAhrGqo6gBP7ntzMYdK73UfhiU/earn-10k.json',
+    totalMinted: 0,
+    maxSupply: null
+  },
+  EARNINGS_MILESTONE_100K: {
+    id: 'EARNINGS_MILESTONE_100K',
+    name: 'Six Figures',
+    description: 'Earn $100,000 on the platform',
+    category: 6, // MILESTONE
+    rarity: 4, // LEGENDARY
+    xpReward: 2000,
+    combatPowerReward: 200,
+    exists: true,
+    active: true,
+    metadataURI: 'ipfs://QmQfesvAL4kVAhrGqo6gBP7ntzMYdK73UfhiU/earn-100k.json',
+    totalMinted: 0,
+    maxSupply: 50
   }
 }
 

@@ -11,9 +11,10 @@ import { getUser } from '@/services/user'
 // POST /api/invoices/[id]/send - Send invoice to client
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -22,7 +23,7 @@ export async function POST(
       )
     }
 
-    const invoiceId = parseInt(params.id)
+    const invoiceId = parseInt(id)
     if (isNaN(invoiceId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid invoice ID' },

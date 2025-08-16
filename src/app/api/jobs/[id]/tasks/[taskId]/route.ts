@@ -8,12 +8,13 @@ import { requireAuth } from '@/lib/middleware/auth'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; taskId: string } }
+  { params }: { params: Promise<{ id: string; taskId: string }> }
 ) {
   try {
+    const { id, taskId } = await params
     const user = await requireAuth(request)
-    const jobId = parseInt(params.id)
-    const taskId = parseInt(params.taskId)
+    const jobId = parseInt(id)
+    const taskId = parseInt(taskId)
     const body = await request.json()
 
     // Verify access
@@ -94,12 +95,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; taskId: string } }
+  { params }: { params: Promise<{ id: string; taskId: string }> }
 ) {
   try {
     const user = await requireAuth(request)
-    const jobId = parseInt(params.id)
-    const taskId = parseInt(params.taskId)
+    const jobId = parseInt(id)
+    const taskId = parseInt(taskId)
 
     // Verify access
     const job = await db.query.jobPostings.findFirst({

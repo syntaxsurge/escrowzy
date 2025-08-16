@@ -26,9 +26,10 @@ const submitMilestoneSchema = z.object({
 // POST /api/jobs/[id]/milestones/[milestoneId]/submit - Submit milestone for review
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; milestoneId: string } }
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
+    const { id, milestoneId } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -37,8 +38,8 @@ export async function POST(
       )
     }
 
-    const jobId = parseInt(params.id)
-    const milestoneId = parseInt(params.milestoneId)
+    const jobId = parseInt(id)
+    const milestoneId = parseInt(milestoneId)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(

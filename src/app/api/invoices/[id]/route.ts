@@ -30,9 +30,10 @@ const updateInvoiceSchema = z.object({
 // GET /api/invoices/[id] - Get specific invoice
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -41,7 +42,7 @@ export async function GET(
       )
     }
 
-    const invoiceId = parseInt(params.id)
+    const invoiceId = parseInt(id)
     if (isNaN(invoiceId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid invoice ID' },
@@ -117,7 +118,7 @@ export async function GET(
 // PATCH /api/invoices/[id] - Update invoice
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUser()
@@ -128,7 +129,7 @@ export async function PATCH(
       )
     }
 
-    const invoiceId = parseInt(params.id)
+    const invoiceId = parseInt(id)
     if (isNaN(invoiceId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid invoice ID' },
@@ -259,7 +260,7 @@ export async function PATCH(
 // DELETE /api/invoices/[id] - Delete invoice
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUser()
@@ -270,7 +271,7 @@ export async function DELETE(
       )
     }
 
-    const invoiceId = parseInt(params.id)
+    const invoiceId = parseInt(id)
     if (isNaN(invoiceId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid invoice ID' },

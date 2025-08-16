@@ -11,11 +11,12 @@ import { fileVersions, jobPostings } from '@/lib/db/schema'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await requireAuth(request)
-    const fileVersionId = parseInt(params.id)
+    const fileVersionId = parseInt(id)
 
     // Get file version with job info
     const fileVersion = await db.query.fileVersions.findFirst({

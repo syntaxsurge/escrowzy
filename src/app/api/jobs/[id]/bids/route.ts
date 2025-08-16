@@ -15,10 +15,11 @@ import { getUser } from '@/services/user'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const jobId = parseInt(params.id)
+    const { id } = await params
+    const jobId = parseInt(id)
     if (isNaN(jobId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid job ID' },
@@ -138,7 +139,7 @@ export async function GET(
 // POST /api/jobs/[id]/bids - Submit a bid for a job
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUser()
@@ -150,7 +151,7 @@ export async function POST(
       )
     }
 
-    const jobId = parseInt(params.id)
+    const jobId = parseInt(id)
     if (isNaN(jobId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid job ID' },

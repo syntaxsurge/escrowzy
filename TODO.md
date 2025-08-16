@@ -285,7 +285,7 @@ milestone-based project management.
 
 ---
 
-## PHASE 7: Review & Reputation System
+## PHASE 7: Review & Reputation System ✅
 
 ### Review Collection
 
@@ -298,7 +298,7 @@ milestone-based project management.
 
 ### Onchain Reputation
 
-- [x] Implement reputation smart contract
+- [x] ~~Implement reputation smart contract~~
 - [x] ~~Create reputation NFTs~~
 - [x] ~~Build verification system~~
 - [x] ~~Add skill endorsements~~

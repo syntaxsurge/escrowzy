@@ -22,10 +22,11 @@ const updateMilestoneSchema = z.object({
 // GET /api/jobs/[id]/milestones/[milestoneId] - Get specific milestone
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; milestoneId: string } }
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
-    const milestoneId = parseInt(params.milestoneId)
+    const { milestoneId } = await params
+    const milestoneId = parseInt(milestoneId)
 
     if (isNaN(milestoneId)) {
       return NextResponse.json(
@@ -63,9 +64,10 @@ export async function GET(
 // PATCH /api/jobs/[id]/milestones/[milestoneId] - Update specific milestone
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; milestoneId: string } }
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -74,8 +76,8 @@ export async function PATCH(
       )
     }
 
-    const jobId = parseInt(params.id)
-    const milestoneId = parseInt(params.milestoneId)
+    const jobId = parseInt(id)
+    const milestoneId = parseInt(milestoneId)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(
@@ -229,7 +231,7 @@ export async function PATCH(
 // DELETE /api/jobs/[id]/milestones/[milestoneId] - Delete milestone
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; milestoneId: string } }
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
     const user = await getUser()
@@ -240,8 +242,8 @@ export async function DELETE(
       )
     }
 
-    const jobId = parseInt(params.id)
-    const milestoneId = parseInt(params.milestoneId)
+    const jobId = parseInt(id)
+    const milestoneId = parseInt(milestoneId)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(

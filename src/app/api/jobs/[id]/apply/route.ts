@@ -8,10 +8,11 @@ import { getUser } from '@/services/user'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const jobId = parseInt(params.id)
+    const { id } = await params
+    const jobId = parseInt(id)
     if (isNaN(jobId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid job ID' },
