@@ -52,7 +52,10 @@ export async function GET(
 
     if (job.clientId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'You can only view invitations for your own jobs' },
+        {
+          success: false,
+          error: 'You can only view invitations for your own jobs'
+        },
         { status: 403 }
       )
     }
@@ -124,7 +127,11 @@ export async function POST(
     const body = await request.json()
     const { freelancerIds, message } = body
 
-    if (!freelancerIds || !Array.isArray(freelancerIds) || freelancerIds.length === 0) {
+    if (
+      !freelancerIds ||
+      !Array.isArray(freelancerIds) ||
+      freelancerIds.length === 0
+    ) {
       return NextResponse.json(
         { success: false, error: 'At least one freelancer must be selected' },
         { status: 400 }
@@ -147,7 +154,10 @@ export async function POST(
 
     if (job.clientId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'You can only send invitations for your own jobs' },
+        {
+          success: false,
+          error: 'You can only send invitations for your own jobs'
+        },
         { status: 403 }
       )
     }
@@ -163,14 +173,19 @@ export async function POST(
         )
       )
 
-    const existingFreelancerIds = existingInvitations.map(inv => inv.freelancerId)
+    const existingFreelancerIds = existingInvitations.map(
+      inv => inv.freelancerId
+    )
     const newFreelancerIds = freelancerIds.filter(
       id => !existingFreelancerIds.includes(id)
     )
 
     if (newFreelancerIds.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'All selected freelancers have already been invited' },
+        {
+          success: false,
+          error: 'All selected freelancers have already been invited'
+        },
         { status: 400 }
       )
     }
@@ -214,7 +229,10 @@ export async function POST(
           }
         })
       } catch (notificationError) {
-        console.error(`Failed to send notification to freelancer ${freelancerId}:`, notificationError)
+        console.error(
+          `Failed to send notification to freelancer ${freelancerId}:`,
+          notificationError
+        )
       }
     }
 

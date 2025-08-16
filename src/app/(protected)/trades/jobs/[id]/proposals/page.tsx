@@ -585,13 +585,17 @@ export default function JobProposalsPage() {
                                 bid={bid}
                                 jobTitle={job?.title || ''}
                                 isClient={true}
-                                onTermsAccepted={() => handleBidAction(bid.id, 'accept')}
+                                onTermsAccepted={() =>
+                                  handleBidAction(bid.id, 'accept')
+                                }
                               />
                               <InterviewScheduler
                                 jobId={parseInt(jobId)}
                                 bidId={bid.id}
                                 freelancerId={bid.freelancerId}
-                                freelancerName={bid.freelancer?.name || 'Freelancer'}
+                                freelancerName={
+                                  bid.freelancer?.name || 'Freelancer'
+                                }
                                 onScheduled={() => mutateBids()}
                               />
                               <Button
@@ -622,12 +626,16 @@ export default function JobProposalsPage() {
                                 jobId={parseInt(jobId)}
                                 bidId={bid.id}
                                 freelancerId={bid.freelancerId}
-                                freelancerName={bid.freelancer?.name || 'Freelancer'}
+                                freelancerName={
+                                  bid.freelancer?.name || 'Freelancer'
+                                }
                                 onScheduled={() => mutateBids()}
                               />
                               <Button
                                 size='sm'
-                                onClick={() => handleBidAction(bid.id, 'accept')}
+                                onClick={() =>
+                                  handleBidAction(bid.id, 'accept')
+                                }
                               >
                                 <Check className='mr-2 h-4 w-4' />
                                 Accept

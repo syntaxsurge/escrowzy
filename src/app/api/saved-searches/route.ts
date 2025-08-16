@@ -81,12 +81,17 @@ export async function POST(request: NextRequest) {
     const existing = await db
       .select()
       .from(savedSearches)
-      .where(and(eq(savedSearches.userId, user.id), eq(savedSearches.name, name)))
+      .where(
+        and(eq(savedSearches.userId, user.id), eq(savedSearches.name, name))
+      )
       .limit(1)
 
     if (existing.length > 0) {
       return NextResponse.json(
-        { success: false, error: 'A saved search with this name already exists' },
+        {
+          success: false,
+          error: 'A saved search with this name already exists'
+        },
         { status: 400 }
       )
     }
@@ -203,7 +208,12 @@ export async function DELETE(request: NextRequest) {
     const [search] = await db
       .select()
       .from(savedSearches)
-      .where(and(eq(savedSearches.id, parseInt(id)), eq(savedSearches.userId, user.id)))
+      .where(
+        and(
+          eq(savedSearches.id, parseInt(id)),
+          eq(savedSearches.userId, user.id)
+        )
+      )
       .limit(1)
 
     if (!search) {
@@ -214,9 +224,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete the search
-    await db
-      .delete(savedSearches)
-      .where(eq(savedSearches.id, parseInt(id)))
+    await db.delete(savedSearches).where(eq(savedSearches.id, parseInt(id)))
 
     return NextResponse.json({
       success: true,

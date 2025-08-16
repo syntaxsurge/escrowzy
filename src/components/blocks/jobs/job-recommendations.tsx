@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -13,8 +12,7 @@ import {
   DollarSign,
   Filter,
   RefreshCw,
-  Target,
-  TrendingUp
+  Target
 } from 'lucide-react'
 import { toast } from 'sonner'
 import useSWR from 'swr'
@@ -32,8 +30,8 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { appRoutes } from '@/config/app-routes'
-import { api } from '@/lib/api/http-client'
 import type { JobMatch } from '@/lib/algorithms/skill-matching'
+import { api } from '@/lib/api/http-client'
 
 export function JobRecommendations() {
   const router = useRouter()
@@ -130,10 +128,10 @@ export function JobRecommendations() {
       </CardHeader>
       <CardContent>
         {recommendations.length === 0 ? (
-          <div className='text-center py-8'>
+          <div className='py-8 text-center'>
             <Target className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-            <h3 className='text-lg font-semibold mb-2'>No Recommendations</h3>
-            <p className='text-muted-foreground text-sm mb-4'>
+            <h3 className='mb-2 text-lg font-semibold'>No Recommendations</h3>
+            <p className='text-muted-foreground mb-4 text-sm'>
               Add more skills to your profile to get better job matches
             </p>
             <Button
@@ -145,25 +143,27 @@ export function JobRecommendations() {
           </div>
         ) : (
           <div className='space-y-4'>
-            {recommendations.map((recommendation) => (
+            {recommendations.map(recommendation => (
               <Card
                 key={recommendation.job.id}
-                className='hover:shadow-md transition-shadow cursor-pointer'
+                className='cursor-pointer transition-shadow hover:shadow-md'
                 onClick={() =>
-                  router.push(`${appRoutes.trades.jobs.base}/${recommendation.job.id}`)
+                  router.push(
+                    `${appRoutes.trades.jobs.base}/${recommendation.job.id}`
+                  )
                 }
               >
                 <CardContent className='p-4'>
-                  <div className='flex items-start justify-between mb-3'>
+                  <div className='mb-3 flex items-start justify-between'>
                     <div className='flex-1'>
-                      <h3 className='font-semibold text-lg mb-1'>
+                      <h3 className='mb-1 text-lg font-semibold'>
                         {recommendation.job.title}
                       </h3>
-                      <p className='text-muted-foreground text-sm line-clamp-2'>
+                      <p className='text-muted-foreground line-clamp-2 text-sm'>
                         {recommendation.job.description}
                       </p>
                     </div>
-                    <div className='text-right ml-4'>
+                    <div className='ml-4 text-right'>
                       <div
                         className={`text-2xl font-bold ${getMatchColor(
                           recommendation.matchScore
@@ -172,7 +172,9 @@ export function JobRecommendations() {
                         {recommendation.matchScore}%
                       </div>
                       <Badge
-                        variant={getMatchBadgeVariant(recommendation.matchScore) as any}
+                        variant={
+                          getMatchBadgeVariant(recommendation.matchScore) as any
+                        }
                         className='mt-1'
                       >
                         Match Score
@@ -181,8 +183,11 @@ export function JobRecommendations() {
                   </div>
 
                   <div className='space-y-2'>
-                    <Progress value={recommendation.matchPercentage} className='h-2' />
-                    
+                    <Progress
+                      value={recommendation.matchPercentage}
+                      className='h-2'
+                    />
+
                     <div className='flex flex-wrap gap-2'>
                       <div className='flex items-center gap-1 text-sm'>
                         <Target className='h-3 w-3' />
@@ -215,8 +220,12 @@ export function JobRecommendations() {
 
                     {/* Matched Skills */}
                     <div className='flex flex-wrap gap-1'>
-                      {recommendation.matchedSkills.slice(0, 3).map((skill) => (
-                        <Badge key={skill} variant='success' className='text-xs'>
+                      {recommendation.matchedSkills.slice(0, 3).map(skill => (
+                        <Badge
+                          key={skill}
+                          variant='success'
+                          className='text-xs'
+                        >
                           ✓ {skill}
                         </Badge>
                       ))}
@@ -230,8 +239,12 @@ export function JobRecommendations() {
                     {/* Missing Skills */}
                     {recommendation.missingSkills.length > 0 && (
                       <div className='flex flex-wrap gap-1'>
-                        {recommendation.missingSkills.slice(0, 2).map((skill) => (
-                          <Badge key={skill} variant='outline' className='text-xs'>
+                        {recommendation.missingSkills.slice(0, 2).map(skill => (
+                          <Badge
+                            key={skill}
+                            variant='outline'
+                            className='text-xs'
+                          >
                             {skill}
                           </Badge>
                         ))}
@@ -244,12 +257,15 @@ export function JobRecommendations() {
                     )}
                   </div>
 
-                  <div className='flex items-center justify-between mt-4'>
+                  <div className='mt-4 flex items-center justify-between'>
                     <span className='text-muted-foreground text-xs'>
                       Posted{' '}
-                      {formatDistanceToNow(new Date(recommendation.job.createdAt), {
-                        addSuffix: true
-                      })}
+                      {formatDistanceToNow(
+                        new Date(recommendation.job.createdAt),
+                        {
+                          addSuffix: true
+                        }
+                      )}
                     </span>
                     <Button size='sm' variant='ghost'>
                       View Details
@@ -260,7 +276,7 @@ export function JobRecommendations() {
               </Card>
             ))}
 
-            <div className='text-center pt-4'>
+            <div className='pt-4 text-center'>
               <Button
                 variant='outline'
                 onClick={() => router.push(appRoutes.trades.jobs.base)}

@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { eq } from 'drizzle-orm'
 
+import { findMatchingFreelancers } from '@/lib/algorithms/skill-matching'
 import { db } from '@/lib/db/drizzle'
 import { jobPostings } from '@/lib/db/schema'
-import { findMatchingFreelancers } from '@/lib/algorithms/skill-matching'
 import { getUser } from '@/services/user'
 
 // GET /api/jobs/[id]/matching-freelancers - Get matching freelancers for a job
@@ -47,7 +47,10 @@ export async function GET(
 
     if (job.clientId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'You can only view matching freelancers for your own jobs' },
+        {
+          success: false,
+          error: 'You can only view matching freelancers for your own jobs'
+        },
         { status: 403 }
       )
     }

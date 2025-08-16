@@ -117,7 +117,10 @@ export async function POST(request: NextRequest) {
 
     if (!job || job.clientId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'You can only schedule interviews for your own jobs' },
+        {
+          success: false,
+          error: 'You can only schedule interviews for your own jobs'
+        },
         { status: 403 }
       )
     }
@@ -141,16 +144,16 @@ export async function POST(request: NextRequest) {
       .select()
       .from(interviews)
       .where(
-        and(
-          eq(interviews.bidId, bidId),
-          eq(interviews.status, 'scheduled')
-        )
+        and(eq(interviews.bidId, bidId), eq(interviews.status, 'scheduled'))
       )
       .limit(1)
 
     if (existingInterview.length > 0) {
       return NextResponse.json(
-        { success: false, error: 'An interview is already scheduled for this bid' },
+        {
+          success: false,
+          error: 'An interview is already scheduled for this bid'
+        },
         { status: 400 }
       )
     }

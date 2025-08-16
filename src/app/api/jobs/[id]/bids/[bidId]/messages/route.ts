@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { and, desc, eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
 import { db } from '@/lib/db/drizzle'
 import { jobBids, jobPostings, messages, users } from '@/lib/db/schema'
-import { pusherServer } from '@/lib/pusher-server'
-import { sendNotification } from '@/lib/pusher-server'
+import { pusherServer, sendNotification } from '@/lib/pusher-server'
 import { getUser } from '@/services/user'
 
 // GET /api/jobs/[id]/bids/[bidId]/messages - Get bid negotiation messages
@@ -185,13 +184,18 @@ export async function POST(
 
     // Send real-time update via Pusher
     if (pusherServer) {
-      await pusherServer.trigger(`bid-${bidId}`, 'new-message', messageWithSender)
+      await pusherServer.trigger(
+        `bid-${bidId}`,
+        'new-message',
+        messageWithSender
+      )
     }
 
     // Send notification to the other party
-    const recipientId = user.id === job.clientId ? bid.freelancerId : job.clientId
+    const recipientId =
+      user.id === job.clientId ? bid.freelancerId : job.clientId
     const recipientType = user.id === job.clientId ? 'freelancer' : 'client'
-    
+
     try {
       await sendNotification(recipientId, {
         type: 'bid_negotiation_message',

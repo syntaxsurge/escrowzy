@@ -952,7 +952,9 @@ export const savedSearches = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 100 }).notNull(),
-    searchType: varchar('search_type', { length: 50 }).notNull().default('jobs'), // jobs, freelancers
+    searchType: varchar('search_type', { length: 50 })
+      .notNull()
+      .default('jobs'), // jobs, freelancers
     filters: jsonb('filters').notNull().default('{}'), // search criteria
     query: text('query'), // search query string
     alertsEnabled: boolean('alerts_enabled').notNull().default(false),
@@ -977,12 +979,16 @@ export const jobAlerts = pgTable(
     userId: integer('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    savedSearchId: integer('saved_search_id')
-      .references(() => savedSearches.id, { onDelete: 'cascade' }),
+    savedSearchId: integer('saved_search_id').references(
+      () => savedSearches.id,
+      { onDelete: 'cascade' }
+    ),
     jobId: integer('job_id')
       .notNull()
       .references(() => jobPostings.id, { onDelete: 'cascade' }),
-    alertType: varchar('alert_type', { length: 50 }).notNull().default('new_match'), // new_match, price_change, deadline_approaching
+    alertType: varchar('alert_type', { length: 50 })
+      .notNull()
+      .default('new_match'), // new_match, price_change, deadline_approaching
     status: varchar('status', { length: 50 }).notNull().default('pending'), // pending, sent, viewed, dismissed
     sentAt: timestamp('sent_at'),
     viewedAt: timestamp('viewed_at'),
@@ -1016,13 +1022,17 @@ export const interviews = pgTable(
       .references(() => users.id),
     scheduledAt: timestamp('scheduled_at').notNull(),
     duration: integer('duration').notNull().default(30), // in minutes
-    meetingType: varchar('meeting_type', { length: 50 }).notNull().default('video'), // video, phone, in-person
+    meetingType: varchar('meeting_type', { length: 50 })
+      .notNull()
+      .default('video'), // video, phone, in-person
     meetingLink: varchar('meeting_link', { length: 500 }),
     location: text('location'),
     notes: text('notes'),
     status: varchar('status', { length: 50 }).notNull().default('scheduled'), // scheduled, completed, cancelled, rescheduled
     clientConfirmed: boolean('client_confirmed').notNull().default(true),
-    freelancerConfirmed: boolean('freelancer_confirmed').notNull().default(false),
+    freelancerConfirmed: boolean('freelancer_confirmed')
+      .notNull()
+      .default(false),
     reminderSent: boolean('reminder_sent').notNull().default(false),
     cancelledBy: integer('cancelled_by').references(() => users.id),
     cancelReason: text('cancel_reason'),
@@ -1170,6 +1180,215 @@ export const savedJobs = pgTable(
   table => [
     index('idx_saved_jobs_freelancer').on(table.freelancerId),
     unique('unique_saved_job').on(table.freelancerId, table.jobId)
+  ]
+)
+
+// Payment & Financial Tables
+export const invoices = pgTable(
+  'invoices',
+  {
+    id: serial('id').primaryKey(),
+    invoiceNumber: varchar('invoice_number', { length: 50 }).notNull().unique(),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id),
+    milestoneId: integer('milestone_id').references(() => jobMilestones.id),
+    freelancerId: integer('freelancer_id')
+      .notNull()
+      .references(() => users.id),
+    clientId: integer('client_id')
+      .notNull()
+      .references(() => users.id),
+    amount: varchar('amount', { length: 50 }).notNull(),
+    currency: varchar('currency', { length: 10 }).notNull().default('USD'),
+    status: varchar('status', { length: 50 }).notNull().default('draft'), // draft, sent, paid, overdue, cancelled
+    dueDate: timestamp('due_date'),
+    paidAt: timestamp('paid_at'),
+    paymentMethod: varchar('payment_method', { length: 50 }),
+    transactionHash: varchar('transaction_hash', { length: 100 }),
+    description: text('description'),
+    items: jsonb('items').notNull().default('[]'), // Line items for the invoice
+    taxAmount: varchar('tax_amount', { length: 50 }),
+    discountAmount: varchar('discount_amount', { length: 50 }),
+    notes: text('notes'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_invoices_freelancer').on(table.freelancerId),
+    index('idx_invoices_client').on(table.clientId),
+    index('idx_invoices_job').on(table.jobId),
+    index('idx_invoices_milestone').on(table.milestoneId),
+    index('idx_invoices_status').on(table.status),
+    index('idx_invoices_due_date').on(table.dueDate)
+  ]
+)
+
+export const earnings = pgTable(
+  'earnings',
+  {
+    id: serial('id').primaryKey(),
+    freelancerId: integer('freelancer_id')
+      .notNull()
+      .references(() => users.id),
+    jobId: integer('job_id').references(() => jobPostings.id),
+    milestoneId: integer('milestone_id').references(() => jobMilestones.id),
+    invoiceId: integer('invoice_id').references(() => invoices.id),
+    amount: varchar('amount', { length: 50 }).notNull(),
+    currency: varchar('currency', { length: 10 }).notNull().default('USD'),
+    type: varchar('type', { length: 50 }).notNull().default('milestone'), // milestone, bonus, tip, refund
+    status: varchar('status', { length: 50 }).notNull().default('pending'), // pending, available, withdrawn
+    availableAt: timestamp('available_at'), // When funds become available for withdrawal
+    platformFee: varchar('platform_fee', { length: 50 }),
+    netAmount: varchar('net_amount', { length: 50 }).notNull(), // Amount after fees
+    description: text('description'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_earnings_freelancer').on(table.freelancerId),
+    index('idx_earnings_job').on(table.jobId),
+    index('idx_earnings_milestone').on(table.milestoneId),
+    index('idx_earnings_status').on(table.status),
+    index('idx_earnings_available_at').on(table.availableAt)
+  ]
+)
+
+export const withdrawals = pgTable(
+  'withdrawals',
+  {
+    id: serial('id').primaryKey(),
+    freelancerId: integer('freelancer_id')
+      .notNull()
+      .references(() => users.id),
+    amount: varchar('amount', { length: 50 }).notNull(),
+    currency: varchar('currency', { length: 10 }).notNull().default('USD'),
+    method: varchar('method', { length: 50 }).notNull(), // bank_transfer, paypal, crypto, stripe
+    status: varchar('status', { length: 50 }).notNull().default('pending'), // pending, processing, completed, failed, cancelled
+    destinationAccount: text('destination_account').notNull(), // Encrypted account details
+    transactionId: varchar('transaction_id', { length: 100 }),
+    fee: varchar('fee', { length: 50 }),
+    netAmount: varchar('net_amount', { length: 50 }).notNull(),
+    processedAt: timestamp('processed_at'),
+    failureReason: text('failure_reason'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_withdrawals_freelancer').on(table.freelancerId),
+    index('idx_withdrawals_status').on(table.status),
+    index('idx_withdrawals_created').on(table.createdAt)
+  ]
+)
+
+export const milestoneRevisions = pgTable(
+  'milestone_revisions',
+  {
+    id: serial('id').primaryKey(),
+    milestoneId: integer('milestone_id')
+      .notNull()
+      .references(() => jobMilestones.id, { onDelete: 'cascade' }),
+    requestedBy: integer('requested_by')
+      .notNull()
+      .references(() => users.id),
+    reason: text('reason').notNull(),
+    details: text('details'),
+    status: varchar('status', { length: 50 }).notNull().default('pending'), // pending, accepted, rejected, completed
+    responseNote: text('response_note'),
+    respondedAt: timestamp('responded_at'),
+    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_milestone_revisions_milestone').on(table.milestoneId),
+    index('idx_milestone_revisions_requested_by').on(table.requestedBy),
+    index('idx_milestone_revisions_status').on(table.status)
+  ]
+)
+
+export const milestoneChats = pgTable(
+  'milestone_chats',
+  {
+    id: serial('id').primaryKey(),
+    milestoneId: integer('milestone_id')
+      .notNull()
+      .references(() => jobMilestones.id, { onDelete: 'cascade' }),
+    senderId: integer('sender_id')
+      .notNull()
+      .references(() => users.id),
+    message: text('message').notNull(),
+    attachments: jsonb('attachments').notNull().default('[]'),
+    messageType: varchar('message_type', { length: 50 })
+      .notNull()
+      .default('text'), // text, submission, approval, revision_request
+    isRead: boolean('is_read').notNull().default(false),
+    readAt: timestamp('read_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_milestone_chats_milestone').on(table.milestoneId),
+    index('idx_milestone_chats_sender').on(table.senderId),
+    index('idx_milestone_chats_created').on(table.createdAt)
+  ]
+)
+
+export const paymentReminders = pgTable(
+  'payment_reminders',
+  {
+    id: serial('id').primaryKey(),
+    invoiceId: integer('invoice_id')
+      .notNull()
+      .references(() => invoices.id, { onDelete: 'cascade' }),
+    recipientId: integer('recipient_id')
+      .notNull()
+      .references(() => users.id),
+    reminderType: varchar('reminder_type', { length: 50 }).notNull(), // due_soon, overdue, final_notice
+    sentAt: timestamp('sent_at'),
+    viewedAt: timestamp('viewed_at'),
+    scheduledFor: timestamp('scheduled_for').notNull(),
+    status: varchar('status', { length: 50 }).notNull().default('scheduled'), // scheduled, sent, cancelled
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_payment_reminders_invoice').on(table.invoiceId),
+    index('idx_payment_reminders_recipient').on(table.recipientId),
+    index('idx_payment_reminders_scheduled').on(table.scheduledFor),
+    index('idx_payment_reminders_status').on(table.status)
+  ]
+)
+
+export const taxDocuments = pgTable(
+  'tax_documents',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    year: integer('year').notNull(),
+    documentType: varchar('document_type', { length: 50 }).notNull(), // 1099, w9, w8ben
+    documentUrl: text('document_url'),
+    status: varchar('status', { length: 50 }).notNull().default('pending'), // pending, generated, sent, acknowledged
+    taxInfo: jsonb('tax_info').notNull().default('{}'), // Encrypted tax information
+    totalEarnings: varchar('total_earnings', { length: 50 }),
+    totalTaxWithheld: varchar('total_tax_withheld', { length: 50 }),
+    generatedAt: timestamp('generated_at'),
+    sentAt: timestamp('sent_at'),
+    acknowledgedAt: timestamp('acknowledged_at'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_tax_documents_user').on(table.userId),
+    index('idx_tax_documents_year').on(table.year),
+    index('idx_tax_documents_type').on(table.documentType),
+    unique('unique_tax_document').on(
+      table.userId,
+      table.year,
+      table.documentType
+    )
   ]
 )
 
@@ -1715,6 +1934,102 @@ export const savedJobsRelations = relations(savedJobs, ({ one }) => ({
   job: one(jobPostings, {
     fields: [savedJobs.jobId],
     references: [jobPostings.id]
+  })
+}))
+
+// Payment & Financial Relations
+export const invoicesRelations = relations(invoices, ({ one, many }) => ({
+  job: one(jobPostings, {
+    fields: [invoices.jobId],
+    references: [jobPostings.id]
+  }),
+  milestone: one(jobMilestones, {
+    fields: [invoices.milestoneId],
+    references: [jobMilestones.id]
+  }),
+  freelancer: one(users, {
+    fields: [invoices.freelancerId],
+    references: [users.id],
+    relationName: 'invoiceFreelancer'
+  }),
+  client: one(users, {
+    fields: [invoices.clientId],
+    references: [users.id],
+    relationName: 'invoiceClient'
+  }),
+  paymentReminders: many(paymentReminders),
+  earnings: many(earnings)
+}))
+
+export const earningsRelations = relations(earnings, ({ one }) => ({
+  freelancer: one(users, {
+    fields: [earnings.freelancerId],
+    references: [users.id]
+  }),
+  job: one(jobPostings, {
+    fields: [earnings.jobId],
+    references: [jobPostings.id]
+  }),
+  milestone: one(jobMilestones, {
+    fields: [earnings.milestoneId],
+    references: [jobMilestones.id]
+  }),
+  invoice: one(invoices, {
+    fields: [earnings.invoiceId],
+    references: [invoices.id]
+  })
+}))
+
+export const withdrawalsRelations = relations(withdrawals, ({ one }) => ({
+  freelancer: one(users, {
+    fields: [withdrawals.freelancerId],
+    references: [users.id]
+  })
+}))
+
+export const milestoneRevisionsRelations = relations(
+  milestoneRevisions,
+  ({ one }) => ({
+    milestone: one(jobMilestones, {
+      fields: [milestoneRevisions.milestoneId],
+      references: [jobMilestones.id]
+    }),
+    requestedBy: one(users, {
+      fields: [milestoneRevisions.requestedBy],
+      references: [users.id]
+    })
+  })
+)
+
+export const milestoneChatsRelations = relations(milestoneChats, ({ one }) => ({
+  milestone: one(jobMilestones, {
+    fields: [milestoneChats.milestoneId],
+    references: [jobMilestones.id]
+  }),
+  sender: one(users, {
+    fields: [milestoneChats.senderId],
+    references: [users.id]
+  })
+}))
+
+export const paymentRemindersRelations = relations(
+  paymentReminders,
+  ({ one }) => ({
+    invoice: one(invoices, {
+      fields: [paymentReminders.invoiceId],
+      references: [invoices.id]
+    }),
+    recipient: one(users, {
+      fields: [paymentReminders.recipientId],
+      references: [users.id]
+    })
+  })
+)
+
+export const taxDocumentsRelations = relations(taxDocuments, ({ one }) => ({
+  user: one(users, {
+    fields: [taxDocuments.userId],
+    references: [users.id]
   })
 }))
 

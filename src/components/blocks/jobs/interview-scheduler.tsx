@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 import { format } from 'date-fns'
-import { Calendar, Clock, MapPin, Monitor, Phone, User, Video } from 'lucide-react'
+import { Calendar, Clock, MapPin, Phone, User, Video } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -101,7 +101,7 @@ export function InterviewScheduler({
         toast.success('Interview scheduled successfully')
         setIsOpen(false)
         onScheduled?.()
-        
+
         // Reset form
         setDate(new Date())
         setTime('14:00')
@@ -157,7 +157,7 @@ export function InterviewScheduler({
               mode='single'
               selected={date}
               onSelect={setDate}
-              disabled={(date) => date < new Date()}
+              disabled={date => date < new Date()}
               className='rounded-md border'
             />
           </div>
@@ -172,7 +172,7 @@ export function InterviewScheduler({
                   <SelectValue placeholder='Select time' />
                 </SelectTrigger>
                 <SelectContent className='h-[200px]'>
-                  {generateTimeOptions().map((timeOption) => (
+                  {generateTimeOptions().map(timeOption => (
                     <SelectItem key={timeOption} value={timeOption}>
                       {timeOption}
                     </SelectItem>
@@ -205,21 +205,30 @@ export function InterviewScheduler({
             <RadioGroup value={meetingType} onValueChange={setMeetingType}>
               <div className='flex items-center space-x-2'>
                 <RadioGroupItem value='video' id='video' />
-                <Label htmlFor='video' className='flex items-center cursor-pointer'>
+                <Label
+                  htmlFor='video'
+                  className='flex cursor-pointer items-center'
+                >
                   <Video className='mr-2 h-4 w-4' />
                   Video Call
                 </Label>
               </div>
               <div className='flex items-center space-x-2'>
                 <RadioGroupItem value='phone' id='phone' />
-                <Label htmlFor='phone' className='flex items-center cursor-pointer'>
+                <Label
+                  htmlFor='phone'
+                  className='flex cursor-pointer items-center'
+                >
                   <Phone className='mr-2 h-4 w-4' />
                   Phone Call
                 </Label>
               </div>
               <div className='flex items-center space-x-2'>
                 <RadioGroupItem value='in-person' id='in-person' />
-                <Label htmlFor='in-person' className='flex items-center cursor-pointer'>
+                <Label
+                  htmlFor='in-person'
+                  className='flex cursor-pointer items-center'
+                >
                   <User className='mr-2 h-4 w-4' />
                   In-Person
                 </Label>
@@ -237,7 +246,7 @@ export function InterviewScheduler({
                 id='meeting-link'
                 placeholder='https://zoom.us/j/...'
                 value={meetingLink}
-                onChange={(e) => setMeetingLink(e.target.value)}
+                onChange={e => setMeetingLink(e.target.value)}
               />
             </div>
           )}
@@ -246,13 +255,13 @@ export function InterviewScheduler({
             <div>
               <Label htmlFor='location'>Location *</Label>
               <div className='relative'>
-                <MapPin className='absolute left-3 top-3 h-4 w-4 text-muted-foreground' />
+                <MapPin className='text-muted-foreground absolute top-3 left-3 h-4 w-4' />
                 <Input
                   id='location'
                   placeholder='123 Main St, City, State'
                   className='pl-10'
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  onChange={e => setLocation(e.target.value)}
                 />
               </div>
             </div>
@@ -265,15 +274,15 @@ export function InterviewScheduler({
               id='notes'
               placeholder='Any additional information or agenda items...'
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={e => setNotes(e.target.value)}
               rows={3}
             />
           </div>
 
           {/* Preview */}
           {date && (
-            <div className='rounded-lg bg-muted p-4'>
-              <h4 className='font-medium mb-2'>Interview Summary</h4>
+            <div className='bg-muted rounded-lg p-4'>
+              <h4 className='mb-2 font-medium'>Interview Summary</h4>
               <div className='space-y-1 text-sm'>
                 <p>
                   <strong>Date:</strong> {format(date, 'EEEE, MMMM d, yyyy')}
@@ -282,7 +291,8 @@ export function InterviewScheduler({
                   <strong>Time:</strong> {time} ({duration} minutes)
                 </p>
                 <p>
-                  <strong>Type:</strong> {meetingType.charAt(0).toUpperCase() + meetingType.slice(1)}
+                  <strong>Type:</strong>{' '}
+                  {meetingType.charAt(0).toUpperCase() + meetingType.slice(1)}
                 </p>
                 {meetingType === 'in-person' && location && (
                   <p>

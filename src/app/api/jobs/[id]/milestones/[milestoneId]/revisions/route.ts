@@ -1,0 +1,273 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+import { and, desc, eq } from 'drizzle-orm'
+import { z } from 'zod'
+
+import { db } from '@/lib/db/drizzle'
+import { jobMilestones, jobPostings, milestoneRevisions } from '@/lib/db/schema'
+import { pusherServer } from '@/lib/pusher-server'
+import { getUser } from '@/services/user'
+
+const createRevisionSchema = z.object({
+  reason: z.string().min(10),
+  details: z.string(),
+  requestedChanges: z.array(z.string()).optional()
+})
+
+// GET /api/jobs/[id]/milestones/[milestoneId]/revisions - Get revision history
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string; milestoneId: string } }
+) {
+  try {
+    const milestoneId = parseInt(params.milestoneId)
+
+    if (isNaN(milestoneId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid milestone ID' },
+        { status: 400 }
+      )
+    }
+
+    const revisions = await db
+      .select()
+      .from(milestoneRevisions)
+      .where(eq(milestoneRevisions.milestoneId, milestoneId))
+      .orderBy(desc(milestoneRevisions.createdAt))
+
+    return NextResponse.json({
+      success: true,
+      revisions
+    })
+  } catch (error) {
+    console.error('Error fetching revisions:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch revisions' },
+      { status: 500 }
+    )
+  }
+}
+
+// POST /api/jobs/[id]/milestones/[milestoneId]/revisions - Request revision
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string; milestoneId: string } }
+) {
+  try {
+    const user = await getUser()
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const jobId = parseInt(params.id)
+    const milestoneId = parseInt(params.milestoneId)
+
+    if (isNaN(jobId) || isNaN(milestoneId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid ID' },
+        { status: 400 }
+      )
+    }
+
+    // Get the milestone and job
+    const [milestone] = await db
+      .select({
+        milestone: jobMilestones,
+        job: jobPostings
+      })
+      .from(jobMilestones)
+      .innerJoin(jobPostings, eq(jobMilestones.jobId, jobPostings.id))
+      .where(
+        and(eq(jobMilestones.id, milestoneId), eq(jobMilestones.jobId, jobId))
+      )
+      .limit(1)
+
+    if (!milestone) {
+      return NextResponse.json(
+        { success: false, error: 'Milestone not found' },
+        { status: 404 }
+      )
+    }
+
+    // Check if user is the client for this job
+    if (milestone.job.clientId !== user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Only the client can request revisions' },
+        { status: 403 }
+      )
+    }
+
+    // Check if milestone is in the correct status
+    if (milestone.milestone.status !== 'submitted') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Can only request revision for submitted milestones'
+        },
+        { status: 400 }
+      )
+    }
+
+    // Parse and validate request body
+    const body = await request.json()
+    const validatedData = createRevisionSchema.parse(body)
+
+    // Start transaction
+    await db.transaction(async tx => {
+      // Create revision request
+      const [revision] = await tx
+        .insert(milestoneRevisions)
+        .values({
+          milestoneId,
+          requestedBy: user.id,
+          reason: validatedData.reason,
+          details: validatedData.details,
+          requestedChanges: validatedData.requestedChanges || [],
+          status: 'pending'
+        })
+        .returning()
+
+      // Update milestone status back to in_progress
+      await tx
+        .update(jobMilestones)
+        .set({
+          status: 'in_progress',
+          revisionCount: (milestone.milestone.revisionCount || 0) + 1,
+          lastRevisionAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(jobMilestones.id, milestoneId))
+    })
+
+    // Send real-time notification to freelancer
+    if (pusherServer && milestone.job.freelancerId) {
+      await pusherServer.trigger(
+        `user-${milestone.job.freelancerId}`,
+        'revision-requested',
+        {
+          milestoneId,
+          jobId,
+          jobTitle: milestone.job.title,
+          milestoneTitle: milestone.milestone.title,
+          clientName: user.name || user.email,
+          reason: validatedData.reason,
+          requestedAt: new Date().toISOString()
+        }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Revision requested successfully'
+    })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid input', details: error.errors },
+        { status: 400 }
+      )
+    }
+
+    console.error('Error requesting revision:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to request revision' },
+      { status: 500 }
+    )
+  }
+}
+
+// PATCH /api/jobs/[id]/milestones/[milestoneId]/revisions - Update revision status
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string; milestoneId: string } }
+) {
+  try {
+    const user = await getUser()
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+    const { revisionId, status, response } = body
+
+    if (!revisionId || !status) {
+      return NextResponse.json(
+        { success: false, error: 'Revision ID and status are required' },
+        { status: 400 }
+      )
+    }
+
+    // Get the revision
+    const [revision] = await db
+      .select()
+      .from(milestoneRevisions)
+      .where(eq(milestoneRevisions.id, revisionId))
+      .limit(1)
+
+    if (!revision) {
+      return NextResponse.json(
+        { success: false, error: 'Revision not found' },
+        { status: 404 }
+      )
+    }
+
+    // Get the milestone and job to check permissions
+    const milestoneId = parseInt(params.milestoneId)
+    const [milestone] = await db
+      .select({
+        milestone: jobMilestones,
+        job: jobPostings
+      })
+      .from(jobMilestones)
+      .innerJoin(jobPostings, eq(jobMilestones.jobId, jobPostings.id))
+      .where(eq(jobMilestones.id, milestoneId))
+      .limit(1)
+
+    if (!milestone) {
+      return NextResponse.json(
+        { success: false, error: 'Milestone not found' },
+        { status: 404 }
+      )
+    }
+
+    // Only freelancer can respond to revision requests
+    if (milestone.job.freelancerId !== user.id) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Only the freelancer can respond to revision requests'
+        },
+        { status: 403 }
+      )
+    }
+
+    // Update revision status
+    const [updatedRevision] = await db
+      .update(milestoneRevisions)
+      .set({
+        status,
+        response,
+        respondedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(milestoneRevisions.id, revisionId))
+      .returning()
+
+    return NextResponse.json({
+      success: true,
+      revision: updatedRevision
+    })
+  } catch (error) {
+    console.error('Error updating revision:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to update revision' },
+      { status: 500 }
+    )
+  }
+}

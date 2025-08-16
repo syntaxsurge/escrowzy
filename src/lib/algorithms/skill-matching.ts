@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { and, desc, eq, gte, inArray, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db/drizzle'
 import {
@@ -101,33 +101,38 @@ export async function calculateSkillMatchScore(
 
     // Parse required skills
     const requiredSkills = (job.skillsRequired as any[]) || []
-    const requiredSkillIds = requiredSkills.map(s => 
-      typeof s === 'object' ? s.id : s
-    ).filter(Boolean)
+    const requiredSkillIds = requiredSkills
+      .map(s => (typeof s === 'object' ? s.id : s))
+      .filter(Boolean)
 
     // Calculate matched skills
     const freelancerSkillIds = freelancerSkillsData.map(s => s.skillId)
-    const matchedSkillIds = requiredSkillIds.filter(id => 
+    const matchedSkillIds = requiredSkillIds.filter(id =>
       freelancerSkillIds.includes(id)
     )
 
     // Base match score (0-100)
-    const skillCoverage = requiredSkillIds.length > 0
-      ? (matchedSkillIds.length / requiredSkillIds.length) * 100
-      : 100
+    const skillCoverage =
+      requiredSkillIds.length > 0
+        ? (matchedSkillIds.length / requiredSkillIds.length) * 100
+        : 100
 
     // Experience bonus (0-20)
     let experienceBonus = 0
     if (job.experienceLevel) {
-      const requiredExp = {
-        'entry': 0,
-        'intermediate': 2,
-        'expert': 5,
-        'senior': 8
-      }[job.experienceLevel] || 0
+      const requiredExp =
+        {
+          entry: 0,
+          intermediate: 2,
+          expert: 5,
+          senior: 8
+        }[job.experienceLevel] || 0
 
       if (profile.yearsOfExperience >= requiredExp) {
-        experienceBonus = Math.min(20, (profile.yearsOfExperience - requiredExp) * 2)
+        experienceBonus = Math.min(
+          20,
+          (profile.yearsOfExperience - requiredExp) * 2
+        )
       }
     }
 
@@ -140,38 +145,41 @@ export async function calculateSkillMatchScore(
     // Skill level bonus (0-10) for matched skills
     let skillLevelBonus = 0
     if (matchedSkillIds.length > 0) {
-      const matchedSkillsData = freelancerSkillsData.filter(s => 
+      const matchedSkillsData = freelancerSkillsData.filter(s =>
         matchedSkillIds.includes(s.skillId)
       )
-      
-      const avgSkillLevel = matchedSkillsData.reduce((sum, s) => {
-        const levelScore = {
-          'beginner': 1,
-          'intermediate': 2,
-          'expert': 3
-        }[s.skillLevel] || 1
-        return sum + levelScore
-      }, 0) / matchedSkillsData.length
+
+      const avgSkillLevel =
+        matchedSkillsData.reduce((sum, s) => {
+          const levelScore =
+            {
+              beginner: 1,
+              intermediate: 2,
+              expert: 3
+            }[s.skillLevel] || 1
+          return sum + levelScore
+        }, 0) / matchedSkillsData.length
 
       skillLevelBonus = (avgSkillLevel / 3) * 10
     }
 
     // Verification bonus (0-10)
-    const verifiedSkills = freelancerSkillsData.filter(s => 
-      matchedSkillIds.includes(s.skillId) && s.isVerified
+    const verifiedSkills = freelancerSkillsData.filter(
+      s => matchedSkillIds.includes(s.skillId) && s.isVerified
     ).length
-    const verificationBonus = matchedSkillIds.length > 0
-      ? (verifiedSkills / matchedSkillIds.length) * 10
-      : 0
+    const verificationBonus =
+      matchedSkillIds.length > 0
+        ? (verifiedSkills / matchedSkillIds.length) * 10
+        : 0
 
     // Calculate total match score
     const matchScore = Math.round(
       skillCoverage * 0.5 + // 50% weight on skill coverage
-      experienceBonus * 0.15 + // 15% weight on experience
-      ratingBonus * 0.15 + // 15% weight on rating
-      completionBonus * 0.1 + // 10% weight on completed jobs
-      skillLevelBonus * 0.05 + // 5% weight on skill level
-      verificationBonus * 0.05 // 5% weight on verified skills
+        experienceBonus * 0.15 + // 15% weight on experience
+        ratingBonus * 0.15 + // 15% weight on rating
+        completionBonus * 0.1 + // 10% weight on completed jobs
+        skillLevelBonus * 0.05 + // 5% weight on skill level
+        verificationBonus * 0.05 // 5% weight on verified skills
     )
 
     return {
@@ -248,19 +256,20 @@ export async function findMatchingJobs(
 
     for (const job of jobs) {
       const requiredSkills = (job.skillsRequired as any[]) || []
-      const requiredSkillIds = requiredSkills.map(s => 
-        typeof s === 'object' ? s.id : s
-      ).filter(Boolean)
+      const requiredSkillIds = requiredSkills
+        .map(s => (typeof s === 'object' ? s.id : s))
+        .filter(Boolean)
 
       // Skip if no skills required
       if (requiredSkillIds.length === 0) continue
 
       // Calculate matched skills
-      const matchedSkillIds = requiredSkillIds.filter(id => 
+      const matchedSkillIds = requiredSkillIds.filter(id =>
         freelancerSkillIds.includes(id)
       )
 
-      const matchPercentage = (matchedSkillIds.length / requiredSkillIds.length) * 100
+      const matchPercentage =
+        (matchedSkillIds.length / requiredSkillIds.length) * 100
 
       // Skip if below minimum match score
       if (matchPercentage < minMatchScore) continue
@@ -271,16 +280,14 @@ export async function findMatchingJobs(
         .from(skills)
         .where(inArray(skills.id, requiredSkillIds))
 
-      const requiredSkillMap = new Map(
-        allSkillsData.map(s => [s.id, s.name])
-      )
+      const requiredSkillMap = new Map(allSkillsData.map(s => [s.id, s.name]))
 
       const matchedSkillNames = matchedSkillIds
         .map(id => freelancerSkillMap.get(id))
         .filter(Boolean) as string[]
 
-      const missingSkillIds = requiredSkillIds.filter(id => 
-        !freelancerSkillIds.includes(id)
+      const missingSkillIds = requiredSkillIds.filter(
+        id => !freelancerSkillIds.includes(id)
       )
       const missingSkillNames = missingSkillIds
         .map(id => requiredSkillMap.get(id))
@@ -291,12 +298,13 @@ export async function findMatchingJobs(
 
       // Bonus for experience level match
       if (job.experienceLevel) {
-        const requiredExp = {
-          'entry': 0,
-          'intermediate': 2,
-          'expert': 5,
-          'senior': 8
-        }[job.experienceLevel] || 0
+        const requiredExp =
+          {
+            entry: 0,
+            intermediate: 2,
+            expert: 5,
+            senior: 8
+          }[job.experienceLevel] || 0
 
         if (profile.yearsOfExperience >= requiredExp) {
           matchScore += 10
@@ -363,9 +371,9 @@ export async function findMatchingFreelancers(
     if (!job) return []
 
     const requiredSkills = (job.skillsRequired as any[]) || []
-    const requiredSkillIds = requiredSkills.map(s => 
-      typeof s === 'object' ? s.id : s
-    ).filter(Boolean)
+    const requiredSkillIds = requiredSkills
+      .map(s => (typeof s === 'object' ? s.id : s))
+      .filter(Boolean)
 
     // Skip if no skills required
     if (requiredSkillIds.length === 0) return []
@@ -397,7 +405,8 @@ export async function findMatchingFreelancers(
     const freelancerMatches: FreelancerMatch[] = []
 
     for (const [freelancerId, matchedSkillIds] of freelancerSkillsMap) {
-      const matchPercentage = (matchedSkillIds.length / requiredSkillIds.length) * 100
+      const matchPercentage =
+        (matchedSkillIds.length / requiredSkillIds.length) * 100
 
       // Skip if below minimum match score
       if (matchPercentage < minMatchScore) continue
@@ -439,12 +448,13 @@ export async function findMatchingFreelancers(
 
       // Experience bonus
       if (job.experienceLevel && freelancerData.profile.yearsOfExperience) {
-        const requiredExp = {
-          'entry': 0,
-          'intermediate': 2,
-          'expert': 5,
-          'senior': 8
-        }[job.experienceLevel] || 0
+        const requiredExp =
+          {
+            entry: 0,
+            intermediate: 2,
+            expert: 5,
+            senior: 8
+          }[job.experienceLevel] || 0
 
         if (freelancerData.profile.yearsOfExperience >= requiredExp) {
           matchScore += 10

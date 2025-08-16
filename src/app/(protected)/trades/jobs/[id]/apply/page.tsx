@@ -21,6 +21,7 @@ import {
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import useSWR from 'swr'
+import { z } from 'zod'
 
 import { BidTemplateSelector } from '@/components/blocks/jobs/bid-template-selector'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'

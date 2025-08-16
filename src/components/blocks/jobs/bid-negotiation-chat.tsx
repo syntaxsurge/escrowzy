@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { format } from 'date-fns'
-import { Paperclip, Send } from 'lucide-react'
+import { Paperclip, Send, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import useSWR from 'swr'
 
@@ -21,10 +21,10 @@ import {
   SheetTitle,
   SheetTrigger
 } from '@/components/ui/sheet'
-import { pusherClient } from '@/lib/pusher-client'
 import { useSession } from '@/hooks/use-session'
 import { api } from '@/lib/api/http-client'
 import type { BidWithRelations } from '@/lib/db/queries/bids'
+import { pusherClient } from '@/lib/pusher-client'
 
 interface BidMessage {
   id: number
@@ -88,7 +88,7 @@ export function BidNegotiationChat({
     if (!isOpen || !user) return
 
     const channel = pusherClient.subscribe(`bid-${bid.id}`)
-    
+
     channel.bind('new-message', (data: BidMessage) => {
       mutateMessages((prev = []) => [...prev, data], false)
       scrollToBottom()
@@ -154,7 +154,10 @@ export function BidNegotiationChat({
     }
   }
 
-  const handleMakeOffer = async (newAmount: string, newDeliveryDays: number) => {
+  const handleMakeOffer = async (
+    newAmount: string,
+    newDeliveryDays: number
+  ) => {
     setIsSending(true)
 
     try {
@@ -193,27 +196,23 @@ export function BidNegotiationChat({
       >
         <Avatar className='h-8 w-8'>
           <AvatarImage src={msg.sender?.avatarUrl || ''} />
-          <AvatarFallback>
-            {msg.sender?.name?.charAt(0) || 'U'}
-          </AvatarFallback>
+          <AvatarFallback>{msg.sender?.name?.charAt(0) || 'U'}</AvatarFallback>
         </Avatar>
-        
+
         <div
           className={`max-w-[70%] space-y-1 ${
             isOwnMessage ? 'items-end' : 'items-start'
           }`}
         >
-          <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+          <div className='text-muted-foreground flex items-center gap-2 text-xs'>
             <span>{msg.sender?.name || 'Unknown'}</span>
             <span>•</span>
             <span>{format(new Date(msg.createdAt), 'HH:mm')}</span>
           </div>
-          
+
           <div
             className={`rounded-lg px-3 py-2 ${
-              isOwnMessage
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted'
+              isOwnMessage ? 'bg-primary text-primary-foreground' : 'bg-muted'
             }`}
           >
             {msg.messageType === 'offer' && msg.metadata && (
@@ -229,7 +228,7 @@ export function BidNegotiationChat({
                 </div>
               </div>
             )}
-            
+
             <p className='text-sm whitespace-pre-wrap'>{msg.message}</p>
           </div>
         </div>
@@ -249,7 +248,8 @@ export function BidNegotiationChat({
         <SheetHeader>
           <SheetTitle>Negotiation Chat</SheetTitle>
           <SheetDescription>
-            Discuss terms with {isClient ? bid.freelancer?.name : 'the client'} for "{jobTitle}"
+            Discuss terms with {isClient ? bid.freelancer?.name : 'the client'}{' '}
+            for "{jobTitle}"
           </SheetDescription>
         </SheetHeader>
 
@@ -277,14 +277,14 @@ export function BidNegotiationChat({
           <ScrollArea ref={scrollRef} className='flex-1 px-2'>
             {isLoading ? (
               <div className='flex items-center justify-center py-8'>
-                <div className='animate-pulse text-muted-foreground'>
+                <div className='text-muted-foreground animate-pulse'>
                   Loading messages...
                 </div>
               </div>
             ) : messages.length === 0 ? (
               <div className='flex flex-col items-center justify-center py-8 text-center'>
-                <MessageSquare className='mb-2 h-12 w-12 text-muted-foreground/50' />
-                <p className='text-sm text-muted-foreground'>
+                <MessageSquare className='text-muted-foreground/50 mb-2 h-12 w-12' />
+                <p className='text-muted-foreground text-sm'>
                   No messages yet. Start the negotiation!
                 </p>
               </div>
@@ -302,7 +302,7 @@ export function BidNegotiationChat({
               <Input
                 placeholder='Type your message...'
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                onChange={e => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 disabled={isSending}
                 className='flex-1'
@@ -323,7 +323,7 @@ export function BidNegotiationChat({
                 <Send className='h-4 w-4' />
               </Button>
             </div>
-            
+
             {/* Quick Actions */}
             {isClient && bid.status === 'pending' && (
               <div className='mt-3 flex gap-2'>
@@ -332,7 +332,10 @@ export function BidNegotiationChat({
                   variant='outline'
                   onClick={() => {
                     const newAmount = prompt('Enter new amount:', bid.bidAmount)
-                    const newDays = prompt('Enter new delivery days:', bid.deliveryDays.toString())
+                    const newDays = prompt(
+                      'Enter new delivery days:',
+                      bid.deliveryDays.toString()
+                    )
                     if (newAmount && newDays) {
                       handleMakeOffer(newAmount, parseInt(newDays))
                     }
@@ -340,11 +343,7 @@ export function BidNegotiationChat({
                 >
                   Make Counter Offer
                 </Button>
-                <Button
-                  size='sm'
-                  variant='default'
-                  onClick={onTermsAccepted}
-                >
+                <Button size='sm' variant='default' onClick={onTermsAccepted}>
                   Accept Current Terms
                 </Button>
               </div>
@@ -357,4 +356,3 @@ export function BidNegotiationChat({
 }
 
 // Import this for the MessageSquare icon
-import { MessageSquare } from 'lucide-react'

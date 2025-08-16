@@ -116,7 +116,10 @@ export async function PATCH(
 
     if (!status || !['accepted', 'declined'].includes(status)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid status. Must be "accepted" or "declined"' },
+        {
+          success: false,
+          error: 'Invalid status. Must be "accepted" or "declined"'
+        },
         { status: 400 }
       )
     }
@@ -138,7 +141,10 @@ export async function PATCH(
     // Check if user is the freelancer
     if (invitation.freelancerId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'Only the invited freelancer can respond to this invitation' },
+        {
+          success: false,
+          error: 'Only the invited freelancer can respond to this invitation'
+        },
         { status: 403 }
       )
     }
@@ -146,7 +152,10 @@ export async function PATCH(
     // Check if invitation is still pending
     if (invitation.status !== 'pending') {
       return NextResponse.json(
-        { success: false, error: 'This invitation has already been responded to' },
+        {
+          success: false,
+          error: 'This invitation has already been responded to'
+        },
         { status: 400 }
       )
     }
@@ -191,9 +200,10 @@ export async function PATCH(
     return NextResponse.json({
       success: true,
       invitation: updatedInvitation,
-      message: status === 'accepted' 
-        ? 'Invitation accepted! You can now submit a bid for this job.' 
-        : 'Invitation declined.'
+      message:
+        status === 'accepted'
+          ? 'Invitation accepted! You can now submit a bid for this job.'
+          : 'Invitation declined.'
     })
   } catch (error) {
     console.error('Error updating invitation:', error)
@@ -245,7 +255,10 @@ export async function DELETE(
     // Check if user is the client who sent the invitation
     if (invitation.invitedBy !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'Only the client who sent the invitation can cancel it' },
+        {
+          success: false,
+          error: 'Only the client who sent the invitation can cancel it'
+        },
         { status: 403 }
       )
     }
@@ -253,15 +266,16 @@ export async function DELETE(
     // Check if invitation is still pending
     if (invitation.status !== 'pending') {
       return NextResponse.json(
-        { success: false, error: 'Cannot cancel an invitation that has been responded to' },
+        {
+          success: false,
+          error: 'Cannot cancel an invitation that has been responded to'
+        },
         { status: 400 }
       )
     }
 
     // Delete the invitation
-    await db
-      .delete(jobInvitations)
-      .where(eq(jobInvitations.id, invitationId))
+    await db.delete(jobInvitations).where(eq(jobInvitations.id, invitationId))
 
     // Send notification to the freelancer
     try {

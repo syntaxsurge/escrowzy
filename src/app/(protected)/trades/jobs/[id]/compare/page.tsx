@@ -1,23 +1,15 @@
 'use client'
 
-import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import { formatDistanceToNow } from 'date-fns'
 import {
   ArrowLeft,
   Award,
   Calendar,
   Check,
   ChevronDown,
-  ChevronUp,
-  DollarSign,
   FileText,
-  Globe,
-  MessageSquare,
-  Minus,
-  Plus,
   Star,
   User,
   X
@@ -62,8 +54,12 @@ export default function CompareFreelancersPage() {
   const jobId = params.id as string
 
   const [selectedBids, setSelectedBids] = useState<number[]>([])
-  const [comparisonMetric, setComparisonMetric] = useState<'overview' | 'skills' | 'experience' | 'pricing'>('overview')
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+  const [comparisonMetric, setComparisonMetric] = useState<
+    'overview' | 'skills' | 'experience' | 'pricing'
+  >('overview')
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({
     overview: true,
     skills: false,
     experience: false,
@@ -80,13 +76,12 @@ export default function CompareFreelancersPage() {
   )
 
   // Fetch bids
-  const { data: bids = [], isLoading: bidsLoading } = useSWR<BidWithRelations[]>(
-    `/api/jobs/${jobId}/bids`,
-    async (url: string) => {
-      const response = await api.get(url)
-      return response.success ? response.bids : []
-    }
-  )
+  const { data: bids = [], isLoading: bidsLoading } = useSWR<
+    BidWithRelations[]
+  >(`/api/jobs/${jobId}/bids`, async (url: string) => {
+    const response = await api.get(url)
+    return response.success ? response.bids : []
+  })
 
   // Check ownership
   const isOwner = user?.id === job?.clientId
@@ -203,7 +198,7 @@ export default function CompareFreelancersPage() {
                 onClick={() => toggleBidSelection(bid.id)}
               >
                 {selectedBids.includes(bid.id) && (
-                  <div className='bg-primary text-primary-foreground absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full'>
+                  <div className='bg-primary text-primary-foreground absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full'>
                     <Check className='h-4 w-4' />
                   </div>
                 )}
@@ -238,7 +233,8 @@ export default function CompareFreelancersPage() {
           {selectedBids.length > 0 && (
             <div className='mt-4 flex items-center justify-between'>
               <p className='text-muted-foreground text-sm'>
-                {selectedBids.length} freelancer{selectedBids.length !== 1 ? 's' : ''} selected
+                {selectedBids.length} freelancer
+                {selectedBids.length !== 1 ? 's' : ''} selected
               </p>
               <Button
                 variant='outline'
@@ -284,7 +280,9 @@ export default function CompareFreelancersPage() {
                       <TableHead key={bid.id} className='text-center'>
                         <div className='flex flex-col items-center gap-2'>
                           <Avatar>
-                            <AvatarImage src={bid.freelancer?.avatarUrl || ''} />
+                            <AvatarImage
+                              src={bid.freelancer?.avatarUrl || ''}
+                            />
                             <AvatarFallback>
                               {bid.freelancer?.name?.charAt(0) || 'F'}
                             </AvatarFallback>
@@ -299,7 +297,8 @@ export default function CompareFreelancersPage() {
                 </TableHeader>
                 <TableBody>
                   {/* Overview Metrics */}
-                  {(comparisonMetric === 'overview' || expandedSections.overview) && (
+                  {(comparisonMetric === 'overview' ||
+                    expandedSections.overview) && (
                     <>
                       <TableRow>
                         <TableCell className='font-medium'>Rating</TableCell>
@@ -308,35 +307,49 @@ export default function CompareFreelancersPage() {
                             {bid.freelancerProfile?.rating ? (
                               <div className='flex items-center justify-center gap-1'>
                                 <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
-                                <span>{bid.freelancerProfile.rating.toFixed(1)}</span>
+                                <span>
+                                  {bid.freelancerProfile.rating.toFixed(1)}
+                                </span>
                               </div>
                             ) : (
-                              <span className='text-muted-foreground'>No rating</span>
+                              <span className='text-muted-foreground'>
+                                No rating
+                              </span>
                             )}
                           </TableCell>
                         ))}
                       </TableRow>
                       <TableRow>
-                        <TableCell className='font-medium'>Completed Jobs</TableCell>
+                        <TableCell className='font-medium'>
+                          Completed Jobs
+                        </TableCell>
                         {selectedBidsData.map(bid => (
                           <TableCell key={bid.id} className='text-center'>
                             <div className='flex items-center justify-center gap-1'>
                               <Award className='h-4 w-4' />
-                              <span>{bid.freelancerProfile?.completedJobs || 0}</span>
+                              <span>
+                                {bid.freelancerProfile?.completedJobs || 0}
+                              </span>
                             </div>
                           </TableCell>
                         ))}
                       </TableRow>
                       <TableRow>
-                        <TableCell className='font-medium'>Bid Amount</TableCell>
+                        <TableCell className='font-medium'>
+                          Bid Amount
+                        </TableCell>
                         {selectedBidsData.map(bid => (
                           <TableCell key={bid.id} className='text-center'>
-                            <span className='font-semibold'>${bid.bidAmount}</span>
+                            <span className='font-semibold'>
+                              ${bid.bidAmount}
+                            </span>
                           </TableCell>
                         ))}
                       </TableRow>
                       <TableRow>
-                        <TableCell className='font-medium'>Delivery Time</TableCell>
+                        <TableCell className='font-medium'>
+                          Delivery Time
+                        </TableCell>
                         {selectedBidsData.map(bid => (
                           <TableCell key={bid.id} className='text-center'>
                             <div className='flex items-center justify-center gap-1'>
@@ -350,18 +363,24 @@ export default function CompareFreelancersPage() {
                   )}
 
                   {/* Skills Metrics */}
-                  {(comparisonMetric === 'skills' || expandedSections.skills) && (
+                  {(comparisonMetric === 'skills' ||
+                    expandedSections.skills) && (
                     <>
                       <TableRow>
-                        <TableCell className='font-medium'>Years of Experience</TableCell>
+                        <TableCell className='font-medium'>
+                          Years of Experience
+                        </TableCell>
                         {selectedBidsData.map(bid => (
                           <TableCell key={bid.id} className='text-center'>
-                            {bid.freelancerProfile?.yearsOfExperience || 0} years
+                            {bid.freelancerProfile?.yearsOfExperience || 0}{' '}
+                            years
                           </TableCell>
                         ))}
                       </TableRow>
                       <TableRow>
-                        <TableCell className='font-medium'>Hourly Rate</TableCell>
+                        <TableCell className='font-medium'>
+                          Hourly Rate
+                        </TableCell>
                         {selectedBidsData.map(bid => (
                           <TableCell key={bid.id} className='text-center'>
                             {bid.freelancerProfile?.hourlyRate
@@ -371,17 +390,21 @@ export default function CompareFreelancersPage() {
                         ))}
                       </TableRow>
                       <TableRow>
-                        <TableCell className='font-medium'>Verification Status</TableCell>
+                        <TableCell className='font-medium'>
+                          Verification Status
+                        </TableCell>
                         {selectedBidsData.map(bid => (
                           <TableCell key={bid.id} className='text-center'>
                             <Badge
                               variant={
-                                bid.freelancerProfile?.verificationStatus === 'verified'
+                                bid.freelancerProfile?.verificationStatus ===
+                                'verified'
                                   ? 'success'
                                   : 'secondary'
                               }
                             >
-                              {bid.freelancerProfile?.verificationStatus || 'Unverified'}
+                              {bid.freelancerProfile?.verificationStatus ||
+                                'Unverified'}
                             </Badge>
                           </TableCell>
                         ))}
@@ -390,10 +413,13 @@ export default function CompareFreelancersPage() {
                   )}
 
                   {/* Pricing Metrics */}
-                  {(comparisonMetric === 'pricing' || expandedSections.pricing) && (
+                  {(comparisonMetric === 'pricing' ||
+                    expandedSections.pricing) && (
                     <>
                       <TableRow>
-                        <TableCell className='font-medium'>Cost per Day</TableCell>
+                        <TableCell className='font-medium'>
+                          Cost per Day
+                        </TableCell>
                         {selectedBidsData.map(bid => (
                           <TableCell key={bid.id} className='text-center'>
                             $
@@ -405,10 +431,13 @@ export default function CompareFreelancersPage() {
                         ))}
                       </TableRow>
                       <TableRow>
-                        <TableCell className='font-medium'>Has Attachments</TableCell>
+                        <TableCell className='font-medium'>
+                          Has Attachments
+                        </TableCell>
                         {selectedBidsData.map(bid => (
                           <TableCell key={bid.id} className='text-center'>
-                            {bid.attachments && (bid.attachments as any[]).length > 0 ? (
+                            {bid.attachments &&
+                            (bid.attachments as any[]).length > 0 ? (
                               <Check className='mx-auto h-4 w-4 text-green-500' />
                             ) : (
                               <X className='text-muted-foreground mx-auto h-4 w-4' />
@@ -417,7 +446,9 @@ export default function CompareFreelancersPage() {
                         ))}
                       </TableRow>
                       <TableRow>
-                        <TableCell className='font-medium'>Cover Letter</TableCell>
+                        <TableCell className='font-medium'>
+                          Cover Letter
+                        </TableCell>
                         {selectedBidsData.map(bid => (
                           <TableCell key={bid.id} className='text-center'>
                             {bid.coverLetter ? (
@@ -470,7 +501,10 @@ export default function CompareFreelancersPage() {
               {selectedBidsData.map(bid => (
                 <Collapsible key={bid.id}>
                   <CollapsibleTrigger asChild>
-                    <Button variant='outline' className='w-full justify-between'>
+                    <Button
+                      variant='outline'
+                      className='w-full justify-between'
+                    >
                       <span>{bid.freelancer?.name}'s Proposal</span>
                       <ChevronDown className='h-4 w-4' />
                     </Button>
@@ -509,7 +543,9 @@ export default function CompareFreelancersPage() {
         <Card>
           <CardContent className='py-12 text-center'>
             <FileText className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-            <h3 className='mb-2 text-lg font-semibold'>No Freelancers Selected</h3>
+            <h3 className='mb-2 text-lg font-semibold'>
+              No Freelancers Selected
+            </h3>
             <p className='text-muted-foreground'>
               Select up to 4 freelancers from above to compare them
             </p>

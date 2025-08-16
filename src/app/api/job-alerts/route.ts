@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { and, desc, eq, gte, isNull } from 'drizzle-orm'
+import { and, desc, eq, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db/drizzle'
 import { jobAlerts, jobPostings, savedSearches } from '@/lib/db/schema'
@@ -59,10 +59,7 @@ export async function GET(request: NextRequest) {
       .select({ count: sql<number>`count(*)` })
       .from(jobAlerts)
       .where(
-        and(
-          eq(jobAlerts.userId, user.id),
-          eq(jobAlerts.status, 'pending')
-        )
+        and(eq(jobAlerts.userId, user.id), eq(jobAlerts.status, 'pending'))
       )
 
     return NextResponse.json({
@@ -256,10 +253,7 @@ export async function DELETE(request: NextRequest) {
         .update(jobAlerts)
         .set({ status: 'dismissed' })
         .where(
-          and(
-            eq(jobAlerts.userId, user.id),
-            eq(jobAlerts.status, 'pending')
-          )
+          and(eq(jobAlerts.userId, user.id), eq(jobAlerts.status, 'pending'))
         )
 
       return NextResponse.json({
@@ -291,9 +285,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete the alert
-    await db
-      .delete(jobAlerts)
-      .where(eq(jobAlerts.id, parseInt(id)))
+    await db.delete(jobAlerts).where(eq(jobAlerts.id, parseInt(id)))
 
     return NextResponse.json({
       success: true,
@@ -309,4 +301,3 @@ export async function DELETE(request: NextRequest) {
 }
 
 // Import sql from drizzle-orm
-import { sql } from 'drizzle-orm'

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { eq } from 'drizzle-orm'
 
 import { db } from '@/lib/db/drizzle'
-import { interviews, users } from '@/lib/db/schema'
+import { interviews } from '@/lib/db/schema'
 import { sendNotification } from '@/lib/pusher-server'
 import { getUser } from '@/services/user'
 
@@ -47,7 +47,10 @@ export async function GET(
     // Check if user is participant
     if (interview.clientId !== user.id && interview.freelancerId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'You are not a participant in this interview' },
+        {
+          success: false,
+          error: 'You are not a participant in this interview'
+        },
         { status: 403 }
       )
     }
@@ -108,7 +111,10 @@ export async function PATCH(
     // Check if user is participant
     if (interview.clientId !== user.id && interview.freelancerId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'You are not a participant in this interview' },
+        {
+          success: false,
+          error: 'You are not a participant in this interview'
+        },
         { status: 403 }
       )
     }
@@ -184,13 +190,17 @@ export async function PATCH(
       // General update (notes, meeting link, etc.)
       if (user.id !== interview.clientId) {
         return NextResponse.json(
-          { success: false, error: 'Only the client can update interview details' },
+          {
+            success: false,
+            error: 'Only the client can update interview details'
+          },
           { status: 403 }
         )
       }
 
       if (body.notes !== undefined) updateData.notes = body.notes
-      if (body.meetingLink !== undefined) updateData.meetingLink = body.meetingLink
+      if (body.meetingLink !== undefined)
+        updateData.meetingLink = body.meetingLink
       if (body.location !== undefined) updateData.location = body.location
       if (body.duration !== undefined) updateData.duration = body.duration
     }
