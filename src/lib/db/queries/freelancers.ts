@@ -702,7 +702,48 @@ export async function getFreelancerReviews(
   userId: number,
   options?: { limit?: number; offset?: number }
 ): Promise<any[]> {
-  // TODO: Implement when reviews schema is available
-  // For now, return empty array to prevent runtime errors
-  return []
+  try {
+    // Get freelancer profile
+    const profile = await db
+      .select()
+      .from(freelancerProfiles)
+      .where(eq(freelancerProfiles.userId, userId))
+      .limit(1)
+
+    if (!profile || profile.length === 0) {
+      return []
+    }
+
+    // Get reviews for this freelancer
+    const reviews = await db
+      .select({
+        id: freelancerReviews.id,
+        jobId: freelancerReviews.jobId,
+        rating: freelancerReviews.rating,
+        reviewText: freelancerReviews.reviewText,
+        skillsRating: freelancerReviews.skillsRating,
+        communicationRating: freelancerReviews.communicationRating,
+        qualityRating: freelancerReviews.qualityRating,
+        deadlineRating: freelancerReviews.deadlineRating,
+        wouldHireAgain: freelancerReviews.wouldHireAgain,
+        createdAt: freelancerReviews.createdAt,
+        client: {
+          id: users.id,
+          username: users.walletAddress,
+          name: users.name,
+          image: users.avatarPath
+        }
+      })
+      .from(freelancerReviews)
+      .innerJoin(users, eq(freelancerReviews.reviewerId, users.id))
+      .where(eq(freelancerReviews.freelancerId, profile[0].id))
+      .orderBy(desc(freelancerReviews.createdAt))
+      .limit(options?.limit || 10)
+      .offset(options?.offset || 0)
+
+    return reviews
+  } catch (error) {
+    console.error('Error fetching freelancer reviews:', error)
+    return []
+  }
 }

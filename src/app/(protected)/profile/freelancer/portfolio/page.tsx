@@ -51,6 +51,7 @@ interface PortfolioItem {
   images?: string[]
   completionDate?: string
   clientName?: string
+  newImageFiles?: File[]
 }
 
 export default function PortfolioManagementPage() {
@@ -124,10 +125,25 @@ export default function PortfolioManagementPage() {
 
     setIsSaving(true)
     try {
+      const formData = new FormData()
+      formData.append('title', newItem.title)
+      formData.append('description', newItem.description)
+      if (newItem.categoryId) formData.append('categoryId', newItem.categoryId)
+      if (newItem.projectUrl) formData.append('projectUrl', newItem.projectUrl)
+      if (newItem.clientName) formData.append('clientName', newItem.clientName)
+      if (newItem.completionDate) formData.append('completionDate', newItem.completionDate)
+      if (newItem.skillsUsed) formData.append('skillsUsed', JSON.stringify(newItem.skillsUsed))
+      
+      // Add image files
+      if (newItem.newImageFiles) {
+        newItem.newImageFiles.forEach(file => {
+          formData.append('images', file)
+        })
+      }
+
       const response = await fetch('/api/freelancer/portfolio', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newItem)
+        body: formData
       })
 
       if (!response.ok) {
@@ -142,7 +158,8 @@ export default function PortfolioManagementPage() {
         title: '',
         description: '',
         skillsUsed: [],
-        images: []
+        images: [],
+        newImageFiles: []
       })
     } catch (error) {
       console.error('Error adding portfolio item:', error)
@@ -157,12 +174,33 @@ export default function PortfolioManagementPage() {
 
     setIsSaving(true)
     try {
+      const formData = new FormData()
+      formData.append('title', editingItem.title)
+      formData.append('description', editingItem.description)
+      if (editingItem.categoryId) formData.append('categoryId', editingItem.categoryId)
+      if (editingItem.projectUrl) formData.append('projectUrl', editingItem.projectUrl)
+      if (editingItem.clientName) formData.append('clientName', editingItem.clientName)
+      if (editingItem.completionDate) formData.append('completionDate', editingItem.completionDate)
+      if (editingItem.skillsUsed) formData.append('skillsUsed', JSON.stringify(editingItem.skillsUsed))
+      
+      // Keep existing images that aren't new uploads
+      const existingImageUrls = (editingItem.images || []).filter(
+        img => !img.startsWith('blob:')
+      )
+      formData.append('existingImages', JSON.stringify(existingImageUrls))
+      
+      // Add new image files
+      if (editingItem.newImageFiles) {
+        editingItem.newImageFiles.forEach(file => {
+          formData.append('images', file)
+        })
+      }
+
       const response = await fetch(
         `/api/freelancer/portfolio/${editingItem.id}`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(editingItem)
+          body: formData
         }
       )
 
@@ -213,19 +251,21 @@ export default function PortfolioManagementPage() {
     const files = e.target.files
     if (!files || files.length === 0) return
 
-    // In production, implement actual file upload
-    // For now, create local URLs
-    const urls = Array.from(files).map(file => URL.createObjectURL(file))
+    // Store File objects for upload and create preview URLs
+    const fileArray = Array.from(files)
+    const previewUrls = fileArray.map(file => URL.createObjectURL(file))
 
     if (editingItem) {
       setEditingItem({
         ...editingItem,
-        images: [...(editingItem.images || []), ...urls]
+        newImageFiles: [...(editingItem.newImageFiles || []), ...fileArray],
+        images: [...(editingItem.images || []), ...previewUrls]
       })
     } else {
       setNewItem({
         ...newItem,
-        images: [...(newItem.images || []), ...urls]
+        newImageFiles: [...(newItem.newImageFiles || []), ...fileArray],
+        images: [...(newItem.images || []), ...previewUrls]
       })
     }
   }

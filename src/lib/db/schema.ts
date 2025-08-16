@@ -736,6 +736,23 @@ export const freelancerProfiles = pgTable(
   ]
 )
 
+export const profileDrafts = pgTable(
+  'profile_drafts',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' })
+      .unique(),
+    data: jsonb('data').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_profile_drafts_user').on(table.userId)
+  ]
+)
+
 export const freelancerSkills = pgTable(
   'freelancer_skills',
   {
@@ -1718,6 +1735,8 @@ export type Skill = typeof skills.$inferSelect
 export type NewSkill = typeof skills.$inferInsert
 export type FreelancerProfile = typeof freelancerProfiles.$inferSelect
 export type NewFreelancerProfile = typeof freelancerProfiles.$inferInsert
+export type ProfileDraft = typeof profileDrafts.$inferSelect
+export type NewProfileDraft = typeof profileDrafts.$inferInsert
 export type FreelancerSkill = typeof freelancerSkills.$inferSelect
 export type NewFreelancerSkill = typeof freelancerSkills.$inferInsert
 export type JobPosting = typeof jobPostings.$inferSelect

@@ -20,6 +20,7 @@ import {
 
 import { PortfolioGallery } from '@/components/blocks/freelancers/portfolio-gallery'
 import { VerifiedBadge } from '@/components/blocks/freelancers/verified-badge'
+import { SaveProfileButton } from '@/components/blocks/freelancers/save-profile-button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -36,7 +37,8 @@ import { getAuth } from '@/lib/auth/auth-utils'
 import {
   getFreelancerProfile,
   getFreelancerStats,
-  getFreelancerReviews
+  getFreelancerReviews,
+  isFreelancerSaved
 } from '@/lib/db/queries/freelancers'
 
 export default async function PublicFreelancerProfilePage({
@@ -62,11 +64,61 @@ export default async function PublicFreelancerProfilePage({
   ])
 
   const isOwnProfile = auth?.id === userId
+  const isSaved = auth ? await isFreelancerSaved(auth.id, profile.id) : false
   const averageRating =
     reviews.length > 0
       ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) /
         reviews.length
       : 0
+
+  // Calculate real stats
+  const calculateProfileCompleteness = () => {
+    let score = 0
+    const weights = {
+      bio: 15,
+      skills: 20,
+      portfolio: 20,
+      hourlyRate: 10,
+      languages: 10,
+      portfolioUrl: 5,
+      linkedinUrl: 5,
+      githubUrl: 5,
+      yearsOfExperience: 10
+    }
+    
+    if (profile.bio) score += weights.bio
+    if (profile.freelancerSkills && profile.freelancerSkills.length > 0) score += weights.skills
+    if (profile.portfolioItems && profile.portfolioItems.length > 0) score += weights.portfolio
+    if (profile.hourlyRate) score += weights.hourlyRate
+    if (profile.languages && (profile.languages as any[]).length > 0) score += weights.languages
+    if (profile.portfolioUrl) score += weights.portfolioUrl
+    if (profile.linkedinUrl) score += weights.linkedinUrl
+    if (profile.githubUrl) score += weights.githubUrl
+    if (profile.yearsOfExperience > 0) score += weights.yearsOfExperience
+    
+    return Math.min(100, score)
+  }
+
+  const calculateResponseRate = () => {
+    // Use response time from profile or default to 95%
+    if (profile.responseTime && profile.responseTime <= 24) {
+      return 100
+    } else if (profile.responseTime && profile.responseTime <= 48) {
+      return 90
+    } else if (profile.responseTime && profile.responseTime <= 72) {
+      return 80
+    }
+    return 95 // Default for profiles without data
+  }
+
+  const calculateOnTimeDelivery = () => {
+    // Use completion rate from profile or default to 100%
+    return profile.completionRate || 100
+  }
+
+  const profileCompleteness = calculateProfileCompleteness()
+  const responseRate = calculateResponseRate()
+  const onTimeDelivery = calculateOnTimeDelivery()
 
   const skillsByCategory =
     profile.skills?.reduce(
@@ -161,10 +213,11 @@ export default async function PublicFreelancerProfilePage({
                           Contact Me
                         </Link>
                       </Button>
-                      <Button variant='outline'>
-                        <Heart className='mr-2 h-4 w-4' />
-                        Save Profile
-                      </Button>
+                      <SaveProfileButton
+                        freelancerId={params.id}
+                        isSaved={isSaved}
+                        isAuthenticated={!!auth}
+                      />
                     </>
                   )}
                   {isOwnProfile && (
@@ -441,25 +494,25 @@ export default async function PublicFreelancerProfilePage({
                 <div className='space-y-2'>
                   <div className='flex items-center justify-between text-sm'>
                     <span>Profile Completeness</span>
-                    <span className='font-semibold'>85%</span>
+                    <span className='font-semibold'>{profileCompleteness}%</span>
                   </div>
-                  <Progress value={85} className='h-2' />
+                  <Progress value={profileCompleteness} className='h-2' />
                 </div>
 
                 <div className='space-y-2'>
                   <div className='flex items-center justify-between text-sm'>
                     <span>Response Rate</span>
-                    <span className='font-semibold'>98%</span>
+                    <span className='font-semibold'>{responseRate}%</span>
                   </div>
-                  <Progress value={98} className='h-2' />
+                  <Progress value={responseRate} className='h-2' />
                 </div>
 
                 <div className='space-y-2'>
                   <div className='flex items-center justify-between text-sm'>
                     <span>On-Time Delivery</span>
-                    <span className='font-semibold'>100%</span>
+                    <span className='font-semibold'>{onTimeDelivery}%</span>
                   </div>
-                  <Progress value={100} className='h-2' />
+                  <Progress value={onTimeDelivery} className='h-2' />
                 </div>
               </CardContent>
             </Card>
