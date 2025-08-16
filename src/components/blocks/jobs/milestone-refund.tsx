@@ -75,7 +75,7 @@ export function MilestoneRefund({
     `/api/jobs/${jobId}/milestones/${milestoneId}/refund`,
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? response.refund : null
+      return response.success ? (response as any).refund : null
     },
     {
       refreshInterval: milestoneStatus === 'disputed' ? 30000 : 0 // Refresh every 30s if disputed

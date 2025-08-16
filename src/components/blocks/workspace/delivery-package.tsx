@@ -8,10 +8,8 @@ import {
   Download,
   FileText,
   Package,
-  Plus,
   Send,
-  Shield,
-  X
+  Shield
 } from 'lucide-react'
 import useSWR from 'swr'
 
@@ -34,7 +32,6 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { api } from '@/lib/api/http-client'
-import { cn } from '@/lib/utils'
 
 interface DeliveryPackageProps {
   jobId: number
@@ -78,7 +75,8 @@ export function DeliveryPackage({
 }: DeliveryPackageProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showAcceptDialog, setShowAcceptDialog] = useState(false)
-  const [selectedPackage, setSelectedPackage] = useState<DeliveryPackageData | null>(null)
+  const [selectedPackage, setSelectedPackage] =
+    useState<DeliveryPackageData | null>(null)
   const [packageData, setPackageData] = useState({
     packageName: '',
     description: '',
@@ -120,7 +118,7 @@ export function DeliveryPackage({
         milestoneId,
         status: 'delivered'
       })
-      
+
       mutate()
       setShowCreateDialog(false)
       setPackageData({
@@ -129,7 +127,7 @@ export function DeliveryPackage({
         deliveryNote: '',
         files: []
       })
-      
+
       if (onPackageDelivered) {
         onPackageDelivered()
       }
@@ -148,11 +146,14 @@ export function DeliveryPackage({
 
     setIsSubmitting(true)
     try {
-      await api.patch(`/api/jobs/${jobId}/delivery-packages/${selectedPackage.id}/accept`, {
-        acceptanceNote,
-        signature: digitalSignature
-      })
-      
+      await api.patch(
+        `/api/jobs/${jobId}/delivery-packages/${selectedPackage.id}/accept`,
+        {
+          acceptanceNote,
+          signature: digitalSignature
+        }
+      )
+
       mutate()
       setShowAcceptDialog(false)
       setSelectedPackage(null)
@@ -188,7 +189,7 @@ export function DeliveryPackage({
       <div className='flex items-center justify-between'>
         <div>
           <h3 className='text-lg font-semibold'>Delivery Packages</h3>
-          <p className='text-sm text-muted-foreground'>
+          <p className='text-muted-foreground text-sm'>
             Formal delivery of project files and assets
           </p>
         </div>
@@ -213,7 +214,12 @@ export function DeliveryPackage({
                   <Input
                     id='packageName'
                     value={packageData.packageName}
-                    onChange={(e) => setPackageData({ ...packageData, packageName: e.target.value })}
+                    onChange={e =>
+                      setPackageData({
+                        ...packageData,
+                        packageName: e.target.value
+                      })
+                    }
                     placeholder='Final Deliverables v1.0'
                   />
                 </div>
@@ -222,29 +228,36 @@ export function DeliveryPackage({
                   <Textarea
                     id='description'
                     value={packageData.description}
-                    onChange={(e) => setPackageData({ ...packageData, description: e.target.value })}
+                    onChange={e =>
+                      setPackageData({
+                        ...packageData,
+                        description: e.target.value
+                      })
+                    }
                     placeholder='Describe the contents of this package...'
                     rows={3}
                   />
                 </div>
                 <div>
                   <Label>Select Files</Label>
-                  <ScrollArea className='h-[200px] mt-2 rounded-lg border p-4'>
+                  <ScrollArea className='mt-2 h-[200px] rounded-lg border p-4'>
                     <div className='space-y-2'>
                       {availableFiles.map((file: any) => (
                         <div
                           key={file.id}
-                          className='flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer'
+                          className='hover:bg-muted flex cursor-pointer items-center gap-3 rounded p-2'
                           onClick={() => toggleFileSelection(file.id)}
                         >
                           <Checkbox
                             checked={packageData.files.includes(file.id)}
                             onCheckedChange={() => toggleFileSelection(file.id)}
                           />
-                          <FileText className='h-4 w-4 text-muted-foreground' />
+                          <FileText className='text-muted-foreground h-4 w-4' />
                           <div className='flex-1'>
-                            <p className='text-sm font-medium'>{file.filename}</p>
-                            <p className='text-xs text-muted-foreground'>
+                            <p className='text-sm font-medium'>
+                              {file.filename}
+                            </p>
+                            <p className='text-muted-foreground text-xs'>
                               {formatFileSize(file.size)}
                             </p>
                           </div>
@@ -252,7 +265,7 @@ export function DeliveryPackage({
                       ))}
                     </div>
                   </ScrollArea>
-                  <p className='mt-2 text-xs text-muted-foreground'>
+                  <p className='text-muted-foreground mt-2 text-xs'>
                     {packageData.files.length} files selected
                   </p>
                 </div>
@@ -261,19 +274,31 @@ export function DeliveryPackage({
                   <Textarea
                     id='deliveryNote'
                     value={packageData.deliveryNote}
-                    onChange={(e) => setPackageData({ ...packageData, deliveryNote: e.target.value })}
+                    onChange={e =>
+                      setPackageData({
+                        ...packageData,
+                        deliveryNote: e.target.value
+                      })
+                    }
                     placeholder='Any special notes for the client...'
                     rows={3}
                   />
                 </div>
               </div>
               <DialogFooter>
-                <Button variant='outline' onClick={() => setShowCreateDialog(false)}>
+                <Button
+                  variant='outline'
+                  onClick={() => setShowCreateDialog(false)}
+                >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleCreatePackage}
-                  disabled={isSubmitting || !packageData.packageName || packageData.files.length === 0}
+                  disabled={
+                    isSubmitting ||
+                    !packageData.packageName ||
+                    packageData.files.length === 0
+                  }
                   className='gap-2'
                 >
                   <Send className='h-4 w-4' />
@@ -293,15 +318,17 @@ export function DeliveryPackage({
               <div className='flex items-start justify-between'>
                 <div>
                   <CardTitle className='text-base'>{pkg.packageName}</CardTitle>
-                  <p className='mt-1 text-sm text-muted-foreground'>{pkg.description}</p>
+                  <p className='text-muted-foreground mt-1 text-sm'>
+                    {pkg.description}
+                  </p>
                 </div>
                 <Badge
                   variant={
                     pkg.status === 'accepted'
                       ? 'default'
                       : pkg.status === 'delivered'
-                      ? 'secondary'
-                      : 'outline'
+                        ? 'secondary'
+                        : 'outline'
                   }
                 >
                   {pkg.status}
@@ -310,13 +337,14 @@ export function DeliveryPackage({
             </CardHeader>
             <CardContent className='space-y-4'>
               <div className='flex items-center justify-between text-sm'>
-                <div className='flex items-center gap-2 text-muted-foreground'>
+                <div className='text-muted-foreground flex items-center gap-2'>
                   <Package className='h-4 w-4' />
                   <span>{pkg.files.length} files</span>
                 </div>
                 <div className='text-muted-foreground'>
                   Delivered by {pkg.deliveredBy.name} on{' '}
-                  {pkg.deliveredAt && format(new Date(pkg.deliveredAt), 'MMM dd, yyyy')}
+                  {pkg.deliveredAt &&
+                    format(new Date(pkg.deliveredAt), 'MMM dd, yyyy')}
                 </div>
               </div>
 
@@ -324,8 +352,10 @@ export function DeliveryPackage({
                 <>
                   <Separator />
                   <div>
-                    <p className='text-sm font-medium mb-1'>Delivery Note:</p>
-                    <p className='text-sm text-muted-foreground'>{pkg.deliveryNote}</p>
+                    <p className='mb-1 text-sm font-medium'>Delivery Note:</p>
+                    <p className='text-muted-foreground text-sm'>
+                      {pkg.deliveryNote}
+                    </p>
                   </div>
                 </>
               )}
@@ -334,13 +364,17 @@ export function DeliveryPackage({
                 <>
                   <Separator />
                   <div className='rounded-lg bg-green-50 p-3'>
-                    <div className='flex items-center gap-2 mb-2'>
+                    <div className='mb-2 flex items-center gap-2'>
                       <Shield className='h-4 w-4 text-green-600' />
                       <p className='text-sm font-medium text-green-900'>
-                        Accepted on {pkg.acceptedAt && format(new Date(pkg.acceptedAt), 'MMM dd, yyyy')}
+                        Accepted on{' '}
+                        {pkg.acceptedAt &&
+                          format(new Date(pkg.acceptedAt), 'MMM dd, yyyy')}
                       </p>
                     </div>
-                    <p className='text-sm text-green-800'>{pkg.acceptanceNote}</p>
+                    <p className='text-sm text-green-800'>
+                      {pkg.acceptanceNote}
+                    </p>
                   </div>
                 </>
               )}
@@ -371,9 +405,11 @@ export function DeliveryPackage({
         {packages.length === 0 && (
           <Card>
             <CardContent className='flex flex-col items-center justify-center py-12'>
-              <Package className='h-12 w-12 text-muted-foreground' />
-              <p className='mt-2 text-sm font-medium'>No delivery packages yet</p>
-              <p className='text-xs text-muted-foreground'>
+              <Package className='text-muted-foreground h-12 w-12' />
+              <p className='mt-2 text-sm font-medium'>
+                No delivery packages yet
+              </p>
+              <p className='text-muted-foreground text-xs'>
                 {isFreelancer
                   ? 'Create a package to deliver files to the client'
                   : 'Packages will appear here when delivered'}
@@ -395,17 +431,21 @@ export function DeliveryPackage({
             </DialogHeader>
             <div className='space-y-4'>
               <div>
-                <p className='text-sm font-medium'>{selectedPackage.packageName}</p>
-                <p className='text-sm text-muted-foreground mt-1'>
+                <p className='text-sm font-medium'>
+                  {selectedPackage.packageName}
+                </p>
+                <p className='text-muted-foreground mt-1 text-sm'>
                   {selectedPackage.files.length} files delivered
                 </p>
               </div>
               <div>
-                <Label htmlFor='acceptanceNote'>Acceptance Note (Optional)</Label>
+                <Label htmlFor='acceptanceNote'>
+                  Acceptance Note (Optional)
+                </Label>
                 <Textarea
                   id='acceptanceNote'
                   value={acceptanceNote}
-                  onChange={(e) => setAcceptanceNote(e.target.value)}
+                  onChange={e => setAcceptanceNote(e.target.value)}
                   placeholder='Any feedback or notes about the delivery...'
                   rows={3}
                 />
@@ -415,16 +455,20 @@ export function DeliveryPackage({
                 <Input
                   id='signature'
                   value={digitalSignature}
-                  onChange={(e) => setDigitalSignature(e.target.value)}
+                  onChange={e => setDigitalSignature(e.target.value)}
                   placeholder='Type your full name to sign'
                 />
-                <p className='mt-1 text-xs text-muted-foreground'>
-                  By signing, you confirm receipt and acceptance of the delivered files
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  By signing, you confirm receipt and acceptance of the
+                  delivered files
                 </p>
               </div>
             </div>
             <DialogFooter>
-              <Button variant='outline' onClick={() => setShowAcceptDialog(false)}>
+              <Button
+                variant='outline'
+                onClick={() => setShowAcceptDialog(false)}
+              >
                 Cancel
               </Button>
               <Button

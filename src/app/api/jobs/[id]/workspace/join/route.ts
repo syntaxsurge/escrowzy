@@ -22,11 +22,17 @@ export async function POST(
     })
 
     if (!job) {
-      return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 })
+      return NextResponse.json(
+        { success: false, error: 'Job not found' },
+        { status: 404 }
+      )
     }
 
     if (job.clientId !== user.id && job.freelancerId !== user.id) {
-      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 })
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
     }
 
     // Check if user already has an active session
@@ -48,7 +54,10 @@ export async function POST(
         })
         .where(eq(workspaceSessions.id, existingSession.id))
 
-      return NextResponse.json({ success: true, sessionId: existingSession.sessionId })
+      return NextResponse.json({
+        success: true,
+        sessionId: existingSession.sessionId
+      })
     }
 
     // Create new session

@@ -3,31 +3,29 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-import { format, formatDistanceToNow } from 'date-fns'
+import { format } from 'date-fns'
 import {
   ArrowLeft,
   Calendar,
-  CheckCircle2,
   Clock,
-  FileText,
   FolderOpen,
   Home,
   ListTodo,
   MessageSquare,
-  Package,
-  Play,
-  Plus,
-  Settings,
-  Trash2,
-  Upload,
   Users
 } from 'lucide-react'
 import useSWR from 'swr'
 
+import { FileManager } from '@/components/blocks/workspace/file-manager'
+import { JobCalendar } from '@/components/blocks/workspace/job-calendar'
+import { TaskBoard } from '@/components/blocks/workspace/task-board'
+import { TimeTracker } from '@/components/blocks/workspace/time-tracker'
+import { WorkspaceActivity } from '@/components/blocks/workspace/workspace-activity'
+import { WorkspaceChat } from '@/components/blocks/workspace/workspace-chat'
+import { WorkspaceOverview } from '@/components/blocks/workspace/workspace-overview'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -39,20 +37,12 @@ import {
 } from '@/components/ui/tooltip'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
-import { pusherClient } from '@/lib/pusher-client'
 import { useSession } from '@/hooks/use-session'
 import { api } from '@/lib/api/http-client'
 import type { JobPostingWithRelations } from '@/lib/db/queries/jobs'
-import { cn } from '@/lib/utils'
+import { pusherClient } from '@/lib/pusher-client'
 
 // Import workspace components
-import { FileManager } from '@/components/blocks/workspace/file-manager'
-import { JobCalendar } from '@/components/blocks/workspace/job-calendar'
-import { TaskBoard } from '@/components/blocks/workspace/task-board'
-import { TimeTracker } from '@/components/blocks/workspace/time-tracker'
-import { WorkspaceActivity } from '@/components/blocks/workspace/workspace-activity'
-import { WorkspaceChat } from '@/components/blocks/workspace/workspace-chat'
-import { WorkspaceOverview } from '@/components/blocks/workspace/workspace-overview'
 
 interface WorkspaceSession {
   id: number
@@ -119,24 +109,30 @@ export default function JobWorkspacePage() {
     initSession()
 
     // Subscribe to workspace events
-    const channel = pusherClient.subscribe(`workspace-${jobId}`)
-    
-    channel.bind('user-joined', (data: any) => {
-      mutateSessions()
-    })
+    if (pusherClient) {
+      const channel = pusherClient.subscribe(`workspace-${jobId}`)
 
-    channel.bind('user-left', (data: any) => {
-      mutateSessions()
-    })
+      channel.bind('user-joined', (data: any) => {
+        mutateSessions()
+      })
 
-    channel.bind('activity-update', (data: any) => {
-      mutateSessions()
-    })
+      channel.bind('user-left', (data: any) => {
+        mutateSessions()
+      })
 
-    // Clean up on unmount
+      channel.bind('activity-update', (data: any) => {
+        mutateSessions()
+      })
+
+      // Clean up on unmount
+      return () => {
+        api.post(`/api/jobs/${jobId}/workspace/leave`).catch(console.error)
+        pusherClient.unsubscribe(`workspace-${jobId}`)
+      }
+    }
+
     return () => {
       api.post(`/api/jobs/${jobId}/workspace/leave`).catch(console.error)
-      pusherClient.unsubscribe(`workspace-${jobId}`)
     }
   }, [user, jobId])
 
@@ -166,8 +162,10 @@ export default function JobWorkspacePage() {
     return (
       <div className='flex h-96 items-center justify-center'>
         <div className='text-center'>
-          <div className='h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent' />
-          <p className='mt-2 text-sm text-muted-foreground'>Loading workspace...</p>
+          <div className='border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
+          <p className='text-muted-foreground mt-2 text-sm'>
+            Loading workspace...
+          </p>
         </div>
       </div>
     )
@@ -177,19 +175,24 @@ export default function JobWorkspacePage() {
     return (
       <div className='flex h-96 flex-col items-center justify-center'>
         <h2 className='text-xl font-semibold'>Access Denied</h2>
-        <p className='mt-2 text-muted-foreground'>
+        <p className='text-muted-foreground mt-2'>
           You don't have permission to access this workspace.
         </p>
-        <Button className='mt-4' onClick={() => router.push(appRoutes.jobs.list)}>
+        <Button
+          className='mt-4'
+          onClick={() => router.push(appRoutes.jobs.list)}
+        >
           Back to Jobs
         </Button>
       </div>
     )
   }
 
-  const completedMilestones = job.milestones?.filter(m => m.status === 'approved').length || 0
+  const completedMilestones =
+    job.milestones?.filter(m => m.status === 'approved').length || 0
   const totalMilestones = job.milestones?.length || 0
-  const progress = totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0
+  const progress =
+    totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0
 
   return (
     <div className='container mx-auto px-4 py-6'>
@@ -228,7 +231,9 @@ export default function JobWorkspacePage() {
                     <div className='text-xs'>
                       <p className='font-medium'>{session.user.name}</p>
                       <p className='text-muted-foreground'>
-                        {session.currentTab ? `Viewing ${session.currentTab}` : 'Active'}
+                        {session.currentTab
+                          ? `Viewing ${session.currentTab}`
+                          : 'Active'}
                       </p>
                     </div>
                   </TooltipContent>
@@ -240,7 +245,7 @@ export default function JobWorkspacePage() {
 
         <div>
           <h1 className='text-2xl font-bold'>{job.title} - Workspace</h1>
-          <p className='mt-1 text-sm text-muted-foreground'>
+          <p className='text-muted-foreground mt-1 text-sm'>
             Collaborate, track progress, and manage deliverables
           </p>
         </div>
@@ -249,13 +254,19 @@ export default function JobWorkspacePage() {
         <div className='mt-4'>
           <div className='flex items-center justify-between text-sm'>
             <span className='text-muted-foreground'>Project Progress</span>
-            <span className='font-medium'>{Math.round(progress)}% Complete</span>
+            <span className='font-medium'>
+              {Math.round(progress)}% Complete
+            </span>
           </div>
           <Progress value={progress} className='mt-2' />
-          <div className='mt-1 flex justify-between text-xs text-muted-foreground'>
-            <span>{completedMilestones} of {totalMilestones} milestones completed</span>
+          <div className='text-muted-foreground mt-1 flex justify-between text-xs'>
+            <span>
+              {completedMilestones} of {totalMilestones} milestones completed
+            </span>
             {job.deadline && (
-              <span>Deadline: {format(new Date(job.deadline), 'MMM dd, yyyy')}</span>
+              <span>
+                Deadline: {format(new Date(job.deadline), 'MMM dd, yyyy')}
+              </span>
             )}
           </div>
         </div>
@@ -325,10 +336,7 @@ export default function JobWorkspacePage() {
           </TabsContent>
 
           <TabsContent value='timeline' className='space-y-6'>
-            <WorkspaceActivity
-              jobId={parseInt(jobId)}
-              job={job}
-            />
+            <WorkspaceActivity jobId={parseInt(jobId)} job={job} />
           </TabsContent>
 
           <TabsContent value='calendar' className='space-y-6'>
@@ -344,7 +352,7 @@ export default function JobWorkspacePage() {
 
       {/* Time Tracker Widget (Always Visible for Freelancer) */}
       {isFreelancer && job.budgetType === 'hourly' && (
-        <div className='fixed bottom-6 right-6 z-50'>
+        <div className='fixed right-6 bottom-6 z-50'>
           <TimeTracker
             jobId={parseInt(jobId)}
             hourlyRate={job.budgetMin || '0'}

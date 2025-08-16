@@ -1420,7 +1420,11 @@ export const workspaceSessions = pgTable(
     index('idx_workspace_sessions_job').on(table.jobId),
     index('idx_workspace_sessions_user').on(table.userId),
     index('idx_workspace_sessions_status').on(table.status),
-    unique('unique_active_workspace_session').on(table.jobId, table.userId, table.status)
+    unique('unique_active_workspace_session').on(
+      table.jobId,
+      table.userId,
+      table.status
+    )
   ]
 )
 
@@ -1431,7 +1435,9 @@ export const jobTasks = pgTable(
     jobId: integer('job_id')
       .notNull()
       .references(() => jobPostings.id, { onDelete: 'cascade' }),
-    milestoneId: integer('milestone_id').references(() => jobMilestones.id, { onDelete: 'cascade' }),
+    milestoneId: integer('milestone_id').references(() => jobMilestones.id, {
+      onDelete: 'cascade'
+    }),
     title: varchar('title', { length: 200 }).notNull(),
     description: text('description'),
     status: varchar('status', { length: 50 }).notNull().default('todo'), // todo, in_progress, review, done

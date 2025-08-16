@@ -447,7 +447,7 @@ export async function findMatchingFreelancers(
       let matchScore = matchPercentage
 
       // Experience bonus
-      if (job.experienceLevel && freelancerData.profile.yearsOfExperience) {
+      if (job.experienceLevel && freelancerData.profile?.yearsOfExperience) {
         const requiredExp =
           {
             entry: 0,
@@ -462,20 +462,35 @@ export async function findMatchingFreelancers(
       }
 
       // Rating bonus
-      if (freelancerData.profile.avgRating) {
+      if (freelancerData.profile?.avgRating) {
         matchScore += (freelancerData.profile.avgRating / 100) * 10
       }
 
       // Completed jobs bonus
-      matchScore += Math.min(5, freelancerData.profile.totalJobs * 0.5)
+      if (freelancerData.profile?.totalJobs) {
+        matchScore += Math.min(5, freelancerData.profile.totalJobs * 0.5)
+      }
 
-      freelancerMatches.push({
-        freelancer: freelancerData.user,
-        profile: freelancerData.profile,
-        matchScore: Math.min(100, matchScore),
-        matchedSkills: matchedSkillNames,
-        matchPercentage
-      })
+      if (
+        freelancerData.profile &&
+        freelancerData.user.name &&
+        freelancerData.user.email
+      ) {
+        freelancerMatches.push({
+          freelancer: {
+            ...freelancerData.user,
+            name: freelancerData.user.name,
+            email: freelancerData.user.email
+          },
+          profile: {
+            ...freelancerData.profile,
+            avgRating: freelancerData.profile.avgRating || 0
+          },
+          matchScore: Math.min(100, matchScore),
+          matchedSkills: matchedSkillNames,
+          matchPercentage
+        })
+      }
     }
 
     // Sort by match score and return top matches

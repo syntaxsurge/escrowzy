@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-import { format, formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import {
   AlertCircle,
   Calendar,
@@ -12,18 +12,13 @@ import {
   Flag,
   MessageSquare,
   Package,
-  Play,
-  Plus,
-  Star,
   Upload,
-  User,
   Users
 } from 'lucide-react'
 import useSWR from 'swr'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
@@ -132,54 +127,71 @@ export function WorkspaceActivity({ jobId, job }: WorkspaceActivityProps) {
       return activity.type.includes('file')
     }
     if (filter === 'messages') {
-      return activity.type.includes('message') || activity.type.includes('comment')
+      return (
+        activity.type.includes('message') || activity.type.includes('comment')
+      )
     }
     return true
   })
 
   // Generate mock activities if none exist
-  const mockActivities: ActivityItem[] = filteredActivities.length > 0 ? filteredActivities : [
-    {
-      id: '1',
-      type: 'milestone_created',
-      title: 'Project kickoff milestone created',
-      description: 'Initial project setup and requirements gathering',
-      user: job.client || { id: 1, name: 'Client', avatarUrl: null },
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
-    },
-    {
-      id: '2',
-      type: 'member_joined',
-      title: 'Freelancer joined the workspace',
-      description: null,
-      user: job.freelancer || { id: 2, name: 'Freelancer', avatarUrl: null },
-      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
-    },
-    {
-      id: '3',
-      type: 'task_created',
-      title: 'Created task: Design wireframes',
-      description: 'Create initial wireframes for the application',
-      user: job.freelancer || { id: 2, name: 'Freelancer', avatarUrl: null },
-      createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000)
-    },
-    {
-      id: '4',
-      type: 'file_uploaded',
-      title: 'Uploaded project-requirements.pdf',
-      description: 'Initial project requirements document',
-      user: job.client || { id: 1, name: 'Client', avatarUrl: null },
-      createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000)
-    },
-    {
-      id: '5',
-      type: 'time_tracked',
-      title: 'Tracked 2 hours',
-      description: 'Working on wireframe designs',
-      user: job.freelancer || { id: 2, name: 'Freelancer', avatarUrl: null },
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
-    }
-  ]
+  const mockActivities: ActivityItem[] =
+    filteredActivities.length > 0
+      ? filteredActivities
+      : [
+          {
+            id: '1',
+            type: 'milestone_created',
+            title: 'Project kickoff milestone created',
+            description: 'Initial project setup and requirements gathering',
+            user: job.client || { id: 1, name: 'Client', avatarUrl: null },
+            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+          },
+          {
+            id: '2',
+            type: 'member_joined',
+            title: 'Freelancer joined the workspace',
+            description: null,
+            user: job.freelancer || {
+              id: 2,
+              name: 'Freelancer',
+              avatarUrl: null
+            },
+            createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
+          },
+          {
+            id: '3',
+            type: 'task_created',
+            title: 'Created task: Design wireframes',
+            description: 'Create initial wireframes for the application',
+            user: job.freelancer || {
+              id: 2,
+              name: 'Freelancer',
+              avatarUrl: null
+            },
+            createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000)
+          },
+          {
+            id: '4',
+            type: 'file_uploaded',
+            title: 'Uploaded project-requirements.pdf',
+            description: 'Initial project requirements document',
+            user: job.client || { id: 1, name: 'Client', avatarUrl: null },
+            createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000)
+          },
+          {
+            id: '5',
+            type: 'time_tracked',
+            title: 'Tracked 2 hours',
+            description: 'Working on wireframe designs',
+            user: job.freelancer || {
+              id: 2,
+              name: 'Freelancer',
+              avatarUrl: null
+            },
+            createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
+          }
+        ]
 
   return (
     <div className='space-y-6'>
@@ -187,7 +199,7 @@ export function WorkspaceActivity({ jobId, job }: WorkspaceActivityProps) {
       <div className='flex items-center justify-between'>
         <div>
           <h3 className='text-lg font-semibold'>Activity Timeline</h3>
-          <p className='text-sm text-muted-foreground'>
+          <p className='text-muted-foreground text-sm'>
             Track all project activities and updates
           </p>
         </div>
@@ -214,7 +226,7 @@ export function WorkspaceActivity({ jobId, job }: WorkspaceActivityProps) {
           <ScrollArea className='h-[500px] pr-4'>
             <div className='relative'>
               {/* Timeline line */}
-              <div className='absolute left-5 top-0 bottom-0 w-px bg-border' />
+              <div className='bg-border absolute top-0 bottom-0 left-5 w-px' />
 
               {/* Activity items */}
               <div className='space-y-6'>
@@ -234,22 +246,28 @@ export function WorkspaceActivity({ jobId, job }: WorkspaceActivityProps) {
                     <div className='flex-1 pb-6'>
                       <div className='flex items-start justify-between'>
                         <div className='space-y-1'>
-                          <p className='text-sm font-medium'>{activity.title}</p>
+                          <p className='text-sm font-medium'>
+                            {activity.title}
+                          </p>
                           {activity.description && (
-                            <p className='text-xs text-muted-foreground'>
+                            <p className='text-muted-foreground text-xs'>
                               {activity.description}
                             </p>
                           )}
-                          <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+                          <div className='text-muted-foreground flex items-center gap-2 text-xs'>
                             <Avatar className='h-5 w-5'>
-                              <AvatarImage src={activity.user.avatarUrl || undefined} />
+                              <AvatarImage
+                                src={activity.user.avatarUrl || undefined}
+                              />
                               <AvatarFallback className='text-xs'>
                                 {activity.user.name.charAt(0).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <span>{activity.user.name}</span>
                             <span>•</span>
-                            <span>{formatDistanceToNow(activity.createdAt)} ago</span>
+                            <span>
+                              {formatDistanceToNow(activity.createdAt)} ago
+                            </span>
                           </div>
                         </div>
                         {activity.metadata?.amount && (
@@ -261,11 +279,13 @@ export function WorkspaceActivity({ jobId, job }: WorkspaceActivityProps) {
 
                       {/* Additional metadata */}
                       {activity.metadata && (
-                        <div className='mt-3 rounded-lg bg-muted p-3'>
+                        <div className='bg-muted mt-3 rounded-lg p-3'>
                           {activity.metadata.files && (
                             <div className='flex items-center gap-2 text-xs'>
                               <File className='h-3 w-3' />
-                              <span>{activity.metadata.files.length} files</span>
+                              <span>
+                                {activity.metadata.files.length} files
+                              </span>
                             </div>
                           )}
                           {activity.metadata.duration && (
@@ -287,9 +307,9 @@ export function WorkspaceActivity({ jobId, job }: WorkspaceActivityProps) {
 
                 {mockActivities.length === 0 && (
                   <div className='flex flex-col items-center justify-center py-12 text-center'>
-                    <Clock className='h-12 w-12 text-muted-foreground' />
+                    <Clock className='text-muted-foreground h-12 w-12' />
                     <p className='mt-2 text-sm font-medium'>No activity yet</p>
-                    <p className='text-xs text-muted-foreground'>
+                    <p className='text-muted-foreground text-xs'>
                       Activities will appear here as work progresses
                     </p>
                   </div>

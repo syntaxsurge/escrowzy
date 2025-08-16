@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { desc, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 import { jobPostings } from '@/lib/db/schema'
@@ -28,11 +28,17 @@ export async function GET(
     })
 
     if (!job) {
-      return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 })
+      return NextResponse.json(
+        { success: false, error: 'Job not found' },
+        { status: 404 }
+      )
     }
 
     if (job.clientId !== user.id && job.freelancerId !== user.id) {
-      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 })
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
     }
 
     // Build activity feed from various sources
@@ -100,8 +106,9 @@ export async function GET(
     }
 
     // Sort activities by date
-    activities.sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    activities.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
 
     // Limit to recent activities

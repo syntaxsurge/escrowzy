@@ -1,8 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-
-import { format, formatDistanceToNow } from 'date-fns'
+import { format } from 'date-fns'
 import {
   AlertCircle,
   Calendar,
@@ -17,7 +15,6 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
@@ -37,23 +34,34 @@ export function WorkspaceOverview({
 }: WorkspaceOverviewProps) {
   // Calculate project statistics
   const totalMilestones = job.milestones?.length || 0
-  const completedMilestones = job.milestones?.filter(m => m.status === 'approved').length || 0
-  const inProgressMilestones = job.milestones?.filter(m => m.status === 'in_progress').length || 0
-  const pendingMilestones = job.milestones?.filter(m => m.status === 'pending').length || 0
-  
-  const totalBudget = job.milestones?.reduce((sum, m) => sum + parseFloat(m.amount), 0) || 0
-  const paidAmount = job.milestones?.filter(m => m.status === 'approved')
-    .reduce((sum, m) => sum + parseFloat(m.amount), 0) || 0
+  const completedMilestones =
+    job.milestones?.filter(m => m.status === 'approved').length || 0
+  const inProgressMilestones =
+    job.milestones?.filter(m => m.status === 'in_progress').length || 0
+  const pendingMilestones =
+    job.milestones?.filter(m => m.status === 'pending').length || 0
+
+  const totalBudget =
+    job.milestones?.reduce((sum, m) => sum + parseFloat(m.amount), 0) || 0
+  const paidAmount =
+    job.milestones
+      ?.filter(m => m.status === 'approved')
+      .reduce((sum, m) => sum + parseFloat(m.amount), 0) || 0
   const remainingAmount = totalBudget - paidAmount
 
-  const progress = totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0
+  const progress =
+    totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0
 
   // Get next milestone
-  const nextMilestone = job.milestones?.find(m => m.status === 'pending' || m.status === 'in_progress')
+  const nextMilestone = job.milestones?.find(
+    m => m.status === 'pending' || m.status === 'in_progress'
+  )
 
   // Calculate days remaining
-  const daysRemaining = job.deadline 
-    ? Math.ceil((new Date(job.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  const daysRemaining = job.deadline
+    ? Math.ceil(
+        (new Date(job.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      )
     : null
 
   return (
@@ -63,12 +71,12 @@ export function WorkspaceOverview({
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Progress</CardTitle>
-            <TrendingUp className='h-4 w-4 text-muted-foreground' />
+            <TrendingUp className='text-muted-foreground h-4 w-4' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>{Math.round(progress)}%</div>
             <Progress value={progress} className='mt-2' />
-            <p className='mt-2 text-xs text-muted-foreground'>
+            <p className='text-muted-foreground mt-2 text-xs'>
               {completedMilestones} of {totalMilestones} milestones
             </p>
           </CardContent>
@@ -77,7 +85,7 @@ export function WorkspaceOverview({
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Budget</CardTitle>
-            <DollarSign className='h-4 w-4 text-muted-foreground' />
+            <DollarSign className='text-muted-foreground h-4 w-4' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>${totalBudget.toFixed(2)}</div>
@@ -97,7 +105,7 @@ export function WorkspaceOverview({
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Deadline</CardTitle>
-            <Calendar className='h-4 w-4 text-muted-foreground' />
+            <Calendar className='text-muted-foreground h-4 w-4' />
           </CardHeader>
           <CardContent>
             {job.deadline ? (
@@ -105,19 +113,25 @@ export function WorkspaceOverview({
                 <div className='text-2xl font-bold'>
                   {format(new Date(job.deadline), 'MMM dd')}
                 </div>
-                <p className={cn(
-                  'mt-2 text-xs',
-                  daysRemaining && daysRemaining < 7 ? 'text-red-600' : 'text-muted-foreground'
-                )}>
+                <p
+                  className={cn(
+                    'mt-2 text-xs',
+                    daysRemaining && daysRemaining < 7
+                      ? 'text-red-600'
+                      : 'text-muted-foreground'
+                  )}
+                >
                   {daysRemaining && daysRemaining > 0
                     ? `${daysRemaining} days remaining`
                     : daysRemaining === 0
-                    ? 'Due today'
-                    : 'Overdue'}
+                      ? 'Due today'
+                      : 'Overdue'}
                 </p>
               </>
             ) : (
-              <div className='text-sm text-muted-foreground'>No deadline set</div>
+              <div className='text-muted-foreground text-sm'>
+                No deadline set
+              </div>
             )}
           </CardContent>
         </Card>
@@ -125,7 +139,7 @@ export function WorkspaceOverview({
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Status</CardTitle>
-            <CheckCircle2 className='h-4 w-4 text-muted-foreground' />
+            <CheckCircle2 className='text-muted-foreground h-4 w-4' />
           </CardHeader>
           <CardContent>
             <div className='space-y-2'>
@@ -176,7 +190,7 @@ export function WorkspaceOverview({
                 </Avatar>
                 <div>
                   <p className='text-sm font-medium'>{job.client?.name}</p>
-                  <p className='text-xs text-muted-foreground'>Client</p>
+                  <p className='text-muted-foreground text-xs'>Client</p>
                 </div>
               </div>
               <Badge variant='outline'>Owner</Badge>
@@ -187,14 +201,18 @@ export function WorkspaceOverview({
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
                   <Avatar>
-                    <AvatarImage src={job.freelancer?.avatarPath || undefined} />
+                    <AvatarImage
+                      src={job.freelancer?.avatarPath || undefined}
+                    />
                     <AvatarFallback>
                       {job.freelancer?.name?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className='text-sm font-medium'>{job.freelancer?.name}</p>
-                    <p className='text-xs text-muted-foreground'>Freelancer</p>
+                    <p className='text-sm font-medium'>
+                      {job.freelancer?.name}
+                    </p>
+                    <p className='text-muted-foreground text-xs'>Freelancer</p>
                   </div>
                 </div>
                 <Badge variant='outline'>Assignee</Badge>
@@ -216,7 +234,7 @@ export function WorkspaceOverview({
               <div className='space-y-3'>
                 <div>
                   <p className='font-medium'>{nextMilestone.title}</p>
-                  <p className='mt-1 text-sm text-muted-foreground'>
+                  <p className='text-muted-foreground mt-1 text-sm'>
                     {nextMilestone.description}
                   </p>
                 </div>
@@ -230,20 +248,23 @@ export function WorkspaceOverview({
                     <p className='text-muted-foreground'>Due Date</p>
                     <p className='font-medium'>
                       {nextMilestone.dueDate
-                        ? format(new Date(nextMilestone.dueDate), 'MMM dd, yyyy')
+                        ? format(
+                            new Date(nextMilestone.dueDate),
+                            'MMM dd, yyyy'
+                          )
                         : 'No due date'}
                     </p>
                   </div>
                 </div>
                 <div>
-                  <p className='mb-2 text-sm text-muted-foreground'>Status</p>
+                  <p className='text-muted-foreground mb-2 text-sm'>Status</p>
                   <Badge
                     variant={
                       nextMilestone.status === 'in_progress'
                         ? 'default'
                         : nextMilestone.status === 'submitted'
-                        ? 'secondary'
-                        : 'outline'
+                          ? 'secondary'
+                          : 'outline'
                     }
                   >
                     {nextMilestone.status.replace('_', ' ').toUpperCase()}
@@ -253,8 +274,10 @@ export function WorkspaceOverview({
             ) : (
               <div className='flex flex-col items-center justify-center py-8 text-center'>
                 <CheckCircle2 className='h-12 w-12 text-green-500' />
-                <p className='mt-2 text-sm font-medium'>All milestones completed!</p>
-                <p className='text-xs text-muted-foreground'>
+                <p className='mt-2 text-sm font-medium'>
+                  All milestones completed!
+                </p>
+                <p className='text-muted-foreground text-xs'>
                   Great job on completing the project
                 </p>
               </div>
@@ -274,27 +297,31 @@ export function WorkspaceOverview({
         <CardContent className='space-y-4'>
           <div>
             <h4 className='mb-2 font-medium'>Description</h4>
-            <p className='text-sm text-muted-foreground'>{job.description}</p>
+            <p className='text-muted-foreground text-sm'>{job.description}</p>
           </div>
-          
+
           <Separator />
-          
+
           <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
             <div>
-              <p className='text-sm text-muted-foreground'>Category</p>
+              <p className='text-muted-foreground text-sm'>Category</p>
               <p className='text-sm font-medium'>{job.category?.name}</p>
             </div>
             <div>
-              <p className='text-sm text-muted-foreground'>Budget Type</p>
+              <p className='text-muted-foreground text-sm'>Budget Type</p>
               <p className='text-sm font-medium capitalize'>{job.budgetType}</p>
             </div>
             <div>
-              <p className='text-sm text-muted-foreground'>Experience Level</p>
-              <p className='text-sm font-medium capitalize'>{job.experienceLevel}</p>
+              <p className='text-muted-foreground text-sm'>Experience Level</p>
+              <p className='text-sm font-medium capitalize'>
+                {job.experienceLevel}
+              </p>
             </div>
             <div>
-              <p className='text-sm text-muted-foreground'>Project Duration</p>
-              <p className='text-sm font-medium'>{job.projectDuration || 'Not specified'}</p>
+              <p className='text-muted-foreground text-sm'>Project Duration</p>
+              <p className='text-sm font-medium'>
+                {job.projectDuration || 'Not specified'}
+              </p>
             </div>
           </div>
 
@@ -302,7 +329,9 @@ export function WorkspaceOverview({
             <>
               <Separator />
               <div>
-                <p className='mb-2 text-sm text-muted-foreground'>Required Skills</p>
+                <p className='text-muted-foreground mb-2 text-sm'>
+                  Required Skills
+                </p>
                 <div className='flex flex-wrap gap-2'>
                   {(job.skillsRequired as any[]).map((skill, index) => (
                     <Badge key={index} variant='secondary'>
@@ -326,33 +355,48 @@ export function WorkspaceOverview({
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
-            {job.milestones?.slice(0, 3).map((milestone) => (
+            {job.milestones?.slice(0, 3).map(milestone => (
               <div key={milestone.id} className='flex items-center gap-4'>
-                <div className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-full',
-                  milestone.status === 'approved' && 'bg-green-100 text-green-600',
-                  milestone.status === 'in_progress' && 'bg-blue-100 text-blue-600',
-                  milestone.status === 'submitted' && 'bg-yellow-100 text-yellow-600',
-                  milestone.status === 'pending' && 'bg-gray-100 text-gray-600'
-                )}>
-                  {milestone.status === 'approved' && <CheckCircle2 className='h-4 w-4' />}
-                  {milestone.status === 'in_progress' && <Clock className='h-4 w-4' />}
-                  {milestone.status === 'submitted' && <Package className='h-4 w-4' />}
-                  {milestone.status === 'pending' && <AlertCircle className='h-4 w-4' />}
+                <div
+                  className={cn(
+                    'flex h-8 w-8 items-center justify-center rounded-full',
+                    milestone.status === 'approved' &&
+                      'bg-green-100 text-green-600',
+                    milestone.status === 'in_progress' &&
+                      'bg-blue-100 text-blue-600',
+                    milestone.status === 'submitted' &&
+                      'bg-yellow-100 text-yellow-600',
+                    milestone.status === 'pending' &&
+                      'bg-gray-100 text-gray-600'
+                  )}
+                >
+                  {milestone.status === 'approved' && (
+                    <CheckCircle2 className='h-4 w-4' />
+                  )}
+                  {milestone.status === 'in_progress' && (
+                    <Clock className='h-4 w-4' />
+                  )}
+                  {milestone.status === 'submitted' && (
+                    <Package className='h-4 w-4' />
+                  )}
+                  {milestone.status === 'pending' && (
+                    <AlertCircle className='h-4 w-4' />
+                  )}
                 </div>
                 <div className='flex-1'>
                   <p className='text-sm font-medium'>{milestone.title}</p>
-                  <p className='text-xs text-muted-foreground'>
+                  <p className='text-muted-foreground text-xs'>
                     {milestone.status.replace('_', ' ')}
                   </p>
                 </div>
                 <span className='text-sm font-medium'>${milestone.amount}</span>
               </div>
             ))}
-            
-            {!job.milestones || job.milestones.length === 0 && (
-              <p className='text-sm text-muted-foreground'>No activity yet</p>
-            )}
+
+            {!job.milestones ||
+              (job.milestones.length === 0 && (
+                <p className='text-muted-foreground text-sm'>No activity yet</p>
+              ))}
           </div>
         </CardContent>
       </Card>

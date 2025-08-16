@@ -10,10 +10,12 @@ import {
   FileImage,
   FileText,
   FileVideo,
+  Loader2,
   Maximize2,
   Minimize2,
   X
 } from 'lucide-react'
+import useSWR from 'swr'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -23,7 +25,81 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { api } from '@/lib/api/http-client'
 import { cn } from '@/lib/utils'
+
+// File content preview component
+function FileContentPreview({
+  fileId,
+  filename,
+  isCode
+}: {
+  fileId: number
+  filename: string
+  isCode: boolean
+}) {
+  const { data, isLoading, error } = useSWR(
+    `/api/files/${fileId}/content`,
+    async (url: string) => {
+      const response = await api.get(url)
+      return response.success ? (response as any) : null
+    }
+  )
+
+  if (isLoading) {
+    return (
+      <div className='flex h-full items-center justify-center'>
+        <Loader2 className='text-muted-foreground h-8 w-8 animate-spin' />
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className='flex h-full flex-col items-center justify-center p-6 text-center'>
+        <FileText className='text-muted-foreground h-12 w-12' />
+        <p className='mt-2 text-sm font-medium'>Failed to load file content</p>
+        <p className='text-muted-foreground text-xs'>
+          The file content could not be retrieved
+        </p>
+      </div>
+    )
+  }
+
+  if (data.type === 'text') {
+    return (
+      <ScrollArea className='h-full'>
+        <div className='p-6'>
+          {isCode ? (
+            <div>
+              <pre className='bg-muted overflow-x-auto rounded-lg p-4'>
+                <code className={`language-${data.language || 'plaintext'}`}>
+                  {data.content}
+                </code>
+              </pre>
+              {data.truncated && (
+                <p className='text-muted-foreground mt-2 text-center text-xs'>
+                  File truncated for preview (showing first 50KB)
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className='prose prose-sm max-w-none'>
+              <pre className='whitespace-pre-wrap'>{data.content}</pre>
+              {data.truncated && (
+                <p className='text-muted-foreground mt-2 text-xs'>
+                  File truncated for preview (showing first 50KB)
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+    )
+  }
+
+  return null
+}
 
 interface FilePreviewProps {
   file: {
@@ -59,13 +135,15 @@ export function FilePreview({
   const isImage = file.mimeType.startsWith('image/')
   const isVideo = file.mimeType.startsWith('video/')
   const isPDF = file.mimeType.includes('pdf')
-  const isText = file.mimeType.startsWith('text/') || 
+  const isText =
+    file.mimeType.startsWith('text/') ||
     file.filename.endsWith('.txt') ||
     file.filename.endsWith('.md') ||
     file.filename.endsWith('.json') ||
     file.filename.endsWith('.yaml') ||
     file.filename.endsWith('.yml')
-  const isCode = file.filename.endsWith('.js') ||
+  const isCode =
+    file.filename.endsWith('.js') ||
     file.filename.endsWith('.jsx') ||
     file.filename.endsWith('.ts') ||
     file.filename.endsWith('.tsx') ||
@@ -129,22 +207,26 @@ export function FilePreview({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
+      <DialogContent
         className={cn(
           'transition-all',
-          isFullscreen ? 'max-w-full h-screen w-screen p-0' : 'sm:max-w-4xl sm:max-h-[90vh]'
+          isFullscreen
+            ? 'h-screen w-screen max-w-full p-0'
+            : 'sm:max-h-[90vh] sm:max-w-4xl'
         )}
       >
         {/* Header */}
-        <DialogHeader className={cn(
-          'flex flex-row items-center justify-between border-b px-6 py-4',
-          isFullscreen && 'fixed top-0 left-0 right-0 bg-background z-50'
-        )}>
+        <DialogHeader
+          className={cn(
+            'flex flex-row items-center justify-between border-b px-6 py-4',
+            isFullscreen && 'bg-background fixed top-0 right-0 left-0 z-50'
+          )}
+        >
           <div className='flex items-center gap-3'>
             {getFileIcon()}
             <div>
               <DialogTitle className='text-base'>{file.filename}</DialogTitle>
-              <p className='text-xs text-muted-foreground'>
+              <p className='text-muted-foreground text-xs'>
                 {formatFileSize(file.size)} • {file.mimeType}
               </p>
             </div>
@@ -197,10 +279,12 @@ export function FilePreview({
         </DialogHeader>
 
         {/* Content */}
-        <div className={cn(
-          'flex-1 overflow-hidden',
-          isFullscreen && 'pt-20 h-full'
-        )}>
+        <div
+          className={cn(
+            'flex-1 overflow-hidden',
+            isFullscreen && 'h-full pt-20'
+          )}
+        >
           {/* Image Preview */}
           {isImage && !imageError && (
             <div className='flex h-full items-center justify-center p-6'>
@@ -216,11 +300,7 @@ export function FilePreview({
           {/* Video Preview */}
           {isVideo && (
             <div className='flex h-full items-center justify-center p-6'>
-              <video
-                controls
-                className='max-h-full max-w-full'
-                src={file.path}
-              >
+              <video controls className='max-h-full max-w-full' src={file.path}>
                 Your browser does not support video playback.
               </video>
             </div>
@@ -239,33 +319,19 @@ export function FilePreview({
 
           {/* Text/Code Preview */}
           {(isText || isCode) && (
-            <ScrollArea className='h-full'>
-              <div className='p-6'>
-                {isCode ? (
-                  <pre className='rounded-lg bg-muted p-4 overflow-x-auto'>
-                    <code className={`language-${getCodeLanguage()}`}>
-                      {/* In production, you would fetch and display the actual file content here */}
-                      {`// ${file.filename}\n// File preview would be displayed here\n// Actual content would be fetched from the server`}
-                    </code>
-                  </pre>
-                ) : (
-                  <div className='prose prose-sm max-w-none'>
-                    <p className='text-muted-foreground'>
-                      Text file preview would be displayed here.
-                      In production, the actual content would be fetched and rendered.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
+            <FileContentPreview
+              fileId={file.id}
+              filename={file.filename}
+              isCode={isCode}
+            />
           )}
 
           {/* Unsupported file type or error */}
           {!isImage && !isVideo && !isPDF && !isText && !isCode && (
             <div className='flex h-full flex-col items-center justify-center p-6 text-center'>
-              <FileText className='h-12 w-12 text-muted-foreground' />
+              <FileText className='text-muted-foreground h-12 w-12' />
               <p className='mt-2 text-sm font-medium'>Preview not available</p>
-              <p className='text-xs text-muted-foreground'>
+              <p className='text-muted-foreground text-xs'>
                 This file type cannot be previewed in the browser
               </p>
               {onDownload && (
@@ -280,9 +346,9 @@ export function FilePreview({
           {/* Image error fallback */}
           {isImage && imageError && (
             <div className='flex h-full flex-col items-center justify-center p-6 text-center'>
-              <FileImage className='h-12 w-12 text-muted-foreground' />
+              <FileImage className='text-muted-foreground h-12 w-12' />
               <p className='mt-2 text-sm font-medium'>Failed to load image</p>
-              <p className='text-xs text-muted-foreground'>
+              <p className='text-muted-foreground text-xs'>
                 The image could not be displayed
               </p>
               {onDownload && (

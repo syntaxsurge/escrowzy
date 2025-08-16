@@ -1,17 +1,9 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 
 import { format } from 'date-fns'
-import {
-  Calendar,
-  ChevronRight,
-  Clock,
-  Flag,
-  MoreVertical,
-  Plus,
-  User
-} from 'lucide-react'
+import { Calendar, Clock, Flag, MoreVertical, Plus } from 'lucide-react'
 // Note: react-beautiful-dnd needs to be installed: pnpm add react-beautiful-dnd @types/react-beautiful-dnd
 // For now, we'll use a simpler implementation without drag and drop
 import useSWR from 'swr'
@@ -19,7 +11,7 @@ import useSWR from 'swr'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -87,7 +79,12 @@ interface TaskBoardProps {
   isFreelancer: boolean
 }
 
-export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoardProps) {
+export function TaskBoard({
+  jobId,
+  milestones,
+  isClient,
+  isFreelancer
+}: TaskBoardProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [newTask, setNewTask] = useState({
@@ -154,7 +151,9 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
       await api.post(`/api/jobs/${jobId}/tasks`, {
         ...newTask,
         milestoneId: newTask.milestoneId ? parseInt(newTask.milestoneId) : null,
-        estimatedHours: newTask.estimatedHours ? parseInt(newTask.estimatedHours) : null
+        estimatedHours: newTask.estimatedHours
+          ? parseInt(newTask.estimatedHours)
+          : null
       })
       mutate()
       setShowCreateDialog(false)
@@ -193,7 +192,7 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
       <div className='flex items-center justify-between'>
         <div>
           <h3 className='text-lg font-semibold'>Task Board</h3>
-          <p className='text-sm text-muted-foreground'>
+          <p className='text-muted-foreground text-sm'>
             Manage and track project tasks
           </p>
         </div>
@@ -217,7 +216,9 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
                 <Input
                   id='title'
                   value={newTask.title}
-                  onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                  onChange={e =>
+                    setNewTask({ ...newTask, title: e.target.value })
+                  }
                   placeholder='Enter task title'
                 />
               </div>
@@ -226,7 +227,9 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
                 <Textarea
                   id='description'
                   value={newTask.description}
-                  onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                  onChange={e =>
+                    setNewTask({ ...newTask, description: e.target.value })
+                  }
                   placeholder='Enter task description'
                   rows={3}
                 />
@@ -236,7 +239,9 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
                   <Label htmlFor='priority'>Priority</Label>
                   <Select
                     value={newTask.priority}
-                    onValueChange={(value) => setNewTask({ ...newTask, priority: value })}
+                    onValueChange={value =>
+                      setNewTask({ ...newTask, priority: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -253,15 +258,20 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
                   <Label htmlFor='milestone'>Milestone</Label>
                   <Select
                     value={newTask.milestoneId}
-                    onValueChange={(value) => setNewTask({ ...newTask, milestoneId: value })}
+                    onValueChange={value =>
+                      setNewTask({ ...newTask, milestoneId: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder='Select milestone' />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value=''>No milestone</SelectItem>
-                      {milestones.map((milestone) => (
-                        <SelectItem key={milestone.id} value={milestone.id.toString()}>
+                      {milestones.map(milestone => (
+                        <SelectItem
+                          key={milestone.id}
+                          value={milestone.id.toString()}
+                        >
                           {milestone.title}
                         </SelectItem>
                       ))}
@@ -276,7 +286,9 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
                     id='dueDate'
                     type='date'
                     value={newTask.dueDate}
-                    onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                    onChange={e =>
+                      setNewTask({ ...newTask, dueDate: e.target.value })
+                    }
                   />
                 </div>
                 <div>
@@ -285,14 +297,19 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
                     id='estimatedHours'
                     type='number'
                     value={newTask.estimatedHours}
-                    onChange={(e) => setNewTask({ ...newTask, estimatedHours: e.target.value })}
+                    onChange={e =>
+                      setNewTask({ ...newTask, estimatedHours: e.target.value })
+                    }
                     placeholder='0'
                   />
                 </div>
               </div>
             </div>
             <DialogFooter>
-              <Button variant='outline' onClick={() => setShowCreateDialog(false)}>
+              <Button
+                variant='outline'
+                onClick={() => setShowCreateDialog(false)}
+              >
                 Cancel
               </Button>
               <Button onClick={handleCreateTask}>Create Task</Button>
@@ -303,7 +320,7 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
 
       {/* Kanban Board */}
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
-        {columns.map((column) => (
+        {columns.map(column => (
           <div key={column.id} className='flex flex-col'>
             <div className={cn('rounded-t-lg p-3', column.color)}>
               <div className='flex items-center justify-between'>
@@ -312,17 +329,24 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
               </div>
             </div>
             <div className='min-h-[400px] rounded-b-lg border-2 border-t-0 p-2'>
-              {column.tasks.map((task) => (
-                <Card key={task.id} className='mb-2 cursor-pointer transition-shadow hover:shadow-md'>
+              {column.tasks.map(task => (
+                <Card
+                  key={task.id}
+                  className='mb-2 cursor-pointer transition-shadow hover:shadow-md'
+                >
                   <CardContent className='p-3'>
                     <div className='space-y-2'>
                       <div className='flex items-start justify-between'>
-                        <p className='text-sm font-medium line-clamp-2'>
+                        <p className='line-clamp-2 text-sm font-medium'>
                           {task.title}
                         </p>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant='ghost' size='icon' className='h-6 w-6'>
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className='h-6 w-6'
+                            >
                               <MoreVertical className='h-3 w-3' />
                             </Button>
                           </DropdownMenuTrigger>
@@ -330,22 +354,38 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
                             <DropdownMenuItem>Edit</DropdownMenuItem>
                             <DropdownMenuItem>Assign</DropdownMenuItem>
                             {column.id !== 'todo' && (
-                              <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'todo')}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleStatusChange(task.id, 'todo')
+                                }
+                              >
                                 Move to Todo
                               </DropdownMenuItem>
                             )}
                             {column.id !== 'in_progress' && (
-                              <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'in_progress')}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleStatusChange(task.id, 'in_progress')
+                                }
+                              >
                                 Move to In Progress
                               </DropdownMenuItem>
                             )}
                             {column.id !== 'review' && (
-                              <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'review')}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleStatusChange(task.id, 'review')
+                                }
+                              >
                                 Move to Review
                               </DropdownMenuItem>
                             )}
                             {column.id !== 'done' && (
-                              <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'done')}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleStatusChange(task.id, 'done')
+                                }
+                              >
                                 Move to Done
                               </DropdownMenuItem>
                             )}
@@ -358,7 +398,7 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
                       </div>
 
                       {task.description && (
-                        <p className='text-xs text-muted-foreground line-clamp-2'>
+                        <p className='text-muted-foreground line-clamp-2 text-xs'>
                           {task.description}
                         </p>
                       )}
@@ -366,7 +406,10 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
                       <div className='flex items-center gap-2'>
                         <Badge
                           variant='outline'
-                          className={cn('text-xs', getPriorityColor(task.priority))}
+                          className={cn(
+                            'text-xs',
+                            getPriorityColor(task.priority)
+                          )}
                         >
                           <Flag className='mr-1 h-3 w-3' />
                           {task.priority}
@@ -381,13 +424,13 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
                       <div className='flex items-center justify-between'>
                         <div className='flex items-center gap-2'>
                           {task.dueDate && (
-                            <div className='flex items-center gap-1 text-xs text-muted-foreground'>
+                            <div className='text-muted-foreground flex items-center gap-1 text-xs'>
                               <Calendar className='h-3 w-3' />
                               {format(new Date(task.dueDate), 'MMM dd')}
                             </div>
                           )}
                           {task.estimatedHours && (
-                            <div className='flex items-center gap-1 text-xs text-muted-foreground'>
+                            <div className='text-muted-foreground flex items-center gap-1 text-xs'>
                               <Clock className='h-3 w-3' />
                               {task.estimatedHours}h
                             </div>
@@ -395,7 +438,9 @@ export function TaskBoard({ jobId, milestones, isClient, isFreelancer }: TaskBoa
                         </div>
                         {task.assignedTo && (
                           <Avatar className='h-6 w-6'>
-                            <AvatarImage src={task.assignedTo.avatarUrl || undefined} />
+                            <AvatarImage
+                              src={task.assignedTo.avatarUrl || undefined}
+                            />
                             <AvatarFallback className='text-xs'>
                               {task.assignedTo.name.charAt(0).toUpperCase()}
                             </AvatarFallback>

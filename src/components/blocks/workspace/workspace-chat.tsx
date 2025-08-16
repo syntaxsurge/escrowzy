@@ -11,9 +11,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { pusherClient } from '@/lib/pusher-client'
 import { api } from '@/lib/api/http-client'
 import type { JobPostingWithRelations } from '@/lib/db/queries/jobs'
+import { pusherClient } from '@/lib/pusher-client'
 import { cn } from '@/lib/utils'
 
 interface Message {
@@ -51,6 +51,8 @@ export function WorkspaceChat({ jobId, job, currentUser }: WorkspaceChatProps) {
 
   // Subscribe to real-time messages
   useEffect(() => {
+    if (!pusherClient) return
+
     const channel = pusherClient.subscribe(`job-${jobId}-chat`)
 
     channel.bind('new-message', (data: Message) => {
@@ -104,7 +106,7 @@ export function WorkspaceChat({ jobId, job, currentUser }: WorkspaceChatProps) {
           <Users className='h-4 w-4' />
           Project Chat
         </CardTitle>
-        <p className='text-sm text-muted-foreground'>
+        <p className='text-muted-foreground text-sm'>
           Communicate with {job.client?.name} and team members
         </p>
       </CardHeader>
@@ -134,31 +136,37 @@ export function WorkspaceChat({ jobId, job, currentUser }: WorkspaceChatProps) {
                       isCurrentUser && 'items-end'
                     )}
                   >
-                    <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+                    <div className='text-muted-foreground flex items-center gap-2 text-xs'>
                       <span className='font-medium'>{msg.sender.name}</span>
                       <span>{format(new Date(msg.createdAt), 'HH:mm')}</span>
                     </div>
                     <div
                       className={cn(
-                        'rounded-lg px-3 py-2 max-w-md',
+                        'max-w-md rounded-lg px-3 py-2',
                         isCurrentUser
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted'
                       )}
                     >
-                      <p className='text-sm whitespace-pre-wrap'>{msg.content}</p>
+                      <p className='text-sm whitespace-pre-wrap'>
+                        {msg.content}
+                      </p>
                     </div>
                     {msg.attachments && msg.attachments.length > 0 && (
                       <div className='mt-1 space-y-1'>
-                        {msg.attachments.map((attachment: any, index: number) => (
-                          <div
-                            key={index}
-                            className='flex items-center gap-2 text-xs text-muted-foreground'
-                          >
-                            <Paperclip className='h-3 w-3' />
-                            <span className='underline'>{attachment.filename}</span>
-                          </div>
-                        ))}
+                        {msg.attachments.map(
+                          (attachment: any, index: number) => (
+                            <div
+                              key={index}
+                              className='text-muted-foreground flex items-center gap-2 text-xs'
+                            >
+                              <Paperclip className='h-3 w-3' />
+                              <span className='underline'>
+                                {attachment.filename}
+                              </span>
+                            </div>
+                          )
+                        )}
                       </div>
                     )}
                   </div>
@@ -169,7 +177,7 @@ export function WorkspaceChat({ jobId, job, currentUser }: WorkspaceChatProps) {
               <div className='flex h-full items-center justify-center text-center'>
                 <div>
                   <p className='text-sm font-medium'>No messages yet</p>
-                  <p className='text-xs text-muted-foreground'>
+                  <p className='text-muted-foreground text-xs'>
                     Start a conversation about the project
                   </p>
                 </div>
@@ -186,13 +194,16 @@ export function WorkspaceChat({ jobId, job, currentUser }: WorkspaceChatProps) {
             </Button>
             <Input
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={e => setMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder='Type a message...'
               disabled={isLoading}
               className='flex-1'
             />
-            <Button onClick={handleSend} disabled={isLoading || !message.trim()}>
+            <Button
+              onClick={handleSend}
+              disabled={isLoading || !message.trim()}
+            >
               <Send className='h-4 w-4' />
             </Button>
           </div>

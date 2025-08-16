@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { and, desc, eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 import { jobPostings, messages, users } from '@/lib/db/schema'
@@ -20,11 +20,17 @@ export async function GET(
     })
 
     if (!job) {
-      return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 })
+      return NextResponse.json(
+        { success: false, error: 'Job not found' },
+        { status: 404 }
+      )
     }
 
     if (job.clientId !== user.id && job.freelancerId !== user.id) {
-      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 })
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
     }
 
     // Get messages for this job workspace
@@ -77,11 +83,17 @@ export async function POST(
     })
 
     if (!job) {
-      return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 })
+      return NextResponse.json(
+        { success: false, error: 'Job not found' },
+        { status: 404 }
+      )
     }
 
     if (job.clientId !== user.id && job.freelancerId !== user.id) {
-      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 })
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
     }
 
     // Create message

@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react'
 
 import { format } from 'date-fns'
-import { Calendar, Clock, DollarSign, Pause, Play, Save, Square } from 'lucide-react'
+import { Clock, DollarSign, Pause, Play, Save, Square } from 'lucide-react'
 import useSWR from 'swr'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -183,10 +183,12 @@ export function TimeTracker({ jobId, hourlyRate }: TimeTrackerProps) {
   return (
     <>
       {/* Floating Timer Widget */}
-      <Card className={cn(
-        'shadow-lg transition-all',
-        isTracking && 'ring-2 ring-primary'
-      )}>
+      <Card
+        className={cn(
+          'shadow-lg transition-all',
+          isTracking && 'ring-primary ring-2'
+        )}
+      >
         <CardContent className='p-4'>
           <div className='space-y-3'>
             {/* Timer Display */}
@@ -195,7 +197,7 @@ export function TimeTracker({ jobId, hourlyRate }: TimeTrackerProps) {
                 {formatTime(currentTime)}
               </div>
               {isTracking && (
-                <div className='mt-1 text-sm text-muted-foreground'>
+                <div className='text-muted-foreground mt-1 text-sm'>
                   ${calculateEarnings(currentTime)} earned
                 </div>
               )}
@@ -250,9 +252,11 @@ export function TimeTracker({ jobId, hourlyRate }: TimeTrackerProps) {
             </div>
 
             {/* Today's Total */}
-            <div className='rounded-lg bg-muted p-2 text-center'>
-              <p className='text-xs text-muted-foreground'>Today's Total</p>
-              <p className='text-sm font-medium'>{Math.floor(todayTotal / 60)}h {todayTotal % 60}m</p>
+            <div className='bg-muted rounded-lg p-2 text-center'>
+              <p className='text-muted-foreground text-xs'>Today's Total</p>
+              <p className='text-sm font-medium'>
+                {Math.floor(todayTotal / 60)}h {todayTotal % 60}m
+              </p>
             </div>
           </div>
         </CardContent>
@@ -276,8 +280,8 @@ export function TimeTracker({ jobId, hourlyRate }: TimeTrackerProps) {
                   {formatTime(currentTime)}
                 </Badge>
                 <Badge variant='outline' className='text-lg'>
-                  <DollarSign className='mr-2 h-4 w-4' />
-                  ${calculateEarnings(currentTime)}
+                  <DollarSign className='mr-2 h-4 w-4' />$
+                  {calculateEarnings(currentTime)}
                 </Badge>
               </div>
             </div>
@@ -286,7 +290,7 @@ export function TimeTracker({ jobId, hourlyRate }: TimeTrackerProps) {
               <Textarea
                 id='description'
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={e => setDescription(e.target.value)}
                 placeholder='What did you work on?'
                 rows={3}
               />
@@ -309,9 +313,7 @@ export function TimeTracker({ jobId, hourlyRate }: TimeTrackerProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Manual Time Entry</DialogTitle>
-            <DialogDescription>
-              Add a time entry manually
-            </DialogDescription>
+            <DialogDescription>Add a time entry manually</DialogDescription>
           </DialogHeader>
           <div className='space-y-4'>
             <div>
@@ -320,7 +322,9 @@ export function TimeTracker({ jobId, hourlyRate }: TimeTrackerProps) {
                 id='date'
                 type='date'
                 value={manualEntry.date}
-                onChange={(e) => setManualEntry({ ...manualEntry, date: e.target.value })}
+                onChange={e =>
+                  setManualEntry({ ...manualEntry, date: e.target.value })
+                }
               />
             </div>
             <div className='grid grid-cols-2 gap-4'>
@@ -330,7 +334,12 @@ export function TimeTracker({ jobId, hourlyRate }: TimeTrackerProps) {
                   id='startTime'
                   type='time'
                   value={manualEntry.startTime}
-                  onChange={(e) => setManualEntry({ ...manualEntry, startTime: e.target.value })}
+                  onChange={e =>
+                    setManualEntry({
+                      ...manualEntry,
+                      startTime: e.target.value
+                    })
+                  }
                 />
               </div>
               <div>
@@ -339,7 +348,9 @@ export function TimeTracker({ jobId, hourlyRate }: TimeTrackerProps) {
                   id='endTime'
                   type='time'
                   value={manualEntry.endTime}
-                  onChange={(e) => setManualEntry({ ...manualEntry, endTime: e.target.value })}
+                  onChange={e =>
+                    setManualEntry({ ...manualEntry, endTime: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -348,14 +359,22 @@ export function TimeTracker({ jobId, hourlyRate }: TimeTrackerProps) {
               <Textarea
                 id='manualDescription'
                 value={manualEntry.description}
-                onChange={(e) => setManualEntry({ ...manualEntry, description: e.target.value })}
+                onChange={e =>
+                  setManualEntry({
+                    ...manualEntry,
+                    description: e.target.value
+                  })
+                }
                 placeholder='What did you work on?'
                 rows={3}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant='outline' onClick={() => setShowManualDialog(false)}>
+            <Button
+              variant='outline'
+              onClick={() => setShowManualDialog(false)}
+            >
               Cancel
             </Button>
             <Button onClick={handleManualSave}>

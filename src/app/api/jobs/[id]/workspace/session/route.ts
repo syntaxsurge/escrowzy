@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { and, desc, eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
-import { jobPostings, users, workspaceSessions } from '@/lib/db/schema'
+import { jobPostings, workspaceSessions } from '@/lib/db/schema'
 import { requireAuth } from '@/lib/middleware/auth'
 
-export async function GET(
+export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const user = await requireAuth(request)
     const jobId = parseInt(params.id)
+    const body = await request.json()
 
     // Verify access
     const job = await db.query.jobPostings.findFirst({
@@ -33,36 +34,30 @@ export async function GET(
       )
     }
 
-    // Get active workspace sessions
-    const sessions = await db
-      .select({
-        id: workspaceSessions.id,
-        userId: workspaceSessions.userId,
-        status: workspaceSessions.status,
-        currentTab: workspaceSessions.currentTab,
-        lastActivityAt: workspaceSessions.lastActivityAt,
-        user: {
-          id: users.id,
-          name: users.name,
-          email: users.email,
-          avatarUrl: users.avatarPath
-        }
+    // Update active session
+    const result = await db
+      .update(workspaceSessions)
+      .set({
+        currentTab: body.currentTab || null,
+        lastActivityAt: new Date(),
+        metadata: body.metadata || null
       })
-      .from(workspaceSessions)
-      .innerJoin(users, eq(workspaceSessions.userId, users.id))
       .where(
         and(
           eq(workspaceSessions.jobId, jobId),
+          eq(workspaceSessions.userId, user.id),
           eq(workspaceSessions.status, 'active')
         )
       )
-      .orderBy(desc(workspaceSessions.lastActivityAt))
 
-    return NextResponse.json({ success: true, sessions })
+    return NextResponse.json({
+      success: true,
+      message: 'Session updated successfully'
+    })
   } catch (error) {
-    console.error('Failed to fetch workspace sessions:', error)
+    console.error('Failed to update session:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch sessions' },
+      { success: false, error: 'Failed to update session' },
       { status: 500 }
     )
   }

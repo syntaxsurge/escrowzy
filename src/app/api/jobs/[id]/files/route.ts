@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { and, desc, eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
-import { attachments, fileVersions, jobPostings, users } from '@/lib/db/schema'
+import { fileVersions, jobPostings, users } from '@/lib/db/schema'
 import { requireAuth } from '@/lib/middleware/auth'
 
 export async function GET(
@@ -20,11 +20,17 @@ export async function GET(
     })
 
     if (!job) {
-      return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 })
+      return NextResponse.json(
+        { success: false, error: 'Job not found' },
+        { status: 404 }
+      )
     }
 
     if (job.clientId !== user.id && job.freelancerId !== user.id) {
-      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 })
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
     }
 
     // Get all file versions for this job
@@ -53,10 +59,10 @@ export async function GET(
 
     // Group versions by original file
     const filesMap = new Map()
-    
+
     versions.forEach(version => {
       const fileId = version.originalFileId || version.id
-      
+
       if (!filesMap.has(fileId)) {
         filesMap.set(fileId, {
           id: fileId,
@@ -70,10 +76,10 @@ export async function GET(
           latestVersion: null
         })
       }
-      
+
       const file = filesMap.get(fileId)
       file.versions.push(version)
-      
+
       if (version.isLatest) {
         file.latestVersion = version
         file.filename = version.filename

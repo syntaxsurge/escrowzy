@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { and, desc, eq, gte } from 'drizzle-orm'
+import { and, eq, gte } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 import { jobPostings, workspaceEvents } from '@/lib/db/schema'
@@ -20,11 +20,17 @@ export async function GET(
     })
 
     if (!job) {
-      return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 })
+      return NextResponse.json(
+        { success: false, error: 'Job not found' },
+        { status: 404 }
+      )
     }
 
     if (job.clientId !== user.id && job.freelancerId !== user.id) {
-      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 })
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
     }
 
     // Get events for the next 90 days
@@ -80,11 +86,17 @@ export async function POST(
     })
 
     if (!job) {
-      return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 })
+      return NextResponse.json(
+        { success: false, error: 'Job not found' },
+        { status: 404 }
+      )
     }
 
     if (job.clientId !== user.id && job.freelancerId !== user.id) {
-      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 })
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
     }
 
     // Create event
@@ -99,7 +111,10 @@ export async function POST(
         endTime: body.endTime ? new Date(body.endTime) : null,
         location: body.location || null,
         meetingLink: body.meetingLink || null,
-        attendees: [user.id, job.clientId === user.id ? job.freelancerId : job.clientId].filter(Boolean),
+        attendees: [
+          user.id,
+          job.clientId === user.id ? job.freelancerId : job.clientId
+        ].filter(Boolean),
         createdBy: user.id,
         isAllDay: body.isAllDay || false,
         reminderMinutes: body.reminderMinutes || null,

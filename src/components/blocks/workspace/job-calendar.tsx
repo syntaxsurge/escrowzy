@@ -60,7 +60,12 @@ interface JobCalendarProps {
   isFreelancer: boolean
 }
 
-export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCalendarProps) {
+export function JobCalendar({
+  jobId,
+  milestones,
+  isClient,
+  isFreelancer
+}: JobCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [showEventDialog, setShowEventDialog] = useState(false)
@@ -91,12 +96,12 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
       const startTime = newEvent.isAllDay
         ? new Date(`${newEvent.date}T00:00:00`)
         : new Date(`${newEvent.date}T${newEvent.startTime}`)
-      
+
       const endTime = newEvent.isAllDay
         ? new Date(`${newEvent.date}T23:59:59`)
         : newEvent.endTime
-        ? new Date(`${newEvent.date}T${newEvent.endTime}`)
-        : null
+          ? new Date(`${newEvent.date}T${newEvent.endTime}`)
+          : null
 
       await api.post(`/api/jobs/${jobId}/events`, {
         ...newEvent,
@@ -126,11 +131,11 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
   const getCalendarDays = () => {
     const start = startOfWeek(startOfMonth(currentDate))
     const days = []
-    
+
     for (let i = 0; i < 35; i++) {
       days.push(addDays(start, i))
     }
-    
+
     return days
   }
 
@@ -143,8 +148,9 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
 
   // Get milestones for a specific day
   const getMilestonesForDay = (date: Date) => {
-    return milestones.filter((milestone) =>
-      milestone.dueDate && isSameDay(new Date(milestone.dueDate), date)
+    return milestones.filter(
+      milestone =>
+        milestone.dueDate && isSameDay(new Date(milestone.dueDate), date)
     )
   }
 
@@ -175,7 +181,7 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
       <div className='flex items-center justify-between'>
         <div>
           <h3 className='text-lg font-semibold'>Project Calendar</h3>
-          <p className='text-sm text-muted-foreground'>
+          <p className='text-muted-foreground text-sm'>
             Schedule meetings, track deadlines, and manage events
           </p>
         </div>
@@ -199,7 +205,9 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
                 <Input
                   id='title'
                   value={newEvent.title}
-                  onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                  onChange={e =>
+                    setNewEvent({ ...newEvent, title: e.target.value })
+                  }
                   placeholder='Enter event title'
                 />
               </div>
@@ -207,7 +215,9 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
                 <Label htmlFor='eventType'>Event Type</Label>
                 <Select
                   value={newEvent.eventType}
-                  onValueChange={(value) => setNewEvent({ ...newEvent, eventType: value })}
+                  onValueChange={value =>
+                    setNewEvent({ ...newEvent, eventType: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -226,7 +236,9 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
                 <Textarea
                   id='description'
                   value={newEvent.description}
-                  onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                  onChange={e =>
+                    setNewEvent({ ...newEvent, description: e.target.value })
+                  }
                   placeholder='Enter event description'
                   rows={3}
                 />
@@ -237,7 +249,9 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
                   id='date'
                   type='date'
                   value={newEvent.date}
-                  onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
+                  onChange={e =>
+                    setNewEvent({ ...newEvent, date: e.target.value })
+                  }
                 />
               </div>
               <div className='flex items-center gap-2'>
@@ -245,7 +259,9 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
                   type='checkbox'
                   id='isAllDay'
                   checked={newEvent.isAllDay}
-                  onChange={(e) => setNewEvent({ ...newEvent, isAllDay: e.target.checked })}
+                  onChange={e =>
+                    setNewEvent({ ...newEvent, isAllDay: e.target.checked })
+                  }
                   className='rounded border-gray-300'
                 />
                 <Label htmlFor='isAllDay' className='cursor-pointer'>
@@ -260,7 +276,9 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
                       id='startTime'
                       type='time'
                       value={newEvent.startTime}
-                      onChange={(e) => setNewEvent({ ...newEvent, startTime: e.target.value })}
+                      onChange={e =>
+                        setNewEvent({ ...newEvent, startTime: e.target.value })
+                      }
                     />
                   </div>
                   <div>
@@ -269,7 +287,9 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
                       id='endTime'
                       type='time'
                       value={newEvent.endTime}
-                      onChange={(e) => setNewEvent({ ...newEvent, endTime: e.target.value })}
+                      onChange={e =>
+                        setNewEvent({ ...newEvent, endTime: e.target.value })
+                      }
                     />
                   </div>
                 </div>
@@ -281,7 +301,9 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
                     <Input
                       id='location'
                       value={newEvent.location}
-                      onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
+                      onChange={e =>
+                        setNewEvent({ ...newEvent, location: e.target.value })
+                      }
                       placeholder='Enter meeting location'
                     />
                   </div>
@@ -290,7 +312,12 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
                     <Input
                       id='meetingLink'
                       value={newEvent.meetingLink}
-                      onChange={(e) => setNewEvent({ ...newEvent, meetingLink: e.target.value })}
+                      onChange={e =>
+                        setNewEvent({
+                          ...newEvent,
+                          meetingLink: e.target.value
+                        })
+                      }
                       placeholder='https://meet.google.com/...'
                     />
                   </div>
@@ -298,7 +325,10 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
               )}
             </div>
             <DialogFooter>
-              <Button variant='outline' onClick={() => setShowEventDialog(false)}>
+              <Button
+                variant='outline'
+                onClick={() => setShowEventDialog(false)}
+              >
                 Cancel
               </Button>
               <Button onClick={handleCreateEvent}>Create Event</Button>
@@ -319,7 +349,14 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
               <Button
                 variant='outline'
                 size='icon'
-                onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
+                onClick={() =>
+                  setCurrentDate(
+                    new Date(
+                      currentDate.getFullYear(),
+                      currentDate.getMonth() - 1
+                    )
+                  )
+                }
               >
                 <ChevronLeft className='h-4 w-4' />
               </Button>
@@ -333,7 +370,14 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
               <Button
                 variant='outline'
                 size='icon'
-                onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
+                onClick={() =>
+                  setCurrentDate(
+                    new Date(
+                      currentDate.getFullYear(),
+                      currentDate.getMonth() + 1
+                    )
+                  )
+                }
               >
                 <ChevronRight className='h-4 w-4' />
               </Button>
@@ -343,10 +387,10 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
         <CardContent className='p-0'>
           <div className='grid grid-cols-7'>
             {/* Day headers */}
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
               <div
                 key={day}
-                className='border-b border-r p-2 text-center text-xs font-medium text-muted-foreground'
+                className='text-muted-foreground border-r border-b p-2 text-center text-xs font-medium'
               >
                 {day}
               </div>
@@ -364,10 +408,10 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
                 <div
                   key={index}
                   className={cn(
-                    'min-h-[100px] border-b border-r p-2 cursor-pointer hover:bg-muted/50 transition-colors',
+                    'hover:bg-muted/50 min-h-[100px] cursor-pointer border-r border-b p-2 transition-colors',
                     !isCurrentMonth && 'bg-muted/20 text-muted-foreground',
                     isToday && 'bg-primary/5',
-                    isSelected && 'ring-2 ring-primary'
+                    isSelected && 'ring-primary ring-2'
                   )}
                   onClick={() => setSelectedDate(day)}
                 >
@@ -396,13 +440,11 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
                         {event.eventType === 'meeting' && '🎥'}
                         {event.eventType === 'deadline' && '⏰'}
                         {event.eventType === 'review' && '👁'}
-                        {event.eventType === 'delivery' && '📦'}
-                        {' '}
-                        {event.title}
+                        {event.eventType === 'delivery' && '📦'} {event.title}
                       </div>
                     ))}
                     {dayEvents.length > 2 && (
-                      <div className='text-xs text-muted-foreground'>
+                      <div className='text-muted-foreground text-xs'>
                         +{dayEvents.length - 2} more
                       </div>
                     )}
@@ -425,21 +467,30 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
           <CardContent>
             <div className='space-y-3'>
               {getEventsForDay(selectedDate).map((event: CalendarEvent) => (
-                <div key={event.id} className='flex items-start gap-3 rounded-lg border p-3'>
-                  <Badge variant='outline' className={getEventTypeColor(event.eventType)}>
+                <div
+                  key={event.id}
+                  className='flex items-start gap-3 rounded-lg border p-3'
+                >
+                  <Badge
+                    variant='outline'
+                    className={getEventTypeColor(event.eventType)}
+                  >
                     {event.eventType}
                   </Badge>
                   <div className='flex-1 space-y-1'>
                     <p className='font-medium'>{event.title}</p>
                     {event.description && (
-                      <p className='text-sm text-muted-foreground'>{event.description}</p>
+                      <p className='text-muted-foreground text-sm'>
+                        {event.description}
+                      </p>
                     )}
-                    <div className='flex items-center gap-4 text-xs text-muted-foreground'>
+                    <div className='text-muted-foreground flex items-center gap-4 text-xs'>
                       {!event.isAllDay && (
                         <span className='flex items-center gap-1'>
                           <Clock className='h-3 w-3' />
                           {format(new Date(event.startTime), 'HH:mm')}
-                          {event.endTime && ` - ${format(new Date(event.endTime), 'HH:mm')}`}
+                          {event.endTime &&
+                            ` - ${format(new Date(event.endTime), 'HH:mm')}`}
                         </span>
                       )}
                       {event.location && (
@@ -453,7 +504,7 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
                           href={event.meetingLink}
                           target='_blank'
                           rel='noopener noreferrer'
-                          className='flex items-center gap-1 text-primary hover:underline'
+                          className='text-primary flex items-center gap-1 hover:underline'
                         >
                           <Video className='h-3 w-3' />
                           Join Meeting
@@ -464,24 +515,35 @@ export function JobCalendar({ jobId, milestones, isClient, isFreelancer }: JobCa
                 </div>
               ))}
               {getMilestonesForDay(selectedDate).map((milestone: any) => (
-                <div key={`milestone-${milestone.id}`} className='flex items-start gap-3 rounded-lg border p-3'>
-                  <Badge variant='outline' className='bg-green-100 text-green-600'>
+                <div
+                  key={`milestone-${milestone.id}`}
+                  className='flex items-start gap-3 rounded-lg border p-3'
+                >
+                  <Badge
+                    variant='outline'
+                    className='bg-green-100 text-green-600'
+                  >
                     Milestone
                   </Badge>
                   <div className='flex-1 space-y-1'>
                     <p className='font-medium'>{milestone.title}</p>
                     {milestone.description && (
-                      <p className='text-sm text-muted-foreground'>{milestone.description}</p>
+                      <p className='text-muted-foreground text-sm'>
+                        {milestone.description}
+                      </p>
                     )}
-                    <div className='text-xs text-muted-foreground'>
+                    <div className='text-muted-foreground text-xs'>
                       Amount: ${milestone.amount}
                     </div>
                   </div>
                 </div>
               ))}
-              {getEventsForDay(selectedDate).length === 0 && getMilestonesForDay(selectedDate).length === 0 && (
-                <p className='text-sm text-muted-foreground'>No events scheduled for this day</p>
-              )}
+              {getEventsForDay(selectedDate).length === 0 &&
+                getMilestonesForDay(selectedDate).length === 0 && (
+                  <p className='text-muted-foreground text-sm'>
+                    No events scheduled for this day
+                  </p>
+                )}
             </div>
           </CardContent>
         </Card>

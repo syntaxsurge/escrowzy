@@ -1,0 +1,149 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+import { eq } from 'drizzle-orm'
+
+import { db } from '@/lib/db'
+import { jobPostings, jobTasks } from '@/lib/db/schema'
+import { requireAuth } from '@/lib/middleware/auth'
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string; taskId: string } }
+) {
+  try {
+    const user = await requireAuth(request)
+    const jobId = parseInt(params.id)
+    const taskId = parseInt(params.taskId)
+    const body = await request.json()
+
+    // Verify access
+    const job = await db.query.jobPostings.findFirst({
+      where: eq(jobPostings.id, jobId)
+    })
+
+    if (!job) {
+      return NextResponse.json(
+        { success: false, error: 'Job not found' },
+        { status: 404 }
+      )
+    }
+
+    if (job.clientId !== user.id && job.freelancerId !== user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
+    }
+
+    // Get the task
+    const task = await db.query.jobTasks.findFirst({
+      where: eq(jobTasks.id, taskId)
+    })
+
+    if (!task || task.jobId !== jobId) {
+      return NextResponse.json(
+        { success: false, error: 'Task not found' },
+        { status: 404 }
+      )
+    }
+
+    // Update task
+    const updateData: any = {
+      updatedAt: new Date()
+    }
+
+    if (body.status !== undefined) updateData.status = body.status
+    if (body.title !== undefined) updateData.title = body.title
+    if (body.description !== undefined)
+      updateData.description = body.description
+    if (body.priority !== undefined) updateData.priority = body.priority
+    if (body.assignedTo !== undefined) updateData.assignedTo = body.assignedTo
+    if (body.dueDate !== undefined)
+      updateData.dueDate = body.dueDate ? new Date(body.dueDate) : null
+    if (body.estimatedHours !== undefined)
+      updateData.estimatedHours = body.estimatedHours
+    if (body.actualHours !== undefined)
+      updateData.actualHours = body.actualHours
+    if (body.position !== undefined) updateData.position = body.position
+    if (body.tags !== undefined) updateData.tags = body.tags
+
+    // If task is marked as done, set completedAt
+    if (body.status === 'done' && task.status !== 'done') {
+      updateData.completedAt = new Date()
+    }
+
+    const [updatedTask] = await db
+      .update(jobTasks)
+      .set(updateData)
+      .where(eq(jobTasks.id, taskId))
+      .returning()
+
+    return NextResponse.json({
+      success: true,
+      task: updatedTask,
+      message: 'Task updated successfully'
+    })
+  } catch (error) {
+    console.error('Failed to update task:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to update task' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string; taskId: string } }
+) {
+  try {
+    const user = await requireAuth(request)
+    const jobId = parseInt(params.id)
+    const taskId = parseInt(params.taskId)
+
+    // Verify access
+    const job = await db.query.jobPostings.findFirst({
+      where: eq(jobPostings.id, jobId)
+    })
+
+    if (!job) {
+      return NextResponse.json(
+        { success: false, error: 'Job not found' },
+        { status: 404 }
+      )
+    }
+
+    if (job.clientId !== user.id && job.freelancerId !== user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
+    }
+
+    // Get the task
+    const task = await db.query.jobTasks.findFirst({
+      where: eq(jobTasks.id, taskId)
+    })
+
+    if (!task || task.jobId !== jobId) {
+      return NextResponse.json(
+        { success: false, error: 'Task not found' },
+        { status: 404 }
+      )
+    }
+
+    // Delete task
+    await db.delete(jobTasks).where(eq(jobTasks.id, taskId))
+
+    return NextResponse.json({
+      success: true,
+      message: 'Task deleted successfully'
+    })
+  } catch (error) {
+    console.error('Failed to delete task:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to delete task' },
+      { status: 500 }
+    )
+  }
+}

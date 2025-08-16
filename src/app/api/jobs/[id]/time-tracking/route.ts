@@ -20,11 +20,17 @@ export async function GET(
     })
 
     if (!job) {
-      return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 })
+      return NextResponse.json(
+        { success: false, error: 'Job not found' },
+        { status: 404 }
+      )
     }
 
     if (job.clientId !== user.id && job.freelancerId !== user.id) {
-      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 })
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
     }
 
     // Get time entries for the last 30 days
@@ -79,17 +85,24 @@ export async function POST(
     })
 
     if (!job) {
-      return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 })
+      return NextResponse.json(
+        { success: false, error: 'Job not found' },
+        { status: 404 }
+      )
     }
 
     if (job.freelancerId !== user.id) {
-      return NextResponse.json({ success: false, error: 'Only freelancer can track time' }, { status: 403 })
+      return NextResponse.json(
+        { success: false, error: 'Only freelancer can track time' },
+        { status: 403 }
+      )
     }
 
     // Calculate total amount
-    const totalAmount = body.duration && body.hourlyRate
-      ? ((body.duration / 60) * parseFloat(body.hourlyRate)).toFixed(2)
-      : null
+    const totalAmount =
+      body.duration && body.hourlyRate
+        ? ((body.duration / 60) * parseFloat(body.hourlyRate)).toFixed(2)
+        : null
 
     // Create time entry
     const [entry] = await db

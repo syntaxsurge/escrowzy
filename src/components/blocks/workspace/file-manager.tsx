@@ -4,7 +4,6 @@ import { useCallback, useState } from 'react'
 
 import { format } from 'date-fns'
 import {
-  ChevronRight,
   Clock,
   Download,
   Eye,
@@ -13,20 +12,18 @@ import {
   FileText,
   FileVideo,
   FolderOpen,
+  MessageSquare,
   MoreVertical,
-  Package,
-  Plus,
   Search,
   Trash2,
-  Upload,
-  Users
+  Upload
 } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 import useSWR from 'swr'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -49,6 +46,9 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
 import { api } from '@/lib/api/http-client'
 import { cn } from '@/lib/utils'
+
+import { FileAnnotations } from './file-annotations'
+import { FilePreview } from './file-preview'
 
 interface FileVersion {
   id: number
@@ -91,13 +91,20 @@ interface FileManagerProps {
   isFreelancer: boolean
 }
 
-export function FileManager({ jobId, isClient, isFreelancer }: FileManagerProps) {
+export function FileManager({
+  jobId,
+  isClient,
+  isFreelancer
+}: FileManagerProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [uploadDescription, setUploadDescription] = useState('')
+  const [showPreview, setShowPreview] = useState(false)
+  const [showAnnotations, setShowAnnotations] = useState(false)
+  const [previewFile, setPreviewFile] = useState<FileItem | null>(null)
 
   // Fetch files
   const { data: files, mutate } = useSWR(
@@ -109,47 +116,53 @@ export function FileManager({ jobId, isClient, isFreelancer }: FileManagerProps)
   )
 
   // File upload handler
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (acceptedFiles.length === 0) return
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      if (acceptedFiles.length === 0) return
 
-    setIsUploading(true)
-    setUploadProgress(0)
-
-    const formData = new FormData()
-    acceptedFiles.forEach(file => {
-      formData.append('files', file)
-    })
-    formData.append('description', uploadDescription)
-
-    try {
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval)
-            return 90
-          }
-          return prev + 10
-        })
-      }, 200)
-
-      const response = await api.post(`/api/jobs/${jobId}/files/upload`, formData)
-
-      clearInterval(progressInterval)
-      setUploadProgress(100)
-
-      if (response.success) {
-        await mutate()
-        setShowUploadDialog(false)
-        setUploadDescription('')
-      }
-    } catch (error) {
-      console.error('Upload failed:', error)
-    } finally {
-      setIsUploading(false)
+      setIsUploading(true)
       setUploadProgress(0)
-    }
-  }, [jobId, uploadDescription, mutate])
+
+      const formData = new FormData()
+      acceptedFiles.forEach(file => {
+        formData.append('files', file)
+      })
+      formData.append('description', uploadDescription)
+
+      try {
+        // Simulate upload progress
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            if (prev >= 90) {
+              clearInterval(progressInterval)
+              return 90
+            }
+            return prev + 10
+          })
+        }, 200)
+
+        const response = await api.post(
+          `/api/jobs/${jobId}/files/upload`,
+          formData
+        )
+
+        clearInterval(progressInterval)
+        setUploadProgress(100)
+
+        if (response.success) {
+          await mutate()
+          setShowUploadDialog(false)
+          setUploadDescription('')
+        }
+      } catch (error) {
+        console.error('Upload failed:', error)
+      } finally {
+        setIsUploading(false)
+        setUploadProgress(0)
+      }
+    },
+    [jobId, uploadDescription, mutate]
+  )
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -174,9 +187,10 @@ export function FileManager({ jobId, isClient, isFreelancer }: FileManagerProps)
   }
 
   // Filter files based on search
-  const filteredFiles = files?.filter((file: FileItem) =>
-    file.filename.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || []
+  const filteredFiles =
+    files?.filter((file: FileItem) =>
+      file.filename.toLowerCase().includes(searchQuery.toLowerCase())
+    ) || []
 
   return (
     <div className='space-y-6'>
@@ -184,11 +198,11 @@ export function FileManager({ jobId, isClient, isFreelancer }: FileManagerProps)
       <div className='flex items-center justify-between'>
         <div className='flex-1'>
           <div className='relative max-w-md'>
-            <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+            <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
             <Input
               placeholder='Search files...'
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               className='pl-10'
             />
           </div>
@@ -209,12 +223,14 @@ export function FileManager({ jobId, isClient, isFreelancer }: FileManagerProps)
             </DialogHeader>
             <div className='space-y-4'>
               <div>
-                <Label htmlFor='description'>Version Description (Optional)</Label>
+                <Label htmlFor='description'>
+                  Version Description (Optional)
+                </Label>
                 <Textarea
                   id='description'
                   placeholder='Describe the changes in this version...'
                   value={uploadDescription}
-                  onChange={(e) => setUploadDescription(e.target.value)}
+                  onChange={e => setUploadDescription(e.target.value)}
                   className='mt-2'
                   rows={3}
                 />
@@ -222,19 +238,19 @@ export function FileManager({ jobId, isClient, isFreelancer }: FileManagerProps)
               <div
                 {...getRootProps()}
                 className={cn(
-                  'border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
+                  'cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors',
                   isDragActive && 'border-primary bg-primary/5',
-                  isUploading && 'opacity-50 cursor-not-allowed'
+                  isUploading && 'cursor-not-allowed opacity-50'
                 )}
               >
                 <input {...getInputProps()} />
-                <Upload className='mx-auto h-12 w-12 text-muted-foreground' />
+                <Upload className='text-muted-foreground mx-auto h-12 w-12' />
                 <p className='mt-2 text-sm font-medium'>
                   {isDragActive
                     ? 'Drop files here...'
                     : 'Drag & drop files here, or click to select'}
                 </p>
-                <p className='mt-1 text-xs text-muted-foreground'>
+                <p className='text-muted-foreground mt-1 text-xs'>
                   Support for images, documents, videos, and more
                 </p>
               </div>
@@ -263,29 +279,49 @@ export function FileManager({ jobId, isClient, isFreelancer }: FileManagerProps)
             <CardContent className='p-4'>
               <div className='flex items-start justify-between'>
                 <div className='flex items-start gap-3'>
-                  <div className='rounded-lg bg-muted p-2'>
+                  <div className='bg-muted rounded-lg p-2'>
                     {getFileIcon(file.mimeType)}
                   </div>
                   <div className='min-w-0 flex-1'>
-                    <p className='truncate text-sm font-medium'>{file.filename}</p>
-                    <p className='text-xs text-muted-foreground'>
-                      {formatFileSize(file.size)} • v{file.latestVersion.versionNumber}
+                    <p className='truncate text-sm font-medium'>
+                      {file.filename}
                     </p>
-                    <p className='mt-1 text-xs text-muted-foreground'>
+                    <p className='text-muted-foreground text-xs'>
+                      {formatFileSize(file.size)} • v
+                      {file.latestVersion.versionNumber}
+                    </p>
+                    <p className='text-muted-foreground mt-1 text-xs'>
                       by {file.uploadedBy.name}
                     </p>
                   </div>
                 </div>
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenuTrigger
+                    asChild
+                    onClick={e => e.stopPropagation()}
+                  >
                     <Button variant='ghost' size='icon' className='h-8 w-8'>
                       <MoreVertical className='h-4 w-4' />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align='end'>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setPreviewFile(file)
+                        setShowPreview(true)
+                      }}
+                    >
                       <Eye className='mr-2 h-4 w-4' />
                       Preview
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSelectedFile(file)
+                        setShowAnnotations(true)
+                      }}
+                    >
+                      <MessageSquare className='mr-2 h-4 w-4' />
+                      Annotations
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <Download className='mr-2 h-4 w-4' />
@@ -323,10 +359,12 @@ export function FileManager({ jobId, isClient, isFreelancer }: FileManagerProps)
       {filteredFiles.length === 0 && (
         <Card>
           <CardContent className='flex flex-col items-center justify-center py-12'>
-            <FolderOpen className='h-12 w-12 text-muted-foreground' />
+            <FolderOpen className='text-muted-foreground h-12 w-12' />
             <p className='mt-2 text-sm font-medium'>No files found</p>
-            <p className='text-xs text-muted-foreground'>
-              {searchQuery ? 'Try a different search term' : 'Upload your first file to get started'}
+            <p className='text-muted-foreground text-xs'>
+              {searchQuery
+                ? 'Try a different search term'
+                : 'Upload your first file to get started'}
             </p>
           </CardContent>
         </Card>
@@ -334,7 +372,10 @@ export function FileManager({ jobId, isClient, isFreelancer }: FileManagerProps)
 
       {/* File Details Dialog */}
       {selectedFile && (
-        <Dialog open={!!selectedFile} onOpenChange={() => setSelectedFile(null)}>
+        <Dialog
+          open={!!selectedFile}
+          onOpenChange={() => setSelectedFile(null)}
+        >
           <DialogContent className='sm:max-w-2xl'>
             <DialogHeader>
               <DialogTitle className='flex items-center gap-2'>
@@ -347,7 +388,9 @@ export function FileManager({ jobId, isClient, isFreelancer }: FileManagerProps)
               <div className='grid grid-cols-2 gap-4 text-sm'>
                 <div>
                   <p className='text-muted-foreground'>Size</p>
-                  <p className='font-medium'>{formatFileSize(selectedFile.size)}</p>
+                  <p className='font-medium'>
+                    {formatFileSize(selectedFile.size)}
+                  </p>
                 </div>
                 <div>
                   <p className='text-muted-foreground'>Type</p>
@@ -370,7 +413,7 @@ export function FileManager({ jobId, isClient, isFreelancer }: FileManagerProps)
                 <h4 className='mb-3 text-sm font-medium'>Version History</h4>
                 <ScrollArea className='h-[200px]'>
                   <div className='space-y-2'>
-                    {selectedFile.versions.map((version) => (
+                    {selectedFile.versions.map(version => (
                       <div
                         key={version.id}
                         className={cn(
@@ -380,7 +423,11 @@ export function FileManager({ jobId, isClient, isFreelancer }: FileManagerProps)
                       >
                         <div className='flex items-center justify-between'>
                           <div className='flex items-center gap-2'>
-                            <Badge variant={version.isLatest ? 'default' : 'secondary'}>
+                            <Badge
+                              variant={
+                                version.isLatest ? 'default' : 'secondary'
+                              }
+                            >
                               v{version.versionNumber}
                             </Badge>
                             {version.isLatest && (
@@ -392,13 +439,16 @@ export function FileManager({ jobId, isClient, isFreelancer }: FileManagerProps)
                           </Button>
                         </div>
                         {version.changeDescription && (
-                          <p className='mt-2 text-xs text-muted-foreground'>
+                          <p className='text-muted-foreground mt-2 text-xs'>
                             {version.changeDescription}
                           </p>
                         )}
-                        <p className='mt-1 text-xs text-muted-foreground'>
-                          by {version.uploadedBy.name} • 
-                          {format(new Date(version.createdAt), 'MMM dd, yyyy HH:mm')}
+                        <p className='text-muted-foreground mt-1 text-xs'>
+                          by {version.uploadedBy.name} •
+                          {format(
+                            new Date(version.createdAt),
+                            'MMM dd, yyyy HH:mm'
+                          )}
                         </p>
                       </div>
                     ))}
@@ -420,6 +470,36 @@ export function FileManager({ jobId, isClient, isFreelancer }: FileManagerProps)
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* File Preview */}
+      {previewFile && (
+        <FilePreview
+          file={previewFile.latestVersion || previewFile}
+          isOpen={showPreview}
+          onClose={() => {
+            setShowPreview(false)
+            setPreviewFile(null)
+          }}
+          onDownload={() => {
+            // Handle download
+            window.open(previewFile.path, '_blank')
+          }}
+        />
+      )}
+
+      {/* File Annotations */}
+      {selectedFile && showAnnotations && (
+        <FileAnnotations
+          fileVersionId={selectedFile.latestVersion?.id || selectedFile.id}
+          fileType={selectedFile.mimeType}
+          isOpen={showAnnotations}
+          onClose={() => {
+            setShowAnnotations(false)
+            setSelectedFile(null)
+          }}
+          canAnnotate={isClient || isFreelancer}
+        />
       )}
     </div>
   )
