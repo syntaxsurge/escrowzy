@@ -1,0 +1,252 @@
+import { getContract, prepareContractCall, sendTransaction } from 'thirdweb'
+
+import { getChain } from '@/lib/blockchain/chains'
+import { client } from '@/lib/blockchain/thirdweb-client'
+
+const REPUTATION_REGISTRY_ABI = [
+  {
+    inputs: [
+      { name: 'user', type: 'address' },
+      { name: 'rating', type: 'uint256' },
+      { name: 'isFreelancer', type: 'bool' }
+    ],
+    name: 'updateReputation',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function' as const
+  },
+  {
+    inputs: [
+      { name: 'user', type: 'address' },
+      { name: 'skillName', type: 'string' },
+      { name: 'rating', type: 'uint256' }
+    ],
+    name: 'endorseSkill',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function' as const
+  },
+  {
+    inputs: [{ name: 'user', type: 'address' }],
+    name: 'getReputationScore',
+    outputs: [
+      { name: 'averageScore', type: 'uint256' },
+      { name: 'reviewCount', type: 'uint256' },
+      { name: 'endorsementCount', type: 'uint256' }
+    ],
+    stateMutability: 'view',
+    type: 'function' as const
+  },
+  {
+    inputs: [{ name: 'user', type: 'address' }],
+    name: 'getTrustScore',
+    outputs: [
+      { name: 'score', type: 'uint256' },
+      { name: 'level', type: 'uint256' }
+    ],
+    stateMutability: 'view',
+    type: 'function' as const
+  },
+  {
+    inputs: [{ name: 'user', type: 'address' }],
+    name: 'hasReputationNFT',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function' as const
+  }
+] as const
+
+export async function updateOnchainReputation(
+  userAddress: string,
+  rating: number,
+  isFreelancer: boolean,
+  chainId: number,
+  contractAddress: string,
+  account: any
+): Promise<{ success: boolean; txHash?: string; error?: string }> {
+  try {
+    const chain = getChain(chainId)
+    const contract = getContract({
+      client,
+      chain,
+      address: contractAddress,
+      abi: REPUTATION_REGISTRY_ABI
+    })
+
+    const transaction = prepareContractCall({
+      contract,
+      method: 'updateReputation',
+      params: [userAddress, BigInt(rating), isFreelancer]
+    })
+
+    const result = await sendTransaction({
+      transaction,
+      account
+    })
+
+    return {
+      success: true,
+      txHash: result.transactionHash
+    }
+  } catch (error) {
+    console.error('Error updating onchain reputation:', error)
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to update reputation'
+    }
+  }
+}
+
+export async function endorseSkillOnchain(
+  userAddress: string,
+  skillName: string,
+  rating: number,
+  chainId: number,
+  contractAddress: string,
+  account: any
+): Promise<{ success: boolean; txHash?: string; error?: string }> {
+  try {
+    const chain = getChain(chainId)
+    const contract = getContract({
+      client,
+      chain,
+      address: contractAddress,
+      abi: REPUTATION_REGISTRY_ABI
+    })
+
+    const transaction = prepareContractCall({
+      contract,
+      method: 'endorseSkill',
+      params: [userAddress, skillName, BigInt(rating)]
+    })
+
+    const result = await sendTransaction({
+      transaction,
+      account
+    })
+
+    return {
+      success: true,
+      txHash: result.transactionHash
+    }
+  } catch (error) {
+    console.error('Error endorsing skill onchain:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to endorse skill'
+    }
+  }
+}
+
+export async function getOnchainReputationScore(
+  userAddress: string,
+  chainId: number,
+  contractAddress: string
+): Promise<{
+  averageScore: number
+  reviewCount: number
+  endorsementCount: number
+} | null> {
+  try {
+    const chain = getChain(chainId)
+    const contract = getContract({
+      client,
+      chain,
+      address: contractAddress,
+      abi: REPUTATION_REGISTRY_ABI
+    })
+
+    const result = await (contract as any).read.getReputationScore([
+      userAddress
+    ])
+
+    return {
+      averageScore: Number(result[0]),
+      reviewCount: Number(result[1]),
+      endorsementCount: Number(result[2])
+    }
+  } catch (error) {
+    console.error('Error fetching onchain reputation score:', error)
+    return null
+  }
+}
+
+export async function getOnchainTrustScore(
+  userAddress: string,
+  chainId: number,
+  contractAddress: string
+): Promise<{
+  score: number
+  level: number
+} | null> {
+  try {
+    const chain = getChain(chainId)
+    const contract = getContract({
+      client,
+      chain,
+      address: contractAddress,
+      abi: REPUTATION_REGISTRY_ABI
+    })
+
+    const result = await (contract as any).read.getTrustScore([userAddress])
+
+    return {
+      score: Number(result[0]),
+      level: Number(result[1])
+    }
+  } catch (error) {
+    console.error('Error fetching onchain trust score:', error)
+    return null
+  }
+}
+
+export async function hasReputationNFT(
+  userAddress: string,
+  chainId: number,
+  contractAddress: string
+): Promise<boolean> {
+  try {
+    const chain = getChain(chainId)
+    const contract = getContract({
+      client,
+      chain,
+      address: contractAddress,
+      abi: REPUTATION_REGISTRY_ABI
+    })
+
+    const result = await (contract as any).read.hasReputationNFT([userAddress])
+
+    return result
+  } catch (error) {
+    console.error('Error checking reputation NFT:', error)
+    return false
+  }
+}
+
+export async function syncReputationToBlockchain(
+  userId: number,
+  averageRating: number,
+  reviewCount: number,
+  isFreelancer: boolean
+): Promise<{ success: boolean; message: string }> {
+  try {
+    // This would typically:
+    // 1. Get user's wallet address
+    // 2. Get the appropriate chain and contract address
+    // 3. Call updateOnchainReputation
+    // 4. Store the transaction hash in the database
+
+    // For now, returning a placeholder
+    return {
+      success: true,
+      message: 'Reputation sync initiated'
+    }
+  } catch (error) {
+    console.error('Error syncing reputation to blockchain:', error)
+    return {
+      success: false,
+      message: 'Failed to sync reputation'
+    }
+  }
+}

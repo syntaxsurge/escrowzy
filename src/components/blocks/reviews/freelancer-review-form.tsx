@@ -1,0 +1,254 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Loader2 } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+
+import { Button } from '@/components/ui/button'
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form'
+import { StarRating } from '@/components/ui/star-rating'
+import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  freelancerReviewSchema,
+  type FreelancerReviewInput
+} from '@/lib/schemas/reviews'
+
+interface FreelancerReviewFormProps {
+  jobId: number
+  freelancerId: number
+  jobTitle: string
+  freelancerName: string
+  onSuccess?: () => void
+}
+
+export function FreelancerReviewForm({
+  jobId,
+  freelancerId,
+  jobTitle,
+  freelancerName,
+  onSuccess
+}: FreelancerReviewFormProps) {
+  const router = useRouter()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const form = useForm<FreelancerReviewInput>({
+    resolver: zodResolver(freelancerReviewSchema),
+    defaultValues: {
+      jobId,
+      freelancerId,
+      rating: 5,
+      reviewText: '',
+      communicationRating: 5,
+      qualityRating: 5,
+      deadlineRating: 5,
+      skillsRating: {},
+      wouldHireAgain: true,
+      isPublic: true
+    }
+  })
+
+  const onSubmit = async (data: FreelancerReviewInput) => {
+    setIsSubmitting(true)
+    try {
+      const response = await fetch('/api/reviews/freelancer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to submit review')
+      }
+
+      toast.success('Review submitted successfully!')
+
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        router.push(`/freelancers/${freelancerId}`)
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to submit review'
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+        <div className='space-y-4'>
+          <div>
+            <h3 className='text-lg font-semibold'>
+              Review for {freelancerName}
+            </h3>
+            <p className='text-muted-foreground text-sm'>Job: {jobTitle}</p>
+          </div>
+
+          <FormField
+            control={form.control}
+            name='rating'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Overall Rating</FormLabel>
+                <FormControl>
+                  <StarRating
+                    value={field.value}
+                    onChange={field.onChange}
+                    size='lg'
+                    showValue
+                  />
+                </FormControl>
+                <FormDescription>
+                  Rate your overall experience with this freelancer
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='reviewText'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Review</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder='Share your experience working with this freelancer...'
+                    className='min-h-[120px]'
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Minimum 10 characters, maximum 5000 characters
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className='grid gap-4 md:grid-cols-3'>
+            <FormField
+              control={form.control}
+              name='communicationRating'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Communication</FormLabel>
+                  <FormControl>
+                    <StarRating
+                      value={field.value}
+                      onChange={field.onChange}
+                      size='sm'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='qualityRating'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Quality of Work</FormLabel>
+                  <FormControl>
+                    <StarRating
+                      value={field.value}
+                      onChange={field.onChange}
+                      size='sm'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='deadlineRating'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Meeting Deadlines</FormLabel>
+                  <FormControl>
+                    <StarRating
+                      value={field.value}
+                      onChange={field.onChange}
+                      size='sm'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name='wouldHireAgain'
+            render={({ field }) => (
+              <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                <div className='space-y-0.5'>
+                  <FormLabel className='text-base'>Would Hire Again</FormLabel>
+                  <FormDescription>
+                    Would you work with this freelancer again?
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='isPublic'
+            render={({ field }) => (
+              <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                <div className='space-y-0.5'>
+                  <FormLabel className='text-base'>Public Review</FormLabel>
+                  <FormDescription>
+                    Make this review visible to everyone
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <Button type='submit' disabled={isSubmitting} className='w-full'>
+          {isSubmitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+          Submit Review
+        </Button>
+      </form>
+    </Form>
+  )
+}
