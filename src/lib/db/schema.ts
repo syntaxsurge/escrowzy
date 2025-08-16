@@ -1122,6 +1122,37 @@ export const clientReviews = pgTable(
   ]
 )
 
+export const reviewDisputes = pgTable(
+  'review_disputes',
+  {
+    id: serial('id').primaryKey(),
+    reviewId: integer('review_id').notNull(),
+    reviewType: varchar('review_type', { length: 20 }).notNull(), // 'freelancer' or 'client'
+    disputedBy: integer('disputed_by')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    reason: varchar('reason', { length: 50 }).notNull(), // false_information, inappropriate_content, etc.
+    description: text('description').notNull(),
+    evidence: jsonb('evidence').notNull().default('[]'), // Array of evidence URLs
+    status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, under_review, resolved, dismissed
+    resolution: varchar('resolution', { length: 20 }), // upheld, dismissed, modified
+    adminNote: text('admin_note'),
+    actionTaken: varchar('action_taken', { length: 50 }), // review_removed, review_hidden, etc.
+    resolvedBy: integer('resolved_by').references(() => users.id, {
+      onDelete: 'restrict'
+    }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    resolvedAt: timestamp('resolved_at'),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_review_disputes_review').on(table.reviewId, table.reviewType),
+    index('idx_review_disputes_disputed_by').on(table.disputedBy),
+    index('idx_review_disputes_status').on(table.status),
+    index('idx_review_disputes_created').on(table.createdAt)
+  ]
+)
+
 export const portfolioItems = pgTable(
   'portfolio_items',
   {
@@ -1705,6 +1736,8 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   clientReviewsReceived: many(clientReviews, {
     relationName: 'reviewedClient'
   }),
+  disputesSubmitted: many(reviewDisputes, { relationName: 'disputeSubmitter' }),
+  disputesResolved: many(reviewDisputes, { relationName: 'disputeResolver' }),
   savedFreelancers: many(savedFreelancers),
   savedJobs: many(savedJobs)
 }))
@@ -2144,6 +2177,19 @@ export const clientReviewsRelations = relations(clientReviews, ({ one }) => ({
   })
 }))
 
+export const reviewDisputesRelations = relations(reviewDisputes, ({ one }) => ({
+  disputedBy: one(users, {
+    fields: [reviewDisputes.disputedBy],
+    references: [users.id],
+    relationName: 'disputeSubmitter'
+  }),
+  resolvedBy: one(users, {
+    fields: [reviewDisputes.resolvedBy],
+    references: [users.id],
+    relationName: 'disputeResolver'
+  })
+}))
+
 export const portfolioItemsRelations = relations(portfolioItems, ({ one }) => ({
   freelancer: one(freelancerProfiles, {
     fields: [portfolioItems.freelancerId],
@@ -2439,6 +2485,8 @@ export type FreelancerReview = typeof freelancerReviews.$inferSelect
 export type NewFreelancerReview = typeof freelancerReviews.$inferInsert
 export type ClientReview = typeof clientReviews.$inferSelect
 export type NewClientReview = typeof clientReviews.$inferInsert
+export type ReviewDispute = typeof reviewDisputes.$inferSelect
+export type NewReviewDispute = typeof reviewDisputes.$inferInsert
 export type PortfolioItem = typeof portfolioItems.$inferSelect
 export type NewPortfolioItem = typeof portfolioItems.$inferInsert
 export type SavedFreelancer = typeof savedFreelancers.$inferSelect

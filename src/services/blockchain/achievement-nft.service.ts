@@ -528,3 +528,24 @@ export class AchievementNFTService extends BaseContractClientService {
     }
   }
 }
+
+// Helper function for easy import
+export async function mintAchievementNFT(
+  to: string,
+  achievementId: number,
+  progress: number = 100
+): Promise<{ tokenId?: number; txHash?: string }> {
+  try {
+    const service = new AchievementNFTService()
+    const result = await service.mintAchievementNFT({
+      to,
+      achievementId,
+      progress,
+      earnedAt: Math.floor(Date.now() / 1000)
+    })
+    return result
+  } catch (error) {
+    console.error('Error minting achievement NFT:', error)
+    return {}
+  }
+}

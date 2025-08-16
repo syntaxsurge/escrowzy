@@ -9,13 +9,17 @@ import {
   addReviewResponse,
   getPendingReviewPrompts
 } from '@/lib/db/queries/reviews'
-import { findUserById } from '@/lib/db/queries/users'
+import { findUserById, findUsersByRole } from '@/lib/db/queries/users'
 import { sendEmail } from '@/lib/email'
 import type {
   FreelancerReviewInput,
   ClientReviewInput,
   ReviewResponse
 } from '@/lib/schemas/reviews'
+
+import { checkAndAwardAchievements } from './achievement-triggers'
+import { updateReviewStreak } from './review-streaks'
+import { RewardsService } from './rewards'
 
 const REVIEW_XP_REWARD = 50
 const FIVE_STAR_BONUS_XP = 25
@@ -71,9 +75,19 @@ export async function submitFreelancerReview(
 
     const xpReward =
       REVIEW_XP_REWARD + (data.rating === 5 ? FIVE_STAR_BONUS_XP : 0)
-    // TODO: Update user game data with XP reward
 
-    // await checkAndAwardAchievements(reviewerId, 'review_submitted')
+    const rewardsService = new RewardsService()
+    await rewardsService.addXP(reviewerId, xpReward, 'Submitted review')
+
+    await checkAndAwardAchievements(reviewerId, 'review_submitted')
+
+    // Update review streak
+    const streakResult = await updateReviewStreak(reviewerId, data.jobId)
+    if (streakResult.milestoneReached) {
+      console.log(
+        `User ${reviewerId} reached streak milestone: ${streakResult.newStreak}`
+      )
+    }
 
     const freelancer = await findUserById(data.freelancerId)
     if (freelancer?.email) {
@@ -150,9 +164,19 @@ export async function submitClientReview(
 
     const xpReward =
       REVIEW_XP_REWARD + (data.rating === 5 ? FIVE_STAR_BONUS_XP : 0)
-    // TODO: Update user game data with XP reward
 
-    // await checkAndAwardAchievements(reviewerId, 'review_submitted')
+    const rewardsService = new RewardsService()
+    await rewardsService.addXP(reviewerId, xpReward, 'Submitted review')
+
+    await checkAndAwardAchievements(reviewerId, 'review_submitted')
+
+    // Update review streak
+    const streakResult = await updateReviewStreak(reviewerId, data.jobId)
+    if (streakResult.milestoneReached) {
+      console.log(
+        `User ${reviewerId} reached streak milestone: ${streakResult.newStreak}`
+      )
+    }
 
     const client = await findUserById(data.clientId)
     if (client?.email) {
@@ -188,7 +212,8 @@ export async function respondToReview(
   try {
     await addReviewResponse(reviewId, data.response, type)
 
-    // TODO: Update user game data with XP reward
+    const rewardsService = new RewardsService()
+    await rewardsService.addXP(userId, 25, 'Responded to review')
 
     return { success: true, message: 'Response added successfully' }
   } catch (error) {
@@ -274,5 +299,16 @@ export async function checkMutualReviews(jobId: number): Promise<{
 async function getUsersWithPendingReviews(): Promise<
   Array<{ id: number; email: string | null }>
 > {
-  return []
+  // Get all users who have completed jobs but haven't reviewed them
+  const users = await findUsersByRole('user')
+  const usersWithPending: Array<{ id: number; email: string | null }> = []
+
+  for (const user of users) {
+    const prompts = await getPendingReviewPrompts(user.id)
+    if (prompts.length > 0) {
+      usersWithPending.push({ id: user.id, email: user.email })
+    }
+  }
+
+  return usersWithPending
 }

@@ -123,6 +123,15 @@ export function buildUserSearchCondition(searchTerm: string): SQL | undefined {
 }
 
 /**
+ * Find users by role
+ * @param role - The role to filter by
+ * @returns Array of users with the specified role
+ */
+export async function findUsersByRole(role: string) {
+  return await db.select().from(users).where(eq(users.role, role))
+}
+
+/**
  * Update a user by ID
  * @param userId - The user ID
  * @param data - Data to update (wallet address will be normalized if provided)

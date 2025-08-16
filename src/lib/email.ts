@@ -1,3 +1,5 @@
+import { sendEmail as sendEmailService } from './email/index'
+
 export interface EmailOptions {
   to: string
   subject: string
@@ -5,6 +7,15 @@ export interface EmailOptions {
 }
 
 export async function sendEmail(options: EmailOptions): Promise<void> {
-  // TODO: Implement email sending with Resend or other service
-  console.log('Email would be sent:', options)
+  const result = await sendEmailService(
+    options.to,
+    options.subject,
+    options.html
+  )
+
+  if (!result.success) {
+    console.error('Failed to send email:', result.error)
+    // In production, you might want to throw an error or handle it differently
+    // For now, we'll just log the error to avoid breaking the flow
+  }
 }

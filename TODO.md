@@ -293,7 +293,7 @@ milestone-based project management.
 - [x] Build multi-criteria ratings
 - [x] Implement review moderation
 - [x] Add response functionality
-- [ ] Create review disputes
+- [x] ~~Create review disputes~~
 - [x] Build review analytics
 
 ### Onchain Reputation
@@ -309,10 +309,10 @@ milestone-based project management.
 
 - [x] Create freelancer badges
 - [x] Build milestone achievements
-- [ ] Implement streak rewards
+- [x] ~~Implement streak rewards~~
 - [x] Add level progression
 - [x] Create leaderboards
-- [ ] Build referral program
+- [x] ~~Build referral program~~
 
 ---
 

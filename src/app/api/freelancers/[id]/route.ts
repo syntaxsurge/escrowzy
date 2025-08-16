@@ -4,10 +4,11 @@ import { getFreelancerProfileById } from '@/lib/db/queries/freelancers'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const profileId = parseInt(params.id)
+    const { id } = await params
+    const profileId = parseInt(id)
     if (isNaN(profileId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid profile ID' },

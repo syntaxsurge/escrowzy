@@ -388,7 +388,14 @@ export async function getPendingReviewPrompts(userId: number): Promise<
   return [
     ...asClient.map(r => ({ ...r, type: 'freelancer' as const })),
     ...asFreelancer.map(r => ({ ...r, type: 'client' as const }))
-  ].filter(r => r.targetUserId !== null)
+  ].filter(r => r.targetUserId !== null) as Array<{
+    jobId: number
+    jobTitle: string
+    completedAt: Date
+    type: 'freelancer' | 'client'
+    targetUserId: number
+    targetUserName: string | null
+  }>
 }
 
 export async function getReviewAnalytics(

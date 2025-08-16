@@ -19,6 +19,17 @@ export type TriggerEvent =
   | 'milestone_completed'
   | 'skill_endorsed'
   | 'rating_milestone'
+  | 'referral_first_job'
+  | 'referral_milestone_5'
+  | 'referral_milestone_10'
+  | 'referral_milestone_25'
+  | 'referral_milestone_50'
+  | 'review_streak_3'
+  | 'review_streak_7'
+  | 'review_streak_14'
+  | 'review_streak_30'
+  | 'review_streak_50'
+  | 'review_streak_100'
 
 interface AchievementCondition {
   id: string
