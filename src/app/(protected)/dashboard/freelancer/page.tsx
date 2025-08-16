@@ -24,6 +24,9 @@ import { ActiveJobsTracker } from '@/components/blocks/dashboard/freelancer/acti
 import { AnalyticsCharts } from '@/components/blocks/dashboard/freelancer/analytics-charts'
 import { EarningsWidget } from '@/components/blocks/dashboard/freelancer/earnings-widget'
 import { GoalTracker } from '@/components/blocks/dashboard/freelancer/goal-tracker'
+import { GrowthRecommendations } from '@/components/blocks/dashboard/freelancer/growth-recommendations'
+import { JobArchives } from '@/components/blocks/dashboard/freelancer/job-archives'
+import { JobTemplates } from '@/components/blocks/dashboard/freelancer/job-templates'
 import { MilestoneCalendar } from '@/components/blocks/dashboard/freelancer/milestone-calendar'
 import { PerformanceChart } from '@/components/blocks/dashboard/freelancer/performance-chart'
 import { ProposalMetrics } from '@/components/blocks/dashboard/freelancer/proposal-metrics'
@@ -359,12 +362,14 @@ export default function FreelancerDashboardPage() {
         onValueChange={setSelectedTab}
         className='space-y-4'
       >
-        <TabsList className='grid w-full grid-cols-5'>
+        <TabsList className='grid w-full grid-cols-7'>
           <TabsTrigger value='overview'>Overview</TabsTrigger>
           <TabsTrigger value='jobs'>Jobs</TabsTrigger>
           <TabsTrigger value='earnings'>Earnings</TabsTrigger>
           <TabsTrigger value='analytics'>Analytics</TabsTrigger>
           <TabsTrigger value='goals'>Goals</TabsTrigger>
+          <TabsTrigger value='templates'>Templates</TabsTrigger>
+          <TabsTrigger value='archives'>Archives</TabsTrigger>
         </TabsList>
 
         <TabsContent value='overview' className='space-y-4'>
@@ -476,11 +481,20 @@ export default function FreelancerDashboardPage() {
         </TabsContent>
 
         <TabsContent value='analytics' className='space-y-4'>
+          <GrowthRecommendations freelancerId={user.id} />
           <AnalyticsCharts freelancerId={user.id} />
         </TabsContent>
 
         <TabsContent value='goals' className='space-y-4'>
           <GoalTracker freelancerId={user.id} />
+        </TabsContent>
+
+        <TabsContent value='templates' className='space-y-4'>
+          <JobTemplates freelancerId={user.id} />
+        </TabsContent>
+
+        <TabsContent value='archives' className='space-y-4'>
+          <JobArchives freelancerId={user.id} />
         </TabsContent>
       </Tabs>
 

@@ -1,9 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-
 import { Plus, Target, Trophy } from 'lucide-react'
-import { toast } from 'sonner'
 import useSWR from 'swr'
 
 import { Badge } from '@/components/ui/badge'
@@ -12,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { api } from '@/lib/api/http-client'
 import { cn } from '@/lib/utils'
+
+import { GoalDialog } from './goal-dialog'
 
 interface GoalTrackerProps {
   freelancerId: number
@@ -29,15 +28,6 @@ interface Goal {
 }
 
 export function GoalTracker({ freelancerId }: GoalTrackerProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [newGoal, setNewGoal] = useState({
-    title: '',
-    description: '',
-    type: 'earnings',
-    target: 0,
-    deadline: ''
-  })
-
   const { data: goalsData, mutate } = useSWR(
     `/api/freelancers/${freelancerId}/goals`,
     async (url: string) => {
@@ -45,29 +35,6 @@ export function GoalTracker({ freelancerId }: GoalTrackerProps) {
       return response.success ? response.data : { goals: [], stats: {} }
     }
   )
-
-  const handleCreateGoal = async () => {
-    try {
-      const response = await api.post(
-        `/api/freelancers/${freelancerId}/goals`,
-        newGoal
-      )
-      if (response.success) {
-        toast.success('Goal created successfully')
-        setIsDialogOpen(false)
-        mutate()
-        setNewGoal({
-          title: '',
-          description: '',
-          type: 'earnings',
-          target: 0,
-          deadline: ''
-        })
-      }
-    } catch (error) {
-      toast.error('Failed to create goal')
-    }
-  }
 
   const getGoalIcon = (type: string) => {
     switch (type) {
@@ -96,10 +63,16 @@ export function GoalTracker({ freelancerId }: GoalTrackerProps) {
               <Target className='h-5 w-5' />
               Goals & Achievements
             </span>
-            <Button size='sm' onClick={() => setIsDialogOpen(!isDialogOpen)}>
-              <Plus className='mr-2 h-4 w-4' />
-              Add Goal
-            </Button>
+            <GoalDialog
+              freelancerId={freelancerId}
+              onSuccess={mutate}
+              trigger={
+                <Button size='sm'>
+                  <Plus className='mr-2 h-4 w-4' />
+                  Add Goal
+                </Button>
+              }
+            />
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -179,9 +152,11 @@ export function GoalTracker({ freelancerId }: GoalTrackerProps) {
                 <p className='text-muted-foreground mb-3 text-sm'>
                   No goals set yet
                 </p>
-                <Button size='sm' onClick={() => setIsDialogOpen(true)}>
-                  Create Your First Goal
-                </Button>
+                <GoalDialog
+                  freelancerId={freelancerId}
+                  onSuccess={mutate}
+                  trigger={<Button size='sm'>Create Your First Goal</Button>}
+                />
               </div>
             )}
           </div>

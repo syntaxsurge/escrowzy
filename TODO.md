@@ -320,30 +320,30 @@ milestone-based project management.
 
 ### Overview Dashboard
 
-- [x] Create `/dashboard/freelancer/page.tsx`
-- [x] Build earnings widget
-- [x] Add active jobs tracker
-- [x] Create proposal status
-- [x] Implement performance metrics
-- [x] Add goal tracking
+- [x] ~~Create `/dashboard/freelancer/page.tsx`~~
+- [x] ~~Build earnings widget~~
+- [x] ~~Add active jobs tracker~~
+- [x] ~~Create proposal status~~
+- [x] ~~Implement performance metrics~~
+- [x] ~~Add goal tracking~~
 
 ### Job Management
 
-- [x] Build active jobs list
-- [x] Create milestone calendar
-- [x] Add deadline reminders
-- [x] Implement quick actions
-- [x] Build job archives
-- [x] Create job templates
+- [x] ~~Build active jobs list~~
+- [x] ~~Create milestone calendar~~
+- [x] ~~Add deadline reminders~~
+- [x] ~~Implement quick actions~~
+- [x] ~~Build job archives~~
+- [x] ~~Create job templates~~
 
 ### Analytics & Insights
 
-- [x] Create earnings charts
-- [x] Build client analytics
-- [x] Add skill demand insights
-- [x] Implement conversion tracking
-- [x] Create competitive analysis
-- [x] Build growth recommendations
+- [x] ~~Create earnings charts~~
+- [x] ~~Build client analytics~~
+- [x] ~~Add skill demand insights~~
+- [x] ~~Implement conversion tracking~~
+- [x] ~~Create competitive analysis~~
+- [x] ~~Build growth recommendations~~
 
 ---
 

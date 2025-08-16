@@ -1,0 +1,252 @@
+'use client'
+
+import { useState } from 'react'
+
+import { Plus } from 'lucide-react'
+import { toast } from 'sonner'
+
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { api } from '@/lib/api/http-client'
+
+interface GoalDialogProps {
+  freelancerId: number
+  onSuccess?: () => void
+  trigger?: React.ReactNode
+}
+
+export function GoalDialog({
+  freelancerId,
+  onSuccess,
+  trigger
+}: GoalDialogProps) {
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    type: 'earnings' as
+      | 'earnings'
+      | 'projects'
+      | 'skills'
+      | 'reviews'
+      | 'custom',
+    target: 0,
+    deadline: ''
+  })
+
+  const handleSubmit = async () => {
+    if (!formData.title || !formData.target || !formData.deadline) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await api.post(
+        `/api/freelancers/${freelancerId}/goals`,
+        formData
+      )
+
+      if (response.success) {
+        toast.success('Goal created successfully')
+        setOpen(false)
+        setFormData({
+          title: '',
+          description: '',
+          type: 'earnings',
+          target: 0,
+          deadline: ''
+        })
+        onSuccess?.()
+      } else {
+        toast.error(response.error || 'Failed to create goal')
+      }
+    } catch (error) {
+      toast.error('Failed to create goal')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'earnings':
+        return 'Earnings Goal'
+      case 'projects':
+        return 'Projects Goal'
+      case 'skills':
+        return 'Skills Goal'
+      case 'reviews':
+        return 'Reviews Goal'
+      case 'custom':
+        return 'Custom Goal'
+      default:
+        return 'Goal'
+    }
+  }
+
+  const getTypePlaceholder = (type: string) => {
+    switch (type) {
+      case 'earnings':
+        return 'e.g., Earn $5000 this month'
+      case 'projects':
+        return 'e.g., Complete 10 projects'
+      case 'skills':
+        return 'e.g., Master 5 new skills'
+      case 'reviews':
+        return 'e.g., Achieve 4.8+ rating'
+      case 'custom':
+        return 'e.g., Custom goal description'
+      default:
+        return 'Enter your goal'
+    }
+  }
+
+  const getTargetLabel = (type: string) => {
+    switch (type) {
+      case 'earnings':
+        return 'Target Amount ($)'
+      case 'projects':
+        return 'Number of Projects'
+      case 'skills':
+        return 'Number of Skills'
+      case 'reviews':
+        return 'Target Rating (1-5)'
+      case 'custom':
+        return 'Target Value'
+      default:
+        return 'Target'
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button size='sm'>
+            <Plus className='mr-2 h-4 w-4' />
+            Add Goal
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className='sm:max-w-[425px]'>
+        <DialogHeader>
+          <DialogTitle>Create New Goal</DialogTitle>
+          <DialogDescription>
+            Set a new goal to track your progress and stay motivated
+          </DialogDescription>
+        </DialogHeader>
+        <div className='space-y-4 py-4'>
+          <div className='space-y-2'>
+            <Label htmlFor='type'>Goal Type</Label>
+            <Select
+              value={formData.type}
+              onValueChange={(value: any) =>
+                setFormData({ ...formData, type: value })
+              }
+            >
+              <SelectTrigger id='type'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='earnings'>💰 Earnings</SelectItem>
+                <SelectItem value='projects'>📁 Projects</SelectItem>
+                <SelectItem value='skills'>🎯 Skills</SelectItem>
+                <SelectItem value='reviews'>⭐ Reviews</SelectItem>
+                <SelectItem value='custom'>🎯 Custom</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='title'>Goal Title</Label>
+            <Input
+              id='title'
+              value={formData.title}
+              onChange={e =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              placeholder={getTypePlaceholder(formData.type)}
+            />
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='target'>{getTargetLabel(formData.type)}</Label>
+            <Input
+              id='target'
+              type='number'
+              value={formData.target || ''}
+              onChange={e =>
+                setFormData({ ...formData, target: Number(e.target.value) })
+              }
+              placeholder='Enter target value'
+              min={formData.type === 'reviews' ? 1 : 0}
+              max={formData.type === 'reviews' ? 5 : undefined}
+              step={formData.type === 'reviews' ? 0.1 : 1}
+            />
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='deadline'>Deadline</Label>
+            <Input
+              id='deadline'
+              type='date'
+              value={formData.deadline}
+              onChange={e =>
+                setFormData({ ...formData, deadline: e.target.value })
+              }
+              min={new Date().toISOString().split('T')[0]}
+            />
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='description'>
+              Description{' '}
+              <span className='text-muted-foreground text-xs'>(optional)</span>
+            </Label>
+            <Textarea
+              id='description'
+              value={formData.description}
+              onChange={e =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              placeholder='Add any additional details about your goal...'
+              rows={3}
+            />
+          </div>
+        </div>
+
+        <div className='flex justify-end gap-3'>
+          <Button
+            variant='outline'
+            onClick={() => setOpen(false)}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Creating...' : 'Create Goal'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
