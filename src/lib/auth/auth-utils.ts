@@ -152,3 +152,6 @@ export function isVerificationTokenExpired(expiresAt: Date | null): boolean {
   if (!expiresAt) return true
   return new Date() > new Date(expiresAt)
 }
+
+// Alias for getUserForRoute to maintain compatibility
+export { getUserForRoute as getAuth } from './get-user-route'

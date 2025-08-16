@@ -1,0 +1,667 @@
+'use client'
+
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+
+import {
+  Loader2,
+  ArrowLeft,
+  Plus,
+  Trash2,
+  Edit,
+  ExternalLink,
+  FileText,
+  X
+} from 'lucide-react'
+import { toast } from 'sonner'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { useSession } from '@/hooks/use-session'
+
+interface PortfolioItem {
+  id?: string
+  title: string
+  description: string
+  categoryId?: string
+  category?: string
+  skillsUsed?: string[]
+  projectUrl?: string
+  images?: string[]
+  completionDate?: string
+  clientName?: string
+}
+
+export default function PortfolioManagementPage() {
+  const router = useRouter()
+  const { user: session, isLoading: sessionLoading } = useSession()
+  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([])
+  const [categories, setCategories] = useState<any[]>([])
+  const [skills, setSkills] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null)
+  const [newItem, setNewItem] = useState<PortfolioItem>({
+    title: '',
+    description: '',
+    skillsUsed: [],
+    images: []
+  })
+
+  useEffect(() => {
+    if (!sessionLoading && !session) {
+      router.push('/login')
+    }
+  }, [session, sessionLoading, router])
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!session) return
+
+      try {
+        const [portfolioResponse, categoriesResponse, skillsResponse] =
+          await Promise.all([
+            fetch('/api/freelancer/portfolio'),
+            fetch('/api/job-categories'),
+            fetch('/api/skills')
+          ])
+
+        if (!portfolioResponse.ok) {
+          if (portfolioResponse.status === 404) {
+            router.push('/profile/freelancer/setup')
+            return
+          }
+          throw new Error('Failed to fetch portfolio')
+        }
+
+        const portfolioData = await portfolioResponse.json()
+        const categoriesData = await categoriesResponse.json()
+        const skillsData = await skillsResponse.json()
+
+        setPortfolioItems(portfolioData.items || [])
+        setCategories(categoriesData.categories || [])
+        setSkills(skillsData.skills || [])
+      } catch (error) {
+        console.error('Error fetching data:', error)
+        toast.error('Failed to load portfolio')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (session) {
+      fetchData()
+    }
+  }, [session, router])
+
+  const handleAddItem = async () => {
+    if (!newItem.title || !newItem.description) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const response = await fetch('/api/freelancer/portfolio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newItem)
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to add portfolio item')
+      }
+
+      const addedItem = await response.json()
+      setPortfolioItems([...portfolioItems, addedItem])
+      toast.success('Portfolio item added successfully')
+      setIsAddDialogOpen(false)
+      setNewItem({
+        title: '',
+        description: '',
+        skillsUsed: [],
+        images: []
+      })
+    } catch (error) {
+      console.error('Error adding portfolio item:', error)
+      toast.error('Failed to add portfolio item')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleUpdateItem = async () => {
+    if (!editingItem) return
+
+    setIsSaving(true)
+    try {
+      const response = await fetch(
+        `/api/freelancer/portfolio/${editingItem.id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(editingItem)
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to update portfolio item')
+      }
+
+      const updatedItem = await response.json()
+      setPortfolioItems(
+        portfolioItems.map(item =>
+          item.id === editingItem.id ? updatedItem : item
+        )
+      )
+      toast.success('Portfolio item updated successfully')
+      setEditingItem(null)
+    } catch (error) {
+      console.error('Error updating portfolio item:', error)
+      toast.error('Failed to update portfolio item')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDeleteItem = async (itemId: string) => {
+    if (!confirm('Are you sure you want to delete this portfolio item?')) return
+
+    setIsSaving(true)
+    try {
+      const response = await fetch(`/api/freelancer/portfolio/${itemId}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete portfolio item')
+      }
+
+      setPortfolioItems(portfolioItems.filter(item => item.id !== itemId))
+      toast.success('Portfolio item deleted successfully')
+    } catch (error) {
+      console.error('Error deleting portfolio item:', error)
+      toast.error('Failed to delete portfolio item')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    // In production, implement actual file upload
+    // For now, create local URLs
+    const urls = Array.from(files).map(file => URL.createObjectURL(file))
+
+    if (editingItem) {
+      setEditingItem({
+        ...editingItem,
+        images: [...(editingItem.images || []), ...urls]
+      })
+    } else {
+      setNewItem({
+        ...newItem,
+        images: [...(newItem.images || []), ...urls]
+      })
+    }
+  }
+
+  const removeImage = (index: number, isEditing: boolean) => {
+    if (isEditing && editingItem) {
+      const newImages = [...(editingItem.images || [])]
+      newImages.splice(index, 1)
+      setEditingItem({ ...editingItem, images: newImages })
+    } else {
+      const newImages = [...(newItem.images || [])]
+      newImages.splice(index, 1)
+      setNewItem({ ...newItem, images: newImages })
+    }
+  }
+
+  if (sessionLoading || isLoading) {
+    return (
+      <div className='flex min-h-screen items-center justify-center'>
+        <Loader2 className='h-8 w-8 animate-spin' />
+      </div>
+    )
+  }
+
+  if (!session) {
+    return null
+  }
+
+  return (
+    <div className='container mx-auto max-w-6xl px-4 py-8'>
+      <div className='mb-8'>
+        <div className='mb-4 flex items-center gap-4'>
+          <Button variant='ghost' size='icon' asChild>
+            <Link href='/profile/freelancer'>
+              <ArrowLeft className='h-4 w-4' />
+            </Link>
+          </Button>
+          <div className='flex-1'>
+            <h1 className='text-3xl font-bold'>Portfolio Management</h1>
+            <p className='text-muted-foreground mt-1'>
+              Showcase your best work to potential clients
+            </p>
+          </div>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className='mr-2 h-4 w-4' />
+                Add Project
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
+              <DialogHeader>
+                <DialogTitle>Add Portfolio Project</DialogTitle>
+                <DialogDescription>
+                  Add a new project to showcase your work
+                </DialogDescription>
+              </DialogHeader>
+              <div className='space-y-4 py-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='title'>Project Title *</Label>
+                  <Input
+                    id='title'
+                    value={newItem.title}
+                    onChange={e =>
+                      setNewItem({ ...newItem, title: e.target.value })
+                    }
+                    placeholder='e.g., E-commerce Website Redesign'
+                  />
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='description'>Description *</Label>
+                  <Textarea
+                    id='description'
+                    value={newItem.description}
+                    onChange={e =>
+                      setNewItem({ ...newItem, description: e.target.value })
+                    }
+                    placeholder='Describe the project, your role, and the outcome...'
+                    rows={4}
+                  />
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='category'>Category</Label>
+                  <Select
+                    value={newItem.categoryId}
+                    onValueChange={value =>
+                      setNewItem({ ...newItem, categoryId: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select a category' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map(cat => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='projectUrl'>Project URL</Label>
+                  <Input
+                    id='projectUrl'
+                    type='url'
+                    value={newItem.projectUrl || ''}
+                    onChange={e =>
+                      setNewItem({ ...newItem, projectUrl: e.target.value })
+                    }
+                    placeholder='https://example.com'
+                  />
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='clientName'>Client Name</Label>
+                  <Input
+                    id='clientName'
+                    value={newItem.clientName || ''}
+                    onChange={e =>
+                      setNewItem({ ...newItem, clientName: e.target.value })
+                    }
+                    placeholder='Company or individual name'
+                  />
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='completionDate'>Completion Date</Label>
+                  <Input
+                    id='completionDate'
+                    type='date'
+                    value={newItem.completionDate || ''}
+                    onChange={e =>
+                      setNewItem({ ...newItem, completionDate: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className='space-y-2'>
+                  <Label>Project Images</Label>
+                  <div className='space-y-4'>
+                    <Input
+                      type='file'
+                      accept='image/*'
+                      multiple
+                      onChange={handleImageUpload}
+                    />
+                    {newItem.images && newItem.images.length > 0 && (
+                      <div className='grid grid-cols-3 gap-2'>
+                        {newItem.images.map((img, index) => (
+                          <div key={index} className='group relative'>
+                            <img
+                              src={img}
+                              alt={`Project ${index + 1}`}
+                              className='h-24 w-full rounded-lg object-cover'
+                            />
+                            <button
+                              onClick={() => removeImage(index, false)}
+                              className='absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100'
+                            >
+                              <X className='h-3 w-3' />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsAddDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleAddItem} disabled={isSaving}>
+                  {isSaving && (
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  )}
+                  Add Project
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {portfolioItems.length > 0 ? (
+        <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+          {portfolioItems.map(item => (
+            <Card key={item.id} className='overflow-hidden'>
+              {item.images && item.images.length > 0 && (
+                <div className='relative aspect-video'>
+                  <img
+                    src={item.images[0]}
+                    alt={item.title}
+                    className='h-full w-full object-cover'
+                  />
+                  {item.images.length > 1 && (
+                    <div className='absolute right-2 bottom-2 rounded bg-black/50 px-2 py-1 text-xs text-white'>
+                      +{item.images.length - 1} more
+                    </div>
+                  )}
+                </div>
+              )}
+              <CardHeader>
+                <div className='flex items-start justify-between'>
+                  <CardTitle className='line-clamp-1'>{item.title}</CardTitle>
+                  <div className='flex gap-1'>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      onClick={() => setEditingItem(item)}
+                    >
+                      <Edit className='h-4 w-4' />
+                    </Button>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      onClick={() => item.id && handleDeleteItem(item.id)}
+                      disabled={isSaving}
+                    >
+                      <Trash2 className='h-4 w-4' />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className='space-y-3'>
+                <p className='text-muted-foreground line-clamp-3 text-sm'>
+                  {item.description}
+                </p>
+
+                {item.category && (
+                  <Badge variant='secondary'>{item.category}</Badge>
+                )}
+
+                <div className='flex items-center justify-between text-sm'>
+                  {item.clientName && (
+                    <span className='text-muted-foreground'>
+                      Client: {item.clientName}
+                    </span>
+                  )}
+                  {item.completionDate && (
+                    <span className='text-muted-foreground'>
+                      {new Date(item.completionDate).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+
+                {item.projectUrl && (
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='w-full'
+                    asChild
+                  >
+                    <a
+                      href={item.projectUrl}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <ExternalLink className='mr-2 h-4 w-4' />
+                      View Project
+                    </a>
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className='flex flex-col items-center justify-center py-12'>
+            <FileText className='text-muted-foreground mb-4 h-12 w-12' />
+            <h3 className='mb-2 text-lg font-semibold'>
+              No Portfolio Items Yet
+            </h3>
+            <p className='text-muted-foreground mb-4 text-center text-sm'>
+              Start showcasing your work by adding your first project
+            </p>
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className='mr-2 h-4 w-4' />
+              Add Your First Project
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {editingItem && (
+        <Dialog open={!!editingItem} onOpenChange={() => setEditingItem(null)}>
+          <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
+            <DialogHeader>
+              <DialogTitle>Edit Portfolio Project</DialogTitle>
+              <DialogDescription>
+                Update your portfolio project details
+              </DialogDescription>
+            </DialogHeader>
+            <div className='space-y-4 py-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='edit-title'>Project Title *</Label>
+                <Input
+                  id='edit-title'
+                  value={editingItem.title}
+                  onChange={e =>
+                    setEditingItem({ ...editingItem, title: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='edit-description'>Description *</Label>
+                <Textarea
+                  id='edit-description'
+                  value={editingItem.description}
+                  onChange={e =>
+                    setEditingItem({
+                      ...editingItem,
+                      description: e.target.value
+                    })
+                  }
+                  rows={4}
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='edit-category'>Category</Label>
+                <Select
+                  value={editingItem.categoryId}
+                  onValueChange={value =>
+                    setEditingItem({ ...editingItem, categoryId: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Select a category' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(cat => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='edit-projectUrl'>Project URL</Label>
+                <Input
+                  id='edit-projectUrl'
+                  type='url'
+                  value={editingItem.projectUrl || ''}
+                  onChange={e =>
+                    setEditingItem({
+                      ...editingItem,
+                      projectUrl: e.target.value
+                    })
+                  }
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='edit-clientName'>Client Name</Label>
+                <Input
+                  id='edit-clientName'
+                  value={editingItem.clientName || ''}
+                  onChange={e =>
+                    setEditingItem({
+                      ...editingItem,
+                      clientName: e.target.value
+                    })
+                  }
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='edit-completionDate'>Completion Date</Label>
+                <Input
+                  id='edit-completionDate'
+                  type='date'
+                  value={editingItem.completionDate || ''}
+                  onChange={e =>
+                    setEditingItem({
+                      ...editingItem,
+                      completionDate: e.target.value
+                    })
+                  }
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label>Project Images</Label>
+                <div className='space-y-4'>
+                  <Input
+                    type='file'
+                    accept='image/*'
+                    multiple
+                    onChange={handleImageUpload}
+                  />
+                  {editingItem.images && editingItem.images.length > 0 && (
+                    <div className='grid grid-cols-3 gap-2'>
+                      {editingItem.images.map((img, index) => (
+                        <div key={index} className='group relative'>
+                          <img
+                            src={img}
+                            alt={`Project ${index + 1}`}
+                            className='h-24 w-full rounded-lg object-cover'
+                          />
+                          <button
+                            onClick={() => removeImage(index, true)}
+                            className='absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100'
+                          >
+                            <X className='h-3 w-3' />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant='outline' onClick={() => setEditingItem(null)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateItem} disabled={isSaving}>
+                {isSaving && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  )
+}

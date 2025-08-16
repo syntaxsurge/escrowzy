@@ -11,7 +11,9 @@ import {
   Moon,
   Monitor,
   MessageSquare,
-  Edit2
+  Edit2,
+  Users,
+  Briefcase
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import useSWR from 'swr'
@@ -344,6 +346,38 @@ function UserMenu() {
                           <MessageSquare className='h-4 w-4 text-white' />
                         </div>
                         <span>Chat</span>
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      className='text-foreground cursor-pointer rounded-xl border-0 px-4 py-3 text-sm font-medium transition-all hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-700 focus:bg-gradient-to-r focus:from-purple-50 focus:to-pink-50 focus:text-purple-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-purple-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-purple-400'
+                      asChild
+                    >
+                      <Link
+                        href='/profile/freelancer'
+                        className='flex w-full items-center'
+                        onClick={() => menuState.close()}
+                      >
+                        <div className='mr-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 p-2'>
+                          <Users className='h-4 w-4 text-white' />
+                        </div>
+                        <span>Freelancer Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      className='text-foreground cursor-pointer rounded-xl border-0 px-4 py-3 text-sm font-medium transition-all hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:text-green-700 focus:bg-gradient-to-r focus:from-green-50 focus:to-emerald-50 focus:text-green-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-green-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-green-400'
+                      asChild
+                    >
+                      <Link
+                        href='/freelancers'
+                        className='flex w-full items-center'
+                        onClick={() => menuState.close()}
+                      >
+                        <div className='mr-3 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 p-2'>
+                          <Briefcase className='h-4 w-4 text-white' />
+                        </div>
+                        <span>Browse Freelancers</span>
                       </Link>
                     </DropdownMenuItem>
                   </div>
