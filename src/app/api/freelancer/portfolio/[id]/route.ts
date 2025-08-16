@@ -1,14 +1,16 @@
 import { NextRequest } from 'next/server'
-import { getAuth } from '@/lib/auth/auth-utils'
-import { apiResponses } from '@/lib/api/api-responses'
-import { db } from '@/lib/db'
-import { freelancerProfiles, portfolioItems } from '@/lib/db/schema'
+
 import { eq, and } from 'drizzle-orm'
+
+import { apiResponses } from '@/lib/api/server-utils'
+import { getAuth } from '@/lib/auth/auth-utils'
+import { db } from '@/lib/db/drizzle'
+import { freelancerProfiles, portfolioItems } from '@/lib/db/schema'
 import { uploadToStorage } from '@/lib/storage/upload'
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await getAuth()
@@ -16,9 +18,10 @@ export async function PUT(
       return apiResponses.unauthorized()
     }
 
-    const itemId = parseInt(params.id)
+    const { id } = await params
+    const itemId = parseInt(id)
     const formData = await request.formData()
-    
+
     const title = formData.get('title') as string
     const description = formData.get('description') as string
     const categoryId = formData.get('categoryId') as string
@@ -121,7 +124,9 @@ export async function DELETE(
         )
       )
 
-    return apiResponses.success({ message: 'Portfolio item deleted successfully' })
+    return apiResponses.success({
+      message: 'Portfolio item deleted successfully'
+    })
   } catch (error) {
     return apiResponses.handleError(error, 'Failed to delete portfolio item')
   }

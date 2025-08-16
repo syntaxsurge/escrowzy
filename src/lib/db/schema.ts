@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { relations } from 'drizzle-orm'
 import {
   pgTable,
@@ -748,9 +750,7 @@ export const profileDrafts = pgTable(
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow()
   },
-  table => [
-    index('idx_profile_drafts_user').on(table.userId)
-  ]
+  table => [index('idx_profile_drafts_user').on(table.userId)]
 )
 
 export const freelancerSkills = pgTable(
@@ -881,6 +881,9 @@ export const jobBids = pgTable(
     coverLetter: text('cover_letter'),
     attachments: jsonb('attachments').notNull().default('[]'),
     status: varchar('status', { length: 50 }).notNull().default('pending'), // pending | shortlisted | accepted | rejected | withdrawn
+    shortlistedAt: timestamp('shortlisted_at'),
+    acceptedAt: timestamp('accepted_at'),
+    rejectedAt: timestamp('rejected_at'),
     milestones: jsonb('milestones').notNull().default('[]'), // Proposed milestones
     metadata: jsonb('metadata').notNull().default('{}'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -891,6 +894,27 @@ export const jobBids = pgTable(
     index('idx_job_bids_freelancer').on(table.freelancerId),
     index('idx_job_bids_status').on(table.status),
     unique('unique_job_bid').on(table.jobId, table.freelancerId)
+  ]
+)
+
+export const bidTemplates = pgTable(
+  'bid_templates',
+  {
+    id: serial('id').primaryKey(),
+    freelancerId: integer('freelancer_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }).notNull(),
+    proposalText: text('proposal_text').notNull(),
+    coverLetter: text('cover_letter'),
+    isDefault: boolean('is_default').notNull().default(false),
+    usageCount: integer('usage_count').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_bid_templates_freelancer').on(table.freelancerId),
+    index('idx_bid_templates_default').on(table.freelancerId, table.isDefault)
   ]
 )
 
@@ -916,6 +940,102 @@ export const jobInvitations = pgTable(
     index('idx_job_invitations_job').on(table.jobId),
     index('idx_job_invitations_freelancer').on(table.freelancerId),
     unique('unique_job_invitation').on(table.jobId, table.freelancerId)
+  ]
+)
+
+// Saved Searches
+export const savedSearches = pgTable(
+  'saved_searches',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }).notNull(),
+    searchType: varchar('search_type', { length: 50 }).notNull().default('jobs'), // jobs, freelancers
+    filters: jsonb('filters').notNull().default('{}'), // search criteria
+    query: text('query'), // search query string
+    alertsEnabled: boolean('alerts_enabled').notNull().default(false),
+    alertFrequency: varchar('alert_frequency', { length: 50 }).default('daily'), // instant, daily, weekly
+    lastAlertSent: timestamp('last_alert_sent'),
+    resultsCount: integer('results_count').default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_saved_searches_user').on(table.userId),
+    index('idx_saved_searches_type').on(table.searchType),
+    index('idx_saved_searches_alerts').on(table.alertsEnabled)
+  ]
+)
+
+// Job Alerts
+export const jobAlerts = pgTable(
+  'job_alerts',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    savedSearchId: integer('saved_search_id')
+      .references(() => savedSearches.id, { onDelete: 'cascade' }),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id, { onDelete: 'cascade' }),
+    alertType: varchar('alert_type', { length: 50 }).notNull().default('new_match'), // new_match, price_change, deadline_approaching
+    status: varchar('status', { length: 50 }).notNull().default('pending'), // pending, sent, viewed, dismissed
+    sentAt: timestamp('sent_at'),
+    viewedAt: timestamp('viewed_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_job_alerts_user').on(table.userId),
+    index('idx_job_alerts_search').on(table.savedSearchId),
+    index('idx_job_alerts_job').on(table.jobId),
+    index('idx_job_alerts_status').on(table.status),
+    unique('unique_job_alert').on(table.userId, table.jobId, table.alertType)
+  ]
+)
+
+// Interview Scheduling
+export const interviews = pgTable(
+  'interviews',
+  {
+    id: serial('id').primaryKey(),
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => jobPostings.id, { onDelete: 'cascade' }),
+    bidId: integer('bid_id')
+      .notNull()
+      .references(() => jobBids.id, { onDelete: 'cascade' }),
+    clientId: integer('client_id')
+      .notNull()
+      .references(() => users.id),
+    freelancerId: integer('freelancer_id')
+      .notNull()
+      .references(() => users.id),
+    scheduledAt: timestamp('scheduled_at').notNull(),
+    duration: integer('duration').notNull().default(30), // in minutes
+    meetingType: varchar('meeting_type', { length: 50 }).notNull().default('video'), // video, phone, in-person
+    meetingLink: varchar('meeting_link', { length: 500 }),
+    location: text('location'),
+    notes: text('notes'),
+    status: varchar('status', { length: 50 }).notNull().default('scheduled'), // scheduled, completed, cancelled, rescheduled
+    clientConfirmed: boolean('client_confirmed').notNull().default(true),
+    freelancerConfirmed: boolean('freelancer_confirmed').notNull().default(false),
+    reminderSent: boolean('reminder_sent').notNull().default(false),
+    cancelledBy: integer('cancelled_by').references(() => users.id),
+    cancelReason: text('cancel_reason'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_interviews_job').on(table.jobId),
+    index('idx_interviews_bid').on(table.bidId),
+    index('idx_interviews_client').on(table.clientId),
+    index('idx_interviews_freelancer').on(table.freelancerId),
+    index('idx_interviews_scheduled').on(table.scheduledAt),
+    index('idx_interviews_status').on(table.status)
   ]
 )
 
@@ -1108,6 +1228,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   jobPostings: many(jobPostings, { relationName: 'jobClient' }),
   assignedJobs: many(jobPostings, { relationName: 'jobFreelancer' }),
   jobBids: many(jobBids),
+  bidTemplates: many(bidTemplates),
   sentJobInvitations: many(jobInvitations, { relationName: 'invitedBy' }),
   receivedJobInvitations: many(jobInvitations, {
     relationName: 'invitedFreelancer'
@@ -1500,6 +1621,13 @@ export const jobBidsRelations = relations(jobBids, ({ one }) => ({
   })
 }))
 
+export const bidTemplatesRelations = relations(bidTemplates, ({ one }) => ({
+  freelancer: one(users, {
+    fields: [bidTemplates.freelancerId],
+    references: [users.id]
+  })
+}))
+
 export const jobInvitationsRelations = relations(jobInvitations, ({ one }) => ({
   job: one(jobPostings, {
     fields: [jobInvitations.jobId],
@@ -1745,6 +1873,8 @@ export type JobMilestone = typeof jobMilestones.$inferSelect
 export type NewJobMilestone = typeof jobMilestones.$inferInsert
 export type JobBid = typeof jobBids.$inferSelect
 export type NewJobBid = typeof jobBids.$inferInsert
+export type BidTemplate = typeof bidTemplates.$inferSelect
+export type NewBidTemplate = typeof bidTemplates.$inferInsert
 export type JobInvitation = typeof jobInvitations.$inferSelect
 export type NewJobInvitation = typeof jobInvitations.$inferInsert
 export type FreelancerReview = typeof freelancerReviews.$inferSelect

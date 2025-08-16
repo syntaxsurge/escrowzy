@@ -13,14 +13,13 @@ import {
   Github,
   Linkedin,
   CheckCircle,
-  Heart,
   Share2,
   Flag
 } from 'lucide-react'
 
 import { PortfolioGallery } from '@/components/blocks/freelancers/portfolio-gallery'
-import { VerifiedBadge } from '@/components/blocks/freelancers/verified-badge'
 import { SaveProfileButton } from '@/components/blocks/freelancers/save-profile-button'
+import { VerifiedBadge } from '@/components/blocks/freelancers/verified-badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -85,17 +84,20 @@ export default async function PublicFreelancerProfilePage({
       githubUrl: 5,
       yearsOfExperience: 10
     }
-    
+
     if (profile.bio) score += weights.bio
-    if (profile.freelancerSkills && profile.freelancerSkills.length > 0) score += weights.skills
-    if (profile.portfolioItems && profile.portfolioItems.length > 0) score += weights.portfolio
+    if (profile.freelancerSkills && profile.freelancerSkills.length > 0)
+      score += weights.skills
+    if (profile.portfolioItems && profile.portfolioItems.length > 0)
+      score += weights.portfolio
     if (profile.hourlyRate) score += weights.hourlyRate
-    if (profile.languages && (profile.languages as any[]).length > 0) score += weights.languages
+    if (profile.languages && (profile.languages as any[]).length > 0)
+      score += weights.languages
     if (profile.portfolioUrl) score += weights.portfolioUrl
     if (profile.linkedinUrl) score += weights.linkedinUrl
     if (profile.githubUrl) score += weights.githubUrl
     if (profile.yearsOfExperience > 0) score += weights.yearsOfExperience
-    
+
     return Math.min(100, score)
   }
 
@@ -494,7 +496,9 @@ export default async function PublicFreelancerProfilePage({
                 <div className='space-y-2'>
                   <div className='flex items-center justify-between text-sm'>
                     <span>Profile Completeness</span>
-                    <span className='font-semibold'>{profileCompleteness}%</span>
+                    <span className='font-semibold'>
+                      {profileCompleteness}%
+                    </span>
                   </div>
                   <Progress value={profileCompleteness} className='h-2' />
                 </div>

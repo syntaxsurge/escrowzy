@@ -398,6 +398,24 @@ export async function broadcastBattleStats() {
   }
 }
 
+export async function sendNotification(
+  userId: number,
+  notification: {
+    type: string
+    title: string
+    message: string
+    data?: any
+  }
+) {
+  if (!pusherServer) return
+
+  try {
+    await pusherServer.trigger(`user-${userId}`, 'notification', notification)
+  } catch (error) {
+    console.error('Failed to send notification:', error)
+  }
+}
+
 export async function broadcastQueueUpdate(
   userId: number,
   status: 'joined' | 'left' | 'matched'

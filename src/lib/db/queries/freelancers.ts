@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { and, desc, eq, sql, ilike, gte, or, inArray, asc } from 'drizzle-orm'
 
 import { db } from '../drizzle'
@@ -630,68 +632,6 @@ export async function updateLastActive(userId: number): Promise<void> {
     .update(freelancerProfiles)
     .set({ lastActiveAt: new Date() })
     .where(eq(freelancerProfiles.userId, userId))
-}
-
-// Calculate and update profile completeness
-export function calculateProfileCompleteness(
-  profile: FreelancerProfileWithRelations
-): number {
-  let completeness = 0
-  const weights = {
-    basicInfo: 20, // title, bio, hourly rate
-    skills: 20,
-    portfolio: 20,
-    avatar: 10,
-    experience: 10,
-    languages: 10,
-    links: 10 // portfolio, linkedin, github
-  }
-
-  // Basic info
-  if (profile.professionalTitle && profile.bio && profile.hourlyRate) {
-    completeness += weights.basicInfo
-  }
-
-  // Skills
-  if (profile.skills && profile.skills.length >= 3) {
-    completeness += weights.skills
-  }
-
-  // Portfolio
-  if (profile.portfolioItems && profile.portfolioItems.length >= 1) {
-    completeness += weights.portfolio
-  }
-
-  // Avatar
-  if (profile.user.avatarUrl) {
-    completeness += weights.avatar
-  }
-
-  // Experience
-  if (profile.yearsOfExperience > 0) {
-    completeness += weights.experience
-  }
-
-  // Languages
-  const languages = profile.languages as any
-  if (languages && Array.isArray(languages) && languages.length > 0) {
-    completeness += weights.languages
-  }
-
-  // Links
-  const linksCount = [
-    profile.portfolioUrl,
-    profile.linkedinUrl,
-    profile.githubUrl
-  ].filter(Boolean).length
-
-  if (linksCount >= 2) {
-    completeness += weights.links
-  } else if (linksCount === 1) {
-    completeness += weights.links / 2
-  }
-
-  return Math.min(100, completeness)
 }
 
 // Alias for getFreelancerProfileByUserId (used in profile pages)

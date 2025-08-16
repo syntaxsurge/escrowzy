@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { eq, inArray, and } from 'drizzle-orm'
 
 import { createActivityLog } from '@/lib/db/queries/activity-logs'

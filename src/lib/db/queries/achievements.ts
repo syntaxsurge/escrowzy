@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { eq, desc, and, sql } from 'drizzle-orm'
 import { ZERO_ADDRESS } from 'thirdweb'
 

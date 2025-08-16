@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { and, desc, eq, sql, count, avg, or, gte } from 'drizzle-orm'
 
 import { db } from '../drizzle'

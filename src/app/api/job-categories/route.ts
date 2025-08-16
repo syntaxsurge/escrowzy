@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
-import { apiResponses } from '@/lib/api/api-responses'
-import { db } from '@/lib/db'
+
+import { apiResponses } from '@/lib/api/server-utils'
+import { db } from '@/lib/db/drizzle'
 import { jobCategories } from '@/lib/db/schema'
-import { isNull } from 'drizzle-orm'
 
 export async function GET(request: NextRequest) {
   try {

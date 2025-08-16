@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { db } from '@/lib/db/drizzle'
 import { jobCategories, skills } from '@/lib/db/schema'
 

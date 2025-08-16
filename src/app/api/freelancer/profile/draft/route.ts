@@ -1,9 +1,11 @@
 import { NextRequest } from 'next/server'
-import { getAuth } from '@/lib/auth/auth-utils'
-import { apiResponses } from '@/lib/api/api-responses'
-import { db } from '@/lib/db'
-import { profileDrafts } from '@/lib/db/schema'
+
 import { eq } from 'drizzle-orm'
+
+import { apiResponses } from '@/lib/api/server-utils'
+import { getAuth } from '@/lib/auth/auth-utils'
+import { db } from '@/lib/db/drizzle'
+import { profileDrafts } from '@/lib/db/schema'
 
 export async function GET(request: NextRequest) {
   try {
@@ -74,9 +76,7 @@ export async function DELETE(request: NextRequest) {
       return apiResponses.unauthorized()
     }
 
-    await db
-      .delete(profileDrafts)
-      .where(eq(profileDrafts.userId, auth.userId))
+    await db.delete(profileDrafts).where(eq(profileDrafts.userId, auth.userId))
 
     return apiResponses.success({ message: 'Draft deleted successfully' })
   } catch (error) {

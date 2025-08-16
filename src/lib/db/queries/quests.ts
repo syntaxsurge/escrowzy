@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { eq, and, gte, sql, or } from 'drizzle-orm'
 
 import { db } from '../drizzle'

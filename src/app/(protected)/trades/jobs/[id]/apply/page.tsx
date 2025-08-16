@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -14,12 +15,14 @@ import {
   Info,
   Plus,
   Trash2,
-  Upload
+  Upload,
+  AlertCircle
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import useSWR from 'swr'
-import * as z from 'zod'
 
+import { BidTemplateSelector } from '@/components/blocks/jobs/bid-template-selector'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -42,20 +45,32 @@ import { appRoutes } from '@/config/app-routes'
 import { useSession } from '@/hooks/use-session'
 import { api } from '@/lib/api/http-client'
 import type { JobPostingWithRelations } from '@/lib/db/queries/jobs'
+import type { BidTemplate } from '@/lib/db/schema'
+import { bidSubmissionSchema } from '@/lib/schemas/bid'
 
-// Form validation schema
-const applyFormSchema = z.object({
-  bidAmount: z.string().min(1, 'Bid amount is required'),
-  deliveryTimeDays: z.number().min(1, 'Delivery time must be at least 1 day'),
-  proposalText: z.string().min(100, 'Proposal must be at least 100 characters'),
-  coverLetter: z.string().optional(),
-  milestoneBreakdown: z
+// Dynamically import MDEditor to avoid SSR issues
+const MDEditor = dynamic(
+  () => import('@uiw/react-md-editor').then(mod => mod.default),
+  { ssr: false }
+)
+
+// Use the centralized bid submission schema with local extensions
+const applyFormSchema = bidSubmissionSchema.omit({ jobId: true }).extend({
+  deliveryDays: z
+    .number()
+    .min(1, 'Delivery time must be at least 1 day')
+    .max(365),
+  milestones: z
     .array(
       z.object({
-        title: z.string().min(1, 'Milestone title is required'),
-        description: z.string().min(1, 'Milestone description is required'),
-        amount: z.string().min(1, 'Amount is required'),
-        durationDays: z.number().min(1, 'Duration must be at least 1 day')
+        title: z
+          .string()
+          .min(3, 'Milestone title must be at least 3 characters'),
+        description: z
+          .string()
+          .min(10, 'Description must be at least 10 characters'),
+        amount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid amount format'),
+        deliveryDays: z.number().min(1).max(365)
       })
     )
     .optional()
@@ -72,6 +87,7 @@ export default function JobApplyPage() {
   const [attachments, setAttachments] = useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showMilestones, setShowMilestones] = useState(false)
+  const [proposalPreview, setProposalPreview] = useState(false)
 
   // Fetch job details
   const { data: job, isLoading } = useSWR<JobPostingWithRelations>(
@@ -86,10 +102,11 @@ export default function JobApplyPage() {
     resolver: zodResolver(applyFormSchema),
     defaultValues: {
       bidAmount: '',
-      deliveryTimeDays: 7,
+      deliveryDays: 7,
       proposalText: '',
       coverLetter: '',
-      milestoneBreakdown: []
+      milestones: [],
+      attachments: []
     }
   })
 
@@ -101,57 +118,58 @@ export default function JobApplyPage() {
 
     setIsSubmitting(true)
     try {
-      // Create form data for file upload
-      const formData = new FormData()
-      formData.append('jobId', jobId)
-      formData.append('freelancerId', user.id.toString())
-      formData.append('bidAmount', values.bidAmount)
-      formData.append('deliveryTimeDays', values.deliveryTimeDays.toString())
-      formData.append('proposalText', values.proposalText)
-      if (values.coverLetter) {
-        formData.append('coverLetter', values.coverLetter)
-      }
-      if (values.milestoneBreakdown) {
-        formData.append(
-          'milestoneBreakdown',
-          JSON.stringify(values.milestoneBreakdown)
-        )
-      }
+      // Prepare attachment URLs (in a real app, you'd upload these first)
+      const attachmentData =
+        attachments.length > 0
+          ? attachments.map(file => ({
+              name: file.name,
+              url: URL.createObjectURL(file), // In production, upload to cloud storage
+              size: file.size,
+              type: file.type
+            }))
+          : undefined
 
-      // Add attachments
-      attachments.forEach(file => {
-        formData.append('attachments', file)
+      // Submit bid via the new API endpoint
+      const response = await api.post(`/api/jobs/${jobId}/bids`, {
+        bidAmount: values.bidAmount,
+        deliveryDays: values.deliveryDays,
+        proposalText: values.proposalText,
+        coverLetter: values.coverLetter || undefined,
+        milestones: values.milestones,
+        attachments: attachmentData
       })
 
-      const response = await api.post(apiEndpoints.jobs.apply(jobId), formData)
-
       if (response.success) {
+        toast.success('Proposal submitted successfully!')
         router.push(appRoutes.trades.jobs.detail(jobId))
+      } else {
+        toast.error(response.error || 'Failed to submit proposal')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to submit application:', error)
+      toast.error(error.message || 'Failed to submit proposal')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const addMilestone = () => {
-    const currentMilestones = form.getValues('milestoneBreakdown') || []
-    form.setValue('milestoneBreakdown', [
+    const currentMilestones = form.getValues('milestones') || []
+    form.setValue('milestones', [
       ...currentMilestones,
       {
         title: '',
         description: '',
         amount: '',
-        durationDays: 7
+        deliveryDays: 7
       }
     ])
   }
 
   const removeMilestone = (index: number) => {
-    const currentMilestones = form.getValues('milestoneBreakdown') || []
+    const currentMilestones = form.getValues('milestones') || []
     form.setValue(
-      'milestoneBreakdown',
+      'milestones',
       currentMilestones.filter((_, i) => i !== index)
     )
   }
@@ -160,6 +178,15 @@ export default function JobApplyPage() {
     if (e.target.files) {
       setAttachments(Array.from(e.target.files))
     }
+  }
+
+  const handleTemplateSelect = (template: BidTemplate) => {
+    // Apply template values to form
+    form.setValue('proposalText', template.proposalText)
+    if (template.coverLetter) {
+      form.setValue('coverLetter', template.coverLetter)
+    }
+    toast.success('Template applied successfully')
   }
 
   if (isLoading) {
@@ -331,7 +358,7 @@ export default function JobApplyPage() {
 
                   <FormField
                     control={form.control}
-                    name='deliveryTimeDays'
+                    name='deliveryDays'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Delivery Time</FormLabel>
@@ -391,7 +418,22 @@ export default function JobApplyPage() {
             {/* Proposal */}
             <Card>
               <CardHeader>
-                <CardTitle>Your Proposal</CardTitle>
+                <div className='flex items-center justify-between'>
+                  <CardTitle>Your Proposal</CardTitle>
+                  <div className='flex items-center gap-2'>
+                    <BidTemplateSelector
+                      onSelectTemplate={handleTemplateSelect}
+                    />
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => setProposalPreview(!proposalPreview)}
+                    >
+                      {proposalPreview ? 'Edit' : 'Preview'}
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className='space-y-4'>
                 <FormField
@@ -401,15 +443,22 @@ export default function JobApplyPage() {
                     <FormItem>
                       <FormLabel>Proposal</FormLabel>
                       <FormControl>
-                        <Textarea
-                          {...field}
-                          rows={8}
-                          placeholder="Describe your approach to this project, relevant experience, and why you're the best fit..."
-                        />
+                        <div data-color-mode='light'>
+                          <MDEditor
+                            value={field.value}
+                            onChange={value => field.onChange(value || '')}
+                            preview={proposalPreview ? 'preview' : 'edit'}
+                            height={400}
+                            textareaProps={{
+                              placeholder:
+                                "## About Me\n\nDescribe your expertise and experience...\n\n## My Approach\n\nExplain how you'll tackle this project...\n\n## Why Choose Me\n\nHighlight what makes you the best fit..."
+                            }}
+                          />
+                        </div>
                       </FormControl>
                       <FormDescription>
-                        Minimum 100 characters. Be specific about your approach
-                        and experience.
+                        Use Markdown to format your proposal. Minimum 50
+                        characters.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -477,7 +526,7 @@ export default function JobApplyPage() {
                     understand your approach
                   </p>
 
-                  {(form.watch('milestoneBreakdown') || []).map((_, index) => (
+                  {(form.watch('milestones') || []).map((_, index) => (
                     <Card key={index}>
                       <CardHeader>
                         <div className='flex items-center justify-between'>
@@ -498,7 +547,7 @@ export default function JobApplyPage() {
                         <div className='grid grid-cols-2 gap-4'>
                           <FormField
                             control={form.control}
-                            name={`milestoneBreakdown.${index}.title`}
+                            name={`milestones.${index}.title`}
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Title</FormLabel>
@@ -516,7 +565,7 @@ export default function JobApplyPage() {
                           <div className='grid grid-cols-2 gap-2'>
                             <FormField
                               control={form.control}
-                              name={`milestoneBreakdown.${index}.amount`}
+                              name={`milestones.${index}.amount`}
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Amount</FormLabel>
@@ -538,7 +587,7 @@ export default function JobApplyPage() {
 
                             <FormField
                               control={form.control}
-                              name={`milestoneBreakdown.${index}.durationDays`}
+                              name={`milestones.${index}.deliveryDays`}
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Days</FormLabel>
@@ -561,7 +610,7 @@ export default function JobApplyPage() {
 
                         <FormField
                           control={form.control}
-                          name={`milestoneBreakdown.${index}.description`}
+                          name={`milestones.${index}.description`}
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Description</FormLabel>
@@ -616,6 +665,12 @@ export default function JobApplyPage() {
 
                   {attachments.length > 0 && (
                     <div className='space-y-2'>
+                      <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+                        <AlertCircle className='h-4 w-4' />
+                        <span>
+                          Selected files ({attachments.length} / 5 max)
+                        </span>
+                      </div>
                       {attachments.map((file, index) => (
                         <div
                           key={index}

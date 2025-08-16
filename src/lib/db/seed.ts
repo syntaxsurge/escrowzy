@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { seedFreelancerData } from './seed-freelancer'
 import { seedLegalDocuments } from './seeds/legal-documents'
 import { seedPlatformContracts } from './seeds/platform-contracts'

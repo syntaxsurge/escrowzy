@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
+
+import { apiResponses } from '@/lib/api/server-utils'
 import { getAuth } from '@/lib/auth/auth-utils'
-import { apiResponses } from '@/lib/api/api-responses'
 import {
   getFreelancerProfileByUserId,
   createFreelancerProfile,
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     const profile = await getFreelancerProfileByUserId(auth.userId)
-    
+
     if (!profile) {
       return apiResponses.notFound('Freelancer profile not found')
     }
@@ -35,10 +36,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    
+
     // Validate the profile data
     const validatedData = freelancerProfileSchema.parse(body)
-    
+
     // Check if profile already exists
     const existingProfile = await getFreelancerProfileByUserId(auth.userId)
     if (existingProfile) {
@@ -58,11 +59,12 @@ export async function POST(request: NextRequest) {
       linkedinUrl: validatedData.linkedinUrl,
       githubUrl: validatedData.githubUrl,
       languages: validatedData.languages,
-      skills: validatedData.skills?.map(skill => ({
-        skillId: skill.skillId,
-        yearsOfExperience: skill.yearsOfExperience || 0,
-        skillLevel: skill.skillLevel || 'beginner'
-      })) || [],
+      skills:
+        validatedData.skills?.map(skill => ({
+          skillId: skill.skillId,
+          yearsOfExperience: skill.yearsOfExperience || 0,
+          skillLevel: skill.skillLevel || 'beginner'
+        })) || [],
       portfolioItems: validatedData.portfolioItems || []
     })
 
@@ -80,7 +82,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    
+
     // Get existing profile
     const existingProfile = await getFreelancerProfileByUserId(auth.userId)
     if (!existingProfile) {

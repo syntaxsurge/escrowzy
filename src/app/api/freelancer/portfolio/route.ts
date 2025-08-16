@@ -1,9 +1,11 @@
 import { NextRequest } from 'next/server'
-import { getAuth } from '@/lib/auth/auth-utils'
-import { apiResponses } from '@/lib/api/api-responses'
-import { db } from '@/lib/db'
-import { freelancerProfiles, portfolioItems } from '@/lib/db/schema'
+
 import { eq } from 'drizzle-orm'
+
+import { apiResponses } from '@/lib/api/server-utils'
+import { getAuth } from '@/lib/auth/auth-utils'
+import { db } from '@/lib/db/drizzle'
+import { freelancerProfiles, portfolioItems } from '@/lib/db/schema'
 import { uploadToStorage } from '@/lib/storage/upload'
 
 export async function GET(request: NextRequest) {

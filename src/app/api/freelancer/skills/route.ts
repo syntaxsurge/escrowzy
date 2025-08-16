@@ -1,9 +1,11 @@
 import { NextRequest } from 'next/server'
-import { getAuth } from '@/lib/auth/auth-utils'
-import { apiResponses } from '@/lib/api/api-responses'
-import { db } from '@/lib/db'
-import { freelancerProfiles, freelancerSkills, skills } from '@/lib/db/schema'
+
 import { eq, and } from 'drizzle-orm'
+
+import { apiResponses } from '@/lib/api/server-utils'
+import { getAuth } from '@/lib/auth/auth-utils'
+import { db } from '@/lib/db/drizzle'
+import { freelancerProfiles, freelancerSkills, skills } from '@/lib/db/schema'
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +18,7 @@ export async function GET(request: NextRequest) {
     const profile = await db
       .select()
       .from(freelancerProfiles)
-      .where(eq(freelancerProfiles.userId, auth.userId))
+      .where(eq(freelancerProfiles.userId, auth.id))
       .limit(1)
 
     if (!profile || profile.length === 0) {
@@ -30,12 +32,12 @@ export async function GET(request: NextRequest) {
       .innerJoin(skills, eq(freelancerSkills.skillId, skills.id))
       .where(eq(freelancerSkills.freelancerId, profile[0].id))
 
-    return apiResponses.success({ 
+    return apiResponses.success({
       skills: userSkills.map(s => ({
         id: s.freelancer_skills.id,
         skillId: s.skills.id,
         name: s.skills.name,
-        category: s.skills.category,
+        categoryId: s.skills.categoryId,
         yearsOfExperience: s.freelancer_skills.yearsOfExperience,
         skillLevel: s.freelancer_skills.skillLevel,
         verified: s.freelancer_skills.isVerified
@@ -59,7 +61,7 @@ export async function POST(request: NextRequest) {
     const profile = await db
       .select()
       .from(freelancerProfiles)
-      .where(eq(freelancerProfiles.userId, auth.userId))
+      .where(eq(freelancerProfiles.userId, auth.id))
       .limit(1)
 
     if (!profile || profile.length === 0) {
@@ -104,7 +106,7 @@ export async function POST(request: NextRequest) {
       id: newSkill.id,
       skillId: skillDetails[0].id,
       name: skillDetails[0].name,
-      category: skillDetails[0].category,
+      categoryId: skillDetails[0].categoryId,
       yearsOfExperience: newSkill.yearsOfExperience,
       skillLevel: newSkill.skillLevel,
       verified: newSkill.isVerified

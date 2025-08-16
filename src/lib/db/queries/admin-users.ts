@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { SQL, and, asc, desc, ilike, or, sql, eq } from 'drizzle-orm'
 
 import type { UserWithPlan } from '@/types/database'

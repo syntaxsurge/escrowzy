@@ -1,9 +1,11 @@
 import { NextRequest } from 'next/server'
-import { getAuth } from '@/lib/auth/auth-utils'
-import { apiResponses } from '@/lib/api/api-responses'
-import { db } from '@/lib/db'
-import { freelancerProfiles, freelancerSkills, skills } from '@/lib/db/schema'
+
 import { eq, and } from 'drizzle-orm'
+
+import { apiResponses } from '@/lib/api/server-utils'
+import { getAuth } from '@/lib/auth/auth-utils'
+import { db } from '@/lib/db/drizzle'
+import { freelancerProfiles, freelancerSkills, skills } from '@/lib/db/schema'
 
 export async function PUT(
   request: NextRequest,

@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { eq, ilike, or } from 'drizzle-orm'
 import type { SQL, ExtractTablesWithRelations } from 'drizzle-orm'
 import type { PgTransaction } from 'drizzle-orm/pg-core'

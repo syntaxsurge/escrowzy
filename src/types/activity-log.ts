@@ -1,6 +1,6 @@
 import { Activity, Shield, Users, CreditCard } from 'lucide-react'
 
-import { ActivityType } from '@/lib/db/schema'
+import { ActivityType } from '@/lib/constants/activity-types'
 
 export const ACTIVITY_CATEGORIES = {
   security: [

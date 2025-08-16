@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { exec } from 'node:child_process'
 import crypto from 'node:crypto'
 import { promises as fs } from 'node:fs'

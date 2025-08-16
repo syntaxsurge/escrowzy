@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { SQL, and, asc, desc, ilike, sql, eq } from 'drizzle-orm'
 
 import type { TeamWithOwnerDetails } from '@/types/database'

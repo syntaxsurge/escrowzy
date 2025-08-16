@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { randomBytes } from 'crypto'
 
 import { eq, and, gt, lt } from 'drizzle-orm'

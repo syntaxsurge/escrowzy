@@ -131,9 +131,11 @@ export default function PortfolioManagementPage() {
       if (newItem.categoryId) formData.append('categoryId', newItem.categoryId)
       if (newItem.projectUrl) formData.append('projectUrl', newItem.projectUrl)
       if (newItem.clientName) formData.append('clientName', newItem.clientName)
-      if (newItem.completionDate) formData.append('completionDate', newItem.completionDate)
-      if (newItem.skillsUsed) formData.append('skillsUsed', JSON.stringify(newItem.skillsUsed))
-      
+      if (newItem.completionDate)
+        formData.append('completionDate', newItem.completionDate)
+      if (newItem.skillsUsed)
+        formData.append('skillsUsed', JSON.stringify(newItem.skillsUsed))
+
       // Add image files
       if (newItem.newImageFiles) {
         newItem.newImageFiles.forEach(file => {
@@ -177,18 +179,23 @@ export default function PortfolioManagementPage() {
       const formData = new FormData()
       formData.append('title', editingItem.title)
       formData.append('description', editingItem.description)
-      if (editingItem.categoryId) formData.append('categoryId', editingItem.categoryId)
-      if (editingItem.projectUrl) formData.append('projectUrl', editingItem.projectUrl)
-      if (editingItem.clientName) formData.append('clientName', editingItem.clientName)
-      if (editingItem.completionDate) formData.append('completionDate', editingItem.completionDate)
-      if (editingItem.skillsUsed) formData.append('skillsUsed', JSON.stringify(editingItem.skillsUsed))
-      
+      if (editingItem.categoryId)
+        formData.append('categoryId', editingItem.categoryId)
+      if (editingItem.projectUrl)
+        formData.append('projectUrl', editingItem.projectUrl)
+      if (editingItem.clientName)
+        formData.append('clientName', editingItem.clientName)
+      if (editingItem.completionDate)
+        formData.append('completionDate', editingItem.completionDate)
+      if (editingItem.skillsUsed)
+        formData.append('skillsUsed', JSON.stringify(editingItem.skillsUsed))
+
       // Keep existing images that aren't new uploads
       const existingImageUrls = (editingItem.images || []).filter(
         img => !img.startsWith('blob:')
       )
       formData.append('existingImages', JSON.stringify(existingImageUrls))
-      
+
       // Add new image files
       if (editingItem.newImageFiles) {
         editingItem.newImageFiles.forEach(file => {

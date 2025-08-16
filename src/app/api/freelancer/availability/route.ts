@@ -1,9 +1,11 @@
 import { NextRequest } from 'next/server'
-import { getAuth } from '@/lib/auth/auth-utils'
-import { apiResponses } from '@/lib/api/api-responses'
-import { db } from '@/lib/db'
-import { freelancerProfiles } from '@/lib/db/schema'
+
 import { eq } from 'drizzle-orm'
+
+import { apiResponses } from '@/lib/api/server-utils'
+import { getAuth } from '@/lib/auth/auth-utils'
+import { db } from '@/lib/db/drizzle'
+import { freelancerProfiles } from '@/lib/db/schema'
 
 export async function GET(request: NextRequest) {
   try {
@@ -67,7 +69,9 @@ export async function PUT(request: NextRequest) {
         timezone: body.timezone,
         languages: body.languages,
         // Store additional availability data in the profile or create a separate table
-        responseTime: body.hoursPerWeek ? Math.floor(body.hoursPerWeek / 8) : profile[0].responseTime
+        responseTime: body.hoursPerWeek
+          ? Math.floor(body.hoursPerWeek / 8)
+          : profile[0].responseTime
       })
       .where(eq(freelancerProfiles.userId, auth.userId))
       .returning()

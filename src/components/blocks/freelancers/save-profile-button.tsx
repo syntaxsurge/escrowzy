@@ -1,10 +1,12 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+
 import { Heart } from 'lucide-react'
 import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
+
+import { Button } from '@/components/ui/button'
 
 interface SaveProfileButtonProps {
   freelancerId: string
@@ -54,9 +56,7 @@ export function SaveProfileButton({
       onClick={handleSaveToggle}
       disabled={isLoading}
     >
-      <Heart
-        className={`mr-2 h-4 w-4 ${isSaved ? 'fill-current' : ''}`}
-      />
+      <Heart className={`mr-2 h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
       {isSaved ? 'Saved' : 'Save Profile'}
     </Button>
   )

@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
     config.externals.push('pino-pretty', 'lokijs', 'encoding')
 
     if (!isServer) {
-      // Fixes npm packages that depend on `fs`, `net`, `tls` modules
+      // Fixes npm packages that depend on Node.js modules
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
@@ -52,22 +52,35 @@ const nextConfig: NextConfig = {
         url: false,
         zlib: false,
         perf_hooks: false,
-        postgres: false,
-        'postgres-js': false
+        child_process: false,
+        path: false,
+        buffer: false
       }
 
       // Prevent importing server-only modules in client bundles
       config.resolve.alias = {
         ...config.resolve.alias,
         postgres: false,
+        'postgres/src/index.js': false,
         'drizzle-orm/postgres-js': false,
-        '@/lib/db/drizzle': false
+        '@/lib/db/drizzle': false,
+        '@/lib/db/queries': false,
+        '@/services': false
       }
+
+      // Ignore postgres modules in client bundles
+      config.module = config.module || {}
+      config.module.rules = config.module.rules || []
+      config.module.rules.push({
+        test: /postgres/,
+        use: 'null-loader'
+      })
     }
 
     // Prevent WalletConnect and other Web3 modules from being bundled on server
     if (isServer) {
       config.externals.push({
+        postgres: 'commonjs postgres',
         'utf-8-validate': 'commonjs utf-8-validate',
         bufferutil: 'commonjs bufferutil',
         '@walletconnect/universal-provider':

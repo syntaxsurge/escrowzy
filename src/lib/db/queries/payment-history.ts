@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { eq, inArray, ilike } from 'drizzle-orm'
 
 import type { TableRequest, TableResponse } from '@/lib/table/table'

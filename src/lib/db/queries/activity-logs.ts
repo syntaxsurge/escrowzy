@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { desc, eq, and, gte, sql, inArray } from 'drizzle-orm'
 
 import { type TableRequest, type TableResponse } from '@/lib/table/table'

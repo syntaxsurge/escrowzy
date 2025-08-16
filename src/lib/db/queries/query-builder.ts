@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { desc, asc, and, or, ilike, eq, sql, type SQL } from 'drizzle-orm'
 
 import { buildUserSearchCondition } from '@/lib/db/queries/users'
