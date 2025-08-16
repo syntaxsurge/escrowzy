@@ -76,14 +76,18 @@ export class ReputationSyncService {
     const config = getBlockchainConfig()
     const chainConfig = config.chains[chainId]
 
-    if (!chainConfig?.contractAddresses?.reputationRegistry) {
+    // Check if reputationRegistry exists in the config (it's optional and not deployed yet)
+    const reputationAddress = (chainConfig?.contractAddresses as any)
+      ?.reputationRegistry
+
+    if (!reputationAddress) {
       // Use a placeholder address if not configured
       this.contractAddress = '0x0000000000000000000000000000000000000000'
       console.warn(
         `ReputationRegistry contract not deployed on chain ${chainId}`
       )
     } else {
-      this.contractAddress = chainConfig.contractAddresses.reputationRegistry
+      this.contractAddress = reputationAddress
     }
   }
 

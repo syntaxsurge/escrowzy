@@ -1153,6 +1153,65 @@ export const reviewDisputes = pgTable(
   ]
 )
 
+export const skillEndorsements = pgTable(
+  'skill_endorsements',
+  {
+    id: serial('id').primaryKey(),
+    endorserId: integer('endorser_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    endorsedUserId: integer('endorsed_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    skillId: integer('skill_id')
+      .notNull()
+      .references(() => skills.id, { onDelete: 'restrict' }),
+    rating: integer('rating').notNull(), // 1-5
+    relationship: varchar('relationship', { length: 50 }), // 'client', 'freelancer', 'colleague'
+    projectContext: text('project_context'), // Brief description of project worked on
+    verified: boolean('verified').notNull().default(false), // If endorser worked with endorsed on platform
+    jobId: integer('job_id').references(() => jobPostings.id), // Link to job if applicable
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_skill_endorsements_endorsed_user').on(table.endorsedUserId),
+    index('idx_skill_endorsements_endorser').on(table.endorserId),
+    index('idx_skill_endorsements_skill').on(table.skillId),
+    index('idx_skill_endorsements_verified').on(table.verified),
+    unique('unique_skill_endorsement').on(
+      table.endorserId,
+      table.endorsedUserId,
+      table.skillId
+    )
+  ]
+)
+
+export const verificationBadges = pgTable(
+  'verification_badges',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    badgeType: varchar('badge_type', { length: 50 }).notNull(), // 'identity', 'email', 'phone', 'kyc', 'professional'
+    verificationLevel: varchar('verification_level', { length: 20 }).notNull(), // 'basic', 'standard', 'advanced'
+    verifiedAt: timestamp('verified_at').notNull().defaultNow(),
+    expiresAt: timestamp('expires_at'),
+    verificationMethod: varchar('verification_method', { length: 100 }), // How it was verified
+    metadata: jsonb('metadata').notNull().default('{}'), // Additional verification data
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_verification_badges_user').on(table.userId),
+    index('idx_verification_badges_type').on(table.badgeType),
+    index('idx_verification_badges_active').on(table.isActive),
+    unique('unique_verification_badge').on(table.userId, table.badgeType)
+  ]
+)
+
 export const portfolioItems = pgTable(
   'portfolio_items',
   {
@@ -1738,6 +1797,13 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   }),
   disputesSubmitted: many(reviewDisputes, { relationName: 'disputeSubmitter' }),
   disputesResolved: many(reviewDisputes, { relationName: 'disputeResolver' }),
+  skillEndorsementsGiven: many(skillEndorsements, {
+    relationName: 'skillEndorser'
+  }),
+  skillEndorsementsReceived: many(skillEndorsements, {
+    relationName: 'skillEndorsed'
+  }),
+  verificationBadges: many(verificationBadges),
   savedFreelancers: many(savedFreelancers),
   savedJobs: many(savedJobs)
 }))
@@ -2190,6 +2256,40 @@ export const reviewDisputesRelations = relations(reviewDisputes, ({ one }) => ({
   })
 }))
 
+export const skillEndorsementsRelations = relations(
+  skillEndorsements,
+  ({ one }) => ({
+    endorser: one(users, {
+      fields: [skillEndorsements.endorserId],
+      references: [users.id],
+      relationName: 'skillEndorser'
+    }),
+    endorsedUser: one(users, {
+      fields: [skillEndorsements.endorsedUserId],
+      references: [users.id],
+      relationName: 'skillEndorsed'
+    }),
+    skill: one(skills, {
+      fields: [skillEndorsements.skillId],
+      references: [skills.id]
+    }),
+    job: one(jobPostings, {
+      fields: [skillEndorsements.jobId],
+      references: [jobPostings.id]
+    })
+  })
+)
+
+export const verificationBadgesRelations = relations(
+  verificationBadges,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [verificationBadges.userId],
+      references: [users.id]
+    })
+  })
+)
+
 export const portfolioItemsRelations = relations(portfolioItems, ({ one }) => ({
   freelancer: one(freelancerProfiles, {
     fields: [portfolioItems.freelancerId],
@@ -2487,6 +2587,10 @@ export type ClientReview = typeof clientReviews.$inferSelect
 export type NewClientReview = typeof clientReviews.$inferInsert
 export type ReviewDispute = typeof reviewDisputes.$inferSelect
 export type NewReviewDispute = typeof reviewDisputes.$inferInsert
+export type SkillEndorsement = typeof skillEndorsements.$inferSelect
+export type NewSkillEndorsement = typeof skillEndorsements.$inferInsert
+export type VerificationBadge = typeof verificationBadges.$inferSelect
+export type NewVerificationBadge = typeof verificationBadges.$inferInsert
 export type PortfolioItem = typeof portfolioItems.$inferSelect
 export type NewPortfolioItem = typeof portfolioItems.$inferInsert
 export type SavedFreelancer = typeof savedFreelancers.$inferSelect

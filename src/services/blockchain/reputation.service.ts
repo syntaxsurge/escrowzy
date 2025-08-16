@@ -1,7 +1,7 @@
 import { getContract, prepareContractCall, sendTransaction } from 'thirdweb'
 
-import { getChain } from '@/lib/blockchain/chains'
-import { client } from '@/lib/blockchain/thirdweb-client'
+import { getThirdwebChain } from '@/lib/blockchain'
+import { thirdwebClient } from '@/lib/blockchain/thirdweb-client'
 
 const REPUTATION_REGISTRY_ABI = [
   {
@@ -65,9 +65,9 @@ export async function updateOnchainReputation(
   account: any
 ): Promise<{ success: boolean; txHash?: string; error?: string }> {
   try {
-    const chain = getChain(chainId)
+    const chain = getThirdwebChain(chainId)
     const contract = getContract({
-      client,
+      client: thirdwebClient,
       chain,
       address: contractAddress,
       abi: REPUTATION_REGISTRY_ABI
@@ -107,9 +107,9 @@ export async function endorseSkillOnchain(
   account: any
 ): Promise<{ success: boolean; txHash?: string; error?: string }> {
   try {
-    const chain = getChain(chainId)
+    const chain = getThirdwebChain(chainId)
     const contract = getContract({
-      client,
+      client: thirdwebClient,
       chain,
       address: contractAddress,
       abi: REPUTATION_REGISTRY_ABI
@@ -149,9 +149,9 @@ export async function getOnchainReputationScore(
   endorsementCount: number
 } | null> {
   try {
-    const chain = getChain(chainId)
+    const chain = getThirdwebChain(chainId)
     const contract = getContract({
-      client,
+      client: thirdwebClient,
       chain,
       address: contractAddress,
       abi: REPUTATION_REGISTRY_ABI
@@ -181,9 +181,9 @@ export async function getOnchainTrustScore(
   level: number
 } | null> {
   try {
-    const chain = getChain(chainId)
+    const chain = getThirdwebChain(chainId)
     const contract = getContract({
-      client,
+      client: thirdwebClient,
       chain,
       address: contractAddress,
       abi: REPUTATION_REGISTRY_ABI
@@ -207,9 +207,9 @@ export async function hasReputationNFT(
   contractAddress: string
 ): Promise<boolean> {
   try {
-    const chain = getChain(chainId)
+    const chain = getThirdwebChain(chainId)
     const contract = getContract({
-      client,
+      client: thirdwebClient,
       chain,
       address: contractAddress,
       abi: REPUTATION_REGISTRY_ABI

@@ -18,47 +18,42 @@ import { searchFreelancers } from '@/lib/db/queries/freelancers'
 async function FreelancersList({
   searchParams
 }: {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  const params = await searchParams
   const filters = {
-    search: searchParams.search as string,
-    skills: searchParams.skills
-      ? (searchParams.skills as string).split(',').map(Number).filter(Boolean)
+    search: params.search as string,
+    skills: params.skills
+      ? (params.skills as string).split(',').map(Number).filter(Boolean)
       : undefined,
-    minRate: searchParams.minRate
-      ? parseFloat(searchParams.minRate as string)
-      : undefined,
-    maxRate: searchParams.maxRate
-      ? parseFloat(searchParams.maxRate as string)
-      : undefined,
-    experienceLevel: searchParams.experienceLevel as
+    minRate: params.minRate ? parseFloat(params.minRate as string) : undefined,
+    maxRate: params.maxRate ? parseFloat(params.maxRate as string) : undefined,
+    experienceLevel: params.experienceLevel as
       | 'entry'
       | 'intermediate'
       | 'expert'
       | undefined,
-    availability: searchParams.availability as
+    availability: params.availability as
       | 'available'
       | 'busy'
       | 'away'
       | undefined,
-    languages: searchParams.languages
-      ? (searchParams.languages as string).split(',')
+    languages: params.languages
+      ? (params.languages as string).split(',')
       : undefined,
-    minRating: searchParams.minRating
-      ? parseFloat(searchParams.minRating as string)
+    minRating: params.minRating
+      ? parseFloat(params.minRating as string)
       : undefined,
-    verified: searchParams.verified === 'true' ? true : undefined,
+    verified: params.verified === 'true' ? true : undefined,
     sortBy:
-      (searchParams.sortBy as
+      (params.sortBy as
         | 'newest'
         | 'rating'
         | 'price_low'
         | 'price_high'
         | 'experience') || 'newest',
     limit: 12,
-    offset: searchParams.page
-      ? (parseInt(searchParams.page as string) - 1) * 12
-      : 0
+    offset: params.page ? (parseInt(params.page as string) - 1) * 12 : 0
   }
 
   const result = await searchFreelancers(filters)
@@ -100,16 +95,16 @@ async function FreelancersList({
               : 1
             const urlParams = new URLSearchParams()
             Object.entries({
-              search: searchParams.search,
-              skills: searchParams.skills,
-              minRate: searchParams.minRate,
-              maxRate: searchParams.maxRate,
-              experienceLevel: searchParams.experienceLevel,
-              availability: searchParams.availability,
-              languages: searchParams.languages,
-              minRating: searchParams.minRating,
-              verified: searchParams.verified,
-              sortBy: searchParams.sortBy,
+              search: params.search,
+              skills: params.skills,
+              minRate: params.minRate,
+              maxRate: params.maxRate,
+              experienceLevel: params.experienceLevel,
+              availability: params.availability,
+              languages: params.languages,
+              minRating: params.minRating,
+              verified: params.verified,
+              sortBy: params.sortBy,
               page: page.toString()
             }).forEach(([key, value]) => {
               if (value) urlParams.set(key, value as string)
@@ -154,11 +149,12 @@ function FreelancersLoading() {
   )
 }
 
-export default function FreelancersDirectoryPage({
+export default async function FreelancersDirectoryPage({
   searchParams
 }: {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  const params = await searchParams
   return (
     <div className='from-background to-muted/20 min-h-screen bg-gradient-to-b'>
       <div className='container mx-auto px-4 py-12'>
@@ -177,13 +173,13 @@ export default function FreelancersDirectoryPage({
               <Input
                 name='search'
                 placeholder='Search by skills, title, or keywords...'
-                defaultValue={searchParams.search as string}
+                defaultValue={params.search as string}
                 className='pl-10'
               />
             </div>
             <Select
               name='sortBy'
-              defaultValue={(searchParams.sortBy as string) || 'relevance'}
+              defaultValue={(params.sortBy as string) || 'relevance'}
             >
               <SelectTrigger className='w-[180px]'>
                 <SelectValue placeholder='Sort by' />

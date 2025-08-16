@@ -43,9 +43,10 @@ import {
 export default async function PublicFreelancerProfilePage({
   params
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
-  const userId = parseInt(params.id)
+  const { id } = await params
+  const userId = parseInt(id)
   if (isNaN(userId)) {
     notFound()
   }
@@ -210,13 +211,13 @@ export default async function PublicFreelancerProfilePage({
                   {!isOwnProfile && (
                     <>
                       <Button asChild>
-                        <Link href={`/messages?user=${params.id}`}>
+                        <Link href={`/messages?user=${id}`}>
                           <MessageSquare className='mr-2 h-4 w-4' />
                           Contact Me
                         </Link>
                       </Button>
                       <SaveProfileButton
-                        freelancerId={params.id}
+                        freelancerId={id}
                         isSaved={isSaved}
                         isAuthenticated={!!auth}
                       />
@@ -626,7 +627,7 @@ export default async function PublicFreelancerProfilePage({
                 </div>
                 {!isOwnProfile && (
                   <Button className='w-full' asChild>
-                    <Link href={`/jobs/create?freelancer=${params.id}`}>
+                    <Link href={`/jobs/create?freelancer=${id}`}>
                       <Briefcase className='mr-2 h-4 w-4' />
                       Hire Me
                     </Link>

@@ -242,7 +242,10 @@ export class ReferralService {
           `Referral milestone: ${milestone.count} active referrals!`
         )
 
-        await checkAndAwardAchievements(userId, milestone.achievement)
+        await checkAndAwardAchievements(
+          userId,
+          milestone.achievement as TriggerEvent
+        )
 
         // Send congratulations email
         const user = await findUserById(userId)

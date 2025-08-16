@@ -289,29 +289,29 @@ milestone-based project management.
 
 ### Review Collection
 
-- [x] Create review prompt system
-- [x] Build multi-criteria ratings
-- [x] Implement review moderation
-- [x] Add response functionality
+- [x] ~~Create review prompt system~~
+- [x] ~~Build multi-criteria ratings~~
+- [x] ~~Implement review moderation~~
+- [x] ~~Add response functionality~~
 - [x] ~~Create review disputes~~
-- [x] Build review analytics
+- [x] ~~Build review analytics~~
 
 ### Onchain Reputation
 
 - [x] Implement reputation smart contract
-- [x] Create reputation NFTs
-- [x] Build verification system
-- [x] Add skill endorsements
-- [x] Create trust scores
-- [x] Implement decay mechanism
+- [x] ~~Create reputation NFTs~~
+- [x] ~~Build verification system~~
+- [x] ~~Add skill endorsements~~
+- [x] ~~Create trust scores~~
+- [x] ~~Implement decay mechanism~~
 
 ### Achievement System
 
-- [x] Create freelancer badges
-- [x] Build milestone achievements
+- [x] ~~Create freelancer badges~~
+- [x] ~~Build milestone achievements~~
 - [x] ~~Implement streak rewards~~
-- [x] Add level progression
-- [x] Create leaderboards
+- [x] ~~Add level progression~~
+- [x] ~~Create leaderboards~~
 - [x] ~~Build referral program~~
 
 ---

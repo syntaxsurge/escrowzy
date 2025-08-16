@@ -8,6 +8,7 @@ import {
   getFreelancerReviews,
   getClientReviews
 } from '@/lib/db/queries/reviews'
+import { findUserById } from '@/lib/db/queries/users'
 
 import { mintAchievementNFT } from './blockchain/achievement-nft.service'
 
@@ -140,12 +141,20 @@ export async function checkAndAwardAchievements(
         const meetsCondition = await achievement.check(userId)
 
         if (meetsCondition) {
+          const user = await findUserById(userId)
+          if (!user?.walletAddress) continue
+
           const { tokenId, txHash } = await mintAchievementNFT(
-            userId,
+            user.walletAddress,
             achievement.id
           )
 
-          await recordAchievementMint(userId, achievement.id, tokenId, txHash)
+          await recordAchievementMint(
+            userId,
+            achievement.id,
+            tokenId || 0,
+            txHash || ''
+          )
 
           awardedAchievements.push(achievement.id)
         }
@@ -175,12 +184,20 @@ export async function checkAllAchievements(userId: number): Promise<string[]> {
         const meetsCondition = await achievement.check(userId)
 
         if (meetsCondition) {
+          const user = await findUserById(userId)
+          if (!user?.walletAddress) continue
+
           const { tokenId, txHash } = await mintAchievementNFT(
-            userId,
+            user.walletAddress,
             achievement.id
           )
 
-          await recordAchievementMint(userId, achievement.id, tokenId, txHash)
+          await recordAchievementMint(
+            userId,
+            achievement.id,
+            tokenId || 0,
+            txHash || ''
+          )
 
           awardedAchievements.push(achievement.id)
         }

@@ -11,7 +11,7 @@ import {
   jobPostings
 } from '@/lib/db/schema'
 
-import { checkAndAwardAchievements } from './achievement-triggers'
+import { checkAndAwardAchievements, TriggerEvent } from './achievement-triggers'
 import { RewardsService } from './rewards'
 
 interface ReviewStreak {
@@ -251,7 +251,7 @@ async function awardStreakMilestone(userId: number, streak: number) {
       `Milestone: ${streak}-review streak!`
     )
 
-    await checkAndAwardAchievements(userId, reward.achievement)
+    await checkAndAwardAchievements(userId, reward.achievement as TriggerEvent)
   }
 }
 
