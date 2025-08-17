@@ -1,0 +1,17 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+import { getHighlightedFaqItems } from '@/lib/db/queries/faq'
+
+export async function GET(req: NextRequest) {
+  try {
+    const highlightedFaqs = await getHighlightedFaqItems()
+
+    return NextResponse.json(highlightedFaqs)
+  } catch (error) {
+    console.error('Failed to fetch highlighted FAQs:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch highlighted FAQs' },
+      { status: 500 }
+    )
+  }
+}

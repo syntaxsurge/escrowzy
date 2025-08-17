@@ -2694,16 +2694,27 @@ export const onboardingSteps = pgTable('onboarding_steps', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const onboardingProgress = pgTable('onboarding_progress', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id),
-  stepId: integer('step_id').notNull().references(() => onboardingSteps.id),
-  completedAt: timestamp('completed_at'),
-  skippedAt: timestamp('skipped_at'),
-  startedAt: timestamp('started_at').defaultNow()
-}, (table) => ({
-  userStepUnique: uniqueIndex('onboarding_progress_user_step_idx').on(table.userId, table.stepId)
-}))
+export const onboardingProgress = pgTable(
+  'onboarding_progress',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    stepId: integer('step_id')
+      .notNull()
+      .references(() => onboardingSteps.id),
+    completedAt: timestamp('completed_at'),
+    skippedAt: timestamp('skipped_at'),
+    startedAt: timestamp('started_at').defaultNow()
+  },
+  table => ({
+    userStepUnique: uniqueIndex('onboarding_progress_user_step_idx').on(
+      table.userId,
+      table.stepId
+    )
+  })
+)
 
 // Tutorial System
 export const tutorials = pgTable('tutorials', {
@@ -2725,18 +2736,29 @@ export const tutorials = pgTable('tutorials', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const tutorialProgress = pgTable('tutorial_progress', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id),
-  tutorialId: integer('tutorial_id').notNull().references(() => tutorials.id),
-  currentStep: integer('current_step').default(0),
-  completedSteps: jsonb('completed_steps').default('[]'),
-  completedAt: timestamp('completed_at'),
-  startedAt: timestamp('started_at').defaultNow(),
-  lastAccessedAt: timestamp('last_accessed_at').defaultNow()
-}, (table) => ({
-  userTutorialUnique: uniqueIndex('tutorial_progress_user_tutorial_idx').on(table.userId, table.tutorialId)
-}))
+export const tutorialProgress = pgTable(
+  'tutorial_progress',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    tutorialId: integer('tutorial_id')
+      .notNull()
+      .references(() => tutorials.id),
+    currentStep: integer('current_step').default(0),
+    completedSteps: jsonb('completed_steps').default('[]'),
+    completedAt: timestamp('completed_at'),
+    startedAt: timestamp('started_at').defaultNow(),
+    lastAccessedAt: timestamp('last_accessed_at').defaultNow()
+  },
+  table => ({
+    userTutorialUnique: uniqueIndex('tutorial_progress_user_tutorial_idx').on(
+      table.userId,
+      table.tutorialId
+    )
+  })
+)
 
 // FAQ System
 export const faqCategories = pgTable('faq_categories', {
@@ -2753,7 +2775,9 @@ export const faqCategories = pgTable('faq_categories', {
 
 export const faqItems = pgTable('faq_items', {
   id: serial('id').primaryKey(),
-  categoryId: integer('category_id').notNull().references(() => faqCategories.id),
+  categoryId: integer('category_id')
+    .notNull()
+    .references(() => faqCategories.id),
   question: text('question').notNull(),
   answer: text('answer').notNull(),
   slug: varchar('slug', { length: 255 }).notNull().unique(),
@@ -2769,18 +2793,30 @@ export const faqItems = pgTable('faq_items', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const faqVotes = pgTable('faq_votes', {
-  id: serial('id').primaryKey(),
-  faqId: integer('faq_id').notNull().references(() => faqItems.id),
-  userId: integer('user_id').references(() => users.id),
-  sessionId: varchar('session_id', { length: 100 }), // For anonymous users
-  isHelpful: boolean('is_helpful').notNull(),
-  feedback: text('feedback'),
-  createdAt: timestamp('created_at').defaultNow()
-}, (table) => ({
-  userFaqUnique: uniqueIndex('faq_votes_user_faq_idx').on(table.userId, table.faqId),
-  sessionFaqUnique: uniqueIndex('faq_votes_session_faq_idx').on(table.sessionId, table.faqId)
-}))
+export const faqVotes = pgTable(
+  'faq_votes',
+  {
+    id: serial('id').primaryKey(),
+    faqId: integer('faq_id')
+      .notNull()
+      .references(() => faqItems.id),
+    userId: integer('user_id').references(() => users.id),
+    sessionId: varchar('session_id', { length: 100 }), // For anonymous users
+    isHelpful: boolean('is_helpful').notNull(),
+    feedback: text('feedback'),
+    createdAt: timestamp('created_at').defaultNow()
+  },
+  table => ({
+    userFaqUnique: uniqueIndex('faq_votes_user_faq_idx').on(
+      table.userId,
+      table.faqId
+    ),
+    sessionFaqUnique: uniqueIndex('faq_votes_session_faq_idx').on(
+      table.sessionId,
+      table.faqId
+    )
+  })
+)
 
 // Help Documentation
 export const helpArticles = pgTable('help_articles', {
@@ -2827,16 +2863,27 @@ export const videoTutorials = pgTable('video_tutorials', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const videoProgress = pgTable('video_progress', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id),
-  videoId: integer('video_id').notNull().references(() => videoTutorials.id),
-  watchedSeconds: integer('watched_seconds').default(0),
-  completedAt: timestamp('completed_at'),
-  lastWatchedAt: timestamp('last_watched_at').defaultNow()
-}, (table) => ({
-  userVideoUnique: uniqueIndex('video_progress_user_video_idx').on(table.userId, table.videoId)
-}))
+export const videoProgress = pgTable(
+  'video_progress',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    videoId: integer('video_id')
+      .notNull()
+      .references(() => videoTutorials.id),
+    watchedSeconds: integer('watched_seconds').default(0),
+    completedAt: timestamp('completed_at'),
+    lastWatchedAt: timestamp('last_watched_at').defaultNow()
+  },
+  table => ({
+    userVideoUnique: uniqueIndex('video_progress_user_video_idx').on(
+      table.userId,
+      table.videoId
+    )
+  })
+)
 
 // Enhanced Referral System
 export const referralCampaigns = pgTable('referral_campaigns', {
@@ -2859,13 +2906,17 @@ export const referralCampaigns = pgTable('referral_campaigns', {
 
 export const referralLinks = pgTable('referral_links', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
   campaignId: integer('campaign_id').references(() => referralCampaigns.id),
   code: varchar('code', { length: 100 }).notNull().unique(),
   customAlias: varchar('custom_alias', { length: 100 }).unique(),
   clickCount: integer('click_count').default(0),
   conversionCount: integer('conversion_count').default(0),
-  totalEarnings: decimal('total_earnings', { precision: 10, scale: 2 }).default('0'),
+  totalEarnings: decimal('total_earnings', { precision: 10, scale: 2 }).default(
+    '0'
+  ),
   metadata: jsonb('metadata'),
   expiresAt: timestamp('expires_at'),
   isActive: boolean('is_active').default(true),
@@ -2875,13 +2926,23 @@ export const referralLinks = pgTable('referral_links', {
 
 export const referralConversions = pgTable('referral_conversions', {
   id: serial('id').primaryKey(),
-  referralLinkId: integer('referral_link_id').notNull().references(() => referralLinks.id),
-  referrerId: integer('referrer_id').notNull().references(() => users.id),
-  refereeId: integer('referee_id').notNull().references(() => users.id),
+  referralLinkId: integer('referral_link_id')
+    .notNull()
+    .references(() => referralLinks.id),
+  referrerId: integer('referrer_id')
+    .notNull()
+    .references(() => users.id),
+  refereeId: integer('referee_id')
+    .notNull()
+    .references(() => users.id),
   campaignId: integer('campaign_id').references(() => referralCampaigns.id),
   conversionType: varchar('conversion_type', { length: 50 }).notNull(), // signup, first_purchase, etc.
-  referrerRewardStatus: varchar('referrer_reward_status', { length: 20 }).default('pending'),
-  refereeRewardStatus: varchar('referee_reward_status', { length: 20 }).default('pending'),
+  referrerRewardStatus: varchar('referrer_reward_status', {
+    length: 20
+  }).default('pending'),
+  refereeRewardStatus: varchar('referee_reward_status', { length: 20 }).default(
+    'pending'
+  ),
   referrerRewardAmount: jsonb('referrer_reward_amount'),
   refereeRewardAmount: jsonb('referee_reward_amount'),
   ipAddress: varchar('ip_address', { length: 45 }),
@@ -2904,7 +2965,9 @@ export const partners = pgTable('partners', {
   apiKey: varchar('api_key', { length: 255 }).unique(),
   webhookUrl: varchar('webhook_url', { length: 500 }),
   branding: jsonb('branding'), // Logo, colors, etc.
-  totalRevenue: decimal('total_revenue', { precision: 10, scale: 2 }).default('0'),
+  totalRevenue: decimal('total_revenue', { precision: 10, scale: 2 }).default(
+    '0'
+  ),
   totalReferrals: integer('total_referrals').default(0),
   status: varchar('status', { length: 20 }).default('pending'), // pending, active, suspended, terminated
   approvedAt: timestamp('approved_at'),
@@ -2916,12 +2979,20 @@ export const partners = pgTable('partners', {
 
 export const partnerCommissions = pgTable('partner_commissions', {
   id: serial('id').primaryKey(),
-  partnerId: integer('partner_id').notNull().references(() => partners.id),
+  partnerId: integer('partner_id')
+    .notNull()
+    .references(() => partners.id),
   referenceType: varchar('reference_type', { length: 50 }).notNull(), // trade, subscription, job
   referenceId: integer('reference_id').notNull(),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
-  commissionRate: decimal('commission_rate', { precision: 5, scale: 2 }).notNull(),
-  commissionAmount: decimal('commission_amount', { precision: 10, scale: 2 }).notNull(),
+  commissionRate: decimal('commission_rate', {
+    precision: 5,
+    scale: 2
+  }).notNull(),
+  commissionAmount: decimal('commission_amount', {
+    precision: 10,
+    scale: 2
+  }).notNull(),
   status: varchar('status', { length: 20 }).default('pending'), // pending, approved, paid, cancelled
   paidAt: timestamp('paid_at'),
   paymentMethod: varchar('payment_method', { length: 50 }),
@@ -2941,7 +3012,9 @@ export const blogPosts = pgTable('blog_posts', {
   featuredImage: varchar('featured_image', { length: 500 }),
   category: varchar('category', { length: 50 }).notNull(),
   tags: jsonb('tags'),
-  authorId: integer('author_id').notNull().references(() => users.id),
+  authorId: integer('author_id')
+    .notNull()
+    .references(() => users.id),
   seoTitle: varchar('seo_title', { length: 255 }),
   seoDescription: text('seo_description'),
   seoKeywords: text('seo_keywords'),
@@ -2961,7 +3034,9 @@ export const blogPosts = pgTable('blog_posts', {
 
 export const blogComments = pgTable('blog_comments', {
   id: serial('id').primaryKey(),
-  postId: integer('post_id').notNull().references(() => blogPosts.id),
+  postId: integer('post_id')
+    .notNull()
+    .references(() => blogPosts.id),
   userId: integer('user_id').references(() => users.id),
   parentId: integer('parent_id'),
   content: text('content').notNull(),

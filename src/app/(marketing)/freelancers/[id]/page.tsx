@@ -87,8 +87,7 @@ export default async function PublicFreelancerProfilePage({
     }
 
     if (profile.bio) score += weights.bio
-    if (profile.freelancerSkills && profile.freelancerSkills.length > 0)
-      score += weights.skills
+    if (profile.skills && profile.skills.length > 0) score += weights.skills
     if (profile.portfolioItems && profile.portfolioItems.length > 0)
       score += weights.portfolio
     if (profile.hourlyRate) score += weights.hourlyRate

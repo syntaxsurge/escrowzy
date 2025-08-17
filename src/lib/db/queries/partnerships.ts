@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { and, asc, desc, eq, gte, lte, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, lte, sql } from 'drizzle-orm'
 
 import { db } from '../drizzle'
 import {
@@ -17,7 +17,7 @@ import {
 export async function createPartner(data: NewPartner): Promise<Partner> {
   // Generate API key
   const apiKey = generateApiKey()
-  
+
   const [partner] = await db
     .insert(partners)
     .values({
@@ -52,12 +52,7 @@ export async function getPartnerByApiKey(apiKey: string) {
   const [partner] = await db
     .select()
     .from(partners)
-    .where(
-      and(
-        eq(partners.apiKey, apiKey),
-        eq(partners.status, 'active')
-      )
-    )
+    .where(and(eq(partners.apiKey, apiKey), eq(partners.status, 'active')))
     .limit(1)
 
   return partner
@@ -156,8 +151,9 @@ export async function trackPartnerCommission(
   // Update partner's total revenue and referrals
   const partner = await getPartner(data.partnerId)
   if (partner) {
-    const totalRevenue = parseFloat(partner.totalRevenue) + parseFloat(data.amount)
-    
+    const totalRevenue =
+      parseFloat(partner.totalRevenue) + parseFloat(data.amount)
+
     await db
       .update(partners)
       .set({
@@ -285,11 +281,17 @@ export async function getPartnerLeaderboard(
   limit = 10
 ) {
   let dateCondition = sql`true`
-  
+
   if (period === 'month') {
-    dateCondition = gte(partnerCommissions.createdAt, sql`now() - interval '1 month'`)
+    dateCondition = gte(
+      partnerCommissions.createdAt,
+      sql`now() - interval '1 month'`
+    )
   } else if (period === 'year') {
-    dateCondition = gte(partnerCommissions.createdAt, sql`now() - interval '1 year'`)
+    dateCondition = gte(
+      partnerCommissions.createdAt,
+      sql`now() - interval '1 year'`
+    )
   }
 
   const leaderboard = await db
@@ -302,10 +304,7 @@ export async function getPartnerLeaderboard(
     .from(partners)
     .leftJoin(
       partnerCommissions,
-      and(
-        eq(partnerCommissions.partnerId, partners.id),
-        dateCondition
-      )
+      and(eq(partnerCommissions.partnerId, partners.id), dateCondition)
     )
     .where(eq(partners.status, 'active'))
     .groupBy(partners.id)

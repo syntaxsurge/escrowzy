@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { and, asc, desc, eq, gt, gte, lt, lte, or, sql } from 'drizzle-orm'
+import { and, desc, eq, gt, gte, lte, or, sql } from 'drizzle-orm'
 
 import { db } from '../drizzle'
 import {
@@ -12,19 +12,14 @@ import {
   type ReferralCampaign,
   type ReferralLink,
   type ReferralConversion,
-  type NewReferralCampaign,
-  type NewReferralLink,
-  type NewReferralConversion
+  type NewReferralCampaign
 } from '../schema'
 
 // Create referral campaign
 export async function createReferralCampaign(
   data: NewReferralCampaign
 ): Promise<ReferralCampaign> {
-  const [campaign] = await db
-    .insert(referralCampaigns)
-    .values(data)
-    .returning()
+  const [campaign] = await db.insert(referralCampaigns).values(data).returning()
 
   return campaign
 }
@@ -49,7 +44,10 @@ export async function getActiveReferralCampaigns() {
         ),
         or(
           sql`${referralCampaigns.maxUses} is null`,
-          gt(sql`${referralCampaigns.maxUses} - ${referralCampaigns.usedCount}`, 0)
+          gt(
+            sql`${referralCampaigns.maxUses} - ${referralCampaigns.usedCount}`,
+            0
+          )
         )
       )
     )
@@ -189,7 +187,7 @@ export async function trackReferralConversion(
   // Get campaign if exists
   let campaign: ReferralCampaign | null = null
   if (link.campaignId) {
-    [campaign] = await db
+    ;[campaign] = await db
       .select()
       .from(referralCampaigns)
       .where(eq(referralCampaigns.id, link.campaignId))
@@ -248,18 +246,24 @@ export async function getUserReferralStats(userId: number) {
 
   const linkIds = links.map(l => l.id)
 
-  const conversions = linkIds.length > 0
-    ? await db
-        .select()
-        .from(referralConversions)
-        .where(sql`${referralConversions.referralLinkId} in (${sql.join(linkIds, sql`, `)})`)
-    : []
+  const conversions =
+    linkIds.length > 0
+      ? await db
+          .select()
+          .from(referralConversions)
+          .where(
+            sql`${referralConversions.referralLinkId} in (${sql.join(linkIds, sql`, `)})`
+          )
+      : []
 
   const totalClicks = links.reduce((sum, link) => sum + link.clickCount, 0)
   const totalConversions = conversions.length
   const totalEarnings = links.reduce((sum, link) => {
     const earnings = link.totalEarnings
-    return sum + (typeof earnings === 'string' ? parseFloat(earnings) : earnings || 0)
+    return (
+      sum +
+      (typeof earnings === 'string' ? parseFloat(earnings) : earnings || 0)
+    )
   }, 0)
 
   const pendingRewards = conversions.filter(
@@ -275,7 +279,8 @@ export async function getUserReferralStats(userId: number) {
     activeLinks: links.filter(l => l.isActive).length,
     totalClicks,
     totalConversions,
-    conversionRate: totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0,
+    conversionRate:
+      totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0,
     totalEarnings,
     pendingRewards,
     claimedRewards,
@@ -301,17 +306,14 @@ export async function processReferralReward(
     throw new Error('Conversion not found')
   }
 
-  const statusField = rewardType === 'referrer' 
-    ? 'referrerRewardStatus' 
-    : 'refereeRewardStatus'
-  
-  const amountField = rewardType === 'referrer'
-    ? 'referrerRewardAmount'
-    : 'refereeRewardAmount'
+  const statusField =
+    rewardType === 'referrer' ? 'referrerRewardStatus' : 'refereeRewardStatus'
 
-  const userId = rewardType === 'referrer' 
-    ? conversion.referrerId 
-    : conversion.refereeId
+  const amountField =
+    rewardType === 'referrer' ? 'referrerRewardAmount' : 'refereeRewardAmount'
+
+  const userId =
+    rewardType === 'referrer' ? conversion.referrerId : conversion.refereeId
 
   // Get reward amount
   const rewardAmount = conversion[amountField] as any
@@ -379,9 +381,10 @@ export async function getReferralLeaderboard(limit = 10) {
       totalConversions: stat.totalConversions,
       totalEarnings: stat.totalEarnings,
       totalClicks: stat.totalClicks,
-      conversionRate: stat.totalClicks > 0 
-        ? (stat.totalConversions / stat.totalClicks) * 100 
-        : 0
+      conversionRate:
+        stat.totalClicks > 0
+          ? (stat.totalConversions / stat.totalClicks) * 100
+          : 0
     }
   }))
 }
@@ -407,12 +410,7 @@ export async function createReferralAlias(
   const [link] = await db
     .select()
     .from(referralLinks)
-    .where(
-      and(
-        eq(referralLinks.id, linkId),
-        eq(referralLinks.userId, userId)
-      )
-    )
+    .where(and(eq(referralLinks.id, linkId), eq(referralLinks.userId, userId)))
     .limit(1)
 
   if (!link) {

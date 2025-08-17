@@ -1,38 +1,35 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  Search, 
-  ChevronDown, 
-  ChevronRight, 
-  ThumbsUp, 
+
+import {
+  Search,
+  ThumbsUp,
   ThumbsDown,
   MessageSquare,
   Eye,
   Sparkles,
   HelpCircle
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
+  AccordionTrigger
 } from '@/components/ui/accordion'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib'
@@ -78,7 +75,9 @@ export function FaqSystem({
   limit = 20
 }: FaqSystemProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(categorySlug || null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    categorySlug || null
+  )
   const [categories, setCategories] = useState<FaqCategory[]>([])
   const [faqs, setFaqs] = useState<FaqItem[]>([])
   const [popularFaqs, setPopularFaqs] = useState<FaqItem[]>([])
@@ -86,7 +85,10 @@ export function FaqSystem({
   const [loading, setLoading] = useState(true)
   const [searchResults, setSearchResults] = useState<FaqItem[]>([])
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null)
-  const [feedbackDialog, setFeedbackDialog] = useState<{ faqId: number; isHelpful: boolean } | null>(null)
+  const [feedbackDialog, setFeedbackDialog] = useState<{
+    faqId: number
+    isHelpful: boolean
+  } | null>(null)
   const [feedbackText, setFeedbackText] = useState('')
 
   const { toast } = useToast()
@@ -164,7 +166,9 @@ export function FaqSystem({
 
   const searchFaqs = async (query: string) => {
     try {
-      const response = await fetch(`/api/faq/search?q=${encodeURIComponent(query)}`)
+      const response = await fetch(
+        `/api/faq/search?q=${encodeURIComponent(query)}`
+      )
       const data = await response.json()
       setSearchResults(data)
     } catch (error) {
@@ -193,7 +197,9 @@ export function FaqSystem({
             return {
               ...faq,
               helpfulCount: isHelpful ? faq.helpfulCount + 1 : faq.helpfulCount,
-              notHelpfulCount: !isHelpful ? faq.notHelpfulCount + 1 : faq.notHelpfulCount
+              notHelpfulCount: !isHelpful
+                ? faq.notHelpfulCount + 1
+                : faq.notHelpfulCount
             }
           }
           return faq
@@ -254,19 +260,20 @@ export function FaqSystem({
       {/* Search Bar */}
       {showSearch && (
         <Card>
-          <CardContent className="pt-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <CardContent className='pt-6'>
+            <div className='relative'>
+              <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
               <Input
-                placeholder="Search FAQs..."
+                placeholder='Search FAQs...'
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                onChange={e => setSearchQuery(e.target.value)}
+                className='pl-10'
               />
             </div>
             {searchResults.length > 0 && searchQuery.length > 2 && (
-              <div className="mt-2 text-sm text-muted-foreground">
-                Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+              <div className='text-muted-foreground mt-2 text-sm'>
+                Found {searchResults.length} result
+                {searchResults.length !== 1 ? 's' : ''}
               </div>
             )}
           </CardContent>
@@ -275,30 +282,32 @@ export function FaqSystem({
 
       {/* Highlighted FAQs */}
       {highlightedFaqs.length > 0 && (
-        <Card className="border-primary/50 bg-primary/5">
+        <Card className='border-primary/50 bg-primary/5'>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="h-5 w-5 text-primary" />
+            <CardTitle className='flex items-center gap-2 text-lg'>
+              <Sparkles className='text-primary h-5 w-5' />
               Frequently Asked
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Accordion type="single" collapsible className="w-full">
-              {highlightedFaqs.map((faq) => (
+            <Accordion type='single' collapsible className='w-full'>
+              {highlightedFaqs.map(faq => (
                 <AccordionItem key={faq.id} value={`highlighted-${faq.id}`}>
-                  <AccordionTrigger className="text-left">
+                  <AccordionTrigger className='text-left'>
                     {faq.question}
                   </AccordionTrigger>
                   <AccordionContent>
-                    <div className="space-y-4">
-                      <div 
-                        className="prose prose-sm dark:prose-invert max-w-none"
+                    <div className='space-y-4'>
+                      <div
+                        className='prose prose-sm dark:prose-invert max-w-none'
                         dangerouslySetInnerHTML={{ __html: faq.answer }}
                       />
-                      <FaqActions 
-                        faq={faq} 
+                      <FaqActions
+                        faq={faq}
                         onVote={handleVote}
-                        onFeedback={(isHelpful) => setFeedbackDialog({ faqId: faq.id, isHelpful })}
+                        onFeedback={isHelpful =>
+                          setFeedbackDialog({ faqId: faq.id, isHelpful })
+                        }
                       />
                     </div>
                   </AccordionContent>
@@ -310,29 +319,29 @@ export function FaqSystem({
       )}
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className='grid grid-cols-1 gap-6 lg:grid-cols-4'>
         {/* Categories Sidebar */}
         {showCategories && (
-          <div className="lg:col-span-1">
+          <div className='lg:col-span-1'>
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Categories</CardTitle>
+                <CardTitle className='text-lg'>Categories</CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
-                <div className="space-y-1">
-                  {categories.map((category) => (
+              <CardContent className='p-0'>
+                <div className='space-y-1'>
+                  {categories.map(category => (
                     <button
                       key={category.id}
                       onClick={() => setSelectedCategory(category.slug)}
                       className={cn(
-                        'w-full text-left px-4 py-2 hover:bg-muted transition-colors',
+                        'hover:bg-muted w-full px-4 py-2 text-left transition-colors',
                         'flex items-center justify-between',
                         selectedCategory === category.slug && 'bg-muted'
                       )}
                     >
-                      <span className="text-sm">{category.name}</span>
+                      <span className='text-sm'>{category.name}</span>
                       {category.itemCount && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant='secondary' className='text-xs'>
                           {category.itemCount}
                         </Badge>
                       )}
@@ -344,25 +353,25 @@ export function FaqSystem({
 
             {/* Popular FAQs */}
             {showPopular && popularFaqs.length > 0 && (
-              <Card className="mt-6">
+              <Card className='mt-6'>
                 <CardHeader>
-                  <CardTitle className="text-lg">Most Viewed</CardTitle>
+                  <CardTitle className='text-lg'>Most Viewed</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {popularFaqs.slice(0, 5).map((faq) => (
+                <CardContent className='space-y-3'>
+                  {popularFaqs.slice(0, 5).map(faq => (
                     <button
                       key={faq.id}
                       onClick={() => setExpandedFaq(faq.id)}
-                      className="text-left hover:text-primary transition-colors"
+                      className='hover:text-primary text-left transition-colors'
                     >
-                      <p className="text-sm line-clamp-2">{faq.question}</p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
+                      <p className='line-clamp-2 text-sm'>{faq.question}</p>
+                      <div className='text-muted-foreground mt-1 flex items-center gap-3 text-xs'>
+                        <span className='flex items-center gap-1'>
+                          <Eye className='h-3 w-3' />
                           {faq.viewCount}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <ThumbsUp className="h-3 w-3" />
+                        <span className='flex items-center gap-1'>
+                          <ThumbsUp className='h-3 w-3' />
                           {faq.helpfulCount}
                         </span>
                       </div>
@@ -375,33 +384,35 @@ export function FaqSystem({
         )}
 
         {/* FAQ List */}
-        <div className={cn(
-          showCategories ? 'lg:col-span-3' : 'lg:col-span-4'
-        )}>
+        <div className={cn(showCategories ? 'lg:col-span-3' : 'lg:col-span-4')}>
           {loading ? (
             <FaqSkeleton />
           ) : displayFaqs.length > 0 ? (
             <Card>
               <CardHeader>
                 <CardTitle>
-                  {searchQuery.length > 2 
-                    ? 'Search Results' 
-                    : selectedCategory 
-                    ? categories.find(c => c.slug === selectedCategory)?.name 
-                    : 'All FAQs'}
+                  {searchQuery.length > 2
+                    ? 'Search Results'
+                    : selectedCategory
+                      ? categories.find(c => c.slug === selectedCategory)?.name
+                      : 'All FAQs'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Accordion type="single" collapsible className="w-full">
-                  {displayFaqs.map((faq) => (
+                <Accordion type='single' collapsible className='w-full'>
+                  {displayFaqs.map(faq => (
                     <AccordionItem key={faq.id} value={`faq-${faq.id}`}>
-                      <AccordionTrigger className="text-left">
-                        <div className="flex-1">
+                      <AccordionTrigger className='text-left'>
+                        <div className='flex-1'>
                           <div>{faq.question}</div>
                           {faq.tags && faq.tags.length > 0 && (
-                            <div className="flex gap-1 mt-2">
-                              {faq.tags.map((tag) => (
-                                <Badge key={tag} variant="outline" className="text-xs">
+                            <div className='mt-2 flex gap-1'>
+                              {faq.tags.map(tag => (
+                                <Badge
+                                  key={tag}
+                                  variant='outline'
+                                  className='text-xs'
+                                >
                                   {tag}
                                 </Badge>
                               ))}
@@ -410,15 +421,17 @@ export function FaqSystem({
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
-                        <div className="space-y-4">
-                          <div 
-                            className="prose prose-sm dark:prose-invert max-w-none"
+                        <div className='space-y-4'>
+                          <div
+                            className='prose prose-sm dark:prose-invert max-w-none'
                             dangerouslySetInnerHTML={{ __html: faq.answer }}
                           />
-                          <FaqActions 
-                            faq={faq} 
+                          <FaqActions
+                            faq={faq}
                             onVote={handleVote}
-                            onFeedback={(isHelpful) => setFeedbackDialog({ faqId: faq.id, isHelpful })}
+                            onFeedback={isHelpful =>
+                              setFeedbackDialog({ faqId: faq.id, isHelpful })
+                            }
                           />
                         </div>
                       </AccordionContent>
@@ -429,10 +442,10 @@ export function FaqSystem({
             </Card>
           ) : (
             <Card>
-              <CardContent className="py-12 text-center">
-                <HelpCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  {searchQuery.length > 2 
+              <CardContent className='py-12 text-center'>
+                <HelpCircle className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+                <p className='text-muted-foreground'>
+                  {searchQuery.length > 2
                     ? 'No FAQs found matching your search.'
                     : 'Select a category to view FAQs.'}
                 </p>
@@ -443,7 +456,10 @@ export function FaqSystem({
       </div>
 
       {/* Feedback Dialog */}
-      <Dialog open={!!feedbackDialog} onOpenChange={() => setFeedbackDialog(null)}>
+      <Dialog
+        open={!!feedbackDialog}
+        onOpenChange={() => setFeedbackDialog(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Additional Feedback</DialogTitle>
@@ -454,16 +470,14 @@ export function FaqSystem({
           <Textarea
             placeholder="Tell us more about why this was or wasn't helpful..."
             value={feedbackText}
-            onChange={(e) => setFeedbackText(e.target.value)}
+            onChange={e => setFeedbackText(e.target.value)}
             rows={4}
           />
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setFeedbackDialog(null)}>
+          <div className='flex justify-end gap-2'>
+            <Button variant='outline' onClick={() => setFeedbackDialog(null)}>
               Cancel
             </Button>
-            <Button onClick={handleFeedbackSubmit}>
-              Submit Feedback
-            </Button>
+            <Button onClick={handleFeedbackSubmit}>Submit Feedback</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -472,59 +486,60 @@ export function FaqSystem({
 }
 
 // FAQ Actions Component
-function FaqActions({ 
-  faq, 
-  onVote, 
-  onFeedback 
-}: { 
+function FaqActions({
+  faq,
+  onVote,
+  onFeedback
+}: {
   faq: FaqItem
   onVote: (id: number, isHelpful: boolean) => void
-  onFeedback: (isHelpful: boolean) => void 
+  onFeedback: (isHelpful: boolean) => void
 }) {
-  const helpfulPercentage = faq.helpfulCount + faq.notHelpfulCount > 0
-    ? Math.round((faq.helpfulCount / (faq.helpfulCount + faq.notHelpfulCount)) * 100)
-    : 0
+  const helpfulPercentage =
+    faq.helpfulCount + faq.notHelpfulCount > 0
+      ? Math.round(
+          (faq.helpfulCount / (faq.helpfulCount + faq.notHelpfulCount)) * 100
+        )
+      : 0
 
   return (
-    <div className="flex items-center justify-between pt-4 border-t">
-      <div className="flex items-center gap-4">
-        <span className="text-sm text-muted-foreground">
-          Was this helpful?
-        </span>
-        <div className="flex gap-2">
+    <div className='flex items-center justify-between border-t pt-4'>
+      <div className='flex items-center gap-4'>
+        <span className='text-muted-foreground text-sm'>Was this helpful?</span>
+        <div className='flex gap-2'>
           <Button
-            variant="outline"
-            size="sm"
+            variant='outline'
+            size='sm'
             onClick={() => onVote(faq.id, true)}
-            className="gap-1"
+            className='gap-1'
           >
-            <ThumbsUp className="h-3 w-3" />
+            <ThumbsUp className='h-3 w-3' />
             {faq.helpfulCount > 0 && faq.helpfulCount}
           </Button>
           <Button
-            variant="outline"
-            size="sm"
+            variant='outline'
+            size='sm'
             onClick={() => onVote(faq.id, false)}
-            className="gap-1"
+            className='gap-1'
           >
-            <ThumbsDown className="h-3 w-3" />
+            <ThumbsDown className='h-3 w-3' />
             {faq.notHelpfulCount > 0 && faq.notHelpfulCount}
           </Button>
         </div>
       </div>
-      <div className="flex items-center gap-4">
+      <div className='flex items-center gap-4'>
         {helpfulPercentage > 0 && (
-          <span className="text-xs text-muted-foreground">
+          <span className='text-muted-foreground text-xs'>
             {helpfulPercentage}% found this helpful
           </span>
         )}
         <Button
-          variant="ghost"
-          size="sm"
+          variant='ghost'
+          size='sm'
           onClick={() => onFeedback(false)}
-          className="gap-1"
+          className='gap-1'
         >
-          <MessageSquare className="h-3 w-3" />
+          <MessageSquare className='h-3 w-3' />
           Feedback
         </Button>
       </div>
@@ -536,11 +551,11 @@ function FaqActions({
 function FaqSkeleton() {
   return (
     <Card>
-      <CardContent className="space-y-4 pt-6">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
+      <CardContent className='space-y-4 pt-6'>
+        {[1, 2, 3, 4, 5].map(i => (
+          <div key={i} className='space-y-2'>
+            <Skeleton className='h-4 w-full' />
+            <Skeleton className='h-4 w-3/4' />
           </div>
         ))}
       </CardContent>

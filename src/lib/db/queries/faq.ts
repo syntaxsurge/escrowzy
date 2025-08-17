@@ -1,6 +1,16 @@
 import 'server-only'
 
-import { and, asc, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  or,
+  sql
+} from 'drizzle-orm'
 
 import { db } from '../drizzle'
 import {
@@ -11,8 +21,7 @@ import {
   type FaqItem,
   type FaqVote,
   type NewFaqCategory,
-  type NewFaqItem,
-  type NewFaqVote
+  type NewFaqItem
 } from '../schema'
 
 // Get all FAQ categories
@@ -163,10 +172,7 @@ export async function getHighlightedFaqItems() {
     .from(faqItems)
     .leftJoin(faqCategories, eq(faqItems.categoryId, faqCategories.id))
     .where(
-      and(
-        eq(faqItems.isPublished, true),
-        eq(faqItems.isHighlighted, true)
-      )
+      and(eq(faqItems.isPublished, true), eq(faqItems.isHighlighted, true))
     )
     .orderBy(asc(faqItems.orderIndex))
 }
@@ -183,16 +189,13 @@ export async function getRelatedFaqItems(faqId: number) {
 
   // Get related FAQs from the relatedFaqs field
   const relatedIds = (currentFaq.relatedFaqs as number[]) || []
-  
+
   if (relatedIds.length > 0) {
     return await db
       .select()
       .from(faqItems)
       .where(
-        and(
-          inArray(faqItems.id, relatedIds),
-          eq(faqItems.isPublished, true)
-        )
+        and(inArray(faqItems.id, relatedIds), eq(faqItems.isPublished, true))
       )
   }
 
@@ -226,7 +229,9 @@ export async function voteFaqHelpfulness(
     .where(
       and(
         eq(faqVotes.faqId, faqId),
-        userId ? eq(faqVotes.userId, userId) : eq(faqVotes.sessionId, sessionId!)
+        userId
+          ? eq(faqVotes.userId, userId)
+          : eq(faqVotes.sessionId, sessionId!)
       )
     )
     .limit(1)
@@ -295,20 +300,14 @@ export async function voteFaqHelpfulness(
 export async function createFaqCategory(
   data: NewFaqCategory
 ): Promise<FaqCategory> {
-  const [category] = await db
-    .insert(faqCategories)
-    .values(data)
-    .returning()
+  const [category] = await db.insert(faqCategories).values(data).returning()
 
   return category
 }
 
 // Create FAQ item
 export async function createFaqItem(data: NewFaqItem): Promise<FaqItem> {
-  const [item] = await db
-    .insert(faqItems)
-    .values(data)
-    .returning()
+  const [item] = await db.insert(faqItems).values(data).returning()
 
   return item
 }
@@ -348,13 +347,15 @@ export async function getFaqStats() {
     .from(faqItems)
     .where(eq(faqItems.isPublished, true))
 
-  return stats[0] || {
-    totalFaqs: 0,
-    totalViews: 0,
-    totalHelpful: 0,
-    totalNotHelpful: 0,
-    averageHelpfulness: 0
-  }
+  return (
+    stats[0] || {
+      totalFaqs: 0,
+      totalViews: 0,
+      totalHelpful: 0,
+      totalNotHelpful: 0,
+      averageHelpfulness: 0
+    }
+  )
 }
 
 // Get FAQ feedback

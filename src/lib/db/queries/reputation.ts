@@ -73,7 +73,8 @@ export async function updateReputationRegistry(
 
     return {
       ...updated,
-      averageRating: parseFloat(updated.averageRating)
+      averageRating: parseFloat(updated.averageRating),
+      metadata: (updated.metadata || {}) as Record<string, any>
     }
   } else {
     // Create new record
@@ -93,7 +94,8 @@ export async function updateReputationRegistry(
 
     return {
       ...created,
-      averageRating: parseFloat(created.averageRating)
+      averageRating: parseFloat(created.averageRating),
+      metadata: (created.metadata || {}) as Record<string, any>
     }
   }
 }
@@ -120,7 +122,8 @@ export async function getUserReputation(
 
   return {
     ...reputation,
-    averageRating: parseFloat(reputation.averageRating)
+    averageRating: parseFloat(reputation.averageRating),
+    metadata: (reputation.metadata || {}) as Record<string, any>
   }
 }
 
@@ -241,6 +244,7 @@ export async function getTopReputationUsers(
   return results.map(r => ({
     ...r.reputation,
     averageRating: parseFloat(r.reputation.averageRating),
+    metadata: (r.reputation.metadata || {}) as Record<string, any>,
     userName: r.userName
   }))
 }

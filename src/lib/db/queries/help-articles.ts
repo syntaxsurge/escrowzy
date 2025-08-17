@@ -17,7 +17,7 @@ export async function getHelpArticles(
   limit = 50
 ) {
   const conditions = []
-  
+
   if (isPublished) {
     conditions.push(eq(helpArticles.isPublished, true))
   }
@@ -53,7 +53,7 @@ export async function getHelpArticleBySlug(slug: string) {
   if (article) {
     await db
       .update(helpArticles)
-      .set({ 
+      .set({
         viewCount: sql`${helpArticles.viewCount} + 1`,
         updatedAt: new Date()
       })
@@ -150,7 +150,7 @@ export async function getRelatedHelpArticles(articleId: number, limit = 5) {
 
   // Get related articles from the relatedArticles field
   const relatedIds = (currentArticle.relatedArticles as number[]) || []
-  
+
   if (relatedIds.length > 0) {
     return await db
       .select({
@@ -169,8 +169,8 @@ export async function getRelatedHelpArticles(articleId: number, limit = 5) {
 
   // If no explicit related articles, get articles from same category with similar tags
   const tags = (currentArticle.tags as string[]) || []
-  const tagConditions = tags.map(tag => 
-    sql`${helpArticles.tags}::text like '%${tag}%'`
+  const tagConditions = tags.map(
+    tag => sql`${helpArticles.tags}::text like '%${tag}%'`
   )
 
   return await db
@@ -196,7 +196,7 @@ export async function getRelatedHelpArticles(articleId: number, limit = 5) {
 export async function markArticleHelpful(articleId: number) {
   await db
     .update(helpArticles)
-    .set({ 
+    .set({
       helpfulCount: sql`${helpArticles.helpfulCount} + 1`,
       updatedAt: new Date()
     })
@@ -207,10 +207,7 @@ export async function markArticleHelpful(articleId: number) {
 export async function createHelpArticle(
   data: NewHelpArticle
 ): Promise<HelpArticle> {
-  const [article] = await db
-    .insert(helpArticles)
-    .values(data)
-    .returning()
+  const [article] = await db.insert(helpArticles).values(data).returning()
 
   return article
 }
@@ -233,7 +230,7 @@ export async function updateHelpArticle(
 export async function publishHelpArticle(id: number): Promise<HelpArticle> {
   const [published] = await db
     .update(helpArticles)
-    .set({ 
+    .set({
       isPublished: true,
       publishedAt: new Date(),
       updatedAt: new Date()
@@ -283,21 +280,23 @@ export async function getHelpStats() {
     })
     .from(helpArticles)
 
-  return stats[0] || {
-    totalArticles: 0,
-    publishedArticles: 0,
-    totalViews: 0,
-    totalHelpful: 0,
-    categories: 0,
-    averageViewsPerArticle: 0
-  }
+  return (
+    stats[0] || {
+      totalArticles: 0,
+      publishedArticles: 0,
+      totalViews: 0,
+      totalHelpful: 0,
+      categories: 0,
+      averageViewsPerArticle: 0
+    }
+  )
 }
 
 // Review help article
 export async function reviewHelpArticle(id: number, reviewerId: number) {
   const [reviewed] = await db
     .update(helpArticles)
-    .set({ 
+    .set({
       lastReviewedAt: new Date(),
       updatedAt: new Date()
     })

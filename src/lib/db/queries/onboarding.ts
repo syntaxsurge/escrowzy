@@ -1,15 +1,14 @@
 import 'server-only'
 
-import { and, asc, desc, eq, gt, gte, isNull, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm'
 
 import { db } from '../drizzle'
-import { 
-  onboardingSteps, 
+import {
+  onboardingSteps,
   onboardingProgress,
   type OnboardingStep,
   type OnboardingProgress,
-  type NewOnboardingStep,
-  type NewOnboardingProgress
+  type NewOnboardingStep
 } from '../schema'
 
 // Get all onboarding steps for a category
@@ -47,7 +46,8 @@ export async function getUserOnboardingProgress(userId: number) {
   const totalSteps = progress.length
   const completedSteps = progress.filter(p => p.progress?.completedAt).length
   const skippedSteps = progress.filter(p => p.progress?.skippedAt).length
-  const progressPercentage = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0
+  const progressPercentage =
+    totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0
 
   return {
     steps: progress,
@@ -136,9 +136,9 @@ export async function skipOnboardingStep(
 // Get next uncompleted onboarding step
 export async function getNextOnboardingStep(userId: number, category: string) {
   const progress = await getUserOnboardingProgress(userId)
-  
+
   const nextStep = progress.steps.find(
-    p => 
+    p =>
       p.step.category === category &&
       !p.progress?.completedAt &&
       !p.progress?.skippedAt
@@ -178,10 +178,7 @@ export async function upsertOnboardingStep(
       .returning()
     return updated
   } else {
-    const [created] = await db
-      .insert(onboardingSteps)
-      .values(step)
-      .returning()
+    const [created] = await db.insert(onboardingSteps).values(step).returning()
     return created
   }
 }
@@ -201,12 +198,14 @@ export async function getOnboardingStats() {
     })
     .from(onboardingProgress)
 
-  return stats[0] || {
-    totalUsers: 0,
-    completedSteps: 0,
-    skippedSteps: 0,
-    averageCompletion: 0
-  }
+  return (
+    stats[0] || {
+      totalUsers: 0,
+      completedSteps: 0,
+      skippedSteps: 0,
+      averageCompletion: 0
+    }
+  )
 }
 
 // Get most skipped steps

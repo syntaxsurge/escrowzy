@@ -96,6 +96,7 @@
     "react-hot-toast": "^2.5.2",
     "react-rewards": "^2.1.0",
     "react-use": "^17.6.0",
+    "recharts": "^3.1.2",
     "request-ip": "^3.3.0",
     "server-only": "^0.0.1",
     "sonner": "^2.0.7",

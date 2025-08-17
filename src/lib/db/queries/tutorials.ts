@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { and, asc, desc, eq, gt, gte, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike, isNotNull, or, sql } from 'drizzle-orm'
 
 import { db } from '../drizzle'
 import {
@@ -13,9 +13,7 @@ import {
   type VideoTutorial,
   type VideoProgress,
   type NewTutorial,
-  type NewTutorialProgress,
-  type NewVideoTutorial,
-  type NewVideoProgress
+  type NewVideoTutorial
 } from '../schema'
 
 // ============================================
@@ -29,7 +27,7 @@ export async function getTutorials(
   isPublished = true
 ) {
   const conditions = []
-  
+
   if (isPublished) {
     conditions.push(eq(tutorials.isPublished, true))
   }
@@ -59,7 +57,7 @@ export async function getTutorialBySlug(slug: string) {
   if (tutorial) {
     await db
       .update(tutorials)
-      .set({ 
+      .set({
         viewCount: sql`${tutorials.viewCount} + 1`,
         updatedAt: new Date()
       })
@@ -70,7 +68,10 @@ export async function getTutorialBySlug(slug: string) {
 }
 
 // Get user's tutorial progress
-export async function getUserTutorialProgress(userId: number, tutorialId: number) {
+export async function getUserTutorialProgress(
+  userId: number,
+  tutorialId: number
+) {
   const [progress] = await db
     .select()
     .from(tutorialProgress)
@@ -158,7 +159,7 @@ export async function updateTutorialProgress(
   }
 
   // Update existing progress
-  const completedSteps = progress.completedSteps as number[] || []
+  const completedSteps = (progress.completedSteps as number[]) || []
   if (markComplete && !completedSteps.includes(stepIndex)) {
     completedSteps.push(stepIndex)
   }
@@ -169,7 +170,7 @@ export async function updateTutorialProgress(
     .where(eq(tutorials.id, tutorialId))
     .limit(1)
 
-  const tutorialSteps = tutorial?.steps as any[] || []
+  const tutorialSteps = (tutorial?.steps as any[]) || []
   const isComplete = completedSteps.length === tutorialSteps.length
 
   const [updated] = await db
@@ -192,7 +193,7 @@ export async function completeTutorial(
   tutorialId: number
 ): Promise<TutorialProgress> {
   const progress = await getUserTutorialProgress(userId, tutorialId)
-  
+
   if (!progress) {
     throw new Error('Tutorial progress not found')
   }
@@ -218,7 +219,7 @@ export async function getRecommendedTutorials(userId: number, limit = 5) {
     .where(
       and(
         eq(tutorialProgress.userId, userId),
-        isNull(tutorialProgress.completedAt).not()
+        isNotNull(tutorialProgress.completedAt)
       )
     )
 
@@ -227,7 +228,10 @@ export async function getRecommendedTutorials(userId: number, limit = 5) {
   // Get uncompleted tutorials
   const conditions = [eq(tutorials.isPublished, true)]
   if (completedIds.length > 0) {
-    const notInCondition = sql`${tutorials.id} not in (${sql.join(completedIds.map(id => sql`${id}`), sql`, `)})`
+    const notInCondition = sql`${tutorials.id} not in (${sql.join(
+      completedIds.map(id => sql`${id}`),
+      sql`, `
+    )})`
     conditions.push(notInCondition)
   }
 
@@ -244,12 +248,9 @@ export async function getRecommendedTutorials(userId: number, limit = 5) {
 // ============================================
 
 // Get all video tutorials
-export async function getVideoTutorials(
-  category?: string,
-  isPublished = true
-) {
+export async function getVideoTutorials(category?: string, isPublished = true) {
   const conditions = []
-  
+
   if (isPublished) {
     conditions.push(eq(videoTutorials.isPublished, true))
   }
@@ -276,7 +277,7 @@ export async function getVideoTutorial(id: number) {
   if (video) {
     await db
       .update(videoTutorials)
-      .set({ 
+      .set({
         viewCount: sql`${videoTutorials.viewCount} + 1`,
         updatedAt: new Date()
       })
@@ -292,10 +293,7 @@ export async function getUserVideoProgress(userId: number, videoId: number) {
     .select()
     .from(videoProgress)
     .where(
-      and(
-        eq(videoProgress.userId, userId),
-        eq(videoProgress.videoId, videoId)
-      )
+      and(eq(videoProgress.userId, userId), eq(videoProgress.videoId, videoId))
     )
     .limit(1)
 
@@ -371,7 +369,7 @@ export async function getPopularVideos(limit = 10) {
 export async function likeVideo(videoId: number) {
   await db
     .update(videoTutorials)
-    .set({ 
+    .set({
       likeCount: sql`${videoTutorials.likeCount} + 1`,
       updatedAt: new Date()
     })
@@ -439,17 +437,25 @@ export async function getTutorialStats() {
     .from(videoTutorials)
 
   return {
-    interactive: interactiveStats || { total: 0, published: 0, totalViews: 0, completed: 0 },
-    videos: videoStats || { total: 0, published: 0, totalViews: 0, totalLikes: 0, completed: 0 }
+    interactive: interactiveStats || {
+      total: 0,
+      published: 0,
+      totalViews: 0,
+      completed: 0
+    },
+    videos: videoStats || {
+      total: 0,
+      published: 0,
+      totalViews: 0,
+      totalLikes: 0,
+      completed: 0
+    }
   }
 }
 
 // Create tutorial
 export async function createTutorial(data: NewTutorial): Promise<Tutorial> {
-  const [tutorial] = await db
-    .insert(tutorials)
-    .values(data)
-    .returning()
+  const [tutorial] = await db.insert(tutorials).values(data).returning()
 
   return tutorial
 }
@@ -472,10 +478,7 @@ export async function updateTutorial(
 export async function createVideoTutorial(
   data: NewVideoTutorial
 ): Promise<VideoTutorial> {
-  const [video] = await db
-    .insert(videoTutorials)
-    .values(data)
-    .returning()
+  const [video] = await db.insert(videoTutorials).values(data).returning()
 
   return video
 }

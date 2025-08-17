@@ -131,7 +131,7 @@ export async function getUserSkillEndorsements(
     skill: {
       id: row.skill.id,
       name: row.skill.name,
-      category: row.skill.category
+      category: row.skill.categoryId
     },
     job: row.job
       ? {
@@ -315,7 +315,7 @@ export async function getEndorsementsBySkill(
     skill: {
       id: row.skill.id,
       name: row.skill.name,
-      category: row.skill.category
+      category: row.skill.categoryId
     },
     job: row.job
       ? {
@@ -388,7 +388,7 @@ export async function getMutualEndorsements(
       skill: {
         id: row.skill.id,
         name: row.skill.name,
-        category: row.skill.category
+        category: row.skill.categoryId
       },
       job: null
     })),
@@ -409,7 +409,7 @@ export async function getMutualEndorsements(
       skill: {
         id: row.skill.id,
         name: row.skill.name,
-        category: row.skill.category
+        category: row.skill.categoryId
       },
       job: null
     })),
