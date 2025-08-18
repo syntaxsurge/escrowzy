@@ -7,7 +7,6 @@ import {
   DollarSign,
   Briefcase,
   Award,
-  MessageSquare,
   Globe,
   Github,
   Linkedin,
@@ -20,11 +19,13 @@ import {
   Zap,
   Shield,
   Sparkles,
-  Activity
+  Activity,
+  MessageSquare
 } from 'lucide-react'
 
 import { PortfolioGallery } from '@/components/blocks/freelancers/portfolio-gallery'
 import { SaveProfileButton } from '@/components/blocks/freelancers/save-profile-button'
+import { SendMessageButton } from '@/components/blocks/freelancers/send-message-button'
 import { VerifiedBadge } from '@/components/blocks/freelancers/verified-badge'
 import {
   GamifiedStatsCards,
@@ -313,24 +314,11 @@ export default async function PublicFreelancerProfilePage({
               <div className='flex flex-col gap-2 sm:flex-row md:flex-col'>
                 {!isOwnProfile && (
                   <>
-                    <Button
-                      variant='outline'
-                      asChild
-                      className='border-2 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20'
-                    >
-                      <Link
-                        href={
-                          auth
-                            ? appRoutes.chat.direct(
-                                `${Math.min(auth.id, userId)}_${Math.max(auth.id, userId)}`
-                              )
-                            : appRoutes.signIn
-                        }
-                      >
-                        <MessageSquare className='mr-2 h-4 w-4' />
-                        Send Message
-                      </Link>
-                    </Button>
+                    <SendMessageButton
+                      currentUserId={auth?.id}
+                      targetUserId={userId}
+                      isAuthenticated={!!auth}
+                    />
                     <SaveProfileButton
                       freelancerId={id}
                       isSaved={isSaved}
