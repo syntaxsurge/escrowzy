@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
 import {
   Star,
@@ -14,17 +14,23 @@ import {
   CheckCircle,
   User,
   Target,
-  TrendingUp
+  Eye,
+  Users as UsersIcon,
+  Trophy,
+  Zap,
+  Shield,
+  Sparkles,
+  Activity
 } from 'lucide-react'
 
 import { PortfolioGallery } from '@/components/blocks/freelancers/portfolio-gallery'
 import { SaveProfileButton } from '@/components/blocks/freelancers/save-profile-button'
 import { VerifiedBadge } from '@/components/blocks/freelancers/verified-badge'
-import { PageHeader as GamifiedHeader } from '@/components/blocks/page-header'
 import {
   GamifiedStatsCards,
   type StatCard
 } from '@/components/blocks/trading/gamified-stats-cards'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -36,6 +42,7 @@ import {
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { appRoutes } from '@/config/app-routes'
 import { getAuth } from '@/lib/auth/auth-utils'
 import {
   getFreelancerProfile,
@@ -43,6 +50,7 @@ import {
   getFreelancerReviews,
   isFreelancerSaved
 } from '@/lib/db/queries/freelancers'
+import { RewardsService } from '@/services/rewards'
 
 export default async function PublicFreelancerProfilePage({
   params
@@ -61,11 +69,21 @@ export default async function PublicFreelancerProfilePage({
     notFound()
   }
 
-  const [stats, reviews, auth] = await Promise.all([
+  const rewardsService = new RewardsService()
+  const [stats, reviews, auth, userGameData] = await Promise.all([
     getFreelancerStats(userId),
     getFreelancerReviews(userId, { limit: 10 }),
-    getAuth()
+    getAuth(),
+    rewardsService.getOrCreateGameData(userId).catch(() => null)
   ])
+
+  const userStats = userGameData
+    ? {
+        level: userGameData.level,
+        xp: userGameData.xp,
+        achievements: []
+      }
+    : null
 
   const isOwnProfile = auth?.id === userId
   const isSaved = auth ? await isFreelancerSaved(auth.id, profile.id) : false
@@ -139,93 +157,257 @@ export default async function PublicFreelancerProfilePage({
       {} as Record<string, any[]>
     ) || {}
 
-  // Calculate stats for gamified cards
+  // Calculate stats for gamified cards with enhanced design
   const statsCards: StatCard[] = [
     {
-      title: 'Total Earnings',
-      value: `$${parseFloat(stats.totalEarnings).toFixed(0)}`,
-      subtitle: 'Lifetime earnings',
+      title: 'Revenue Generated',
+      value: `$${parseFloat(stats.totalEarnings).toLocaleString()}`,
+      subtitle: 'Total lifetime earnings',
       icon: <DollarSign className='h-5 w-5' />,
-      badge: 'EARNINGS',
-      colorScheme: 'green'
+      badge: 'WEALTH',
+      colorScheme: parseFloat(stats.totalEarnings) >= 10000 ? 'green' : 'yellow'
     },
     {
-      title: 'Completion Rate',
+      title: 'Win Rate',
       value: `${stats.completionRate}%`,
-      subtitle: `${stats.completedJobs} completed`,
-      icon: <Target className='h-5 w-5' />,
-      badge: 'PERFORMANCE',
-      colorScheme: stats.completionRate >= 90 ? 'blue' : 'yellow'
-    },
-    {
-      title: 'Average Rating',
-      value: averageRating > 0 ? averageRating.toFixed(1) : 'N/A',
-      subtitle: `${reviews.length} reviews`,
-      icon: <Star className='h-5 w-5' />,
-      badge: 'REPUTATION',
+      subtitle: `${stats.completedJobs} victories`,
+      icon: <Trophy className='h-5 w-5' />,
+      badge: 'CHAMPION',
       colorScheme:
-        averageRating >= 4.5
+        stats.completionRate >= 95
           ? 'purple'
-          : averageRating > 0
-            ? 'orange'
+          : stats.completionRate >= 90
+            ? 'blue'
             : 'yellow'
     },
     {
-      title: 'Success Rate',
-      value:
-        stats.activeBids > 0
-          ? `${((stats.completedJobs / (stats.completedJobs + stats.activeBids)) * 100).toFixed(0)}%`
-          : 'N/A',
-      subtitle: 'Project completion',
-      icon: <Briefcase className='h-5 w-5' />,
-      badge: 'SUCCESS',
-      colorScheme: 'blue'
+      title: 'Reputation Score',
+      value: averageRating > 0 ? `${averageRating.toFixed(1)} ⭐` : 'New',
+      subtitle: `${reviews.length} testimonials`,
+      icon: <Star className='h-5 w-5' />,
+      badge: 'LEGENDARY',
+      colorScheme:
+        averageRating >= 4.8
+          ? 'purple'
+          : averageRating >= 4.5
+            ? 'blue'
+            : averageRating > 0
+              ? 'orange'
+              : 'yellow'
+    },
+    {
+      title: 'Battle Power',
+      value: userStats ? `${Math.round(userStats.xp / 100)}` : '0',
+      subtitle: `Level ${userStats?.level || 1} Warrior`,
+      icon: <Zap className='h-5 w-5' />,
+      badge: 'POWER',
+      colorScheme:
+        userStats && userStats.level >= 50
+          ? 'purple'
+          : userStats && userStats.level >= 25
+            ? 'blue'
+            : 'yellow'
     }
   ]
 
   return (
     <div className='from-background via-background to-primary/5 dark:to-primary/10 min-h-screen bg-gradient-to-br'>
       <div className='container mx-auto space-y-6 px-4 py-6'>
-        {/* Gamified Header */}
-        <GamifiedHeader
-          title={profile.user?.name || 'FREELANCER PROFILE'}
-          subtitle={profile.professionalTitle || 'Professional Freelancer'}
-          icon={<User className='h-8 w-8 text-white' />}
-          actions={
-            <div className='flex items-center gap-2'>
-              {!isOwnProfile && (
-                <>
-                  <Button
-                    variant='outline'
-                    asChild
-                    className='border-2 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20'
-                  >
-                    <Link href={`/messages?user=${id}`}>
-                      <MessageSquare className='mr-2 h-4 w-4' />
-                      Contact Me
-                    </Link>
-                  </Button>
-                  <SaveProfileButton
-                    freelancerId={id}
-                    isSaved={isSaved}
-                    isAuthenticated={!!auth}
+        {/* Gamified Social Media Header */}
+        <div className='border-primary/20 from-primary/20 relative overflow-hidden rounded-2xl border-2 bg-gradient-to-br via-purple-600/20 to-cyan-600/20 p-8'>
+          <div className='bg-grid-white/5 absolute inset-0' />
+          <div className='relative z-10'>
+            <div className='flex flex-col items-center gap-6 md:flex-row md:items-start'>
+              {/* Profile Avatar */}
+              <div className='relative'>
+                <div className='absolute -inset-1 animate-pulse rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-75 blur' />
+                <div className='relative'>
+                  <UserAvatar
+                    user={{
+                      ...profile.user,
+                      walletAddress: profile.user.walletAddress || undefined
+                    }}
+                    size='xl'
+                    className='h-32 w-32 border-4 border-white shadow-2xl dark:border-gray-800'
                   />
-                </>
-              )}
-              {isOwnProfile && (
-                <Button
-                  asChild
-                  className='border-0 bg-gradient-to-r from-blue-600 to-cyan-700 font-bold text-white shadow-lg transition-all hover:scale-105 hover:from-blue-700 hover:to-cyan-800 hover:shadow-xl'
-                >
-                  <Link href='/profile/freelancer/setup'>Edit Profile</Link>
-                </Button>
-              )}
+                  {profile.availability === 'available' && (
+                    <div className='absolute right-2 bottom-2 h-6 w-6 rounded-full border-4 border-white bg-green-500 dark:border-gray-800' />
+                  )}
+                </div>
+              </div>
+
+              {/* Profile Info */}
+              <div className='flex-1 text-center md:text-left'>
+                <div className='flex items-center justify-center gap-3 md:justify-start'>
+                  <h1 className='text-3xl font-bold text-white'>
+                    {profile.user?.name || 'Anonymous Freelancer'}
+                  </h1>
+                  {profile.verificationStatus === 'verified' && (
+                    <VerifiedBadge />
+                  )}
+                  {userStats && userStats.level >= 50 && (
+                    <Badge className='bg-gradient-to-r from-yellow-500 to-orange-500 text-white'>
+                      <Trophy className='mr-1 h-3 w-3' />
+                      Elite
+                    </Badge>
+                  )}
+                </div>
+                <p className='mt-1 text-xl text-gray-300'>
+                  {profile.professionalTitle || 'Professional Freelancer'}
+                </p>
+
+                {/* Social Stats */}
+                <div className='mt-4 flex flex-wrap items-center justify-center gap-6 md:justify-start'>
+                  <div className='flex items-center gap-2'>
+                    <Eye className='h-4 w-4 text-gray-400' />
+                    <span className='font-semibold text-white'>
+                      {stats.profileViews.toLocaleString()}
+                    </span>
+                    <span className='text-gray-400'>views</span>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <UsersIcon className='h-4 w-4 text-gray-400' />
+                    <span className='font-semibold text-white'>
+                      {stats.savedByClients}
+                    </span>
+                    <span className='text-gray-400'>followers</span>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <Trophy className='h-4 w-4 text-gray-400' />
+                    <span className='font-semibold text-white'>
+                      {stats.completedJobs}
+                    </span>
+                    <span className='text-gray-400'>completed</span>
+                  </div>
+                  {userStats && (
+                    <div className='flex items-center gap-2'>
+                      <Zap className='h-4 w-4 text-yellow-400' />
+                      <span className='font-semibold text-white'>
+                        Level {userStats.level}
+                      </span>
+                      <span className='text-gray-400'>
+                        ({userStats.xp.toLocaleString()} XP)
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* XP Progress Bar */}
+                {userStats && (
+                  <div className='mt-4 max-w-md'>
+                    <div className='mb-1 flex justify-between text-sm'>
+                      <span className='text-gray-400'>Level Progress</span>
+                      <span className='text-gray-400'>
+                        {Math.round(((userStats.xp % 1000) / 1000) * 100)}%
+                      </span>
+                    </div>
+                    <Progress
+                      value={((userStats.xp % 1000) / 1000) * 100}
+                      className='h-2 bg-gray-700'
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className='flex flex-col gap-2 sm:flex-row md:flex-col'>
+                {!isOwnProfile && (
+                  <>
+                    <Button
+                      variant='outline'
+                      asChild
+                      className='border-2 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20'
+                    >
+                      <Link
+                        href={
+                          auth
+                            ? appRoutes.chat.direct(
+                                `${Math.min(auth.id, userId)}_${Math.max(auth.id, userId)}`
+                              )
+                            : '#'
+                        }
+                        onClick={e => {
+                          if (!auth) {
+                            e.preventDefault()
+                            redirect(appRoutes.signIn)
+                          }
+                        }}
+                      >
+                        <MessageSquare className='mr-2 h-4 w-4' />
+                        Send Message
+                      </Link>
+                    </Button>
+                    <SaveProfileButton
+                      freelancerId={id}
+                      isSaved={isSaved}
+                      isAuthenticated={!!auth}
+                    />
+                  </>
+                )}
+                {isOwnProfile && (
+                  <Button
+                    asChild
+                    className='border-0 bg-gradient-to-r from-blue-600 to-cyan-700 font-bold text-white shadow-lg transition-all hover:scale-105 hover:from-blue-700 hover:to-cyan-800 hover:shadow-xl'
+                  >
+                    <Link href='/profile/freelancer/setup'>Edit Profile</Link>
+                  </Button>
+                )}
+              </div>
             </div>
-          }
-        />
+          </div>
+        </div>
 
         {/* Stats Cards */}
         <GamifiedStatsCards cards={statsCards} />
+        {/* Achievement Badges Section */}
+        {userStats &&
+          userStats.achievements &&
+          userStats.achievements.length > 0 && (
+            <Card className='border-primary/20 from-primary/10 border-2 bg-gradient-to-br via-purple-600/10 to-cyan-600/10 backdrop-blur-sm'>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                  <Award className='h-5 w-5 text-yellow-500' />
+                  Achievement Showcase
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='flex flex-wrap gap-3'>
+                  {userStats.achievements
+                    .slice(0, 8)
+                    .map((achievement: any, index: number) => (
+                      <div
+                        key={index}
+                        className='group border-primary/20 from-primary/5 hover:border-primary/40 relative overflow-hidden rounded-lg border bg-gradient-to-br to-purple-600/5 p-3 transition-all hover:scale-105'
+                      >
+                        <div className='flex items-center gap-2'>
+                          <div className='rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 p-1.5'>
+                            <Trophy className='h-4 w-4 text-white' />
+                          </div>
+                          <div>
+                            <p className='text-sm font-semibold'>
+                              {achievement.name}
+                            </p>
+                            <p className='text-xs text-gray-500'>
+                              {achievement.description}
+                            </p>
+                          </div>
+                        </div>
+                        <div className='absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform group-hover:translate-x-full' />
+                      </div>
+                    ))}
+                  {userStats.achievements.length > 8 && (
+                    <Badge
+                      variant='outline'
+                      className='border-primary/20 self-center'
+                    >
+                      +{userStats.achievements.length - 8} more
+                    </Badge>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
         <div className='grid gap-6 lg:grid-cols-3'>
           <div className='space-y-6 lg:col-span-2'>
             <Card className='border-primary/20 from-primary/5 border-2 bg-gradient-to-br to-purple-600/5'>
@@ -644,21 +826,32 @@ export default async function PublicFreelancerProfilePage({
           </div>
 
           <div className='space-y-6'>
-            {/* Performance Stats Card */}
+            {/* Gamified Performance Stats Card */}
             <Card className='border-primary/20 from-primary/5 border-2 bg-gradient-to-br to-purple-600/5'>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
-                  <TrendingUp className='h-5 w-5' />
-                  Performance Stats
+                  <Activity className='h-5 w-5 text-cyan-500' />
+                  Battle Statistics
                 </CardTitle>
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div className='space-y-2'>
                   <div className='flex items-center justify-between text-sm'>
-                    <span>Completion Rate</span>
-                    <span className='font-medium'>{stats.completionRate}%</span>
+                    <span className='flex items-center gap-1'>
+                      <Shield className='h-3 w-3 text-blue-500' />
+                      Mission Success Rate
+                    </span>
+                    <span className='font-bold text-blue-500'>
+                      {stats.completionRate}%
+                    </span>
                   </div>
-                  <Progress value={stats.completionRate} className='h-2' />
+                  <Progress
+                    value={stats.completionRate}
+                    className='h-3 bg-gray-700'
+                    style={{
+                      background: `linear-gradient(to right, #3b82f6 ${stats.completionRate}%, #1f2937 ${stats.completionRate}%)`
+                    }}
+                  />
                 </div>
                 <div className='space-y-2'>
                   <div className='flex items-center justify-between text-sm'>
@@ -669,63 +862,146 @@ export default async function PublicFreelancerProfilePage({
                   </div>
                 </div>
                 <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-1'>
-                    <p className='text-muted-foreground text-xs'>Completed</p>
-                    <p className='text-xl font-bold'>{stats.completedJobs}</p>
+                  <div className='rounded-lg bg-gradient-to-br from-green-500/10 to-emerald-500/10 p-3'>
+                    <div className='flex items-center gap-2'>
+                      <Trophy className='h-4 w-4 text-green-500' />
+                      <p className='text-muted-foreground text-xs'>Victories</p>
+                    </div>
+                    <p className='mt-1 text-2xl font-bold text-green-500'>
+                      {stats.completedJobs}
+                    </p>
                   </div>
-                  <div className='space-y-1'>
-                    <p className='text-muted-foreground text-xs'>Active Bids</p>
-                    <p className='text-xl font-bold'>{stats.activeBids}</p>
+                  <div className='rounded-lg bg-gradient-to-br from-orange-500/10 to-red-500/10 p-3'>
+                    <div className='flex items-center gap-2'>
+                      <Target className='h-4 w-4 text-orange-500' />
+                      <p className='text-muted-foreground text-xs'>
+                        Active Quests
+                      </p>
+                    </div>
+                    <p className='mt-1 text-2xl font-bold text-orange-500'>
+                      {stats.activeBids}
+                    </p>
                   </div>
                 </div>
                 <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-1'>
-                    <p className='text-muted-foreground text-xs'>Earnings</p>
-                    <p className='text-lg font-bold'>
-                      ${parseFloat(stats.totalEarnings).toFixed(0)}
+                  <div className='rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 p-3'>
+                    <div className='flex items-center gap-2'>
+                      <Sparkles className='h-4 w-4 text-purple-500' />
+                      <p className='text-muted-foreground text-xs'>
+                        Gold Earned
+                      </p>
+                    </div>
+                    <p className='mt-1 text-xl font-bold text-purple-500'>
+                      ${parseFloat(stats.totalEarnings).toLocaleString()}
                     </p>
                   </div>
-                  <div className='space-y-1'>
-                    <p className='text-muted-foreground text-xs'>
-                      Profile Views
+                  <div className='rounded-lg bg-gradient-to-br from-blue-500/10 to-cyan-500/10 p-3'>
+                    <div className='flex items-center gap-2'>
+                      <Eye className='h-4 w-4 text-blue-500' />
+                      <p className='text-muted-foreground text-xs'>
+                        Fame Points
+                      </p>
+                    </div>
+                    <p className='mt-1 text-xl font-bold text-blue-500'>
+                      {stats.profileViews.toLocaleString()}
                     </p>
-                    <p className='text-lg font-bold'>{stats.profileViews}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Quick Stats Card */}
+            {/* Player Stats Card */}
             <Card className='border-primary/20 from-primary/5 border-2 bg-gradient-to-br to-purple-600/5'>
               <CardHeader>
-                <CardTitle>Quick Stats</CardTitle>
+                <CardTitle className='flex items-center gap-2'>
+                  <Zap className='h-5 w-5 text-yellow-500' />
+                  Player Stats
+                </CardTitle>
               </CardHeader>
               <CardContent className='space-y-4'>
-                <div className='space-y-2'>
-                  <div className='flex items-center justify-between text-sm'>
-                    <span>Profile Completeness</span>
-                    <span className='font-semibold'>
-                      {profileCompleteness}%
-                    </span>
+                <div className='space-y-3'>
+                  <div className='space-y-2'>
+                    <div className='flex items-center justify-between text-sm'>
+                      <span className='flex items-center gap-1'>
+                        <User className='h-3 w-3' />
+                        Profile Power
+                      </span>
+                      <span className='font-bold'>{profileCompleteness}%</span>
+                    </div>
+                    <div className='relative h-3 overflow-hidden rounded-full bg-gray-700'>
+                      <div
+                        className='absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 to-purple-500'
+                        style={{ width: `${profileCompleteness}%` }}
+                      />
+                    </div>
                   </div>
-                  <Progress value={profileCompleteness} className='h-2' />
+
+                  <div className='space-y-2'>
+                    <div className='flex items-center justify-between text-sm'>
+                      <span className='flex items-center gap-1'>
+                        <MessageSquare className='h-3 w-3' />
+                        Response Speed
+                      </span>
+                      <span className='font-bold text-green-500'>
+                        {responseRate}%
+                      </span>
+                    </div>
+                    <div className='relative h-3 overflow-hidden rounded-full bg-gray-700'>
+                      <div
+                        className='absolute inset-y-0 left-0 bg-gradient-to-r from-green-500 to-emerald-500'
+                        style={{ width: `${responseRate}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className='space-y-2'>
+                    <div className='flex items-center justify-between text-sm'>
+                      <span className='flex items-center gap-1'>
+                        <Clock className='h-3 w-3' />
+                        Reliability
+                      </span>
+                      <span className='font-bold text-cyan-500'>
+                        {onTimeDelivery}%
+                      </span>
+                    </div>
+                    <div className='relative h-3 overflow-hidden rounded-full bg-gray-700'>
+                      <div
+                        className='absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 to-blue-500'
+                        style={{ width: `${onTimeDelivery}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className='space-y-2'>
-                  <div className='flex items-center justify-between text-sm'>
-                    <span>Response Rate</span>
-                    <span className='font-semibold'>{responseRate}%</span>
+                {/* Level & XP Display */}
+                {userStats && (
+                  <div className='mt-4 rounded-lg bg-gradient-to-br from-yellow-500/10 to-orange-500/10 p-3'>
+                    <div className='flex items-center justify-between'>
+                      <div className='flex items-center gap-2'>
+                        <div className='rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 p-1.5'>
+                          <Zap className='h-4 w-4 text-white' />
+                        </div>
+                        <div>
+                          <p className='text-sm font-bold'>
+                            Level {userStats.level}
+                          </p>
+                          <p className='text-xs text-gray-500'>
+                            {userStats.xp.toLocaleString()} XP
+                          </p>
+                        </div>
+                      </div>
+                      <Badge className='bg-gradient-to-r from-yellow-500 to-orange-500 text-white'>
+                        {userStats.level >= 75
+                          ? 'Master'
+                          : userStats.level >= 50
+                            ? 'Expert'
+                            : userStats.level >= 25
+                              ? 'Advanced'
+                              : 'Beginner'}
+                      </Badge>
+                    </div>
                   </div>
-                  <Progress value={responseRate} className='h-2' />
-                </div>
-
-                <div className='space-y-2'>
-                  <div className='flex items-center justify-between text-sm'>
-                    <span>On-Time Delivery</span>
-                    <span className='font-semibold'>{onTimeDelivery}%</span>
-                  </div>
-                  <Progress value={onTimeDelivery} className='h-2' />
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -845,8 +1121,13 @@ export default async function PublicFreelancerProfilePage({
                   <p className='text-muted-foreground text-sm'>per hour</p>
                 </div>
                 {!isOwnProfile && (
-                  <Button className='w-full' asChild>
-                    <Link href={`/jobs/create?freelancer=${id}`}>
+                  <Button
+                    className='w-full bg-gradient-to-r from-green-600 to-emerald-700 font-bold text-white shadow-lg transition-all hover:scale-105 hover:from-green-700 hover:to-emerald-800 hover:shadow-xl'
+                    asChild
+                  >
+                    <Link
+                      href={appRoutes.trades.jobs.create + `?freelancer=${id}`}
+                    >
                       <Briefcase className='mr-2 h-4 w-4' />
                       Hire Me
                     </Link>

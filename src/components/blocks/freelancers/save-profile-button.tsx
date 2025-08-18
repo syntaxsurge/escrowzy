@@ -1,12 +1,19 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { Heart } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { UnifiedConnectButton } from '@/components/blocks/blockchain/unified-connect-button'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
 
 interface SaveProfileButtonProps {
   freelancerId: string
@@ -21,12 +28,11 @@ export function SaveProfileButton({
 }: SaveProfileButtonProps) {
   const [isSaved, setIsSaved] = useState(initialSaved)
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const [showConnectModal, setShowConnectModal] = useState(false)
 
   const handleSaveToggle = async () => {
     if (!isAuthenticated) {
-      toast.error('Please sign in to save profiles')
-      router.push('/login')
+      setShowConnectModal(true)
       return
     }
 
@@ -51,13 +57,31 @@ export function SaveProfileButton({
   }
 
   return (
-    <Button
-      variant={isSaved ? 'default' : 'outline'}
-      onClick={handleSaveToggle}
-      disabled={isLoading}
-    >
-      <Heart className={`mr-2 h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-      {isSaved ? 'Saved' : 'Save Profile'}
-    </Button>
+    <>
+      <Button
+        variant={isSaved ? 'default' : 'outline'}
+        onClick={handleSaveToggle}
+        disabled={isLoading}
+        className='border-2 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20'
+      >
+        <Heart className={`mr-2 h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+        {isSaved ? 'Saved' : 'Save Profile'}
+      </Button>
+
+      <Dialog open={showConnectModal} onOpenChange={setShowConnectModal}>
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>Sign in to Save Profiles</DialogTitle>
+            <DialogDescription>
+              Connect your wallet to save freelancer profiles and get notified
+              about their availability.
+            </DialogDescription>
+          </DialogHeader>
+          <div className='flex justify-center py-4'>
+            <UnifiedConnectButton />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
