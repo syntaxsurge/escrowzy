@@ -581,12 +581,53 @@ export default function FreelancerProfileSetup() {
   const [profileData, setProfileData] = useState<Partial<ProfileData>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
 
   useEffect(() => {
     if (!sessionLoading && !session) {
       router.push('/login')
     }
   }, [session, sessionLoading, router])
+
+  // Load existing profile for editing
+  useEffect(() => {
+    const loadExistingProfile = async () => {
+      if (!session) return
+
+      try {
+        const response = await fetch('/api/freelancer/profile')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.profile) {
+            setProfileData({
+              professionalTitle: data.profile.professionalTitle,
+              bio: data.profile.bio,
+              hourlyRate: data.profile.hourlyRate,
+              yearsOfExperience: data.profile.yearsOfExperience,
+              availability: data.profile.availability,
+              timezone: data.profile.timezone,
+              languages: data.profile.languages || [],
+              portfolioUrl: data.profile.portfolioUrl,
+              linkedinUrl: data.profile.linkedinUrl,
+              githubUrl: data.profile.githubUrl,
+              skills: data.profile.skills || [],
+              portfolioItems: data.profile.portfolioItems || []
+            })
+            setIsEditMode(true)
+          }
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error)
+      } finally {
+        setIsLoadingProfile(false)
+      }
+    }
+
+    if (session) {
+      loadExistingProfile()
+    }
+  }, [session])
 
   const handleProfileUpdate = (updates: Partial<ProfileData>) => {
     setProfileData(prev => ({ ...prev, ...updates }))
@@ -596,20 +637,27 @@ export default function FreelancerProfileSetup() {
     setIsSubmitting(true)
     try {
       const response = await fetch('/api/freelancer/profile', {
-        method: 'POST',
+        method: isEditMode ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profileData)
       })
 
       if (!response.ok) {
-        throw new Error('Failed to create profile')
+        throw new Error(`Failed to ${isEditMode ? 'update' : 'create'} profile`)
       }
 
-      toast.success('Freelancer profile created successfully!')
+      toast.success(
+        `Freelancer profile ${isEditMode ? 'updated' : 'created'} successfully!`
+      )
       router.push('/profile/freelancer')
     } catch (error) {
-      console.error('Error creating profile:', error)
-      toast.error('Failed to create profile. Please try again.')
+      console.error(
+        `Error ${isEditMode ? 'updating' : 'creating'} profile:`,
+        error
+      )
+      toast.error(
+        `Failed to ${isEditMode ? 'update' : 'create'} profile. Please try again.`
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -639,7 +687,7 @@ export default function FreelancerProfileSetup() {
     }
   }
 
-  if (sessionLoading) {
+  if (sessionLoading || isLoadingProfile) {
     return (
       <div className='flex min-h-screen items-center justify-center'>
         <Loader2 className='h-8 w-8 animate-spin' />
@@ -719,8 +767,14 @@ export default function FreelancerProfileSetup() {
       <div className='container mx-auto max-w-5xl space-y-6 px-4 py-6'>
         {/* Gamified Header */}
         <GamifiedHeader
-          title='CREATE FREELANCER PROFILE'
-          subtitle='Set up your professional profile to start bidding on projects and showcase your expertise'
+          title={
+            isEditMode ? 'EDIT FREELANCER PROFILE' : 'CREATE FREELANCER PROFILE'
+          }
+          subtitle={
+            isEditMode
+              ? 'Update your professional profile and showcase your latest expertise'
+              : 'Set up your professional profile to start bidding on projects and showcase your expertise'
+          }
           icon={<UserPlus className='h-8 w-8 text-white' />}
         />
 
@@ -826,7 +880,13 @@ export default function FreelancerProfileSetup() {
               }}
               onComplete={handleComplete}
               completeLabel={
-                isSubmitting ? 'Creating Profile...' : 'Create Profile'
+                isSubmitting
+                  ? isEditMode
+                    ? 'Updating Profile...'
+                    : 'Creating Profile...'
+                  : isEditMode
+                    ? 'Update Profile'
+                    : 'Create Profile'
               }
               showSkip
             />

@@ -131,7 +131,7 @@ export default async function FreelancerProfilePage() {
                 asChild
                 className='border-0 bg-gradient-to-r from-blue-600 to-cyan-700 font-bold text-white shadow-lg transition-all hover:scale-105 hover:from-blue-700 hover:to-cyan-800 hover:shadow-xl'
               >
-                <Link href='/profile/freelancer/edit'>
+                <Link href='/profile/freelancer/setup'>
                   <Edit className='mr-2 h-4 w-4' />
                   Edit Profile
                 </Link>
