@@ -52,10 +52,12 @@ if [ $? -eq 0 ]; then
     # Create contracts directory if it doesn't exist
     mkdir -p ../contracts
     
-    # Copy the main contract ABIs
+    # Copy all contract ABIs
     cp -f out/AchievementNFT.sol/AchievementNFT.json ../contracts/abi/AchievementNFT.json
     cp -f out/EscrowCore.sol/EscrowCore.json ../contracts/abi/EscrowCore.json
     cp -f out/SubscriptionManager.sol/SubscriptionManager.json ../contracts/abi/SubscriptionManager.json
+    cp -f out/MilestoneEscrow.sol/MilestoneEscrow.json ../contracts/abi/MilestoneEscrow.json
+    cp -f out/ReputationRegistry.sol/ReputationRegistry.json ../contracts/abi/ReputationRegistry.json
 
     # Format the ABIs
     pnpm lint:all

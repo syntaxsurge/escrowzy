@@ -6,12 +6,16 @@ import { loadBlockchainConfig } from '@/config/blockchain-config-loader'
 
 import AchievementNFTArtifact from '../../../contracts/abi/AchievementNFT.json'
 import EscrowCoreArtifact from '../../../contracts/abi/EscrowCore.json'
+import MilestoneEscrowArtifact from '../../../contracts/abi/MilestoneEscrow.json'
+import ReputationRegistryArtifact from '../../../contracts/abi/ReputationRegistry.json'
 import SubscriptionManagerArtifact from '../../../contracts/abi/SubscriptionManager.json'
 
 // Extract ABIs from artifacts (internal use only - use service classes instead)
 export const SUBSCRIPTION_MANAGER_ABI = SubscriptionManagerArtifact.abi
 export const ESCROW_CORE_ABI = EscrowCoreArtifact.abi
 export const ACHIEVEMENT_NFT_ABI = AchievementNFTArtifact.abi
+export const MILESTONE_ESCROW_ABI = MilestoneEscrowArtifact.abi
+export const REPUTATION_REGISTRY_ABI = ReputationRegistryArtifact.abi
 
 /* ────────────────────────────────────────────────────────────
  * 1️⃣  Load & cache the (already validated) YAML → TS config
@@ -38,6 +42,8 @@ interface ChainMeta {
   contractAddress: string
   escrowCoreAddress: string
   achievementNFTAddress: string
+  milestoneEscrowAddress: string
+  reputationRegistryAddress: string
   viemChain: ReturnType<typeof defineViemChain>
   thirdwebChain: Chain
   isTestnet: boolean
@@ -59,6 +65,8 @@ type PublicChainMap = Record<
       subscriptionManager: string
       escrowCore?: string
       achievementNFT?: string
+      milestoneEscrow?: string
+      reputationRegistry?: string
     }
   }
 >
@@ -101,6 +109,8 @@ for (const [yamlKey, c] of Object.entries(RAW_BLOCKCHAIN_CFG.chains)) {
     contractAddress: c.contractAddresses.subscriptionManager,
     escrowCoreAddress: c.contractAddresses.escrowCore || '',
     achievementNFTAddress: c.contractAddresses.achievementNFT || '',
+    milestoneEscrowAddress: c.contractAddresses.milestoneEscrow || '',
+    reputationRegistryAddress: c.contractAddresses.reputationRegistry || '',
     viemChain: viem,
     thirdwebChain: third,
     isTestnet: !!c.isTestnet
@@ -119,7 +129,9 @@ for (const [yamlKey, c] of Object.entries(RAW_BLOCKCHAIN_CFG.chains)) {
     contractAddresses: {
       subscriptionManager: c.contractAddresses.subscriptionManager,
       escrowCore: c.contractAddresses.escrowCore || '',
-      achievementNFT: c.contractAddresses.achievementNFT || ''
+      achievementNFT: c.contractAddresses.achievementNFT || '',
+      milestoneEscrow: c.contractAddresses.milestoneEscrow || '',
+      reputationRegistry: c.contractAddresses.reputationRegistry || ''
     }
   }
 }
@@ -184,6 +196,12 @@ export const getEscrowCoreAddress = (id: number) =>
 /** AchievementNFT address (may be ''). */
 export const getAchievementNFTAddress = (id: number) =>
   CHAIN_MAP[id]?.achievementNFTAddress ?? ''
+/** MilestoneEscrow address (may be ''). */
+export const getMilestoneEscrowAddress = (id: number) =>
+  CHAIN_MAP[id]?.milestoneEscrowAddress ?? ''
+/** ReputationRegistry address (may be ''). */
+export const getReputationRegistryAddress = (id: number) =>
+  CHAIN_MAP[id]?.reputationRegistryAddress ?? ''
 /** Heavy `viem` Chain object. */
 export const getViemChain = (id: number) => CHAIN_MAP[id]?.viemChain
 /** Heavy `thirdweb` Chain object. */
@@ -254,7 +272,9 @@ export const getBlockchainConfig = () => ({
         contractAddresses: {
           subscriptionManager: CHAIN_MAP[id].contractAddress,
           escrowCore: CHAIN_MAP[id].escrowCoreAddress,
-          achievementNFT: CHAIN_MAP[id].achievementNFTAddress
+          achievementNFT: CHAIN_MAP[id].achievementNFTAddress,
+          milestoneEscrow: CHAIN_MAP[id].milestoneEscrowAddress,
+          reputationRegistry: CHAIN_MAP[id].reputationRegistryAddress
         }
       }
     ])
@@ -275,7 +295,9 @@ export const SUPPORTED_NETWORKS = Object.entries(PUBLIC_CHAINS).reduce(
       coingeckoId: chain.coingeckoId,
       contractAddress: chain.contractAddresses.subscriptionManager || '',
       escrowCore: chain.contractAddresses.escrowCore || '',
-      achievementNFT: chain.contractAddresses.achievementNFT || ''
+      achievementNFT: chain.contractAddresses.achievementNFT || '',
+      milestoneEscrow: chain.contractAddresses.milestoneEscrow || '',
+      reputationRegistry: chain.contractAddresses.reputationRegistry || ''
     }
     return acc
   },
@@ -288,6 +310,8 @@ export const SUPPORTED_NETWORKS = Object.entries(PUBLIC_CHAINS).reduce(
       contractAddress: string
       escrowCore?: string
       achievementNFT?: string
+      milestoneEscrow?: string
+      reputationRegistry?: string
     }
   >
 )
