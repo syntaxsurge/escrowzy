@@ -237,25 +237,27 @@ export function SkillSelector({
             </div>
 
             <Tabs defaultValue='all' className='w-full'>
-              <TabsList className='grid h-9 w-full grid-cols-4'>
-                <TabsTrigger
-                  value='all'
-                  onClick={() => setSelectedCategory(null)}
-                >
-                  All
-                </TabsTrigger>
-                {Object.entries(skillsByCategory)
-                  .slice(0, 3)
-                  .map(([id, category]) => (
+              <div className='overflow-x-auto'>
+                <TabsList className='inline-flex h-9 w-max'>
+                  <TabsTrigger
+                    value='all'
+                    onClick={() => setSelectedCategory(null)}
+                    className='whitespace-nowrap'
+                  >
+                    All
+                  </TabsTrigger>
+                  {Object.entries(skillsByCategory).map(([id, category]) => (
                     <TabsTrigger
                       key={id}
                       value={id}
                       onClick={() => setSelectedCategory(parseInt(id))}
+                      className='whitespace-nowrap'
                     >
                       {category.name}
                     </TabsTrigger>
                   ))}
-              </TabsList>
+                </TabsList>
+              </div>
 
               <ScrollArea className='h-64'>
                 <div className='p-2'>

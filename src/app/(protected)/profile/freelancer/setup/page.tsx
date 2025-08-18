@@ -99,6 +99,7 @@ function BasicInfoStep({
     const isValid = !!(
       data.professionalTitle &&
       data.bio &&
+      data.bio.length >= 20 &&
       data.hourlyRate &&
       data.yearsOfExperience !== undefined
     )
@@ -310,7 +311,6 @@ function AvailabilityStep({
       </div>
 
       <div className='space-y-2'>
-        <Label>Languages *</Label>
         <LanguageSelector
           languages={data.languages || []}
           onChange={languages => onChange({ languages })}

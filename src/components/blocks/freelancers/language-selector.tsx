@@ -110,7 +110,7 @@ export function LanguageSelector({
   return (
     <div className='space-y-4'>
       <div className='flex items-center justify-between'>
-        <Label>Languages</Label>
+        <Label>Languages *</Label>
         <span className='text-muted-foreground text-sm'>
           {languages.length}/{maxLanguages}
         </span>
