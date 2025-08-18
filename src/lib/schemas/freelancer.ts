@@ -22,7 +22,7 @@ export const freelancerProfileSchema = z.object({
     .optional(),
   bio: z
     .string()
-    .min(50, 'Bio must be at least 50 characters')
+    .min(20, 'Bio must be at least 20 characters')
     .max(5000, 'Bio must be less than 5000 characters')
     .optional(),
   hourlyRate: z
@@ -53,7 +53,7 @@ export const profileBasicInfoSchema = z.object({
     .max(200, 'Title must be less than 200 characters'),
   bio: z
     .string()
-    .min(50, 'Bio must be at least 50 characters')
+    .min(20, 'Bio must be at least 20 characters')
     .max(5000, 'Bio must be less than 5000 characters'),
   hourlyRate: z
     .string()

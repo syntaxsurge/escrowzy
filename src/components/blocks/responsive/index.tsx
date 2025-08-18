@@ -213,12 +213,12 @@ export function MobileMenu({
   return (
     <>
       <div
-        className='fixed inset-0 z-40 bg-black/50 sm:hidden'
+        className='fixed inset-0 z-40 bg-black/50 md:hidden'
         onClick={onClose}
       />
       <div
         className={cn(
-          'bg-background fixed inset-x-0 top-0 z-50 border-b sm:hidden',
+          'bg-background fixed inset-x-0 top-0 z-50 border-b md:hidden',
           'animate-in slide-in-from-top duration-200',
           className
         )}

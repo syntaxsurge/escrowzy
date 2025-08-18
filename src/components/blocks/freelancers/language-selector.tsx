@@ -1,12 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
-import { Plus, X } from 'lucide-react'
+import { X, Languages } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandGroup
+} from '@/components/ui/command'
 import { Label } from '@/components/ui/label'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@/components/ui/popover'
 import {
   Select,
   SelectContent,
@@ -14,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { getLanguages, getPopularLanguages } from '@/lib/utils/localization'
 
 export interface Language {
   language: string
@@ -25,29 +39,6 @@ interface LanguageSelectorProps {
   onChange: (languages: Language[]) => void
   maxLanguages?: number
 }
-
-const COMMON_LANGUAGES = [
-  'English',
-  'Spanish',
-  'French',
-  'German',
-  'Italian',
-  'Portuguese',
-  'Russian',
-  'Chinese (Mandarin)',
-  'Chinese (Cantonese)',
-  'Japanese',
-  'Korean',
-  'Arabic',
-  'Hindi',
-  'Dutch',
-  'Polish',
-  'Turkish',
-  'Swedish',
-  'Norwegian',
-  'Danish',
-  'Finnish'
-]
 
 const PROFICIENCY_LEVELS = [
   { value: 'basic', label: 'Basic' },
@@ -63,20 +54,47 @@ export function LanguageSelector({
 }: LanguageSelectorProps) {
   const [newLanguage, setNewLanguage] = useState<string>('')
   const [newLevel, setNewLevel] = useState<Language['level']>('conversational')
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
 
-  const handleAddLanguage = () => {
-    if (!newLanguage || languages.length >= maxLanguages) {
+  const allLanguages = useMemo(() => getLanguages(), [])
+  const popularLanguages = useMemo(() => getPopularLanguages(), [])
+
+  // Filter out already selected languages
+  const availableLanguages = useMemo(() => {
+    return allLanguages.filter(
+      lang => !languages.find(l => l.language === lang.name)
+    )
+  }, [allLanguages, languages])
+
+  const availablePopular = useMemo(() => {
+    return popularLanguages.filter(
+      lang => !languages.find(l => l.language === lang.name)
+    )
+  }, [popularLanguages, languages])
+
+  // Filter languages based on search
+  const filteredLanguages = useMemo(() => {
+    if (!search) return availableLanguages
+
+    const searchLower = search.toLowerCase()
+    return availableLanguages.filter(
+      lang =>
+        lang.name.toLowerCase().includes(searchLower) ||
+        lang.code.toLowerCase().includes(searchLower)
+    )
+  }, [search, availableLanguages])
+
+  const handleAddLanguage = (languageName: string) => {
+    if (languages.length >= maxLanguages) {
       return
     }
 
-    // Check if language already exists
-    if (languages.find(l => l.language === newLanguage)) {
-      return
-    }
-
-    onChange([...languages, { language: newLanguage, level: newLevel }])
+    onChange([...languages, { language: languageName, level: newLevel }])
     setNewLanguage('')
     setNewLevel('conversational')
+    setOpen(false)
+    setSearch('')
   }
 
   const handleRemoveLanguage = (index: number) => {
@@ -88,10 +106,6 @@ export function LanguageSelector({
       languages.map((lang, i) => (i === index ? { ...lang, level } : lang))
     )
   }
-
-  const availableLanguages = COMMON_LANGUAGES.filter(
-    lang => !languages.find(l => l.language === lang)
-  )
 
   return (
     <div className='space-y-4'>
@@ -145,18 +159,66 @@ export function LanguageSelector({
       {languages.length < maxLanguages && (
         <Card className='p-3'>
           <div className='flex items-center gap-2'>
-            <Select value={newLanguage} onValueChange={setNewLanguage}>
-              <SelectTrigger className='flex-1'>
-                <SelectValue placeholder='Select a language' />
-              </SelectTrigger>
-              <SelectContent>
-                {availableLanguages.map(lang => (
-                  <SelectItem key={lang} value={lang}>
-                    {lang}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant='outline'
+                  role='combobox'
+                  aria-expanded={open}
+                  className='flex-1 justify-between'
+                >
+                  <span className='flex items-center gap-2'>
+                    <Languages className='h-4 w-4' />
+                    Select a language
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className='w-[350px] p-0' align='start'>
+                <Command>
+                  <CommandInput
+                    placeholder='Search languages...'
+                    value={search}
+                    onValueChange={setSearch}
+                  />
+                  <CommandList className='max-h-[300px]'>
+                    <CommandEmpty>No language found.</CommandEmpty>
+
+                    {/* Popular languages */}
+                    {!search && availablePopular.length > 0 && (
+                      <CommandGroup heading='Popular Languages'>
+                        {availablePopular.map(lang => (
+                          <CommandItem
+                            key={lang.code}
+                            value={lang.name}
+                            onSelect={() => handleAddLanguage(lang.name)}
+                          >
+                            {lang.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+
+                    {/* All languages or filtered */}
+                    <CommandGroup
+                      heading={search ? 'Search Results' : 'All Languages'}
+                    >
+                      {(search ? filteredLanguages : availableLanguages).map(
+                        lang => (
+                          <CommandItem
+                            key={lang.code}
+                            value={lang.name}
+                            onSelect={() => handleAddLanguage(lang.name)}
+                          >
+                            {lang.name}
+                          </CommandItem>
+                        )
+                      )}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+
             <Select
               value={newLevel}
               onValueChange={value => setNewLevel(value as Language['level'])}
@@ -172,13 +234,6 @@ export function LanguageSelector({
                 ))}
               </SelectContent>
             </Select>
-            <Button
-              size='sm'
-              onClick={handleAddLanguage}
-              disabled={!newLanguage}
-            >
-              <Plus className='h-4 w-4' />
-            </Button>
           </div>
         </Card>
       )}

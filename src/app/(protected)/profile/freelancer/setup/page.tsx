@@ -15,6 +15,9 @@ import { toast } from 'sonner'
 import type { z } from 'zod'
 
 import { LanguageSelector } from '@/components/blocks/freelancers/language-selector'
+import { PortfolioUpload } from '@/components/blocks/freelancers/portfolio-upload'
+import { SkillSelector } from '@/components/blocks/freelancers/skill-selector'
+import { TimezoneSelector } from '@/components/blocks/freelancers/timezone-selector'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -35,10 +38,12 @@ import {
   useWizard
 } from '@/components/ui/wizard'
 import { useSession } from '@/hooks/use-session'
-// Portfolio upload will be implemented in future update
 import { freelancerProfileSchema } from '@/lib/schemas/freelancer'
 
-type ProfileData = z.infer<typeof freelancerProfileSchema>
+type ProfileData = z.infer<typeof freelancerProfileSchema> & {
+  skills?: any[]
+  portfolioItems?: any[]
+}
 
 const wizardSteps = [
   {
@@ -122,7 +127,7 @@ function BasicInfoStep({
           onChange={e => onChange({ bio: e.target.value })}
         />
         <p className='text-muted-foreground text-xs'>
-          {data.bio?.length || 0}/500 characters
+          {data.bio?.length || 0}/5000 characters (min 20)
         </p>
       </div>
 
@@ -172,24 +177,56 @@ function SkillsStep({
   onChange: (updates: Partial<ProfileData>) => void
 }) {
   const { setStepValid } = useWizard()
+  const [skills, setSkills] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Fetch available skills
+    fetch('/api/skills')
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          setSkills(result.skills || [])
+        }
+      })
+      .catch(err => {
+        console.error('Failed to fetch skills:', err)
+        toast.error('Failed to load skills')
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    // Skills are optional during setup, so always valid
     setStepValid('skills', true)
   }, [setStepValid])
+
+  if (loading) {
+    return (
+      <div className='flex items-center justify-center py-8'>
+        <Loader2 className='h-6 w-6 animate-spin' />
+      </div>
+    )
+  }
 
   return (
     <div className='space-y-6'>
       <div className='space-y-2'>
-        <Label>Select Your Skills *</Label>
+        <Label>Select Your Skills</Label>
         <p className='text-muted-foreground text-sm'>
           Choose the skills that best represent your expertise. You can specify
           your experience level for each skill.
         </p>
       </div>
 
-      <div className='text-muted-foreground rounded-lg border-2 border-dashed py-8 text-center'>
-        Skills selection will be available after initial profile setup.
-      </div>
+      <SkillSelector
+        skills={skills}
+        selectedSkills={data.skills || []}
+        onChange={skills => onChange({ skills })}
+        maxSkills={20}
+        showExperience={true}
+        showLevel={true}
+      />
     </div>
   )
 }
@@ -218,9 +255,11 @@ function PortfolioStep({
         </p>
       </div>
 
-      <div className='text-muted-foreground rounded-lg border-2 border-dashed py-8 text-center'>
-        Portfolio items can be added after profile setup.
-      </div>
+      <PortfolioUpload
+        portfolioItems={data.portfolioItems || []}
+        onChange={items => onChange({ portfolioItems: items })}
+        maxItems={10}
+      />
     </div>
   )
 }
@@ -263,11 +302,10 @@ function AvailabilityStep({
 
       <div className='space-y-2'>
         <Label htmlFor='timezone'>Timezone *</Label>
-        <Input
-          id='timezone'
-          placeholder='e.g., America/New_York, Europe/London'
-          value={data.timezone || ''}
-          onChange={e => onChange({ timezone: e.target.value })}
+        <TimezoneSelector
+          value={data.timezone}
+          onChange={timezone => onChange({ timezone })}
+          placeholder='Select your timezone'
         />
       </div>
 
@@ -276,16 +314,6 @@ function AvailabilityStep({
         <LanguageSelector
           languages={data.languages || []}
           onChange={languages => onChange({ languages })}
-        />
-      </div>
-
-      {/* Weekly availability calendar will be added in a future update */}
-      <div className='space-y-2'>
-        <Label>Timezone</Label>
-        <Input
-          value={data.timezone || ''}
-          onChange={e => onChange({ timezone: e.target.value })}
-          placeholder='e.g., America/New_York'
         />
       </div>
     </div>
@@ -412,14 +440,23 @@ function ReviewStep({ data }: { data: Partial<ProfileData> }) {
               </p>
             </div>
 
-            <div>
-              <p className='text-sm font-medium'>Languages</p>
-              <p className='text-muted-foreground text-sm'>
-                {data.languages?.length
-                  ? `${data.languages.length} languages`
-                  : 'No languages added'}
-              </p>
-            </div>
+            {data.skills && data.skills.length > 0 && (
+              <div>
+                <p className='text-sm font-medium'>Skills</p>
+                <p className='text-muted-foreground text-sm'>
+                  {data.skills.length} skills selected
+                </p>
+              </div>
+            )}
+
+            {data.portfolioItems && data.portfolioItems.length > 0 && (
+              <div>
+                <p className='text-sm font-medium'>Portfolio</p>
+                <p className='text-muted-foreground text-sm'>
+                  {data.portfolioItems.length} items added
+                </p>
+              </div>
+            )}
           </div>
 
           <div className='bg-primary/10 rounded-lg p-4'>

@@ -67,7 +67,7 @@ const ThirdwebNetworkButton = dynamic(
                   />
                 </div>
               </mod.ChainProvider>
-              <span className='text-foreground hidden text-sm font-medium lg:inline xl:inline'>
+              <span className='text-foreground hidden text-sm font-medium sm:inline'>
                 {activeChain.name || `Chain ${activeChain.id}`}
               </span>
             </div>
@@ -104,7 +104,7 @@ const RainbowKitNetworkButton = dynamic(
                         )}
                       </div>
                     )}
-                    <span className='text-foreground hidden text-sm font-medium lg:inline xl:inline'>
+                    <span className='text-foreground hidden text-sm font-medium sm:inline'>
                       {chain.name || 'Unknown Chain'}
                     </span>
                   </div>
