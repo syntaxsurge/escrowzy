@@ -453,14 +453,19 @@ function UserMenu() {
   )
 }
 
-function PublicNavigation() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+function PublicNavigation({ 
+  isMobileMenuOpen, 
+  setIsMobileMenuOpen 
+}: {
+  isMobileMenuOpen: boolean
+  setIsMobileMenuOpen: (open: boolean) => void
+}) {
   const [isBrowseOpen, setIsBrowseOpen] = useState(false)
 
   return (
     <>
       {/* Desktop Navigation */}
-      <nav className='hidden items-center gap-1 lg:flex'>
+      <nav className='hidden items-center gap-1 md:flex'>
         {/* Browse Dropdown */}
         <DropdownMenu open={isBrowseOpen} onOpenChange={setIsBrowseOpen}>
           <DropdownMenuTrigger asChild>
@@ -512,16 +517,17 @@ function PublicNavigation() {
                 <span>Domain Names</span>
               </Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link
+                href={appRoutes.services}
+                className='flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all hover:bg-gradient-to-r hover:from-emerald-50 hover:to-green-50 hover:text-emerald-700 focus:bg-gradient-to-r focus:from-emerald-50 focus:to-green-50 focus:text-emerald-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-emerald-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-emerald-400'
+              >
+                <Briefcase className='h-4 w-4' />
+                <span>Services</span>
+              </Link>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        {/* Services Link */}
-        <Link
-          href={appRoutes.services}
-          className='text-muted-foreground hover:text-foreground hover:bg-muted inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-all'
-        >
-          Services
-        </Link>
 
         {/* Pricing Link */}
         <Link
@@ -532,79 +538,65 @@ function PublicNavigation() {
         </Link>
       </nav>
 
-      {/* Mobile Menu Button */}
-      <Button
-        variant='ghost'
-        size='icon'
-        className='lg:hidden'
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-      >
-        {isMobileMenuOpen ? (
-          <X className='h-5 w-5' />
-        ) : (
-          <Menu className='h-5 w-5' />
-        )}
-      </Button>
-
       {/* Mobile Menu */}
       <MobileMenu
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
-        className='bg-background top-[60px]'
+        className='bg-background/95 backdrop-blur-xl top-[60px] border-t border-border'
       >
-        <div className='space-y-1 p-4'>
-          <div className='text-muted-foreground mb-2 px-3 text-xs font-semibold tracking-wider uppercase'>
+        <div className='space-y-1 p-4 max-h-[calc(100vh-80px)] overflow-y-auto'>
+          <div className='text-muted-foreground mb-3 px-3 text-xs font-semibold tracking-wider uppercase'>
             Browse
           </div>
           <Link
             href={appRoutes.freelancers}
-            className='text-foreground hover:bg-muted flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all'
+            className='text-foreground hover:bg-muted active:bg-muted flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-all'
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            <Users className='h-4 w-4' />
+            <Users className='h-5 w-5 text-primary' />
             <span>Freelancers</span>
           </Link>
           <Link
             href={appRoutes.jobs}
-            className='text-foreground hover:bg-muted flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all'
+            className='text-foreground hover:bg-muted active:bg-muted flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-all'
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            <Briefcase className='h-4 w-4' />
+            <Briefcase className='h-5 w-5 text-emerald-600' />
             <span>Jobs</span>
           </Link>
           <Link
             href='/listings?category=p2p'
-            className='text-foreground hover:bg-muted flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all'
+            className='text-foreground hover:bg-muted active:bg-muted flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-all'
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            <ShoppingBag className='h-4 w-4' />
+            <ShoppingBag className='h-5 w-5 text-purple-600' />
             <span>P2P Marketplace</span>
           </Link>
           <Link
             href={appRoutes.domains}
-            className='text-foreground hover:bg-muted flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all'
+            className='text-foreground hover:bg-muted active:bg-muted flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-all'
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            <Globe className='h-4 w-4' />
+            <Globe className='h-5 w-5 text-indigo-600' />
             <span>Domain Names</span>
           </Link>
-
-          <div className='border-border my-2 border-t' />
-
           <Link
             href={appRoutes.services}
-            className='text-foreground hover:bg-muted flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all'
+            className='text-foreground hover:bg-muted active:bg-muted flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-all'
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            <Hash className='h-4 w-4' />
+            <Briefcase className='h-5 w-5 text-green-600' />
             <span>Services</span>
           </Link>
+
+          <div className='border-border my-3 border-t' />
+
           <Link
             href={appRoutes.pricing}
-            className='text-foreground hover:bg-muted flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all'
+            className='text-foreground hover:bg-muted active:bg-muted flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-all'
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            <DollarSign className='h-4 w-4' />
+            <DollarSign className='h-5 w-5 text-yellow-600' />
             <span>Pricing</span>
           </Link>
         </div>
@@ -620,6 +612,7 @@ export default function Header() {
     swrFetcher
   )
   const user = userData?.user
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
     <header className='border-border bg-background/80 sticky top-0 z-50 border-b backdrop-blur-xl'>
@@ -644,14 +637,35 @@ export default function Header() {
         </Link>
 
         {/* Center Navigation */}
-        <PublicNavigation />
+        <PublicNavigation 
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
+        />
 
         {/* Right Side Actions */}
         <div className='flex items-center gap-2'>
-          <ThemeToggle />
-          <NetworkSelector isAuthenticated={!!user} />
-          {/* Only show notifications when user is authenticated */}
-          {isConnected && user && <NotificationDropdown />}
+          {/* Mobile Menu Button */}
+          <Button
+            variant='ghost'
+            size='icon'
+            className='md:hidden'
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? (
+              <X className='h-5 w-5' />
+            ) : (
+              <Menu className='h-5 w-5' />
+            )}
+          </Button>
+          
+          {/* Desktop Actions */}
+          <div className='hidden md:flex items-center gap-2'>
+            <ThemeToggle />
+            <NetworkSelector isAuthenticated={!!user} />
+            {/* Only show notifications when user is authenticated */}
+            {isConnected && user && <NotificationDropdown />}
+          </div>
+          
           <UserMenu />
         </div>
       </div>
