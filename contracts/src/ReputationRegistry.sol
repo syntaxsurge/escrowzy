@@ -6,6 +6,17 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 contract ReputationRegistry is ERC721URIStorage, Ownable {
+    // Custom errors for better gas efficiency and debugging
+    error InvalidRating(uint256 received, uint256 minExpected, uint256 maxExpected);
+    error SelfEndorsement(address attemptedEndorser, address targetUser);
+    error InvalidAddress(address provided);
+    error InsufficientReviews(uint256 current, uint256 required);
+    error ScoreTooLow(uint256 current, uint256 required);
+    error AlreadyHasNFT(address user, uint256 existingTokenId);
+    error NoReviewsFound(address user);
+    error InvalidSkillName();
+    error DecayPeriodNotElapsed(uint256 currentTime, uint256 nextDecayTime);
+    
     uint256 private _tokenIdCounter;
     
     struct ReputationScore {
@@ -54,16 +65,30 @@ contract ReputationRegistry is ERC721URIStorage, Ownable {
         uint256 rating,
         bool isFreelancer
     ) external onlyOwner {
-        require(rating >= 1 && rating <= 5, "Invalid rating");
+        if (rating < 1 || rating > 5) {
+            revert InvalidRating(rating, 1, 5);
+        }
+        
+        if (user == address(0)) {
+            revert InvalidAddress(user);
+        }
         
         ReputationScore storage userRep = reputationScores[user];
         
-        uint256 weightedScore = rating * 200; // Scale to 0-1000
+        // Apply different weighting based on user type
+        // Freelancers get a slight boost to help build reputation
+        uint256 weightedScore = isFreelancer 
+            ? rating * 210  // 5% boost for freelancers (scale to 0-1050)
+            : rating * 200; // Normal scale to 0-1000
         userRep.totalScore += weightedScore;
         userRep.reviewCount++;
         userRep.lastUpdateTime = block.timestamp;
         
+        // Adjust average score back to 0-1000 scale
         uint256 averageScore = userRep.totalScore / userRep.reviewCount;
+        if (isFreelancer && averageScore > 1000) {
+            averageScore = 1000; // Cap at max score
+        }
         
         _updateTrustScore(user, averageScore);
         
@@ -84,8 +109,21 @@ contract ReputationRegistry is ERC721URIStorage, Ownable {
         string memory skillName,
         uint256 rating
     ) external {
-        require(msg.sender != user, "Cannot endorse yourself");
-        require(rating >= 1 && rating <= 5, "Invalid rating");
+        if (msg.sender == user) {
+            revert SelfEndorsement(msg.sender, user);
+        }
+        
+        if (rating < 1 || rating > 5) {
+            revert InvalidRating(rating, 1, 5);
+        }
+        
+        if (user == address(0)) {
+            revert InvalidAddress(user);
+        }
+        
+        if (bytes(skillName).length == 0) {
+            revert InvalidSkillName();
+        }
         
         SkillEndorsement memory endorsement = SkillEndorsement({
             skillName: skillName,

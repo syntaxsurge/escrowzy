@@ -20,17 +20,40 @@ contract MilestoneEscrow is
     ReentrancyGuardUpgradeable,
     PausableUpgradeable
 {
-    // Custom errors for gas efficiency
-    error InvalidMilestoneIndex();
-    error MilestoneNotSubmitted();
-    error AutoReleaseNotEnabled();
-    error AutoReleasePeriodNotExpired();
-    error FundsAlreadyReleased();
-    error InvalidMilestoneStatus();
-    error InvalidResolutionType();
-    error EmergencyOnly();
-    error InvalidEscrowId();
-    error UnauthorizedAccess();
+    // Custom errors for gas efficiency and debugging
+    error InvalidMilestoneIndex(uint256 provided, uint256 maxIndex);
+    error MilestoneNotSubmitted(uint256 milestoneIndex, MilestoneStatus currentStatus);
+    error AutoReleaseNotEnabled(uint256 escrowId);
+    error AutoReleasePeriodNotExpired(uint256 currentTime, uint256 releaseTime);
+    error FundsAlreadyReleased(uint256 milestoneIndex);
+    error InvalidMilestoneStatus(MilestoneStatus current, MilestoneStatus expected);
+    error InvalidResolutionType(string provided);
+    error EmergencyOnly(bool isEmergency);
+    error InvalidEscrowId(uint256 escrowId);
+    error UnauthorizedCaller(address caller, address expected);
+    error InvalidAddress(address provided);
+    error NoMilestonesProvided();
+    error EscrowNotFound(uint256 escrowId);
+    error InvalidAmount(uint256 provided, uint256 minRequired);
+    error InvalidDueDate(uint256 provided, uint256 currentTime);
+    error EmptyTitle(uint256 milestoneIndex);
+    error MilestoneAmountMismatch(uint256 totalMilestones, uint256 escrowAmount);
+    error IncorrectPayment(uint256 sent, uint256 required);
+    error InvalidToken(address token);
+    error InvalidRecipient(address recipient);
+    error MilestoneAlreadyApproved(uint256 milestoneIndex, address approver);
+    error InvalidMilestoneCount(uint256 provided, uint256 maxAllowed);
+    error InsufficientApprovals(uint256 current, uint256 required);
+    error MilestoneOverdue(uint256 dueDate, uint256 currentTime);
+    error InvalidPriority(uint256 provided, uint256 maxPriority);
+    error RevisionLimitExceeded(uint256 current, uint256 maxAllowed);
+    error InvalidArrayLengths(uint256 firstLength, uint256 secondLength);
+    error PreviousMilestoneNotCompleted(uint256 previousIndex, MilestoneStatus previousStatus);
+    error EmptySubmissionUrl();
+    error UnauthorizedParty(address caller);
+    error TransferFailed(string transferType);
+    error EmptyReason();
+    error TooManyMilestones(uint256 provided, uint256 maxAllowed);
     
     // Reference to EscrowCore contract
     EscrowCore public escrowCore;
@@ -192,8 +215,12 @@ contract MilestoneEscrow is
         address _escrowCore,
         address _admin
     ) public initializer {
-        require(_escrowCore != address(0), "Invalid EscrowCore address");
-        require(_admin != address(0), "Invalid admin address");
+        if (_escrowCore == address(0)) {
+            revert InvalidAddress(_escrowCore);
+        }
+        if (_admin == address(0)) {
+            revert InvalidAddress(_admin);
+        }
         
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -235,25 +262,42 @@ contract MilestoneEscrow is
         uint256[] memory _amounts,
         uint256[] memory _dueDates
     ) external payable whenNotPaused {
-        require(
-            _titles.length == _descriptions.length &&
-            _titles.length == _amounts.length &&
-            _titles.length == _dueDates.length,
-            "Array lengths mismatch"
-        );
-        require(_titles.length > 0, "No milestones provided");
+        if (_titles.length != _descriptions.length ||
+            _titles.length != _amounts.length ||
+            _titles.length != _dueDates.length) {
+            revert InvalidArrayLengths(_titles.length, _descriptions.length);
+        }
+        
+        if (_titles.length == 0) {
+            revert NoMilestonesProvided();
+        }
+        
+        uint256 maxMilestones = 20; // Reasonable limit
+        if (_titles.length > maxMilestones) {
+            revert InvalidMilestoneCount(_titles.length, maxMilestones);
+        }
         
         // Verify escrow exists and caller is authorized
         (address buyer, , uint256 escrowAmount, , , , , , ) = escrowCore.getEscrowDetails(_escrowId);
-        require(buyer != address(0), "Escrow does not exist");
-        require(msg.sender == buyer, "Only buyer can create milestones");
+        if (buyer == address(0)) {
+            revert EscrowNotFound(_escrowId);
+        }
+        if (msg.sender != buyer) {
+            revert UnauthorizedCaller(msg.sender, buyer);
+        }
         
         uint256 totalMilestoneAmount = 0;
         
         for (uint256 i = 0; i < _titles.length; i++) {
-            require(_amounts[i] > 0, "Invalid amount");
-            require(_dueDates[i] > block.timestamp, "Invalid due date");
-            require(bytes(_titles[i]).length > 0, "Title required");
+            if (_amounts[i] == 0) {
+                revert InvalidAmount(_amounts[i], 1);
+            }
+            if (_dueDates[i] <= block.timestamp) {
+                revert InvalidDueDate(_dueDates[i], block.timestamp);
+            }
+            if (bytes(_titles[i]).length == 0) {
+                revert EmptyTitle(i);
+            }
             
             Milestone storage milestone = milestones[_escrowId].push();
             milestone.escrowId = _escrowId;
@@ -277,8 +321,12 @@ contract MilestoneEscrow is
             );
         }
         
-        require(totalMilestoneAmount == escrowAmount, "Milestone amounts must equal escrow amount");
-        require(msg.value == totalMilestoneAmount, "Incorrect ETH sent for milestones");
+        if (totalMilestoneAmount != escrowAmount) {
+            revert MilestoneAmountMismatch(totalMilestoneAmount, escrowAmount);
+        }
+        if (msg.value != totalMilestoneAmount) {
+            revert IncorrectPayment(msg.value, totalMilestoneAmount);
+        }
         escrowMilestoneCount[_escrowId] = _titles.length;
     }
     
@@ -292,27 +340,27 @@ contract MilestoneEscrow is
         whenNotPaused 
     {
         if (_milestoneIndex >= milestones[_escrowId].length) {
-            revert InvalidMilestoneIndex();
+            revert InvalidMilestoneIndex(_milestoneIndex, milestones[_escrowId].length - 1);
         }
         
         Milestone storage milestone = milestones[_escrowId][_milestoneIndex];
         
         // Verify caller is the seller or assigned party
         (, address seller, , , , , , , ) = escrowCore.getEscrowDetails(_escrowId);
-        require(
-            msg.sender == seller || msg.sender == milestone.assignedTo,
-            "Unauthorized"
-        );
+        if (msg.sender != seller && msg.sender != milestone.assignedTo) {
+            revert UnauthorizedParty(msg.sender);
+        }
         
-        require(milestone.status == MilestoneStatus.PENDING, "Invalid status");
+        if (milestone.status != MilestoneStatus.PENDING) {
+            revert InvalidMilestoneStatus(milestone.status, MilestoneStatus.PENDING);
+        }
         
         // Check if previous milestone is completed (if not first)
         if (_milestoneIndex > 0) {
             Milestone storage prevMilestone = milestones[_escrowId][_milestoneIndex - 1];
-            require(
-                prevMilestone.status == MilestoneStatus.APPROVED,
-                "Previous milestone not completed"
-            );
+            if (prevMilestone.status != MilestoneStatus.APPROVED) {
+                revert PreviousMilestoneNotCompleted(_milestoneIndex - 1, prevMilestone.status);
+            }
         }
         
         milestone.status = MilestoneStatus.IN_PROGRESS;
@@ -332,17 +380,23 @@ contract MilestoneEscrow is
         string memory _submissionUrl
     ) external whenNotPaused {
         if (_milestoneIndex >= milestones[_escrowId].length) {
-            revert InvalidMilestoneIndex();
+            revert InvalidMilestoneIndex(_milestoneIndex, milestones[_escrowId].length - 1);
         }
         
         Milestone storage milestone = milestones[_escrowId][_milestoneIndex];
         
         // Verify caller is the seller
         (, address seller, , , , , , , ) = escrowCore.getEscrowDetails(_escrowId);
-        require(msg.sender == seller || msg.sender == milestone.assignedTo, "Unauthorized");
+        if (msg.sender != seller && msg.sender != milestone.assignedTo) {
+            revert UnauthorizedParty(msg.sender);
+        }
         
-        require(milestone.status == MilestoneStatus.IN_PROGRESS, "Milestone not in progress");
-        require(bytes(_submissionUrl).length > 0, "Submission URL required");
+        if (milestone.status != MilestoneStatus.IN_PROGRESS) {
+            revert InvalidMilestoneStatus(milestone.status, MilestoneStatus.IN_PROGRESS);
+        }
+        if (bytes(_submissionUrl).length == 0) {
+            revert EmptySubmissionUrl();
+        }
         
         milestone.status = MilestoneStatus.SUBMITTED;
         milestone.submittedAt = block.timestamp;
@@ -368,21 +422,23 @@ contract MilestoneEscrow is
         string memory _feedback
     ) external payable nonReentrant whenNotPaused {
         if (_milestoneIndex >= milestones[_escrowId].length) {
-            revert InvalidMilestoneIndex();
+            revert InvalidMilestoneIndex(_milestoneIndex, milestones[_escrowId].length - 1);
         }
         
         Milestone storage milestone = milestones[_escrowId][_milestoneIndex];
         
         if (milestone.status != MilestoneStatus.SUBMITTED) {
-            revert MilestoneNotSubmitted();
+            revert MilestoneNotSubmitted(_milestoneIndex, milestone.status);
         }
         if (milestone.fundsReleased) {
-            revert FundsAlreadyReleased();
+            revert FundsAlreadyReleased(_milestoneIndex);
         }
         
         // Verify caller
         (address buyer, address seller, , , , , , , ) = escrowCore.getEscrowDetails(_escrowId);
-        require(msg.sender == buyer, "Only buyer can approve");
+        if (msg.sender != buyer) {
+            revert UnauthorizedCaller(msg.sender, buyer);
+        }
         
         // Process approval
         milestone.status = MilestoneStatus.APPROVED;
@@ -433,7 +489,7 @@ contract MilestoneEscrow is
         string memory _reason
     ) external whenNotPaused {
         if (_milestoneIndex >= milestones[_escrowId].length) {
-            revert InvalidMilestoneIndex();
+            revert InvalidMilestoneIndex(_milestoneIndex, milestones[_escrowId].length - 1);
         }
         
         Milestone storage milestone = milestones[_escrowId][_milestoneIndex];
@@ -442,7 +498,9 @@ contract MilestoneEscrow is
         
         // Verify caller is buyer
         (address buyer, , , , , , , , ) = escrowCore.getEscrowDetails(_escrowId);
-        require(msg.sender == buyer, "Only buyer can request revision");
+        if (msg.sender != buyer) {
+            revert UnauthorizedCaller(msg.sender, buyer);
+        }
         
         milestone.status = MilestoneStatus.IN_PROGRESS;
         milestone.revisionCount++;
@@ -464,7 +522,7 @@ contract MilestoneEscrow is
         string memory _reason
     ) external whenNotPaused {
         if (_milestoneIndex >= milestones[_escrowId].length) {
-            revert InvalidMilestoneIndex();
+            revert InvalidMilestoneIndex(_milestoneIndex, milestones[_escrowId].length - 1);
         }
         
         Milestone storage milestone = milestones[_escrowId][_milestoneIndex];
@@ -495,22 +553,22 @@ contract MilestoneEscrow is
         uint256 _milestoneIndex
     ) external nonReentrant whenNotPaused {
         if (_milestoneIndex >= milestones[_escrowId].length) {
-            revert InvalidMilestoneIndex();
+            revert InvalidMilestoneIndex(_milestoneIndex, milestones[_escrowId].length - 1);
         }
         
         Milestone storage milestone = milestones[_escrowId][_milestoneIndex];
         
         if (milestone.status != MilestoneStatus.SUBMITTED) {
-            revert MilestoneNotSubmitted();
+            revert MilestoneNotSubmitted(_milestoneIndex, milestone.status);
         }
         if (!milestone.autoReleaseEnabled) {
-            revert AutoReleaseNotEnabled();
+            revert AutoReleaseNotEnabled(_escrowId);
         }
         if (block.timestamp < milestone.autoReleaseTime) {
             revert("Auto-release period not expired");
         }
         if (milestone.fundsReleased) {
-            revert FundsAlreadyReleased();
+            revert FundsAlreadyReleased(_milestoneIndex);
         }
         
         // Process auto-release
@@ -591,7 +649,9 @@ contract MilestoneEscrow is
     ) external {
         // Verify caller is buyer
         (address buyer, , , , , , , , ) = escrowCore.getEscrowDetails(_escrowId);
-        require(msg.sender == buyer, "Only buyer can configure");
+        if (msg.sender != buyer) {
+            revert UnauthorizedCaller(msg.sender, buyer);
+        }
         require(_window >= 1 days && _window <= 30 days, "Invalid window");
         
         escrowAutoReleaseEnabled[_escrowId] = _enabled;
