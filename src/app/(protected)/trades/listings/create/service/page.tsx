@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -82,54 +82,6 @@ const createJobSchema = z.object({
 
 type JobFormData = z.infer<typeof createJobSchema>
 
-// Mock categories - these will come from the database
-const jobCategories = [
-  { id: '1', name: 'Web Development', icon: '💻' },
-  { id: '2', name: 'Mobile Development', icon: '📱' },
-  { id: '3', name: 'Design & Creative', icon: '🎨' },
-  { id: '4', name: 'Writing & Translation', icon: '✍️' },
-  { id: '5', name: 'Digital Marketing', icon: '📈' },
-  { id: '6', name: 'Video & Animation', icon: '🎬' },
-  { id: '7', name: 'Music & Audio', icon: '🎵' },
-  { id: '8', name: 'Programming & Tech', icon: '⚙️' },
-  { id: '9', name: 'Data Science & Analytics', icon: '📊' },
-  { id: '10', name: 'Business & Consulting', icon: '💼' }
-]
-
-// Mock skills - these will come from the database
-const availableSkills = [
-  'JavaScript',
-  'TypeScript',
-  'React',
-  'Node.js',
-  'Python',
-  'Java',
-  'C++',
-  'PHP',
-  'Ruby',
-  'Go',
-  'Rust',
-  'UI/UX Design',
-  'Graphic Design',
-  'Logo Design',
-  'Illustration',
-  'Content Writing',
-  'Copywriting',
-  'Technical Writing',
-  'Translation',
-  'SEO',
-  'Social Media Marketing',
-  'PPC',
-  'Email Marketing',
-  'Video Editing',
-  '3D Animation',
-  'Motion Graphics',
-  'Data Analysis',
-  'Machine Learning',
-  'AI',
-  'Blockchain'
-]
-
 export default function CreateServiceListingPage() {
   const router = useRouter()
   const { toast } = useToast()
@@ -138,6 +90,9 @@ export default function CreateServiceListingPage() {
   const [skillSearch, setSkillSearch] = useState('')
   const [milestones, setMilestones] = useState<any[]>([])
   const [showMilestones, setShowMilestones] = useState(false)
+  const [jobCategories, setJobCategories] = useState<any[]>([])
+  const [availableSkills, setAvailableSkills] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(createJobSchema),
@@ -159,6 +114,54 @@ export default function CreateServiceListingPage() {
 
   const budgetType = form.watch('budgetType')
   const postingType = form.watch('postingType')
+  const selectedCategoryId = form.watch('categoryId')
+
+  // Fetch categories and skills on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch categories
+        const categoriesResponse = await fetch('/api/jobs/categories')
+        const categoriesData = await categoriesResponse.json()
+        if (categoriesData.success) {
+          setJobCategories(categoriesData.categories)
+        }
+
+        // Fetch all skills initially
+        const skillsResponse = await fetch('/api/jobs/skills')
+        const skillsData = await skillsResponse.json()
+        if (skillsData.success) {
+          setAvailableSkills(skillsData.skills.map((s: any) => s.name))
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories/skills:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  // Update skills when category changes
+  useEffect(() => {
+    if (selectedCategoryId) {
+      const fetchCategorySkills = async () => {
+        try {
+          const response = await fetch(
+            `/api/jobs/skills?categoryId=${selectedCategoryId}`
+          )
+          const data = await response.json()
+          if (data.success) {
+            setAvailableSkills(data.skills.map((s: any) => s.name))
+          }
+        } catch (error) {
+          console.error('Failed to fetch category skills:', error)
+        }
+      }
+      fetchCategorySkills()
+    }
+  }, [selectedCategoryId])
 
   // Filter skills based on search
   const filteredSkills = availableSkills.filter(
@@ -228,6 +231,21 @@ export default function CreateServiceListingPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className='container mx-auto max-w-4xl space-y-6 p-4'>
+        <div className='flex items-center justify-center py-12'>
+          <div className='text-center'>
+            <div className='border-primary mx-auto h-12 w-12 animate-spin rounded-full border-b-2'></div>
+            <p className='text-muted-foreground mt-4'>
+              Loading categories and skills...
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

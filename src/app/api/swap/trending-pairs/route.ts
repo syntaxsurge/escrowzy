@@ -41,14 +41,13 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Trending pairs API error:', error)
 
-    // Return default trending pairs on error
+    // Return empty array on error instead of mock data
     return NextResponse.json({
       success: false,
       chainId: request.nextUrl.searchParams.get('chainId') || '1',
-      pairs: getDefaultTrendingPairs(
-        request.nextUrl.searchParams.get('chainId') || '1'
-      ),
-      lastUpdated: new Date().toISOString()
+      pairs: [],
+      lastUpdated: new Date().toISOString(),
+      error: 'Failed to fetch trending pairs. Please try again later.'
     })
   }
 }
@@ -124,7 +123,8 @@ async function getTrendingPairs(chainIndex: string): Promise<TrendingPair[]> {
     return trendingPairs.slice(0, 5)
   } catch (error) {
     console.error('Failed to get trending pairs:', error)
-    return getDefaultTrendingPairs(chainIndex)
+    // Return empty array instead of mock data
+    return []
   }
 }
 
@@ -222,64 +222,4 @@ function getCommonPairsForChain(chainIndex: string) {
   }
 
   return commonPairs[chainIndex] || commonPairs['1']
-}
-
-function getDefaultTrendingPairs(chainId: string): TrendingPair[] {
-  // Default pairs with mock data when API fails
-  const defaultPairs: Record<string, TrendingPair[]> = {
-    '1': [
-      {
-        from: {
-          symbol: 'ETH',
-          address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
-        },
-        to: {
-          symbol: 'USDC',
-          address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
-        }
-      },
-      {
-        from: {
-          symbol: 'ETH',
-          address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
-        },
-        to: {
-          symbol: 'USDT',
-          address: '0xdac17f958d2ee523a2206206994597c13d831ec7'
-        }
-      },
-      {
-        from: {
-          symbol: 'WBTC',
-          address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599'
-        },
-        to: {
-          symbol: 'ETH',
-          address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
-        }
-      },
-      {
-        from: {
-          symbol: 'ETH',
-          address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
-        },
-        to: {
-          symbol: 'DAI',
-          address: '0x6b175474e89094c44da98b954eedeac495271d0f'
-        }
-      },
-      {
-        from: {
-          symbol: 'USDC',
-          address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
-        },
-        to: {
-          symbol: 'USDT',
-          address: '0xdac17f958d2ee523a2206206994597c13d831ec7'
-        }
-      }
-    ]
-  }
-
-  return defaultPairs[chainId] || defaultPairs['1']
 }

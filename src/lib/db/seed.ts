@@ -1,6 +1,8 @@
 import 'server-only'
 
 import { seedFreelancerData } from './seed-freelancer'
+import { seedJobsData } from './seed-jobs'
+import { seedScheduledTasks } from './seed-scheduled-tasks'
 import { seedLegalDocuments } from './seeds/legal-documents'
 import { seedPlatformContracts } from './seeds/platform-contracts'
 import { seedRewards } from './seeds/rewards'
@@ -37,9 +39,17 @@ async function seed() {
     await seedPlatformContracts()
     console.log('✅ Platform contracts seeded')
 
+    // Seed job categories and skills
+    await seedJobsData()
+    console.log('✅ Job categories and skills seeded')
+
     // Seed freelancer marketplace data
     await seedFreelancerData()
     console.log('✅ Freelancer marketplace data seeded')
+
+    // Seed scheduled tasks
+    await seedScheduledTasks()
+    console.log('✅ Scheduled tasks seeded')
 
     console.log('================================')
     console.log('🎉 Seed process completed successfully!')

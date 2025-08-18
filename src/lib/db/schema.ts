@@ -3085,6 +3085,56 @@ export const tooltipContent = pgTable('tooltip_content', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
+// Scheduled Tasks Tables
+export const scheduledTasks = pgTable(
+  'scheduled_tasks',
+  {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 100 }).notNull().unique(),
+    description: text('description'),
+    taskType: varchar('task_type', { length: 50 }).notNull(), // cron, webhook, manual
+    schedule: varchar('schedule', { length: 100 }), // Cron expression
+    endpoint: varchar('endpoint', { length: 200 }), // API endpoint to call
+    isActive: boolean('is_active').notNull().default(true),
+    lastRunAt: timestamp('last_run_at'),
+    nextRunAt: timestamp('next_run_at'),
+    averageRunTime: integer('average_run_time'), // milliseconds
+    successCount: integer('success_count').notNull().default(0),
+    errorCount: integer('error_count').notNull().default(0),
+    metadata: jsonb('metadata').notNull().default('{}'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_scheduled_tasks_active').on(table.isActive),
+    index('idx_scheduled_tasks_type').on(table.taskType),
+    index('idx_scheduled_tasks_next_run').on(table.nextRunAt)
+  ]
+)
+
+export const scheduledTaskRuns = pgTable(
+  'scheduled_task_runs',
+  {
+    id: serial('id').primaryKey(),
+    taskId: integer('task_id')
+      .notNull()
+      .references(() => scheduledTasks.id, { onDelete: 'cascade' }),
+    status: varchar('status', { length: 20 }).notNull(), // running, success, failed, timeout
+    startedAt: timestamp('started_at').notNull().defaultNow(),
+    completedAt: timestamp('completed_at'),
+    runTime: integer('run_time'), // milliseconds
+    output: text('output'),
+    error: text('error'),
+    metadata: jsonb('metadata').notNull().default('{}'),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('idx_task_runs_task').on(table.taskId),
+    index('idx_task_runs_status').on(table.status),
+    index('idx_task_runs_started').on(table.startedAt)
+  ]
+)
+
 // Type exports for Phase 11
 export type OnboardingStep = typeof onboardingSteps.$inferSelect
 export type NewOnboardingStep = typeof onboardingSteps.$inferInsert
@@ -3124,3 +3174,7 @@ export type SocialShare = typeof socialShares.$inferSelect
 export type NewSocialShare = typeof socialShares.$inferInsert
 export type TooltipContent = typeof tooltipContent.$inferSelect
 export type NewTooltipContent = typeof tooltipContent.$inferInsert
+export type ScheduledTask = typeof scheduledTasks.$inferSelect
+export type NewScheduledTask = typeof scheduledTasks.$inferInsert
+export type ScheduledTaskRun = typeof scheduledTaskRuns.$inferSelect
+export type NewScheduledTaskRun = typeof scheduledTaskRuns.$inferInsert

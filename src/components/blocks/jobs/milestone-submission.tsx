@@ -70,19 +70,50 @@ export function MilestoneSubmission({
     }
   }
 
-  const handleFiles = (fileList: FileList) => {
+  const handleFiles = async (fileList: FileList) => {
     const newFiles: FileUpload[] = []
 
-    Array.from(fileList).forEach(file => {
-      // In production, you would upload to cloud storage here
-      // For now, we'll create a mock URL
-      newFiles.push({
-        name: file.name,
-        url: URL.createObjectURL(file), // This would be replaced with actual upload URL
-        size: file.size,
-        type: file.type
-      })
-    })
+    // Upload files to server
+    for (const file of Array.from(fileList)) {
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('folder', `milestones/${milestoneId}`)
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          newFiles.push({
+            name: file.name,
+            url: data.url,
+            size: file.size,
+            type: file.type
+          })
+        } else {
+          console.error('Failed to upload file:', file.name)
+          // Fallback to local URL for preview
+          newFiles.push({
+            name: file.name,
+            url: URL.createObjectURL(file),
+            size: file.size,
+            type: file.type
+          })
+        }
+      } catch (error) {
+        console.error('Error uploading file:', error)
+        // Fallback to local URL for preview
+        newFiles.push({
+          name: file.name,
+          url: URL.createObjectURL(file),
+          size: file.size,
+          type: file.type
+        })
+      }
+    }
 
     setFiles([...files, ...newFiles])
   }

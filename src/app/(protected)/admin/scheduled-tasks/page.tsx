@@ -49,59 +49,9 @@ export default function ScheduledTasksPage() {
   // Fetch task statuses
   const { data: tasks, mutate: mutateTasks } = useSWR<ScheduledTask[]>(
     '/api/admin/scheduled-tasks',
-    async () => {
-      // Mock data for now - in production, this would fetch from a task management service
-      return [
-        {
-          id: 'milestone-auto-release',
-          name: 'Milestone Auto-Release',
-          description:
-            'Automatically releases approved milestones after grace period',
-          schedule: '0 * * * *', // Every hour
-          lastRun: new Date(Date.now() - 1800000).toISOString(),
-          nextRun: new Date(Date.now() + 1800000).toISOString(),
-          status: 'active',
-          successCount: 156,
-          errorCount: 2,
-          averageRunTime: 1250
-        },
-        {
-          id: 'payment-reminders',
-          name: 'Payment Reminders',
-          description: 'Sends automated payment reminders for overdue invoices',
-          schedule: '0 9 * * *', // Daily at 9 AM
-          lastRun: new Date(Date.now() - 86400000).toISOString(),
-          nextRun: new Date(Date.now() + 3600000).toISOString(),
-          status: 'active',
-          successCount: 423,
-          errorCount: 0,
-          averageRunTime: 3400
-        },
-        {
-          id: 'tax-document-generation',
-          name: 'Tax Document Generation',
-          description: 'Generates quarterly tax documents for freelancers',
-          schedule: '0 0 1 */3 *', // Quarterly on the 1st
-          lastRun: new Date('2024-01-01').toISOString(),
-          nextRun: new Date('2024-04-01').toISOString(),
-          status: 'active',
-          successCount: 12,
-          errorCount: 0,
-          averageRunTime: 45000
-        },
-        {
-          id: 'milestone-overdue-check',
-          name: 'Milestone Overdue Check',
-          description: 'Checks for overdue milestones and sends notifications',
-          schedule: '0 0 * * *', // Daily at midnight
-          lastRun: new Date(Date.now() - 43200000).toISOString(),
-          nextRun: new Date(Date.now() + 43200000).toISOString(),
-          status: 'active',
-          successCount: 89,
-          errorCount: 1,
-          averageRunTime: 2100
-        }
-      ]
+    async (url: string) => {
+      const response = await api.get(url)
+      return response
     },
     {
       refreshInterval: 30000 // Refresh every 30 seconds
@@ -125,28 +75,7 @@ export default function ScheduledTasksPage() {
     setIsRunning({ ...isRunning, [taskId]: true })
 
     try {
-      let endpoint = ''
-
-      switch (taskId) {
-        case 'milestone-auto-release':
-          endpoint = '/api/cron/milestone-auto-release'
-          break
-        case 'payment-reminders':
-          endpoint = '/api/payment-reminders'
-          break
-        default:
-          throw new Error('Unknown task')
-      }
-
-      const response = await api.post(
-        endpoint,
-        {},
-        {
-          headers: {
-            'x-api-key': process.env.NEXT_PUBLIC_CRON_API_KEY || ''
-          }
-        }
-      )
+      const response = await api.post('/api/admin/scheduled-tasks', { taskId })
 
       if (response.success) {
         toast.success(`Task ${taskId} completed successfully`)

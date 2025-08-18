@@ -1,28 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { getJobCategoriesWithCounts } from '@/lib/db/queries/jobs'
+import { eq } from 'drizzle-orm'
 
-// GET /api/jobs/categories - Get all job categories with job counts
-export async function GET(_request: NextRequest) {
+import { db } from '@/lib/db/drizzle'
+import { jobCategories } from '@/lib/db/schema'
+
+export async function GET(request: NextRequest) {
   try {
-    const categories = await getJobCategoriesWithCounts()
-
-    // Organize into hierarchy with counts
-    const rootCategories = categories.filter(c => !c.parentCategoryId)
-    const categoriesWithChildren = rootCategories.map(parent => ({
-      ...parent,
-      subCategories: categories.filter(c => c.parentCategoryId === parent.id)
-    }))
+    const categories = await db
+      .select()
+      .from(jobCategories)
+      .where(eq(jobCategories.isActive, true))
+      .orderBy(jobCategories.sortOrder)
 
     return NextResponse.json({
       success: true,
-      categories: categoriesWithChildren,
-      total: categories.reduce((sum, cat) => sum + cat.jobCount, 0)
+      categories
     })
   } catch (error) {
-    console.error('Error fetching categories:', error)
+    console.error('Failed to fetch job categories:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch categories' },
+      { success: false, error: 'Failed to fetch job categories' },
       { status: 500 }
     )
   }

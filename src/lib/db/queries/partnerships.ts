@@ -1,393 +1,272 @@
-import 'server-only'
-
-import { and, asc, desc, eq, gte, lte, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, sql, sum } from 'drizzle-orm'
 
 import { db } from '../drizzle'
-import {
-  partners,
-  partnerCommissions,
-  users,
-  type Partner,
-  type PartnerCommission,
-  type NewPartner,
-  type NewPartnerCommission
-} from '../schema'
+import { escrowListings, partnerCommissions, partners, users } from '../schema'
 
-// Create partner
-export async function createPartner(data: NewPartner): Promise<Partner> {
-  // Generate API key
-  const apiKey = generateApiKey()
+export async function getPartnershipByUserId(userId: number) {
+  const partnership = await db
+    .select({
+      id: partners.id,
+      userId: partners.userId,
+      companyName: partners.companyName,
+      websiteUrl: partners.websiteUrl,
+      contactEmail: partners.contactEmail,
+      contactPhone: partners.contactPhone,
+      partnershipType: partners.partnershipType,
+      commissionRate: partners.commissionRate,
+      customTerms: partners.customTerms,
+      totalEarnedCommission: partners.totalEarnedCommission,
+      totalPendingCommission: partners.totalPendingCommission,
+      totalReferrals: partners.totalReferrals,
+      status: partners.status,
+      startDate: partners.approvedAt,
+      createdAt: partners.createdAt
+    })
+    .from(partners)
+    .where(eq(partners.userId, userId))
+    .limit(1)
 
-  const [partner] = await db
+  return partnership[0] || null
+}
+
+export async function getPartnershipStats(partnerId: number) {
+  // Get total transactions and volume
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+
+  const commissionStats = await db
+    .select({
+      totalTransactions: sql<number>`count(*)::int`,
+      totalVolume: sum(partnerCommissions.amount),
+      totalCommissions: sum(partnerCommissions.commissionAmount),
+      pendingCommissions: sum(
+        sql`CASE WHEN ${partnerCommissions.status} = 'pending' THEN ${partnerCommissions.commissionAmount} ELSE 0 END`
+      )
+    })
+    .from(partnerCommissions)
+    .where(eq(partnerCommissions.partnerId, partnerId))
+
+  const recentCommissions = await db
+    .select({
+      avgTransactionSize: sql<string>`AVG(${partnerCommissions.amount})::decimal(10,2)`
+    })
+    .from(partnerCommissions)
+    .where(
+      and(
+        eq(partnerCommissions.partnerId, partnerId),
+        gte(partnerCommissions.createdAt, thirtyDaysAgo)
+      )
+    )
+
+  // Get active users (unique users who made transactions through partner)
+  const activeUsers = await db
+    .selectDistinct({ userId: users.id })
+    .from(users)
+    .innerJoin(escrowListings, eq(escrowListings.userId, users.id))
+    .where(
+      and(
+        eq(escrowListings.partnerId, partnerId),
+        gte(escrowListings.createdAt, thirtyDaysAgo)
+      )
+    )
+
+  const stats = commissionStats[0]
+
+  return {
+    totalTransactions: stats?.totalTransactions || 0,
+    totalVolume: stats?.totalVolume || '0',
+    totalCommissions: stats?.totalCommissions || '0',
+    pendingCommissions: stats?.pendingCommissions || '0',
+    avgTransactionSize: recentCommissions[0]?.avgTransactionSize || '0',
+    activeUsers: activeUsers.length
+  }
+}
+
+export async function getPartnerCommissions(
+  partnerId: number,
+  status?: 'pending' | 'paid' | 'cancelled',
+  limit = 50
+) {
+  const conditions = [eq(partnerCommissions.partnerId, partnerId)]
+
+  if (status) {
+    conditions.push(eq(partnerCommissions.status, status))
+  }
+
+  const commissions = await db
+    .select({
+      id: partnerCommissions.id,
+      referenceType: partnerCommissions.referenceType,
+      referenceId: partnerCommissions.referenceId,
+      amount: partnerCommissions.amount,
+      commissionRate: partnerCommissions.commissionRate,
+      commissionAmount: partnerCommissions.commissionAmount,
+      status: partnerCommissions.status,
+      paidAt: partnerCommissions.paidAt,
+      createdAt: partnerCommissions.createdAt
+    })
+    .from(partnerCommissions)
+    .where(and(...conditions))
+    .orderBy(desc(partnerCommissions.createdAt))
+    .limit(limit)
+
+  return commissions
+}
+
+export async function createPartnership(data: {
+  userId: number
+  companyName: string
+  websiteUrl: string
+  contactEmail: string
+  contactPhone?: string
+  partnershipType: string
+  proposedTerms: string
+  estimatedVolume?: string
+  userBase?: string
+  additionalInfo?: string
+}) {
+  const [partnership] = await db
     .insert(partners)
     .values({
-      ...data,
-      apiKey
+      userId: data.userId,
+      companyName: data.companyName,
+      websiteUrl: data.websiteUrl,
+      contactEmail: data.contactEmail,
+      contactPhone: data.contactPhone,
+      partnershipType: data.partnershipType,
+      commissionRate: '10', // Default rate, admin can adjust
+      customTerms: data.proposedTerms,
+      status: 'pending',
+      notes: JSON.stringify({
+        estimatedVolume: data.estimatedVolume,
+        userBase: data.userBase,
+        additionalInfo: data.additionalInfo
+      })
     })
     .returning()
 
-  return partner
+  return partnership
 }
 
-// Generate unique API key
-function generateApiKey(): string {
-  const timestamp = Date.now().toString(36)
-  const randomPart = Math.random().toString(36).substring(2, 15)
-  return `pk_${timestamp}_${randomPart}`
-}
+export async function updatePartnershipStatus(
+  partnerId: number,
+  status: 'active' | 'suspended' | 'terminated',
+  approvedBy?: number
+) {
+  const updates: any = {
+    status,
+    updatedAt: new Date()
+  }
 
-// Get partner by ID
-export async function getPartner(id: number) {
-  const [partner] = await db
-    .select()
-    .from(partners)
-    .where(eq(partners.id, id))
-    .limit(1)
+  if (status === 'active' && approvedBy) {
+    updates.approvedAt = new Date()
+    updates.approvedBy = approvedBy
+  }
 
-  return partner
-}
-
-// Get partner by API key
-export async function getPartnerByApiKey(apiKey: string) {
-  const [partner] = await db
-    .select()
-    .from(partners)
-    .where(and(eq(partners.apiKey, apiKey), eq(partners.status, 'active')))
-    .limit(1)
-
-  return partner
-}
-
-// Get all partners
-export async function getPartners(status?: string) {
-  const conditions = status ? [eq(partners.status, status)] : []
-
-  return await db
-    .select({
-      partner: partners,
-      approvedByUser: users
-    })
-    .from(partners)
-    .leftJoin(users, eq(partners.approvedBy, users.id))
-    .where(and(...conditions))
-    .orderBy(desc(partners.createdAt))
-}
-
-// Update partner
-export async function updatePartner(
-  id: number,
-  data: Partial<NewPartner>
-): Promise<Partner> {
   const [updated] = await db
     .update(partners)
-    .set({ ...data, updatedAt: new Date() })
-    .where(eq(partners.id, id))
+    .set(updates)
+    .where(eq(partners.id, partnerId))
     .returning()
 
   return updated
 }
 
-// Approve partner
-export async function approvePartner(
-  id: number,
-  approvedBy: number
-): Promise<Partner> {
-  const [approved] = await db
-    .update(partners)
-    .set({
-      status: 'active',
-      approvedAt: new Date(),
-      approvedBy,
-      updatedAt: new Date()
+export async function recordPartnerCommission(data: {
+  partnerId: number
+  referenceType: 'trade' | 'subscription' | 'job'
+  referenceId: number
+  amount: string
+  commissionRate: string
+}) {
+  const commissionAmount = (
+    parseFloat(data.amount) *
+    (parseFloat(data.commissionRate) / 100)
+  ).toFixed(2)
+
+  const [commission] = await db
+    .insert(partnerCommissions)
+    .values({
+      partnerId: data.partnerId,
+      referenceType: data.referenceType,
+      referenceId: data.referenceId,
+      amount: data.amount,
+      commissionRate: data.commissionRate,
+      commissionAmount,
+      status: 'pending'
     })
-    .where(eq(partners.id, id))
     .returning()
 
-  return approved
-}
-
-// Suspend partner
-export async function suspendPartner(
-  id: number,
-  reason: string
-): Promise<Partner> {
-  const [suspended] = await db
-    .update(partners)
-    .set({
-      status: 'suspended',
-      notes: sql`${partners.notes} || E'\n\nSuspended: ' || ${reason}`,
-      updatedAt: new Date()
-    })
-    .where(eq(partners.id, id))
-    .returning()
-
-  return suspended
-}
-
-// Regenerate partner API key
-export async function regeneratePartnerApiKey(id: number): Promise<string> {
-  const newApiKey = generateApiKey()
-
+  // Update partner's total pending commission
   await db
     .update(partners)
     .set({
-      apiKey: newApiKey,
+      totalPendingCommission: sql`${partners.totalPendingCommission} + ${commissionAmount}::decimal`,
       updatedAt: new Date()
     })
-    .where(eq(partners.id, id))
-
-  return newApiKey
-}
-
-// Track partner commission
-export async function trackPartnerCommission(
-  data: NewPartnerCommission
-): Promise<PartnerCommission> {
-  const [commission] = await db
-    .insert(partnerCommissions)
-    .values(data)
-    .returning()
-
-  // Update partner's total revenue and referrals
-  const partner = await getPartner(data.partnerId)
-  if (partner) {
-    const totalRevenue =
-      parseFloat(partner.totalRevenue || '0') + parseFloat(data.amount)
-
-    await db
-      .update(partners)
-      .set({
-        totalRevenue: totalRevenue.toString(),
-        totalReferrals: sql`${partners.totalReferrals} + 1`,
-        updatedAt: new Date()
-      })
-      .where(eq(partners.id, data.partnerId))
-  }
+    .where(eq(partners.id, data.partnerId))
 
   return commission
 }
 
-// Get partner commissions
-export async function getPartnerCommissions(
-  partnerId: number,
-  status?: string,
-  limit = 100
-) {
-  const conditions = [eq(partnerCommissions.partnerId, partnerId)]
-  if (status) {
-    conditions.push(eq(partnerCommissions.status, status))
+export async function applyForPartnership(data: {
+  userId: number
+  companyName: string
+  websiteUrl: string
+  contactEmail: string
+  contactPhone?: string
+  partnershipType: string
+  proposedTerms: string
+  estimatedVolume?: string
+  userBase?: string
+  additionalInfo?: string
+}) {
+  // Check if user already has a partnership
+  const existing = await getPartnershipByUserId(data.userId)
+  if (existing) {
+    return null // User already has a partnership
   }
 
-  return await db
-    .select()
-    .from(partnerCommissions)
-    .where(and(...conditions))
-    .orderBy(desc(partnerCommissions.createdAt))
-    .limit(limit)
+  return createPartnership(data)
 }
 
-// Process partner commission payment
-export async function processCommissionPayment(
-  commissionId: number,
-  paymentMethod: string,
-  paymentReference: string
-): Promise<PartnerCommission> {
-  const [paid] = await db
+export async function processPartnerPayout(
+  partnerId: number,
+  commissionIds: number[]
+) {
+  // Mark commissions as paid
+  const paidCommissions = await db
     .update(partnerCommissions)
     .set({
       status: 'paid',
       paidAt: new Date(),
-      paymentMethod,
-      paymentReference,
       updatedAt: new Date()
     })
-    .where(eq(partnerCommissions.id, commissionId))
+    .where(
+      and(
+        eq(partnerCommissions.partnerId, partnerId),
+        sql`${partnerCommissions.id} IN (${sql.join(commissionIds, sql`, `)})`
+      )
+    )
     .returning()
 
-  return paid
-}
-
-// Get partner stats
-export async function getPartnerStats(partnerId: number) {
-  const partner = await getPartner(partnerId)
-  if (!partner) {
-    throw new Error('Partner not found')
-  }
-
-  const commissions = await db
-    .select({
-      totalCommissions: sql<number>`count(*)`,
-      pendingCommissions: sql<number>`count(case when ${partnerCommissions.status} = 'pending' then 1 end)`,
-      paidCommissions: sql<number>`count(case when ${partnerCommissions.status} = 'paid' then 1 end)`,
-      totalPending: sql<number>`sum(case when ${partnerCommissions.status} = 'pending' then ${partnerCommissions.commissionAmount} else 0 end)`,
-      totalPaid: sql<number>`sum(case when ${partnerCommissions.status} = 'paid' then ${partnerCommissions.commissionAmount} else 0 end)`,
-      totalRevenue: sql<number>`sum(${partnerCommissions.amount})`
-    })
-    .from(partnerCommissions)
-    .where(eq(partnerCommissions.partnerId, partnerId))
-
-  // Get monthly revenue
-  const monthlyRevenue = await db
-    .select({
-      month: sql<string>`to_char(${partnerCommissions.createdAt}, 'YYYY-MM')`,
-      revenue: sql<number>`sum(${partnerCommissions.amount})`,
-      commissions: sql<number>`sum(${partnerCommissions.commissionAmount})`
-    })
-    .from(partnerCommissions)
-    .where(
-      and(
-        eq(partnerCommissions.partnerId, partnerId),
-        gte(partnerCommissions.createdAt, sql`now() - interval '12 months'`)
-      )
-    )
-    .groupBy(sql`to_char(${partnerCommissions.createdAt}, 'YYYY-MM')`)
-    .orderBy(desc(sql`to_char(${partnerCommissions.createdAt}, 'YYYY-MM')`))
-
-  return {
-    partner,
-    summary: commissions[0] || {
-      totalCommissions: 0,
-      pendingCommissions: 0,
-      paidCommissions: 0,
-      totalPending: 0,
-      totalPaid: 0,
-      totalRevenue: 0
-    },
-    monthlyRevenue
-  }
-}
-
-// Get pending commissions for all partners
-export async function getPendingCommissions() {
-  return await db
-    .select({
-      commission: partnerCommissions,
-      partner: partners
-    })
-    .from(partnerCommissions)
-    .innerJoin(partners, eq(partnerCommissions.partnerId, partners.id))
-    .where(
-      and(
-        eq(partnerCommissions.status, 'pending'),
-        eq(partners.status, 'active')
-      )
-    )
-    .orderBy(asc(partnerCommissions.createdAt))
-}
-
-// Get partner leaderboard
-export async function getPartnerLeaderboard(
-  period: 'all' | 'month' | 'year' = 'month',
-  limit = 10
-) {
-  let dateCondition = sql`true`
-
-  if (period === 'month') {
-    dateCondition = gte(
-      partnerCommissions.createdAt,
-      sql`now() - interval '1 month'`
-    )
-  } else if (period === 'year') {
-    dateCondition = gte(
-      partnerCommissions.createdAt,
-      sql`now() - interval '1 year'`
-    )
-  }
-
-  const leaderboard = await db
-    .select({
-      partner: partners,
-      totalRevenue: sql<number>`sum(${partnerCommissions.amount})`,
-      totalCommissions: sql<number>`sum(${partnerCommissions.commissionAmount})`,
-      referralCount: sql<number>`count(${partnerCommissions.id})`
-    })
-    .from(partners)
-    .leftJoin(
-      partnerCommissions,
-      and(eq(partnerCommissions.partnerId, partners.id), dateCondition)
-    )
-    .where(eq(partners.status, 'active'))
-    .groupBy(partners.id)
-    .orderBy(desc(sql`sum(${partnerCommissions.amount})`))
-    .limit(limit)
-
-  return leaderboard.map((entry, index) => ({
-    rank: index + 1,
-    ...entry
-  }))
-}
-
-// Calculate partner tier
-export function calculatePartnerTier(
-  totalRevenue: number,
-  totalReferrals: number
-): string {
-  if (totalRevenue >= 100000 || totalReferrals >= 1000) {
-    return 'platinum'
-  } else if (totalRevenue >= 50000 || totalReferrals >= 500) {
-    return 'gold'
-  } else if (totalRevenue >= 10000 || totalReferrals >= 100) {
-    return 'silver'
-  } else {
-    return 'bronze'
-  }
-}
-
-// Update partner tier
-export async function updatePartnerTier(partnerId: number): Promise<Partner> {
-  const partner = await getPartner(partnerId)
-  if (!partner) {
-    throw new Error('Partner not found')
-  }
-
-  const newTier = calculatePartnerTier(
-    parseFloat(partner.totalRevenue || '0'),
-    partner.totalReferrals || 0
+  // Calculate total paid amount
+  const totalPaid = paidCommissions.reduce(
+    (sum, c) => sum + parseFloat(c.commissionAmount),
+    0
   )
 
-  if (newTier !== partner.tier) {
-    const [updated] = await db
-      .update(partners)
-      .set({
-        tier: newTier,
-        updatedAt: new Date()
-      })
-      .where(eq(partners.id, partnerId))
-      .returning()
-
-    return updated
-  }
-
-  return partner
-}
-
-// Get partner performance metrics
-export async function getPartnerPerformanceMetrics(
-  partnerId: number,
-  startDate: Date,
-  endDate: Date
-) {
-  return await db
-    .select({
-      date: sql<string>`date(${partnerCommissions.createdAt})`,
-      revenue: sql<number>`sum(${partnerCommissions.amount})`,
-      commissions: sql<number>`sum(${partnerCommissions.commissionAmount})`,
-      referrals: sql<number>`count(*)`,
-      avgTicketSize: sql<number>`avg(${partnerCommissions.amount})`
+  // Update partner totals
+  await db
+    .update(partners)
+    .set({
+      totalEarnedCommission: sql`${partners.totalEarnedCommission} + ${totalPaid}::decimal`,
+      totalPendingCommission: sql`${partners.totalPendingCommission} - ${totalPaid}::decimal`,
+      updatedAt: new Date()
     })
-    .from(partnerCommissions)
-    .where(
-      and(
-        eq(partnerCommissions.partnerId, partnerId),
-        gte(partnerCommissions.createdAt, startDate),
-        lte(partnerCommissions.createdAt, endDate)
-      )
-    )
-    .groupBy(sql`date(${partnerCommissions.createdAt})`)
-    .orderBy(asc(sql`date(${partnerCommissions.createdAt})`))
-}
+    .where(eq(partners.id, partnerId))
 
-// Aliases for compatibility
-export const applyForPartnership = createPartner
-export const getPartnershipByUserId = getPartner
-export const getPartnershipStats = getPartnerStats
+  return {
+    paidCommissions,
+    totalPaid: totalPaid.toFixed(2)
+  }
+}

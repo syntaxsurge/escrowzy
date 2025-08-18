@@ -14,7 +14,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const referralLink = await generateReferralLink(session.user.id)
+    const body = await req.json()
+    const { campaignSource, customSlug } = body
+
+    const referralLink = await generateReferralLink(
+      session.user.id,
+      campaignSource,
+      customSlug
+    )
 
     if (!referralLink) {
       return NextResponse.json(
@@ -25,10 +32,11 @@ export async function POST(req: NextRequest) {
 
     // Construct the full URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://escrowzy.com'
-    const fullUrl = `${baseUrl}/ref/${referralLink}`
+    const fullUrl = `${baseUrl}/ref/${referralLink.code}`
 
     return NextResponse.json({
-      code: referralLink,
+      link: referralLink,
+      code: referralLink.code,
       fullUrl,
       message: 'Referral link generated successfully'
     })

@@ -1,423 +1,256 @@
-import 'server-only'
-
-import { eq } from 'drizzle-orm'
+import { desc, eq, sql, sum } from 'drizzle-orm'
 
 import { db } from '../drizzle'
-import { users, userGameData } from '../schema'
+import { referralConversions, referralLinks, users } from '../schema'
 
-export interface ReferralProgram {
-  referrerId: number
-  referralCode: string
-  totalReferrals: number
-  activeReferrals: number
-  pendingRewards: number
-  claimedRewards: number
-  tierLevel: 'bronze' | 'silver' | 'gold' | 'platinum'
-  lifetimeEarnings: number
-}
-
-export interface ReferralReward {
-  type: 'signup' | 'first_job' | 'first_review' | 'milestone'
-  amount: number
-  description: string
-  claimable: boolean
-}
-
-const REFERRAL_REWARDS = {
-  signup: { xp: 100, description: 'New user signup' },
-  emailVerified: { xp: 50, description: 'Referral verified email' },
-  firstJob: { xp: 200, description: 'Referral completed first job' },
-  firstReview: { xp: 150, description: 'Referral submitted first review' },
-  milestone5: { xp: 500, description: '5 active referrals' },
-  milestone10: { xp: 1000, description: '10 active referrals' },
-  milestone25: { xp: 2500, description: '25 active referrals' },
-  milestone50: { xp: 5000, description: '50 active referrals' }
-}
-
-export async function generateReferralCode(userId: number): Promise<string> {
-  // Generate a unique referral code based on user ID and random string
-  const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase()
-  const code = `REF${userId}${randomPart}`
-
-  // Store in user's game data
-  const [userData] = await db
+export async function getReferralStats(userId: number) {
+  // Get all referral links for user
+  const links = await db
     .select()
-    .from(userGameData)
-    .where(eq(userGameData.userId, userId))
-    .limit(1)
+    .from(referralLinks)
+    .where(eq(referralLinks.userId, userId))
 
-  const currentStats = (userData?.stats || {}) as any
-  const updatedStats = {
-    ...currentStats,
-    referral: {
-      ...currentStats.referral,
-      code,
-      generatedAt: new Date().toISOString()
-    }
-  }
-
-  await db
-    .update(userGameData)
-    .set({
-      stats: updatedStats,
-      updatedAt: new Date()
+  // Get all conversions
+  const conversions = await db
+    .select({
+      totalConversions: sql<number>`count(*)::int`,
+      activeConversions: sql<number>`count(case when ${referralConversions.status} = 'active' then 1 end)::int`,
+      totalEarnings: sum(referralConversions.commission),
+      pendingEarnings: sum(
+        sql`CASE WHEN ${referralConversions.paidAt} IS NULL THEN ${referralConversions.commission} ELSE 0 END`
+      ),
+      totalValue: sum(referralConversions.conversionValue)
     })
-    .where(eq(userGameData.userId, userId))
+    .from(referralConversions)
+    .where(eq(referralConversions.referrerId, userId))
 
-  return code
-}
+  // Calculate total clicks
+  const totalClicks = links.reduce((sum, link) => sum + link.clicks, 0)
+  const totalConversions = links.reduce(
+    (sum, link) => sum + link.conversions,
+    0
+  )
 
-export async function getReferralCode(userId: number): Promise<string | null> {
-  const [userData] = await db
-    .select()
-    .from(userGameData)
-    .where(eq(userGameData.userId, userId))
-    .limit(1)
+  const stats = conversions[0]
+  const conversionRate =
+    totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0
 
-  const stats = (userData?.stats || {}) as any
+  // Determine referral tier based on total referrals
+  let currentTier = 'Bronze'
+  let nextTierProgress = 0
 
-  if (stats.referral?.code) {
-    return stats.referral.code
+  if (totalConversions >= 31) {
+    currentTier = 'Platinum'
+    nextTierProgress = 100
+  } else if (totalConversions >= 16) {
+    currentTier = 'Gold'
+    nextTierProgress = ((totalConversions - 16) / 15) * 100
+  } else if (totalConversions >= 6) {
+    currentTier = 'Silver'
+    nextTierProgress = ((totalConversions - 6) / 10) * 100
+  } else {
+    currentTier = 'Bronze'
+    nextTierProgress = (totalConversions / 6) * 100
   }
 
-  // Generate new code if doesn't exist
-  return await generateReferralCode(userId)
-}
-
-export async function trackReferral(
-  referralCode: string,
-  newUserId: number
-): Promise<{ success: boolean; referrerId?: number; message: string }> {
-  try {
-    // Find the referrer by code
-    const allUsers = await db
-      .select({
-        user: users,
-        gameData: userGameData
-      })
-      .from(users)
-      .leftJoin(userGameData, eq(users.id, userGameData.userId))
-
-    const referrer = allUsers.find(u => {
-      const stats = (u.gameData?.stats || {}) as any
-      return stats.referral?.code === referralCode
-    })
-
-    if (!referrer) {
-      return { success: false, message: 'Invalid referral code' }
-    }
-
-    // Store referral relationship
-    const [newUserData] = await db
-      .select()
-      .from(userGameData)
-      .where(eq(userGameData.userId, newUserId))
-      .limit(1)
-
-    const currentStats = (newUserData?.stats || {}) as any
-    const updatedStats = {
-      ...currentStats,
-      referredBy: {
-        userId: referrer.user.id,
-        code: referralCode,
-        joinedAt: new Date().toISOString()
-      }
-    }
-
-    await db
-      .update(userGameData)
-      .set({
-        stats: updatedStats,
-        updatedAt: new Date()
-      })
-      .where(eq(userGameData.userId, newUserId))
-
-    // Update referrer's stats
-    await addReferralToReferrer(referrer.user.id, newUserId)
-
-    return {
-      success: true,
-      referrerId: referrer.user.id,
-      message: 'Referral tracked successfully'
-    }
-  } catch (error) {
-    console.error('Error tracking referral:', error)
-    return { success: false, message: 'Failed to track referral' }
-  }
-}
-
-async function addReferralToReferrer(
-  referrerId: number,
-  referredUserId: number
-): Promise<void> {
-  const [userData] = await db
-    .select()
-    .from(userGameData)
-    .where(eq(userGameData.userId, referrerId))
-    .limit(1)
-
-  const currentStats = (userData?.stats || {}) as any
-  const referralStats = currentStats.referral || {}
-  const referrals = referralStats.referrals || []
-
-  referrals.push({
-    userId: referredUserId,
-    joinedAt: new Date().toISOString(),
-    status: 'pending',
-    rewards: {
-      signup: { claimed: false, amount: REFERRAL_REWARDS.signup.xp }
-    }
-  })
-
-  const updatedStats = {
-    ...currentStats,
-    referral: {
-      ...referralStats,
-      referrals,
-      totalReferrals: referrals.length,
-      pendingRewards: calculatePendingRewards(referrals)
-    }
-  }
-
-  await db
-    .update(userGameData)
-    .set({
-      stats: updatedStats,
-      updatedAt: new Date()
-    })
-    .where(eq(userGameData.userId, referrerId))
-}
-
-function calculatePendingRewards(referrals: any[]): number {
-  let total = 0
-
-  for (const referral of referrals) {
-    if (referral.rewards) {
-      for (const reward of Object.values(referral.rewards)) {
-        const r = reward as any
-        if (!r.claimed) {
-          total += r.amount
-        }
-      }
-    }
-  }
-
-  return total
-}
-
-export async function getReferralProgram(
-  userId: number
-): Promise<ReferralProgram> {
-  const [userData] = await db
-    .select()
-    .from(userGameData)
-    .where(eq(userGameData.userId, userId))
-    .limit(1)
-
-  const stats = (userData?.stats || {}) as any
-  const referralStats = stats.referral || {}
-  const referrals = referralStats.referrals || []
-
-  const activeReferrals = referrals.filter(
-    (r: any) => r.status === 'active'
-  ).length
-  const totalReferrals = referrals.length
-  const pendingRewards = calculatePendingRewards(referrals)
-  const claimedRewards = referralStats.claimedRewards || 0
-
-  // Determine tier based on active referrals
-  let tierLevel: 'bronze' | 'silver' | 'gold' | 'platinum' = 'bronze'
-  if (activeReferrals >= 50) tierLevel = 'platinum'
-  else if (activeReferrals >= 25) tierLevel = 'gold'
-  else if (activeReferrals >= 10) tierLevel = 'silver'
+  // Calculate lifetime value
+  const lifetimeValue = stats?.totalValue || '0'
 
   return {
-    referrerId: userId,
-    referralCode: referralStats.code || (await generateReferralCode(userId)),
-    totalReferrals,
-    activeReferrals,
-    pendingRewards,
-    claimedRewards,
-    tierLevel,
-    lifetimeEarnings: claimedRewards + pendingRewards
+    totalReferrals: totalConversions,
+    activeReferrals: stats?.activeConversions || 0,
+    totalEarnings: stats?.totalEarnings || '0',
+    pendingEarnings: stats?.pendingEarnings || '0',
+    conversionRate,
+    totalClicks,
+    lifetimeValue,
+    currentTier,
+    nextTierProgress
   }
 }
 
-export async function claimReferralReward(
-  userId: number,
-  referredUserId: number,
-  rewardType: string
-): Promise<{ success: boolean; xpAwarded?: number; message: string }> {
-  try {
-    const [userData] = await db
-      .select()
-      .from(userGameData)
-      .where(eq(userGameData.userId, userId))
-      .limit(1)
-
-    const currentStats = (userData?.stats || {}) as any
-    const referralStats = currentStats.referral || {}
-    const referrals = referralStats.referrals || []
-
-    const referralIndex = referrals.findIndex(
-      (r: any) => r.userId === referredUserId
-    )
-    if (referralIndex === -1) {
-      return { success: false, message: 'Referral not found' }
-    }
-
-    const referral = referrals[referralIndex]
-    const reward = referral.rewards?.[rewardType]
-
-    if (!reward) {
-      return { success: false, message: 'Reward not found' }
-    }
-
-    if (reward.claimed) {
-      return { success: false, message: 'Reward already claimed' }
-    }
-
-    // Mark reward as claimed
-    referral.rewards[rewardType].claimed = true
-    referral.rewards[rewardType].claimedAt = new Date().toISOString()
-
-    const updatedStats = {
-      ...currentStats,
-      referral: {
-        ...referralStats,
-        referrals,
-        claimedRewards: (referralStats.claimedRewards || 0) + reward.amount,
-        pendingRewards: calculatePendingRewards(referrals)
-      }
-    }
-
-    await db
-      .update(userGameData)
-      .set({
-        stats: updatedStats,
-        updatedAt: new Date()
-      })
-      .where(eq(userGameData.userId, userId))
-
-    return {
-      success: true,
-      xpAwarded: reward.amount,
-      message: `Claimed ${reward.amount} XP reward`
-    }
-  } catch (error) {
-    console.error('Error claiming referral reward:', error)
-    return { success: false, message: 'Failed to claim reward' }
-  }
-}
-
-export async function updateReferralStatus(
-  referredUserId: number,
-  status: 'pending' | 'active' | 'inactive'
-): Promise<void> {
-  // Get the referred user's data to find referrer
-  const [referredUserData] = await db
+export async function getReferralLinks(userId: number) {
+  const links = await db
     .select()
-    .from(userGameData)
-    .where(eq(userGameData.userId, referredUserId))
+    .from(referralLinks)
+    .where(eq(referralLinks.userId, userId))
+    .orderBy(desc(referralLinks.createdAt))
+
+  return links
+}
+
+export async function getReferredUsers(userId: number) {
+  const referrals = await db
+    .select({
+      id: referralConversions.id,
+      referredUser: users.walletAddress,
+      status: referralConversions.status,
+      joinedAt: referralConversions.createdAt,
+      earnings: referralConversions.commission,
+      trades: sql<number>`0` // This would need to be calculated from actual trades
+    })
+    .from(referralConversions)
+    .innerJoin(users, eq(users.id, referralConversions.referredUserId))
+    .where(eq(referralConversions.referrerId, userId))
+    .orderBy(desc(referralConversions.createdAt))
+
+  return referrals
+}
+
+export async function generateReferralLink(
+  userId: number,
+  campaignSource?: string,
+  customSlug?: string
+) {
+  // Generate unique code
+  const randomCode = Math.random().toString(36).substring(2, 12).toUpperCase()
+  const code = customSlug || `REF${randomCode}`
+
+  // Check if code already exists
+  const existing = await db
+    .select()
+    .from(referralLinks)
+    .where(eq(referralLinks.code, code))
     .limit(1)
 
-  const stats = (referredUserData?.stats || {}) as any
-  const referrerInfo = stats.referredBy
+  if (existing.length > 0) {
+    // Recursively generate a new code
+    return generateReferralLink(userId, campaignSource)
+  }
 
-  if (!referrerInfo?.userId) {
+  const [link] = await db
+    .insert(referralLinks)
+    .values({
+      userId,
+      code,
+      campaignSource,
+      customSlug,
+      clicks: 0,
+      conversions: 0,
+      isActive: true
+    })
+    .returning()
+
+  return link
+}
+
+export async function trackReferralClick(code: string) {
+  await db
+    .update(referralLinks)
+    .set({
+      clicks: sql`${referralLinks.clicks} + 1`,
+      updatedAt: new Date()
+    })
+    .where(eq(referralLinks.code, code))
+}
+
+export async function createReferralConversion(
+  code: string,
+  referredUserId: number
+) {
+  // Get referral link
+  const link = await db
+    .select()
+    .from(referralLinks)
+    .where(eq(referralLinks.code, code))
+    .limit(1)
+
+  if (!link.length || !link[0].isActive) {
+    return null
+  }
+
+  const referralLink = link[0]
+
+  // Check if user was already referred
+  const existing = await db
+    .select()
+    .from(referralConversions)
+    .where(eq(referralConversions.referredUserId, referredUserId))
+    .limit(1)
+
+  if (existing.length > 0) {
+    return null // User was already referred
+  }
+
+  // Create conversion
+  const [conversion] = await db
+    .insert(referralConversions)
+    .values({
+      referralLinkId: referralLink.id,
+      referrerId: referralLink.userId,
+      referredUserId,
+      status: 'pending',
+      conversionValue: '0',
+      commission: '0',
+      commissionRate: '10' // Default 10% commission
+    })
+    .returning()
+
+  // Update link conversions count
+  await db
+    .update(referralLinks)
+    .set({
+      conversions: sql`${referralLinks.conversions} + 1`,
+      updatedAt: new Date()
+    })
+    .where(eq(referralLinks.id, referralLink.id))
+
+  return conversion
+}
+
+export async function updateReferralCommission(
+  referredUserId: number,
+  transactionAmount: string
+) {
+  // Get conversion record
+  const conversion = await db
+    .select()
+    .from(referralConversions)
+    .where(eq(referralConversions.referredUserId, referredUserId))
+    .limit(1)
+
+  if (!conversion.length) {
     return
   }
 
-  // Update referrer's stats
-  const [referrerData] = await db
-    .select()
-    .from(userGameData)
-    .where(eq(userGameData.userId, referrerInfo.userId))
-    .limit(1)
+  const conv = conversion[0]
+  const commissionAmount = (
+    parseFloat(transactionAmount) *
+    (parseFloat(conv.commissionRate) / 100)
+  ).toFixed(2)
 
-  const referrerStats = (referrerData?.stats || {}) as any
-  const referralStats = referrerStats.referral || {}
-  const referrals = referralStats.referrals || []
-
-  const referralIndex = referrals.findIndex(
-    (r: any) => r.userId === referredUserId
-  )
-  if (referralIndex !== -1) {
-    referrals[referralIndex].status = status
-    referrals[referralIndex].updatedAt = new Date().toISOString()
-
-    const updatedStats = {
-      ...referrerStats,
-      referral: {
-        ...referralStats,
-        referrals,
-        activeReferrals: referrals.filter((r: any) => r.status === 'active')
-          .length
-      }
-    }
-
-    await db
-      .update(userGameData)
-      .set({
-        stats: updatedStats,
-        updatedAt: new Date()
-      })
-      .where(eq(userGameData.userId, referrerInfo.userId))
-  }
+  // Update conversion value and commission
+  await db
+    .update(referralConversions)
+    .set({
+      conversionValue: sql`${referralConversions.conversionValue} + ${transactionAmount}::decimal`,
+      commission: sql`${referralConversions.commission} + ${commissionAmount}::decimal`,
+      status: 'active',
+      updatedAt: new Date()
+    })
+    .where(eq(referralConversions.id, conv.id))
 }
 
-export async function getReferralLeaderboard(limit: number = 10): Promise<
-  Array<{
-    userId: number
-    name: string | null
-    referralCode: string
-    totalReferrals: number
-    activeReferrals: number
-    tierLevel: string
-  }>
-> {
-  const allUsers = await db
+export async function getReferralLeaderboard(limit = 10) {
+  const leaderboard = await db
     .select({
-      user: users,
-      gameData: userGameData
+      userId: referralConversions.referrerId,
+      username: users.name,
+      referralCount: sql<number>`count(*)::int`,
+      totalEarnings: sum(referralConversions.commission)
     })
-    .from(users)
-    .leftJoin(userGameData, eq(users.id, userGameData.userId))
+    .from(referralConversions)
+    .innerJoin(users, eq(users.id, referralConversions.referrerId))
+    .where(eq(referralConversions.status, 'active'))
+    .groupBy(referralConversions.referrerId, users.name)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit)
 
-  const leaderboard = allUsers
-    .map(({ user, gameData }) => {
-      const stats = (gameData?.stats || {}) as any
-      const referralStats = stats.referral || {}
-      const referrals = referralStats.referrals || []
-      const activeReferrals = referrals.filter(
-        (r: any) => r.status === 'active'
-      ).length
-
-      let tierLevel = 'bronze'
-      if (activeReferrals >= 50) tierLevel = 'platinum'
-      else if (activeReferrals >= 25) tierLevel = 'gold'
-      else if (activeReferrals >= 10) tierLevel = 'silver'
-
-      return {
-        userId: user.id,
-        name: user.name,
-        referralCode: referralStats.code || '',
-        totalReferrals: referrals.length,
-        activeReferrals,
-        tierLevel
-      }
-    })
-    .filter(u => u.totalReferrals > 0)
-    .sort((a, b) => b.activeReferrals - a.activeReferrals)
-    .slice(0, limit)
-
-  return leaderboard
+  return leaderboard.map((entry, index) => ({
+    rank: index + 1,
+    userId: entry.userId,
+    username: entry.username || `User ${entry.userId}`,
+    referralCount: entry.referralCount,
+    totalEarnings: entry.totalEarnings || '0'
+  }))
 }
-
-// Aliases for compatibility
-export const generateReferralLink = generateReferralCode
-export const getReferralStats = getReferralProgram
-export {
-  trackReferralClick,
-  trackReferralConversion
-} from './enhanced-referrals'

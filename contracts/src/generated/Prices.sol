@@ -2,7 +2,7 @@
 pragma solidity ^0.8.25;
 
 // Auto-generated price constants
-// Generated at: 2025-08-16T18:06:36.344Z
+// Generated at: 2025-08-18T07:59:07.044Z
 // USD Prices: Pro=$3, Enterprise=$5
 
 library Prices {
@@ -14,11 +14,11 @@ library Prices {
     function getPrices(uint256 chainId) internal pure returns (uint256 proPrice, uint256 enterprisePrice) {
         if (chainId == 1114) {
             // coreTestnet (tCORE)
-            return (3202914224889419348, 5338190374815699357);
+            return (3847061358063953662, 6411768930106589437);
         }
         else if (chainId == 1116) {
             // coreMainnet (CORE)
-            return (3202914224889419348, 5338190374815699357);
+            return (3847061358063953662, 6411768930106589437);
         }
         else {
             // Default fallback prices
