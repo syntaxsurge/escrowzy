@@ -129,7 +129,7 @@ export default async function PublicFreelancerProfilePage({
     } else if (profile.responseTime && profile.responseTime <= 72) {
       return 80
     }
-    return 95 // Default for profiles without data
+    return 100 // Default for profiles without data
   }
 
   const calculateOnTimeDelivery = () => {
