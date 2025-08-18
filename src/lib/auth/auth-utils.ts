@@ -153,5 +153,8 @@ export function isVerificationTokenExpired(expiresAt: Date | null): boolean {
   return new Date() > new Date(expiresAt)
 }
 
-// Alias for getUserForRoute to maintain compatibility
-export { getUserForRoute as getAuth } from './get-user-route'
+// Export auth functions
+// For Server Components (pages, layouts) - read-only, no cookie modification
+export { getUser, getUser as getAuth } from './get-user'
+// For API Routes and Server Actions - can modify cookies
+export { getUserForRoute } from './get-user-route'
