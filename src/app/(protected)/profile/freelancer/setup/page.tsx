@@ -3,13 +3,18 @@
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
+import { motion } from 'framer-motion'
 import {
   Loader2,
   User,
   Briefcase,
   Globe,
   Link2,
-  CheckCircle
+  CheckCircle,
+  UserPlus,
+  Star,
+  Target,
+  Award
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { z } from 'zod'
@@ -18,7 +23,11 @@ import { LanguageSelector } from '@/components/blocks/freelancers/language-selec
 import { PortfolioUpload } from '@/components/blocks/freelancers/portfolio-upload'
 import { SkillSelector } from '@/components/blocks/freelancers/skill-selector'
 import { TimezoneSelector } from '@/components/blocks/freelancers/timezone-selector'
-import { Button } from '@/components/ui/button'
+import { PageHeader as GamifiedHeader } from '@/components/blocks/page-header'
+import {
+  GamifiedStatsCards,
+  type StatCard
+} from '@/components/blocks/trading/gamified-stats-cards'
 import {
   Card,
   CardContent,
@@ -28,6 +37,7 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { LoadingButton } from '@/components/ui/loading-button'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Wizard,
@@ -39,6 +49,7 @@ import {
 } from '@/components/ui/wizard'
 import { useSession } from '@/hooks/use-session'
 import { freelancerProfileSchema } from '@/lib/schemas/freelancer'
+import { cn } from '@/lib/utils'
 
 type ProfileData = z.infer<typeof freelancerProfileSchema> & {
   skills?: any[]
@@ -94,6 +105,12 @@ function BasicInfoStep({
   onChange: (updates: Partial<ProfileData>) => void
 }) {
   const { setStepValid } = useWizard()
+  const [touched, setTouched] = useState({
+    professionalTitle: false,
+    bio: false,
+    hourlyRate: false,
+    yearsOfExperience: false
+  })
 
   useEffect(() => {
     const isValid = !!(
@@ -106,6 +123,10 @@ function BasicInfoStep({
     setStepValid('basic', isValid)
   }, [data, setStepValid])
 
+  const handleBlur = (field: keyof typeof touched) => {
+    setTouched(prev => ({ ...prev, [field]: true }))
+  }
+
   return (
     <div className='space-y-6'>
       <div className='space-y-2'>
@@ -115,7 +136,16 @@ function BasicInfoStep({
           placeholder='e.g., Full Stack Developer, UI/UX Designer'
           value={data.professionalTitle || ''}
           onChange={e => onChange({ professionalTitle: e.target.value })}
+          onBlur={() => handleBlur('professionalTitle')}
+          className={cn(
+            touched.professionalTitle &&
+              !data.professionalTitle &&
+              'border-red-500'
+          )}
         />
+        {touched.professionalTitle && !data.professionalTitle && (
+          <p className='text-sm text-red-500'>Professional title is required</p>
+        )}
       </div>
 
       <div className='space-y-2'>
@@ -126,10 +156,28 @@ function BasicInfoStep({
           rows={6}
           value={data.bio || ''}
           onChange={e => onChange({ bio: e.target.value })}
+          onBlur={() => handleBlur('bio')}
+          className={cn(
+            touched.bio &&
+              (!data.bio || data.bio.length < 20) &&
+              'border-red-500'
+          )}
         />
-        <p className='text-muted-foreground text-xs'>
-          {data.bio?.length || 0}/5000 characters (min 20)
-        </p>
+        <div className='flex justify-between'>
+          <p
+            className={cn(
+              'text-xs',
+              touched.bio && (!data.bio || data.bio.length < 20)
+                ? 'text-red-500'
+                : 'text-muted-foreground'
+            )}
+          >
+            {data.bio?.length || 0}/5000 characters (min 20)
+          </p>
+          {touched.bio && !data.bio && (
+            <p className='text-xs text-red-500'>Bio is required</p>
+          )}
+        </div>
       </div>
 
       <div className='grid grid-cols-2 gap-4'>
@@ -143,7 +191,14 @@ function BasicInfoStep({
             placeholder='50'
             value={data.hourlyRate || ''}
             onChange={e => onChange({ hourlyRate: e.target.value })}
+            onBlur={() => handleBlur('hourlyRate')}
+            className={cn(
+              touched.hourlyRate && !data.hourlyRate && 'border-red-500'
+            )}
           />
+          {touched.hourlyRate && !data.hourlyRate && (
+            <p className='text-xs text-red-500'>Hourly rate is required</p>
+          )}
         </div>
 
         <div className='space-y-2'>
@@ -158,7 +213,19 @@ function BasicInfoStep({
             onChange={e =>
               onChange({ yearsOfExperience: parseInt(e.target.value) })
             }
+            onBlur={() => handleBlur('yearsOfExperience')}
+            className={cn(
+              touched.yearsOfExperience &&
+                data.yearsOfExperience === undefined &&
+                'border-red-500'
+            )}
           />
+          {touched.yearsOfExperience &&
+            data.yearsOfExperience === undefined && (
+              <p className='text-xs text-red-500'>
+                Years of experience is required
+              </p>
+            )}
         </div>
       </div>
 
@@ -273,6 +340,11 @@ function AvailabilityStep({
   onChange: (updates: Partial<ProfileData>) => void
 }) {
   const { setStepValid } = useWizard()
+  const [touched, setTouched] = useState({
+    availability: false,
+    timezone: false,
+    languages: false
+  })
 
   useEffect(() => {
     const isValid = !!(
@@ -284,37 +356,68 @@ function AvailabilityStep({
     setStepValid('availability', isValid)
   }, [data, setStepValid])
 
+  const handleBlur = (field: keyof typeof touched) => {
+    setTouched(prev => ({ ...prev, [field]: true }))
+  }
+
   return (
     <div className='space-y-6'>
       <div className='space-y-2'>
         <Label htmlFor='availability'>Availability Status *</Label>
         <select
           id='availability'
-          className='border-input bg-background w-full rounded-md border px-3 py-2'
+          className={cn(
+            'border-input bg-background w-full rounded-md border px-3 py-2',
+            touched.availability && !data.availability && 'border-red-500'
+          )}
           value={data.availability || ''}
           onChange={e => onChange({ availability: e.target.value as any })}
+          onBlur={() => handleBlur('availability')}
         >
           <option value=''>Select status...</option>
           <option value='available'>Available</option>
           <option value='busy'>Busy</option>
           <option value='away'>Away</option>
         </select>
+        {touched.availability && !data.availability && (
+          <p className='text-xs text-red-500'>
+            Availability status is required
+          </p>
+        )}
       </div>
 
       <div className='space-y-2'>
         <Label htmlFor='timezone'>Timezone *</Label>
-        <TimezoneSelector
-          value={data.timezone}
-          onChange={timezone => onChange({ timezone })}
-          placeholder='Select your timezone'
-        />
+        <div
+          className={cn(
+            touched.timezone && !data.timezone && '[&>*]:border-red-500'
+          )}
+        >
+          <TimezoneSelector
+            value={data.timezone}
+            onChange={timezone => {
+              onChange({ timezone })
+              if (timezone) handleBlur('timezone')
+            }}
+            placeholder='Select your timezone'
+          />
+        </div>
+        {touched.timezone && !data.timezone && (
+          <p className='text-xs text-red-500'>Timezone is required</p>
+        )}
       </div>
 
-      <div className='space-y-2'>
+      <div className='space-y-2' onBlur={() => handleBlur('languages')}>
         <LanguageSelector
           languages={data.languages || []}
           onChange={languages => onChange({ languages })}
         />
+        {touched.languages &&
+          (!data.languages || data.languages.length === 0) && (
+            <p className='text-xs text-red-500'>
+              At least one language is required
+            </p>
+          )}
       </div>
     </div>
   )
@@ -512,7 +615,10 @@ export default function FreelancerProfileSetup() {
     }
   }
 
+  const [isSavingDraft, setIsSavingDraft] = useState(false)
+
   const saveDraft = async () => {
+    setIsSavingDraft(true)
     try {
       const response = await fetch('/api/freelancer/profile/draft', {
         method: 'POST',
@@ -528,6 +634,8 @@ export default function FreelancerProfileSetup() {
     } catch (error) {
       console.error('Error saving draft:', error)
       toast.error('Failed to save draft')
+    } finally {
+      setIsSavingDraft(false)
     }
   }
 
@@ -543,75 +651,188 @@ export default function FreelancerProfileSetup() {
     return null
   }
 
+  // Calculate profile completion stats
+  const calculateProfileStats = (): StatCard[] => {
+    let completedSteps = 0
+    const totalSteps = wizardSteps.filter(s => !s.isOptional).length
+
+    if (
+      profileData.professionalTitle &&
+      profileData.bio &&
+      profileData.hourlyRate &&
+      profileData.yearsOfExperience
+    ) {
+      completedSteps++
+    }
+    if (
+      profileData.availability &&
+      profileData.timezone &&
+      profileData.languages?.length
+    ) {
+      completedSteps++
+    }
+
+    const completionPercentage = Math.round((completedSteps / totalSteps) * 100)
+
+    return [
+      {
+        title: 'Profile Progress',
+        value: `${completionPercentage}%`,
+        subtitle: `${completedSteps} of ${totalSteps} steps`,
+        icon: <Target className='h-5 w-5' />,
+        badge: 'PROGRESS',
+        colorScheme: 'blue'
+      },
+      {
+        title: 'Required Fields',
+        value:
+          profileData.professionalTitle && profileData.bio
+            ? '✓'
+            : `${Object.values(profileData).filter(Boolean).length}`,
+        subtitle: 'Basic info status',
+        icon: <CheckCircle className='h-5 w-5' />,
+        badge: 'REQUIRED',
+        colorScheme:
+          profileData.professionalTitle && profileData.bio ? 'green' : 'yellow'
+      },
+      {
+        title: 'Skills Added',
+        value: profileData.skills?.length || 0,
+        subtitle: 'Technical abilities',
+        icon: <Star className='h-5 w-5' />,
+        badge: 'OPTIONAL',
+        colorScheme: 'purple'
+      },
+      {
+        title: 'Portfolio Items',
+        value: profileData.portfolioItems?.length || 0,
+        subtitle: 'Work samples',
+        icon: <Award className='h-5 w-5' />,
+        badge: 'OPTIONAL',
+        colorScheme: 'orange'
+      }
+    ]
+  }
+
   return (
-    <div className='container mx-auto max-w-4xl px-4 py-8'>
-      <div className='mb-8'>
-        <h1 className='text-3xl font-bold'>Create Your Freelancer Profile</h1>
-        <p className='text-muted-foreground mt-2'>
-          Complete your profile to start bidding on projects and showcase your
-          expertise
-        </p>
+    <div className='from-background via-background to-primary/5 dark:to-primary/10 min-h-screen bg-gradient-to-br'>
+      <div className='container mx-auto max-w-5xl space-y-6 px-4 py-6'>
+        {/* Gamified Header */}
+        <GamifiedHeader
+          title='CREATE FREELANCER PROFILE'
+          subtitle='Set up your professional profile to start bidding on projects and showcase your expertise'
+          icon={<UserPlus className='h-8 w-8 text-white' />}
+        />
+
+        {/* Stats Cards */}
+        <GamifiedStatsCards cards={calculateProfileStats()} />
+
+        <Wizard
+          steps={wizardSteps}
+          initialStep={currentStepIndex}
+          onStepChange={setCurrentStepIndex}
+        >
+          <WizardHeader showProgress showSteps />
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className='border-primary/20 from-primary/5 border-2 bg-gradient-to-br to-purple-600/5 backdrop-blur-sm'>
+              <CardContent className='pt-6'>
+                <WizardContent>
+                  <WizardStep stepId='basic'>
+                    <BasicInfoStep
+                      data={profileData}
+                      onChange={handleProfileUpdate}
+                    />
+                  </WizardStep>
+
+                  <WizardStep stepId='skills'>
+                    <SkillsStep
+                      data={profileData}
+                      onChange={handleProfileUpdate}
+                    />
+                  </WizardStep>
+
+                  <WizardStep stepId='portfolio'>
+                    <PortfolioStep
+                      data={profileData}
+                      onChange={handleProfileUpdate}
+                    />
+                  </WizardStep>
+
+                  <WizardStep stepId='availability'>
+                    <AvailabilityStep
+                      data={profileData}
+                      onChange={handleProfileUpdate}
+                    />
+                  </WizardStep>
+
+                  <WizardStep stepId='links'>
+                    <LinksStep
+                      data={profileData}
+                      onChange={handleProfileUpdate}
+                    />
+                  </WizardStep>
+
+                  <WizardStep stepId='review'>
+                    <ReviewStep data={profileData} />
+                  </WizardStep>
+                </WizardContent>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <div className='flex items-center justify-between'>
+            <LoadingButton
+              variant='outline'
+              onClick={saveDraft}
+              isLoading={isSavingDraft}
+              loadingText='Saving...'
+              disabled={isSubmitting}
+              className='min-w-[120px]'
+            >
+              Save Draft
+            </LoadingButton>
+            <WizardFooter
+              onNext={() => {
+                // Validate current step before allowing next
+                const currentStep = wizardSteps[currentStepIndex]
+                if (currentStep.id === 'basic') {
+                  if (
+                    !profileData.professionalTitle ||
+                    !profileData.bio ||
+                    profileData.bio.length < 20 ||
+                    !profileData.hourlyRate ||
+                    profileData.yearsOfExperience === undefined
+                  ) {
+                    toast.error('Please fill in all required fields')
+                    return Promise.reject()
+                  }
+                } else if (currentStep.id === 'availability') {
+                  if (
+                    !profileData.availability ||
+                    !profileData.timezone ||
+                    !profileData.languages ||
+                    profileData.languages.length === 0
+                  ) {
+                    toast.error('Please fill in all required fields')
+                    return Promise.reject()
+                  }
+                }
+                return Promise.resolve()
+              }}
+              onComplete={handleComplete}
+              completeLabel={
+                isSubmitting ? 'Creating Profile...' : 'Create Profile'
+              }
+              showSkip
+            />
+          </div>
+        </Wizard>
       </div>
-
-      <Wizard
-        steps={wizardSteps}
-        initialStep={currentStepIndex}
-        onStepChange={setCurrentStepIndex}
-      >
-        <WizardHeader showProgress showSteps />
-
-        <Card>
-          <CardContent className='pt-6'>
-            <WizardContent>
-              <WizardStep stepId='basic'>
-                <BasicInfoStep
-                  data={profileData}
-                  onChange={handleProfileUpdate}
-                />
-              </WizardStep>
-
-              <WizardStep stepId='skills'>
-                <SkillsStep data={profileData} onChange={handleProfileUpdate} />
-              </WizardStep>
-
-              <WizardStep stepId='portfolio'>
-                <PortfolioStep
-                  data={profileData}
-                  onChange={handleProfileUpdate}
-                />
-              </WizardStep>
-
-              <WizardStep stepId='availability'>
-                <AvailabilityStep
-                  data={profileData}
-                  onChange={handleProfileUpdate}
-                />
-              </WizardStep>
-
-              <WizardStep stepId='links'>
-                <LinksStep data={profileData} onChange={handleProfileUpdate} />
-              </WizardStep>
-
-              <WizardStep stepId='review'>
-                <ReviewStep data={profileData} />
-              </WizardStep>
-            </WizardContent>
-          </CardContent>
-        </Card>
-
-        <div className='flex items-center justify-between'>
-          <Button variant='outline' onClick={saveDraft} disabled={isSubmitting}>
-            Save Draft
-          </Button>
-          <WizardFooter
-            onComplete={handleComplete}
-            completeLabel={
-              isSubmitting ? 'Creating Profile...' : 'Create Profile'
-            }
-            showSkip
-          />
-        </div>
-      </Wizard>
     </div>
   )
 }

@@ -94,14 +94,22 @@ export function WizardProvider({
 
   const goToStep = (index: number) => {
     if (index >= 0 && index < steps.length && !isLoading) {
-      // Check if all steps before the target are valid
+      // Allow going back to previous steps
+      if (index < currentStep) {
+        setCurrentStep(index)
+        onStepChange?.(index)
+        return
+      }
+
+      // For forward navigation, check if all steps before the target are valid
       let canNavigate = true
-      for (let i = 0; i < index; i++) {
+      for (let i = 0; i <= index - 1; i++) {
         if (!steps[i].isOptional && steps[i].isValid === false) {
           canNavigate = false
           break
         }
       }
+
       if (canNavigate) {
         setCurrentStep(index)
         onStepChange?.(index)
@@ -163,11 +171,20 @@ export function WizardHeader({
         <div className='flex items-center justify-between'>
           {steps.map((step, index) => {
             const isActive = index === currentStep
-            const isCompleted =
-              step.isValid === true ||
-              (index < currentStep && step.isValid !== false)
-            const isClickable =
-              index <= currentStep || step.isOptional || isCompleted
+            const isCompleted = step.isValid === true
+
+            // Allow going back to previous steps or current step
+            // For forward navigation, check if all previous steps are valid
+            let isClickable = index <= currentStep
+            if (index > currentStep) {
+              isClickable = true
+              for (let i = 0; i < index; i++) {
+                if (!steps[i].isOptional && steps[i].isValid !== true) {
+                  isClickable = false
+                  break
+                }
+              }
+            }
 
             return (
               <button
@@ -176,7 +193,8 @@ export function WizardHeader({
                 disabled={!isClickable}
                 className={cn(
                   'flex items-center gap-2 rounded-lg px-3 py-2 transition-all',
-                  'hover:bg-accent/50 disabled:cursor-not-allowed disabled:opacity-50',
+                  isClickable && !isActive && 'hover:bg-accent/50',
+                  'disabled:cursor-not-allowed disabled:opacity-50',
                   isActive && 'bg-accent font-medium',
                   !isActive && isCompleted && 'text-muted-foreground'
                 )}
