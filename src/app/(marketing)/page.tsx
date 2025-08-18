@@ -27,10 +27,8 @@ import {
   ScrollText,
   Timer,
   ChevronRight,
-  Activity,
   Percent,
   Gift,
-  ShieldCheck,
   Coins,
   UserCheck,
   AlertTriangle,
@@ -38,7 +36,6 @@ import {
   Hash,
   Layers
 } from 'lucide-react'
-import useSWR from 'swr'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -49,32 +46,6 @@ import { appRoutes } from '@/config/app-routes'
 import { envPublic } from '@/config/env.public'
 import { ACHIEVEMENTS } from '@/config/rewards'
 import { cn } from '@/lib'
-
-// Animated counter component
-function AnimatedCounter({ value }: { value: number }) {
-  const [count, setCount] = useState(0)
-
-  useEffect(() => {
-    let start = 0
-    const end = value
-    const duration = 2000
-    const increment = end / (duration / 16)
-
-    const timer = setInterval(() => {
-      start += increment
-      if (start >= end) {
-        setCount(end)
-        clearInterval(timer)
-      } else {
-        setCount(Math.floor(start))
-      }
-    }, 16)
-
-    return () => clearInterval(timer)
-  }, [value])
-
-  return <span>{count.toLocaleString()}</span>
-}
 
 // Floating achievement component
 function FloatingAchievement({
@@ -111,20 +82,12 @@ function FloatingAchievement({
   )
 }
 
-const fetcher = (url: string) => fetch(url).then(res => res.json())
-
 export default function HomePage() {
   const [combatPower, setCombatPower] = useState(450)
   const [selectedTier, setSelectedTier] = useState('pro')
   const [battleWinner, setBattleWinner] = useState<
     'player' | 'opponent' | null
   >(null)
-
-  // Fetch real-time platform stats
-  const { data: stats, error } = useSWR('/api/platform/stats', fetcher, {
-    refreshInterval: 30000, // Refresh every 30 seconds
-    revalidateOnFocus: true
-  })
 
   // Sample achievements for floating animation
   const floatingAchievements = [
@@ -170,82 +133,6 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className='relative z-10 px-4 py-20 sm:px-6 lg:px-8'>
         <div className='mx-auto max-w-7xl'>
-          {/* Live Stats Ticker */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className='mb-8 flex flex-wrap justify-center gap-6 text-center'
-          >
-            {(stats
-              ? [
-                  {
-                    label: 'Platform Users',
-                    value: stats.totalUsers || 0,
-                    icon: Users,
-                    color: 'text-green-400'
-                  },
-                  {
-                    label: 'Active Listings',
-                    value: stats.activeListings || 0,
-                    icon: Activity,
-                    color: 'text-blue-400',
-                    tooltip: stats.listingBreakdown
-                      ? `P2P: ${stats.listingBreakdown.p2p} | Domains: ${stats.listingBreakdown.domain} | Services: ${stats.listingBreakdown.service}`
-                      : ''
-                  },
-                  {
-                    label: 'Live Escrows',
-                    value: stats.activeEscrows || 0,
-                    icon: ShieldCheck,
-                    color: 'text-purple-400'
-                  },
-                  {
-                    label: 'Daily Battles',
-                    value: stats.dailyBattles || 0,
-                    icon: Swords,
-                    color: 'text-red-400'
-                  }
-                ]
-              : [
-                  // Loading state - show skeleton values
-                  {
-                    label: 'Loading...',
-                    value: 0,
-                    icon: Activity,
-                    color: 'text-gray-400'
-                  }
-                ]
-            ).map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: i * 0.1 }}
-                className='group relative rounded-lg border border-white/10 bg-black/40 px-4 py-2 backdrop-blur-sm transition-all hover:border-white/20'
-                title={(stat as any).tooltip}
-              >
-                <div className='flex items-center gap-2'>
-                  <stat.icon className={cn('h-4 w-4', stat.color)} />
-                  <div className='text-left'>
-                    <p className='text-xs text-gray-400'>{stat.label}</p>
-                    <p className='text-lg font-bold text-white'>
-                      {(stat as any).prefix}
-                      <AnimatedCounter value={stat.value} />
-                      {(stat as any).suffix}
-                    </p>
-                  </div>
-                </div>
-                {(stat as any).tooltip && (
-                  <div className='absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 group-hover:block'>
-                    <div className='rounded bg-black/90 px-2 py-1 text-xs whitespace-nowrap text-white'>
-                      {(stat as any).tooltip}
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </motion.div>
-
           {/* Main Hero Content */}
           <div className='relative'>
             {/* Floating Achievements */}
