@@ -49,15 +49,6 @@ interface TalentPipeline {
     deliveryDays: number
     proposalSummary: string
   }>
-  interviewScheduled: Array<{
-    freelancerId: number
-    freelancerName: string
-    jobId: number
-    jobTitle: string
-    interviewDate: Date
-    interviewType: string
-    notes: string | null
-  }>
   talentRecommendations: Array<{
     id: number
     name: string
@@ -233,7 +224,6 @@ export const GET = withAuth(
               proposalSummary: bid.proposalText?.substring(0, 200) || ''
             })
           ),
-          interviewScheduled: [], // Would need separate interview tracking
           talentRecommendations: [] // Will be calculated based on job requirements
         }
 
@@ -372,14 +362,6 @@ export const POST = withAuth(
           return NextResponse.json({
             success: true,
             message: 'Candidate shortlisted'
-          })
-        }
-
-        case 'schedule-interview': {
-          // Would need to implement interview scheduling
-          return NextResponse.json({
-            success: false,
-            error: 'Interview scheduling not yet implemented'
           })
         }
 

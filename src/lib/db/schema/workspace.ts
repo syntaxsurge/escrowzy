@@ -263,11 +263,10 @@ export const workspaceEvents = pgTable(
     jobId: integer('job_id').notNull(),
     title: varchar('title', { length: 200 }).notNull(),
     description: text('description'),
-    eventType: varchar('event_type', { length: 50 }).notNull(), // meeting, deadline, milestone, review, delivery
+    eventType: varchar('event_type', { length: 50 }).notNull(), // deadline, milestone, review, delivery
     startTime: timestamp('start_time').notNull(),
     endTime: timestamp('end_time'),
     location: text('location'),
-    meetingLink: text('meeting_link'),
     attendees: jsonb('attendees').notNull().default('[]'), // Array of user IDs
     createdBy: integer('created_by')
       .notNull()

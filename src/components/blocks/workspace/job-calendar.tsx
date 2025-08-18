@@ -9,8 +9,7 @@ import {
   ChevronRight,
   Clock,
   MapPin,
-  Plus,
-  Video
+  Plus
 } from 'lucide-react'
 import useSWR from 'swr'
 
@@ -47,7 +46,6 @@ interface CalendarEvent {
   startTime: Date
   endTime: Date | null
   location: string | null
-  meetingLink: string | null
   attendees: number[]
   isAllDay: boolean
   status: string
@@ -77,7 +75,6 @@ export function JobCalendar({
     startTime: '',
     endTime: '',
     location: '',
-    meetingLink: '',
     isAllDay: false
   })
 
@@ -119,7 +116,6 @@ export function JobCalendar({
         startTime: '',
         endTime: '',
         location: '',
-        meetingLink: '',
         isAllDay: false
       })
     } catch (error) {
@@ -307,20 +303,6 @@ export function JobCalendar({
                       placeholder='Enter meeting location'
                     />
                   </div>
-                  <div>
-                    <Label htmlFor='meetingLink'>Meeting Link (Optional)</Label>
-                    <Input
-                      id='meetingLink'
-                      value={newEvent.meetingLink}
-                      onChange={e =>
-                        setNewEvent({
-                          ...newEvent,
-                          meetingLink: e.target.value
-                        })
-                      }
-                      placeholder='https://meet.google.com/...'
-                    />
-                  </div>
                 </>
               )}
             </div>
@@ -498,17 +480,6 @@ export function JobCalendar({
                           <MapPin className='h-3 w-3' />
                           {event.location}
                         </span>
-                      )}
-                      {event.meetingLink && (
-                        <a
-                          href={event.meetingLink}
-                          target='_blank'
-                          rel='noopener noreferrer'
-                          className='text-primary flex items-center gap-1 hover:underline'
-                        >
-                          <Video className='h-3 w-3' />
-                          Join Meeting
-                        </a>
                       )}
                     </div>
                   </div>

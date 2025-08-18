@@ -610,7 +610,6 @@ export default function JobDetailsPage() {
                 </div>
               )}
 
-
               <Separator />
 
               <div className='space-y-3'>

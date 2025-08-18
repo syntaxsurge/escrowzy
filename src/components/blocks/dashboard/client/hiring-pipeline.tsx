@@ -5,7 +5,6 @@ import { useState } from 'react'
 
 import { format } from 'date-fns'
 import {
-  Calendar,
   CheckCircle,
   FileText,
   Loader2,
@@ -57,7 +56,6 @@ interface ApplicationStats {
   total: number
   pending: number
   shortlisted: number
-  interviewed: number
   hired: number
 }
 
@@ -186,25 +184,12 @@ export function HiringPipeline({
     }
   }
 
-  const handleScheduleInterview = async (
-    freelancerId: number,
-    jobId: number
-  ) => {
-    // This would open a calendar/scheduling interface
-    toast({
-      title: 'Coming Soon',
-      description: 'Interview scheduling will be available soon'
-    })
-  }
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
         return <FileText className='h-4 w-4 text-gray-500' />
       case 'shortlisted':
         return <UserCheck className='h-4 w-4 text-blue-500' />
-      case 'interviewed':
-        return <MessageSquare className='h-4 w-4 text-purple-500' />
       case 'accepted':
         return <CheckCircle className='h-4 w-4 text-green-500' />
       case 'rejected':
@@ -217,7 +202,7 @@ export function HiringPipeline({
   return (
     <div className='space-y-6'>
       {/* Pipeline Stats */}
-      <div className='grid gap-4 md:grid-cols-5'>
+      <div className='grid gap-4 md:grid-cols-4'>
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium'>
@@ -247,16 +232,6 @@ export function HiringPipeline({
           <CardContent>
             <div className='text-2xl font-bold text-blue-500'>
               {applications.stats.shortlisted}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>Interviewed</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-purple-500'>
-              {applications.stats.interviewed}
             </div>
           </CardContent>
         </Card>
@@ -367,10 +342,9 @@ export function HiringPipeline({
         </CardHeader>
         <CardContent>
           <Tabs defaultValue='applications' className='w-full'>
-            <TabsList className='grid w-full grid-cols-4'>
+            <TabsList className='grid w-full grid-cols-3'>
               <TabsTrigger value='applications'>Applications</TabsTrigger>
               <TabsTrigger value='shortlisted'>Shortlisted</TabsTrigger>
-              <TabsTrigger value='interviews'>Interviews</TabsTrigger>
               <TabsTrigger value='templates'>Templates</TabsTrigger>
             </TabsList>
 
@@ -530,18 +504,6 @@ export function HiringPipeline({
                           </div>
                         </div>
                         <div className='flex gap-2'>
-                          <Button
-                            size='sm'
-                            onClick={() =>
-                              handleScheduleInterview(
-                                app.freelancerId,
-                                app.jobId
-                              )
-                            }
-                          >
-                            <Calendar className='mr-2 h-4 w-4' />
-                            Schedule Interview
-                          </Button>
                           <Button size='sm' variant='outline' asChild>
                             <Link href={`/messages?user=${app.freelancerId}`}>
                               <MessageSquare className='mr-2 h-4 w-4' />
@@ -555,18 +517,6 @@ export function HiringPipeline({
               </div>
             </TabsContent>
 
-            <TabsContent value='interviews'>
-              <div className='py-8 text-center'>
-                <Calendar className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-                <h3 className='mb-2 text-lg font-medium'>
-                  No interviews scheduled
-                </h3>
-                <p className='text-muted-foreground'>
-                  Schedule interviews with shortlisted candidates
-                </p>
-              </div>
-            </TabsContent>
-
             <TabsContent value='templates'>
               <div className='space-y-4'>
                 <Card>
@@ -576,10 +526,6 @@ export function HiringPipeline({
                     </CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-2'>
-                    <Button variant='outline' className='w-full justify-start'>
-                      <FileText className='mr-2 h-4 w-4' />
-                      Standard Interview Questions
-                    </Button>
                     <Button variant='outline' className='w-full justify-start'>
                       <Mail className='mr-2 h-4 w-4' />
                       Invitation Email Template

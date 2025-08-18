@@ -28,7 +28,6 @@ import { toast } from 'sonner'
 import useSWR from 'swr'
 
 // import { BidNegotiationChat } from '@/components/blocks/jobs/bid-negotiation-chat'
-// import { InterviewScheduler } from '@/components/blocks/jobs/interview-scheduler'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -591,16 +590,6 @@ export default function JobProposalsPage() {
                                   handleBidAction(bid.id, 'accept')
                                 }
                               /> */}
-                              {/* TODO: Implement InterviewScheduler component */}
-                              {/* <InterviewScheduler
-                                jobId={parseInt(jobId)}
-                                bidId={bid.id}
-                                freelancerId={bid.freelancerId}
-                                freelancerName={
-                                  bid.freelancer?.name || 'Freelancer'
-                                }
-                                onScheduled={() => mutateBids()}
-                              /> */}
                               <Button
                                 size='sm'
                                 variant='outline'
@@ -625,16 +614,6 @@ export default function JobProposalsPage() {
 
                           {bid.status === 'shortlisted' && (
                             <>
-                              {/* TODO: Implement InterviewScheduler component */}
-                              {/* <InterviewScheduler
-                                jobId={parseInt(jobId)}
-                                bidId={bid.id}
-                                freelancerId={bid.freelancerId}
-                                freelancerName={
-                                  bid.freelancer?.name || 'Freelancer'
-                                }
-                                onScheduled={() => mutateBids()}
-                              /> */}
                               <Button
                                 size='sm'
                                 onClick={() =>

@@ -55,7 +55,6 @@ export async function GET(
         startTime: workspaceEvents.startTime,
         endTime: workspaceEvents.endTime,
         location: workspaceEvents.location,
-        meetingLink: workspaceEvents.meetingLink,
         attendees: workspaceEvents.attendees,
         isAllDay: workspaceEvents.isAllDay,
         status: workspaceEvents.status,
@@ -124,11 +123,10 @@ export async function POST(
         jobId,
         title: body.title,
         description: body.description || null,
-        eventType: body.eventType || 'meeting',
+        eventType: body.eventType || 'deadline',
         startTime: new Date(body.startTime),
         endTime: body.endTime ? new Date(body.endTime) : null,
         location: body.location || null,
-        meetingLink: body.meetingLink || null,
         attendees: [
           user.id,
           job.clientId === user.id ? job.freelancerId : job.clientId

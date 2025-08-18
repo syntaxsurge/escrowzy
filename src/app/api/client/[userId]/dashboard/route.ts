@@ -121,7 +121,6 @@ interface ClientDashboardData {
       total: number
       pending: number
       shortlisted: number
-      interviewed: number
       hired: number
     }
   }
@@ -487,7 +486,6 @@ export const GET = withAuth(
             shortlisted: recentApplications.filter(
               a => a.bid.status === 'shortlisted'
             ).length,
-            interviewed: 0,
             hired: recentApplications.filter(a => a.bid.status === 'accepted')
               .length
           }

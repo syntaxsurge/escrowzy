@@ -74,7 +74,6 @@ export const jobPostings = pgTable(
     // Quality assurance
     requiresNDA: boolean('requires_nda').notNull().default(false),
     requiresBackground: boolean('requires_background').notNull().default(false),
-    requiresInterview: boolean('requires_interview').notNull().default(false),
     // SEO and content
     seoTitle: varchar('seo_title', { length: 255 }),
     seoDescription: text('seo_description'),
@@ -295,69 +294,5 @@ export const jobAlerts = pgTable(
     index('idx_job_alerts_job').on(table.jobId),
     index('idx_job_alerts_status').on(table.status),
     index('idx_job_alerts_type').on(table.alertType)
-  ]
-)
-
-export const interviews = pgTable(
-  'interviews',
-  {
-    id: serial('id').primaryKey(),
-    jobId: integer('job_id')
-      .notNull()
-      .references(() => jobPostings.id, { onDelete: 'cascade' }),
-    bidId: integer('bid_id')
-      .notNull()
-      .references(() => jobBids.id, { onDelete: 'cascade' }),
-    clientId: integer('client_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    freelancerId: integer('freelancer_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    scheduledAt: timestamp('scheduled_at').notNull(),
-    duration: integer('duration').notNull().default(30), // in minutes
-    meetingType: varchar('meeting_type', { length: 50 })
-      .notNull()
-      .default('video'), // video, phone, in-person
-    meetingUrl: text('meeting_url'),
-    meetingId: varchar('meeting_id', { length: 255 }),
-    location: text('location'),
-    agenda: text('agenda'),
-    questions: jsonb('questions').notNull().default('[]'),
-    status: varchar('status', { length: 50 }).notNull().default('scheduled'), // scheduled, in_progress, completed, cancelled, no_show
-    clientConfirmed: boolean('client_confirmed').notNull().default(false),
-    freelancerConfirmed: boolean('freelancer_confirmed').notNull().default(false),
-    attendanceStatus: jsonb('attendance_status').notNull().default('{}'), // {clientId: 'present', freelancerId: 'absent'}
-    startedAt: timestamp('started_at'),
-    endedAt: timestamp('ended_at'),
-    actualDuration: integer('actual_duration'), // in minutes
-    notes: text('notes'),
-    clientNotes: text('client_notes'),
-    freelancerNotes: text('freelancer_notes'),
-    rating: integer('rating'), // 1-5
-    outcome: varchar('outcome', { length: 50 }), // hire, reject, second_interview, undecided
-    nextSteps: text('next_steps'),
-    recordingUrl: text('recording_url'),
-    reminderSent: boolean('reminder_sent').notNull().default(false),
-    reminderSentAt: timestamp('reminder_sent_at'),
-    followUpScheduled: boolean('follow_up_scheduled').notNull().default(false),
-    followUpDate: timestamp('follow_up_date'),
-    feedback: jsonb('feedback').notNull().default('{}'),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
-    cancelledAt: timestamp('cancelled_at'),
-    cancelledBy: integer('cancelled_by').references(() => users.id, {
-      onDelete: 'set null'
-    }),
-    cancelReason: text('cancel_reason'),
-    cancellationReason: text('cancellation_reason')
-  },
-  table => [
-    index('idx_interviews_job').on(table.jobId),
-    index('idx_interviews_bid').on(table.bidId),
-    index('idx_interviews_client').on(table.clientId),
-    index('idx_interviews_freelancer').on(table.freelancerId),
-    index('idx_interviews_scheduled').on(table.scheduledAt),
-    index('idx_interviews_status').on(table.status)
   ]
 )

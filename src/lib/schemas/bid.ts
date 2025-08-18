@@ -156,17 +156,6 @@ export const shortlistSchema = z.object({
   notes: z.string().max(500).optional()
 })
 
-// Interview scheduling schema
-export const interviewScheduleSchema = z.object({
-  bidId: z.number().positive('Invalid bid ID'),
-  scheduledAt: z
-    .date()
-    .min(new Date(), 'Interview must be scheduled in the future'),
-  duration: z.number().min(15).max(180), // minutes
-  meetingUrl: z.string().url('Invalid meeting URL').optional(),
-  notes: z.string().max(500).optional()
-})
-
 // Offer schema
 export const offerSchema = z
   .object({
@@ -204,5 +193,4 @@ export type InvitationResponseFormData = z.infer<
   typeof invitationResponseSchema
 >
 export type ShortlistFormData = z.infer<typeof shortlistSchema>
-export type InterviewScheduleFormData = z.infer<typeof interviewScheduleSchema>
 export type OfferFormData = z.infer<typeof offerSchema>

@@ -1,6 +1,3 @@
-// Re-export ActivityType enum from constants
-export { ActivityType } from '@/lib/constants/activity-types'
-
 // Import all tables
 import {
   users,
@@ -40,8 +37,7 @@ import {
   bidTemplates,
   jobInvitations,
   savedSearches,
-  jobAlerts,
-  interviews
+  jobAlerts
 } from './jobs'
 import {
   referralCampaigns,
@@ -211,8 +207,6 @@ export type SavedSearch = typeof savedSearches.$inferSelect
 export type NewSavedSearch = typeof savedSearches.$inferInsert
 export type JobAlert = typeof jobAlerts.$inferSelect
 export type NewJobAlert = typeof jobAlerts.$inferInsert
-export type Interview = typeof interviews.$inferSelect
-export type NewInterview = typeof interviews.$inferInsert
 
 // Workspace types
 export type WorkspaceSession = typeof workspaceSessions.$inferSelect

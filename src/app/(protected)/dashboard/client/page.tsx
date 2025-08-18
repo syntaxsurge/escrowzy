@@ -142,7 +142,6 @@ interface ClientDashboardData {
       total: number
       pending: number
       shortlisted: number
-      interviewed: number
       hired: number
     }
   }

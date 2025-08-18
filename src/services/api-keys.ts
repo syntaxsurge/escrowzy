@@ -81,7 +81,9 @@ export async function createApiKey(
   const existingKeys = await db
     .select()
     .from(apiKeys)
-    .where(and(eq(apiKeys.teamId, membership.teamId), eq(apiKeys.isActive, true)))
+    .where(
+      and(eq(apiKeys.teamId, membership.teamId), eq(apiKeys.isActive, true))
+    )
 
   if (existingKeys.length >= 10) {
     throw new Error('Maximum number of API keys (10) reached')
