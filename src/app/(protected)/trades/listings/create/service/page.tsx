@@ -56,17 +56,19 @@ import { handleFormSuccess } from '@/lib/utils/form'
 
 // Job posting schema
 const createJobSchema = z.object({
-  postingType: z.enum(['job', 'offer']), // job = client posts job, offer = freelancer offers service
+  postingType: z.enum(['job', 'service']), // job = client posts job, service = freelancer offers service
   title: z.string().min(10, 'Title must be at least 10 characters'),
   description: z.string().min(50, 'Description must be at least 50 characters'),
   categoryId: z.string().min(1, 'Please select a category'),
   budgetType: z.enum(['fixed', 'hourly']),
-  budgetMin: z.string().min(1, 'Minimum budget is required'),
-  budgetMax: z.string().min(1, 'Maximum budget is required'),
+  budget: z.string().optional(), // For services
+  budgetMin: z.string().optional(), // For jobs - made optional
+  budgetMax: z.string().optional(), // For jobs - made optional
   currency: z.string().default('USD'),
   deadline: z.string().optional(),
   experienceLevel: z.enum(['entry', 'intermediate', 'expert']),
   projectDuration: z.string().optional(),
+  revisions: z.number().optional(), // Number of revisions for services
   skillsRequired: z.array(z.string()).min(1, 'At least one skill is required'),
   milestones: z
     .array(
@@ -97,16 +99,18 @@ export default function CreateServiceListingPage() {
   const form = useForm<JobFormData>({
     resolver: zodResolver(createJobSchema),
     defaultValues: {
-      postingType: 'job',
+      postingType: 'service',
       title: '',
       description: '',
       categoryId: '',
       budgetType: 'fixed',
+      budget: '',
       budgetMin: '',
       budgetMax: '',
       currency: 'USD',
       experienceLevel: 'intermediate',
       projectDuration: '',
+      revisions: 0,
       skillsRequired: [],
       milestones: []
     }
@@ -204,17 +208,51 @@ export default function CreateServiceListingPage() {
     form.setValue('milestones', updated)
   }
 
-  const onSubmit = async (_data: JobFormData) => {
+  const onSubmit = async (data: JobFormData) => {
     setIsSubmitting(true)
     try {
-      // For now, we'll just show a success message
-      // In production, this would create the job posting
-      handleFormSuccess(
-        toast,
-        postingType === 'job'
-          ? 'Your job has been posted successfully!'
-          : 'Your service offer has been created!'
-      )
+      if (postingType === 'service') {
+        // Create service listing
+        const serviceData = {
+          listingCategory: 'service',
+          listingType: 'sell',
+          serviceTitle: data.title,
+          serviceDescription: data.description,
+          serviceCategoryId: parseInt(selectedCategoryId) || 1, // Use selected category or default
+          amount: (data.budget || data.budgetMin || '100').toString(),
+          pricePerUnit:
+            data.budgetType === 'hourly'
+              ? (data.budget || data.budgetMin || '50').toString()
+              : undefined,
+          deliveryTime: parseInt(data.projectDuration || '7') || 7, // Default to 7 days if not specified
+          revisions: data.revisions || 0,
+          skillsOffered: data.skillsRequired || [],
+          paymentMethods: ['bank_transfer', 'paypal', 'crypto'], // Default payment methods
+          chainId: '1' // Default chain ID
+        }
+
+        const response = await fetch(apiEndpoints.listings.create, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(serviceData)
+        })
+
+        const result = await response.json()
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to create service listing')
+        }
+
+        handleFormSuccess(
+          toast,
+          'Your service offer has been created successfully!'
+        )
+      } else {
+        // TODO: Implement job posting creation
+        handleFormSuccess(toast, 'Job posting feature coming soon!')
+      }
 
       // Invalidate the listings cache to ensure new listing shows
       await mutate(apiEndpoints.listings.user)
@@ -222,10 +260,13 @@ export default function CreateServiceListingPage() {
       // Redirect to listings page
       router.push(appRoutes.trades.myListings)
     } catch (error) {
-      console.error('Error submitting job:', error)
+      console.error('Error submitting:', error)
       toast({
         title: 'Error',
-        description: 'Failed to create listing. Please try again.',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Failed to create listing. Please try again.',
         variant: 'destructive'
       })
     } finally {
@@ -366,12 +407,12 @@ export default function CreateServiceListingPage() {
                         </div>
                         <div className='relative'>
                           <RadioGroupItem
-                            value='offer'
-                            id='offer'
+                            value='service'
+                            id='service'
                             className='peer sr-only'
                           />
                           <Label
-                            htmlFor='offer'
+                            htmlFor='service'
                             className='border-muted hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 p-4'
                           >
                             <Award className='mb-2 h-6 w-6' />

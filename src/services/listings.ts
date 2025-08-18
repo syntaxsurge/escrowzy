@@ -61,6 +61,19 @@ export async function createListing(
       transferMethod: 'manual',
       adminTransferEmail: envPublic.NEXT_PUBLIC_DOMAIN_ESCROW_EMAIL
     } as DomainMetadata
+  } else if (input.listingCategory === 'service') {
+    // Service specific fields
+    const serviceInput = input as any
+    values.serviceTitle = serviceInput.serviceTitle
+    values.serviceDescription = serviceInput.serviceDescription
+    values.serviceCategoryId = serviceInput.serviceCategoryId
+    values.amount = serviceInput.amount
+    values.pricePerUnit = serviceInput.pricePerUnit || null
+    values.deliveryTime = serviceInput.deliveryTime
+    values.revisions = serviceInput.revisions || 0
+    values.skillsOffered = serviceInput.skillsOffered || []
+    values.paymentMethods = serviceInput.paymentMethods
+    values.tokenOffered = null // Services don't have a specific token
   }
 
   const [listing] = await db.insert(escrowListings).values(values).returning()
