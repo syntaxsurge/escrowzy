@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 
 import {
   Star,
@@ -324,14 +324,8 @@ export default async function PublicFreelancerProfilePage({
                             ? appRoutes.chat.direct(
                                 `${Math.min(auth.id, userId)}_${Math.max(auth.id, userId)}`
                               )
-                            : '#'
+                            : appRoutes.signIn
                         }
-                        onClick={e => {
-                          if (!auth) {
-                            e.preventDefault()
-                            redirect(appRoutes.signIn)
-                          }
-                        }}
                       >
                         <MessageSquare className='mr-2 h-4 w-4' />
                         Send Message
