@@ -182,10 +182,7 @@ export default async function FreelancersDirectoryPage({
                   </SelectContent>
                 </Select>
 
-                <Select
-                  name='availability'
-                  defaultValue={params.availability}
-                >
+                <Select name='availability' defaultValue={params.availability}>
                   <SelectTrigger className='w-full sm:w-[140px]'>
                     <SelectValue placeholder='Availability' />
                   </SelectTrigger>
@@ -197,10 +194,7 @@ export default async function FreelancersDirectoryPage({
                   </SelectContent>
                 </Select>
 
-                <Select
-                  name='sortBy'
-                  defaultValue={params.sortBy || 'newest'}
-                >
+                <Select name='sortBy' defaultValue={params.sortBy || 'newest'}>
                   <SelectTrigger className='w-full sm:w-[160px]'>
                     <SelectValue placeholder='Sort by' />
                   </SelectTrigger>

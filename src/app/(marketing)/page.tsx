@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { motion } from 'framer-motion'
 import {
@@ -27,8 +27,10 @@ import {
   ScrollText,
   Timer,
   ChevronRight,
+  Activity,
   Percent,
   Gift,
+  ShieldCheck,
   Coins,
   UserCheck,
   AlertTriangle,

@@ -69,7 +69,7 @@ export function NetworkSelectorFallback({
               )}
             </div>
             {showLabel && (
-              <span className='text-foreground hidden text-sm font-medium sm:inline'>
+              <span className='text-foreground hidden text-sm font-medium lg:inline xl:inline'>
                 {currentNetwork?.name || 'Select Network'}
               </span>
             )}

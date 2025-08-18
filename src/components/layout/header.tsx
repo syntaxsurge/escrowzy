@@ -487,7 +487,7 @@ function PublicNavigation({
                 href={appRoutes.freelancers}
                 className='flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-700 focus:bg-gradient-to-r focus:from-blue-50 focus:to-purple-50 focus:text-blue-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-blue-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-blue-400'
               >
-                <Users className='h-4 w-4' />
+                <Users className='h-4 w-4 text-blue-600 dark:text-blue-400' />
                 <span>Freelancers</span>
               </Link>
             </DropdownMenuItem>
@@ -496,7 +496,7 @@ function PublicNavigation({
                 href='/listings?category=p2p'
                 className='flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-700 focus:bg-gradient-to-r focus:from-purple-50 focus:to-pink-50 focus:text-purple-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-purple-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-purple-400'
               >
-                <ShoppingBag className='h-4 w-4' />
+                <ShoppingBag className='h-4 w-4 text-purple-600 dark:text-purple-400' />
                 <span>P2P Marketplace</span>
               </Link>
             </DropdownMenuItem>
@@ -505,7 +505,7 @@ function PublicNavigation({
                 href={appRoutes.domains}
                 className='flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 hover:text-indigo-700 focus:bg-gradient-to-r focus:from-indigo-50 focus:to-blue-50 focus:text-indigo-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-indigo-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-indigo-400'
               >
-                <Globe className='h-4 w-4' />
+                <Globe className='h-4 w-4 text-indigo-600 dark:text-indigo-400' />
                 <span>Domain Names</span>
               </Link>
             </DropdownMenuItem>
@@ -514,7 +514,7 @@ function PublicNavigation({
                 href={appRoutes.services}
                 className='flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all hover:bg-gradient-to-r hover:from-emerald-50 hover:to-green-50 hover:text-emerald-700 focus:bg-gradient-to-r focus:from-emerald-50 focus:to-green-50 focus:text-emerald-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-emerald-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-emerald-400'
               >
-                <Briefcase className='h-4 w-4' />
+                <Briefcase className='h-4 w-4 text-green-600 dark:text-green-400' />
                 <span>Services</span>
               </Link>
             </DropdownMenuItem>
@@ -591,14 +591,12 @@ function PublicNavigation({
             Settings
           </div>
 
-          {/* Theme Toggle */}
-          <div className='px-3 py-2'>
+          {/* Theme Toggle and Network Selector Side by Side */}
+          <div className='flex items-center gap-2 px-3 py-2'>
+            <div className='flex-1'>
+              <NetworkSelector isAuthenticated={!!user} />
+            </div>
             <ThemeToggle />
-          </div>
-
-          {/* Network Selector */}
-          <div className='px-3 py-2'>
-            <NetworkSelector isAuthenticated={!!user} />
           </div>
         </div>
       </MobileMenu>
