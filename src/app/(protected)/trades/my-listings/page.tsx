@@ -46,14 +46,9 @@ export default function MyListingsPage() {
     apiEndpoints.listings.user,
     async () => {
       const res = await api.get(apiEndpoints.listings.user)
-      // The API returns { success: true, data: { listings: [...] } }
-      // But api.get puts the whole response in data, so we need res.data.data
-      if (res.success && res.data) {
-        // Check if res.data has a nested data property (double wrapping issue)
-        if ('data' in res.data && 'success' in res.data) {
-          return res.data.data
-        }
-        return res.data
+      // The API now returns { success: true, listings: [...] }
+      if (res.success) {
+        return res.data || { listings: [] }
       }
       return { listings: [] }
     },
@@ -68,13 +63,8 @@ export default function MyListingsPage() {
     apiEndpoints.listings.userStats,
     async () => {
       const res = await api.get(apiEndpoints.listings.userStats)
-      // Handle the same double-wrapping issue
-      if (res.success && res.data) {
-        // Check if res.data has a nested data property (double wrapping issue)
-        if ('data' in res.data && 'success' in res.data) {
-          return res.data.data
-        }
-        return res.data
+      if (res.success) {
+        return res.data || null
       }
       return null
     },

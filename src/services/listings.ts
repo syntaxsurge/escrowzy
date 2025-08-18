@@ -100,12 +100,13 @@ export async function getActiveListings(
     conditions.push(eq(escrowListings.isActive, true))
   }
 
-  // Category filter
+  // Category filter - ensure service category is properly handled
   if (query.listingCategory) {
     conditions.push(eq(escrowListings.listingCategory, query.listingCategory))
   }
 
-  if (query.listingType) {
+  // Type filter - only apply for non-service categories
+  if (query.listingType && query.listingCategory !== 'service') {
     conditions.push(eq(escrowListings.listingType, query.listingType))
   }
 
@@ -441,7 +442,7 @@ export async function getUserListings(
     .where(and(...conditions))
     .orderBy(desc(escrowListings.createdAt))
 
-  // Format the results
+  // Format the results - ensure all fields are included
   const formattedListings: EscrowListingWithUser[] = listings.map(row => ({
     ...row.listing,
     user: row.user

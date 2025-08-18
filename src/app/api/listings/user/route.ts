@@ -14,11 +14,12 @@ export async function GET() {
     }
 
     // Get user's listings (include inactive ones so user can manage them)
-    const listings = await getUserListings(session.user.id, true)
+    const result = await getUserListings(session.user.id, true)
 
+    // Return the listings directly without double-wrapping
     return NextResponse.json({
       success: true,
-      data: listings
+      ...result
     })
   } catch (error) {
     console.error('Error in GET /api/listings/user:', error)

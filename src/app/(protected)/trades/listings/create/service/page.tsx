@@ -212,10 +212,10 @@ export default function CreateServiceListingPage() {
     setIsSubmitting(true)
     try {
       if (postingType === 'service') {
-        // Create service listing
+        // Create service listing with complete data
         const serviceData = {
           listingCategory: 'service',
-          listingType: 'sell',
+          listingType: 'sell', // Services are always sell listings
           serviceTitle: data.title,
           serviceDescription: data.description,
           serviceCategoryId: parseInt(data.categoryId) || 1, // Use selected category or default
@@ -223,7 +223,7 @@ export default function CreateServiceListingPage() {
           pricePerUnit:
             data.budgetType === 'hourly'
               ? (data.budget || data.budgetMin || '50').toString()
-              : undefined,
+              : null,
           deliveryTime: parseInt(data.projectDuration || '7') || 7, // Default to 7 days if not specified
           revisions: data.revisions || 0,
           skillsOffered: data.skillsRequired || [],
