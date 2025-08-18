@@ -23,6 +23,7 @@ import {
   MessageSquare
 } from 'lucide-react'
 
+import { HireFreelancerButton } from '@/components/blocks/freelancers/hire-freelancer-button'
 import { PortfolioGallery } from '@/components/blocks/freelancers/portfolio-gallery'
 import { SaveProfileButton } from '@/components/blocks/freelancers/save-profile-button'
 import { SendMessageButton } from '@/components/blocks/freelancers/send-message-button'
@@ -43,7 +44,6 @@ import {
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { appRoutes } from '@/config/app-routes'
 import { getAuth } from '@/lib/auth/auth-utils'
 import {
   getFreelancerProfile,
@@ -1103,17 +1103,10 @@ export default async function PublicFreelancerProfilePage({
                   <p className='text-muted-foreground text-sm'>per hour</p>
                 </div>
                 {!isOwnProfile && (
-                  <Button
-                    className='w-full bg-gradient-to-r from-green-600 to-emerald-700 font-bold text-white shadow-lg transition-all hover:scale-105 hover:from-green-700 hover:to-emerald-800 hover:shadow-xl'
-                    asChild
-                  >
-                    <Link
-                      href={appRoutes.trades.jobs.create + `?freelancer=${id}`}
-                    >
-                      <Briefcase className='mr-2 h-4 w-4' />
-                      Hire Me
-                    </Link>
-                  </Button>
+                  <HireFreelancerButton
+                    freelancerId={id}
+                    isAuthenticated={!!auth}
+                  />
                 )}
               </CardContent>
             </Card>

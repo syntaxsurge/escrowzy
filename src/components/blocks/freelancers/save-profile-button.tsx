@@ -5,15 +5,8 @@ import { useState } from 'react'
 import { Heart } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { UnifiedConnectButton } from '@/components/blocks/blockchain/unified-connect-button'
+import { SignInModal } from '@/components/blocks/auth/sign-in-modal'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
 
 interface SaveProfileButtonProps {
   freelancerId: string
@@ -68,20 +61,12 @@ export function SaveProfileButton({
         {isSaved ? 'Saved' : 'Save Profile'}
       </Button>
 
-      <Dialog open={showConnectModal} onOpenChange={setShowConnectModal}>
-        <DialogContent className='sm:max-w-md'>
-          <DialogHeader>
-            <DialogTitle>Sign in to Save Profiles</DialogTitle>
-            <DialogDescription>
-              Connect your wallet to save freelancer profiles and get notified
-              about their availability.
-            </DialogDescription>
-          </DialogHeader>
-          <div className='flex justify-center py-4'>
-            <UnifiedConnectButton />
-          </div>
-        </DialogContent>
-      </Dialog>
+      <SignInModal
+        open={showConnectModal}
+        onOpenChange={setShowConnectModal}
+        title='Sign in to Save Profiles'
+        description='Connect your wallet to save freelancer profiles and get notified about their availability.'
+      />
     </>
   )
 }
