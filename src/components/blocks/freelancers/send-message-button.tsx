@@ -1,13 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { MessageSquare } from 'lucide-react'
 
-import { SignInModal } from '@/components/blocks/auth/sign-in-modal'
+import { SignMessageButton } from '@/components/blocks/blockchain/sign-message-button'
+import { UnifiedConnectButton } from '@/components/blocks/blockchain/unified-connect-button'
 import { Button } from '@/components/ui/button'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
+import { useUnifiedWalletInfo } from '@/context'
+import { api } from '@/lib/api/http-client'
 
 interface SendMessageButtonProps {
   currentUserId?: number
@@ -18,56 +22,72 @@ interface SendMessageButtonProps {
 export function SendMessageButton({
   currentUserId,
   targetUserId,
-  isAuthenticated
+  isAuthenticated: initialAuth
 }: SendMessageButtonProps) {
-  const [showSignInModal, setShowSignInModal] = useState(false)
+  const { isConnected } = useUnifiedWalletInfo()
+  const [isAuthenticated, setIsAuthenticated] = useState(initialAuth)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false)
 
-  const handleClick = () => {
-    if (!isAuthenticated) {
-      setShowSignInModal(true)
-      return
+  // Check authentication status when wallet connection changes
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (isConnected && !isAuthenticated) {
+        setIsCheckingAuth(true)
+        try {
+          const response = await api.get(apiEndpoints.user.profile)
+          if (response.success && response.data) {
+            setIsAuthenticated(true)
+          }
+        } catch (error) {
+          // User not authenticated
+        } finally {
+          setIsCheckingAuth(false)
+        }
+      }
     }
-  }
+    checkAuth()
+  }, [isConnected, isAuthenticated])
 
-  if (!isAuthenticated) {
+  // Not connected - show connect wallet button
+  if (!isConnected) {
     return (
-      <>
-        <Button
-          variant='outline'
-          onClick={handleClick}
-          className='border-2 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20'
-        >
-          <MessageSquare className='mr-2 h-4 w-4' />
-          Send Message
-        </Button>
-        <SignInModal
-          open={showSignInModal}
-          onOpenChange={setShowSignInModal}
-          title='Sign in to Message'
-          description='Connect your wallet to send messages to freelancers.'
-        />
-      </>
+      <div className='w-full sm:w-auto'>
+        <UnifiedConnectButton />
+      </div>
     )
   }
 
-  if (!currentUserId) {
-    return null
+  // Connected but not authenticated - show sign message button
+  if (isConnected && !isAuthenticated && !isCheckingAuth) {
+    return (
+      <SignMessageButton
+        variant='outline'
+        className='border-2 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20'
+      >
+        Sign to Access Dashboard
+      </SignMessageButton>
+    )
   }
 
-  const chatUrl = appRoutes.chat.direct(
-    `${Math.min(currentUserId, targetUserId)}_${Math.max(currentUserId, targetUserId)}`
-  )
+  // Authenticated - show actual message button
+  if (isAuthenticated && currentUserId) {
+    const chatUrl = appRoutes.chat.direct(
+      `${Math.min(currentUserId, targetUserId)}_${Math.max(currentUserId, targetUserId)}`
+    )
 
-  return (
-    <Button
-      variant='outline'
-      asChild
-      className='border-2 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20'
-    >
-      <Link href={chatUrl}>
-        <MessageSquare className='mr-2 h-4 w-4' />
-        Send Message
-      </Link>
-    </Button>
-  )
+    return (
+      <Button
+        variant='outline'
+        asChild
+        className='border-2 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20'
+      >
+        <Link href={chatUrl}>
+          <MessageSquare className='mr-2 h-4 w-4' />
+          Send Message
+        </Link>
+      </Button>
+    )
+  }
+
+  return null
 }
