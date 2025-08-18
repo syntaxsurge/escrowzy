@@ -118,7 +118,6 @@ export default function CreateServiceListingPage() {
 
   const budgetType = form.watch('budgetType')
   const postingType = form.watch('postingType')
-  const selectedCategoryId = form.watch('categoryId')
 
   // Fetch categories and skills on mount
   useEffect(() => {
@@ -148,12 +147,13 @@ export default function CreateServiceListingPage() {
   }, [])
 
   // Update skills when category changes
+  const categoryId = form.watch('categoryId')
   useEffect(() => {
-    if (selectedCategoryId) {
+    if (categoryId) {
       const fetchCategorySkills = async () => {
         try {
           const response = await fetch(
-            `/api/jobs/skills?categoryId=${selectedCategoryId}`
+            `/api/jobs/skills?categoryId=${categoryId}`
           )
           const data = await response.json()
           if (data.success) {
@@ -165,7 +165,7 @@ export default function CreateServiceListingPage() {
       }
       fetchCategorySkills()
     }
-  }, [selectedCategoryId])
+  }, [categoryId])
 
   // Filter skills based on search
   const filteredSkills = availableSkills.filter(
@@ -218,7 +218,7 @@ export default function CreateServiceListingPage() {
           listingType: 'sell',
           serviceTitle: data.title,
           serviceDescription: data.description,
-          serviceCategoryId: parseInt(selectedCategoryId) || 1, // Use selected category or default
+          serviceCategoryId: parseInt(data.categoryId) || 1, // Use selected category or default
           amount: (data.budget || data.budgetMin || '100').toString(),
           pricePerUnit:
             data.budgetType === 'hourly'
@@ -466,7 +466,7 @@ export default function CreateServiceListingPage() {
                       <FormLabel>Category</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -475,7 +475,10 @@ export default function CreateServiceListingPage() {
                         </FormControl>
                         <SelectContent>
                           {jobCategories.map(category => (
-                            <SelectItem key={category.id} value={category.id}>
+                            <SelectItem
+                              key={category.id}
+                              value={category.id.toString()}
+                            >
                               <span className='flex items-center gap-2'>
                                 <span>{category.icon}</span>
                                 <span>{category.name}</span>
@@ -553,16 +556,16 @@ export default function CreateServiceListingPage() {
                   )}
                 />
 
-                <div className='grid grid-cols-2 gap-4'>
+                {postingType === 'service' ? (
                   <FormField
                     control={form.control}
-                    name='budgetMin'
+                    name='budget'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
                           {budgetType === 'hourly'
-                            ? 'Min Hourly Rate'
-                            : 'Minimum Budget'}
+                            ? 'Hourly Rate'
+                            : 'Service Price'}
                         </FormLabel>
                         <FormControl>
                           <div className='relative'>
@@ -577,39 +580,74 @@ export default function CreateServiceListingPage() {
                             />
                           </div>
                         </FormControl>
+                        <FormDescription>
+                          {budgetType === 'hourly'
+                            ? 'Your hourly rate for this service'
+                            : 'Fixed price for this service'}
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                ) : (
+                  <div className='grid grid-cols-2 gap-4'>
+                    <FormField
+                      control={form.control}
+                      name='budgetMin'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {budgetType === 'hourly'
+                              ? 'Min Hourly Rate'
+                              : 'Minimum Budget'}
+                          </FormLabel>
+                          <FormControl>
+                            <div className='relative'>
+                              <span className='absolute top-1/2 left-3 -translate-y-1/2'>
+                                $
+                              </span>
+                              <Input
+                                type='number'
+                                placeholder='0'
+                                className='pl-8'
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name='budgetMax'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          {budgetType === 'hourly'
-                            ? 'Max Hourly Rate'
-                            : 'Maximum Budget'}
-                        </FormLabel>
-                        <FormControl>
-                          <div className='relative'>
-                            <span className='absolute top-1/2 left-3 -translate-y-1/2'>
-                              $
-                            </span>
-                            <Input
-                              type='number'
-                              placeholder='0'
-                              className='pl-8'
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                    <FormField
+                      control={form.control}
+                      name='budgetMax'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {budgetType === 'hourly'
+                              ? 'Max Hourly Rate'
+                              : 'Maximum Budget'}
+                          </FormLabel>
+                          <FormControl>
+                            <div className='relative'>
+                              <span className='absolute top-1/2 left-3 -translate-y-1/2'>
+                                $
+                              </span>
+                              <Input
+                                type='number'
+                                placeholder='0'
+                                className='pl-8'
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
 
                 <FormField
                   control={form.control}
