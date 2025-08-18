@@ -12,10 +12,10 @@ export const appRoutes = {
 
   // Public pages
   freelancers: '/freelancers',
-  jobs: '/jobs',
+  jobs: '/listings?category=service',
   listings: '/listings',
   domains: '/listings?category=domain',
-  services: '/freelancers',
+  services: '/listings?category=service',
 
   chat: {
     base: '/chat',
@@ -67,10 +67,13 @@ export const appRoutes = {
     listings: {
       base: '/trades/listings',
       create: '/trades/listings/create',
-      withTab: (tab: string) => `/trades/listings?tab=${tab}`
+      withTab: (tab: string) => `/trades/listings?tab=${tab}`,
+      p2p: '/trades/listings?category=p2p',
+      domain: '/trades/listings?category=domain',
+      service: '/trades/listings?category=service'
     },
     jobs: {
-      base: '/trades/jobs',
+      base: '/trades/listings?category=service',
       detail: (id: string | number) => `/trades/jobs/${id}`,
       create: '/trades/listings/create/service',
       saved: '/trades/jobs/saved',

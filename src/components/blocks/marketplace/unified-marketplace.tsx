@@ -1,7 +1,7 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
 
 import {
   Plus,
@@ -56,12 +56,48 @@ export function UnifiedMarketplace({
   description
 }: UnifiedMarketplaceProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Read category from URL params if available, otherwise use defaultCategory
+  const categoryFromUrl = searchParams.get('category') as
+    | 'all'
+    | 'p2p'
+    | 'domain'
+    | 'service'
+    | null
+  const initialCategory = categoryFromUrl || defaultCategory
+
   const [category, setCategory] = useState<
     'all' | 'p2p' | 'domain' | 'service'
-  >(defaultCategory)
+  >(initialCategory)
   const [filterType, setFilterType] = useState<'all' | 'buy' | 'sell'>('all')
   const [filterToken, setFilterToken] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Update category when URL params change
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('category') as
+      | 'all'
+      | 'p2p'
+      | 'domain'
+      | 'service'
+      | null
+    if (categoryFromUrl && categoryFromUrl !== category) {
+      setCategory(categoryFromUrl)
+    }
+  }, [searchParams, category])
+
+  // Update URL when category changes
+  const handleCategoryChange = (newCategory: string) => {
+    setCategory(newCategory as any)
+    const params = new URLSearchParams(searchParams.toString())
+    if (newCategory === 'all') {
+      params.delete('category')
+    } else {
+      params.set('category', newCategory)
+    }
+    router.push(`?${params.toString()}`)
+  }
 
   // Fetch marketplace listings
   const { data: listingsData, mutate: mutateListings } = useSWR(
@@ -355,7 +391,7 @@ export function UnifiedMarketplace({
         {/* Category Tabs */}
         <Tabs
           value={category}
-          onValueChange={v => setCategory(v as any)}
+          onValueChange={handleCategoryChange}
           className='w-full'
         >
           <TabsList className='bg-background/50 border-primary/20 grid h-14 w-full grid-cols-4 border-2 backdrop-blur-sm'>

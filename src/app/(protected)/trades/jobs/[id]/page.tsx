@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import useSWR from 'swr'
 
-import { FeaturedJobsMini } from '@/components/blocks/jobs'
+// import { FeaturedJobsMini } from '@/components/blocks/jobs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'

@@ -27,8 +27,8 @@ import {
 import { toast } from 'sonner'
 import useSWR from 'swr'
 
-import { BidNegotiationChat } from '@/components/blocks/jobs/bid-negotiation-chat'
-import { InterviewScheduler } from '@/components/blocks/jobs/interview-scheduler'
+// import { BidNegotiationChat } from '@/components/blocks/jobs/bid-negotiation-chat'
+// import { InterviewScheduler } from '@/components/blocks/jobs/interview-scheduler'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'

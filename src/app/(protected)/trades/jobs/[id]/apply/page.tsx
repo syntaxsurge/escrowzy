@@ -23,7 +23,7 @@ import { toast } from 'sonner'
 import useSWR from 'swr'
 import { z } from 'zod'
 
-import { BidTemplateSelector } from '@/components/blocks/jobs/bid-template-selector'
+// import { BidTemplateSelector } from '@/components/blocks/jobs/bid-template-selector'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'

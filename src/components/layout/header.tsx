@@ -496,7 +496,7 @@ function PublicNavigation() {
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link
-                href={appRoutes.listings}
+                href='/listings?category=p2p'
                 className='flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-700 focus:bg-gradient-to-r focus:from-purple-50 focus:to-pink-50 focus:text-purple-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-purple-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-purple-400'
               >
                 <ShoppingBag className='h-4 w-4' />
@@ -573,7 +573,7 @@ function PublicNavigation() {
             <span>Jobs</span>
           </Link>
           <Link
-            href={appRoutes.listings}
+            href='/listings?category=p2p'
             className='text-foreground hover:bg-muted flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all'
             onClick={() => setIsMobileMenuOpen(false)}
           >
