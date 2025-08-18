@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import useSWR from 'swr'
 
+import { ClientJobManagement } from '@/components/blocks/client/job-management'
 import { BudgetTracker } from '@/components/blocks/dashboard/client/budget-tracker'
 import { HiringPipeline } from '@/components/blocks/dashboard/client/hiring-pipeline'
 import { JobsOverview } from '@/components/blocks/dashboard/client/jobs-overview'
@@ -383,8 +384,9 @@ export default function ClientDashboardPage() {
         onValueChange={setSelectedTab}
         className='space-y-4'
       >
-        <TabsList className='grid w-full grid-cols-7'>
+        <TabsList className='grid w-full grid-cols-8'>
           <TabsTrigger value='overview'>Overview</TabsTrigger>
+          <TabsTrigger value='job-management'>Job Management</TabsTrigger>
           <TabsTrigger value='jobs'>Jobs</TabsTrigger>
           <TabsTrigger value='milestones'>Milestones</TabsTrigger>
           <TabsTrigger value='hiring'>Hiring</TabsTrigger>
@@ -484,6 +486,10 @@ export default function ClientDashboardPage() {
               projections={dashboardData.spending.projections}
             />
           </motion.div>
+        </TabsContent>
+
+        <TabsContent value='job-management' className='space-y-4'>
+          <ClientJobManagement />
         </TabsContent>
 
         <TabsContent value='jobs' className='space-y-4'>

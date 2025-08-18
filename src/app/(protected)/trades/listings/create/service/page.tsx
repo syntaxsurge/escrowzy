@@ -20,7 +20,6 @@ import {
   Shield
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
-import { mutate } from 'swr'
 import { z } from 'zod'
 
 import { GamifiedHeader } from '@/components/blocks/trading'
@@ -250,15 +249,67 @@ export default function CreateServiceListingPage() {
           'Your service offer has been created successfully!'
         )
       } else {
-        // TODO: Implement job posting creation
-        handleFormSuccess(toast, 'Job posting feature coming soon!')
+        // Create job posting
+        const jobData = {
+          title: data.title,
+          description: data.description,
+          categoryId: parseInt(data.categoryId),
+          budgetType: data.budgetType,
+          budgetMin: data.budgetMin || data.budget,
+          budgetMax: data.budgetMax || data.budget,
+          currency: data.currency || 'USD',
+          deadline: data.deadline || undefined,
+          experienceLevel: data.experienceLevel,
+          skillsRequired: data.skillsRequired,
+          visibility: 'public',
+          status: 'open',
+          metadata: {
+            projectDuration: data.projectDuration,
+            milestones: milestones.length > 0 ? milestones : undefined
+          }
+        }
+
+        const response = await fetch('/api/jobs', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(jobData)
+        })
+
+        const result = await response.json()
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to create job posting')
+        }
+
+        // Create milestones if provided
+        if (milestones.length > 0 && result.job?.id) {
+          for (const [index, milestone] of milestones.entries()) {
+            await fetch(`/api/jobs/${result.job.id}/milestones`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                title: milestone.title,
+                description: milestone.description,
+                amount: milestone.amount,
+                dueDate: milestone.dueDate,
+                sortOrder: index
+              })
+            })
+          }
+        }
+
+        handleFormSuccess(
+          toast,
+          'Your job posting has been created successfully!'
+        )
+
+        // Redirect to job detail page
+        router.push(appRoutes.trades.jobs.detail(result.job.id))
       }
-
-      // Invalidate the listings cache to ensure new listing shows
-      await mutate(apiEndpoints.listings.user)
-
-      // Redirect to listings page
-      router.push(appRoutes.trades.myListings)
     } catch (error) {
       console.error('Error submitting:', error)
       toast({
