@@ -11,16 +11,11 @@ import {
   Users,
   Activity,
   Zap,
-  Globe
+  Globe,
+  Briefcase
 } from 'lucide-react'
 import useSWR from 'swr'
 
-import {
-  GamifiedHeader,
-  GamifiedStatsCards,
-  GamifiedListingCard,
-  type StatCard
-} from '@/components/blocks/trading'
 import { navigationProgress } from '@/components/providers/navigation-progress'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -38,11 +33,32 @@ import { refreshIntervals, appRoutes } from '@/config/app-routes'
 import { api } from '@/lib/api/http-client'
 import type { EscrowListingWithUser } from '@/types/listings'
 
-export default function MarketplacePage() {
+import {
+  GamifiedHeader,
+  GamifiedStatsCards,
+  GamifiedListingCard,
+  type StatCard
+} from '../trading'
+
+export interface UnifiedMarketplaceProps {
+  defaultCategory?: 'all' | 'p2p' | 'domain' | 'service'
+  showCreateButton?: boolean
+  isPublic?: boolean
+  title?: string
+  description?: string
+}
+
+export function UnifiedMarketplace({
+  defaultCategory = 'all',
+  showCreateButton = true,
+  isPublic = false,
+  title = 'ESCROW MARKETPLACE',
+  description
+}: UnifiedMarketplaceProps) {
   const router = useRouter()
   const [category, setCategory] = useState<
     'all' | 'p2p' | 'domain' | 'service'
-  >('all')
+  >(defaultCategory)
   const [filterType, setFilterType] = useState<'all' | 'buy' | 'sell'>('all')
   const [filterToken, setFilterToken] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -188,7 +204,7 @@ export default function MarketplacePage() {
                 (l: EscrowListingWithUser) => l.listingCategory === 'service'
               ).length,
               subtitle: 'Services available',
-              icon: <ShoppingCart className='h-5 w-5 text-white' />,
+              icon: <Briefcase className='h-5 w-5 text-white' />,
               badge: 'SERVICES',
               colorScheme: 'green'
             },
@@ -286,34 +302,53 @@ export default function MarketplacePage() {
             }
           ]
 
+  const getSubtitle = () => {
+    if (description) return description
+
+    return category === 'domain'
+      ? 'Browse and purchase domains with secure escrow'
+      : category === 'p2p'
+        ? 'Trade cryptocurrencies directly with other users'
+        : category === 'service'
+          ? 'Find professional services and freelancers'
+          : 'Browse all escrow listings'
+  }
+
+  const getIcon = () => {
+    switch (category) {
+      case 'domain':
+        return <Globe className='h-8 w-8 text-white' />
+      case 'service':
+        return <Briefcase className='h-8 w-8 text-white' />
+      case 'p2p':
+        return <Zap className='h-8 w-8 text-white' />
+      default:
+        return <ShoppingCart className='h-8 w-8 text-white' />
+    }
+  }
+
   return (
     <div className='from-background via-background to-primary/5 dark:to-primary/10 min-h-screen bg-gradient-to-br'>
       <div className='container mx-auto space-y-8 py-6'>
         {/* Gaming Header */}
         <GamifiedHeader
-          title='ESCROW MARKETPLACE'
-          subtitle={
-            category === 'domain'
-              ? 'Browse and purchase domains with secure escrow'
-              : category === 'p2p'
-                ? 'Trade cryptocurrencies directly with other users'
-                : category === 'service'
-                  ? 'Find professional services and freelancers'
-                  : 'Browse all escrow listings'
-          }
-          icon={<ShoppingCart className='h-8 w-8 text-white' />}
+          title={title}
+          subtitle={getSubtitle()}
+          icon={getIcon()}
           actions={
-            <Button
-              onClick={() => {
-                navigationProgress.start()
-                router.push(appRoutes.trades.listings.create)
-              }}
-              size='lg'
-              className='border-0 bg-gradient-to-r from-blue-600 to-cyan-700 font-bold text-white shadow-lg transition-all hover:scale-105 hover:from-blue-700 hover:to-cyan-800 hover:shadow-xl'
-            >
-              <Plus className='mr-2 h-5 w-5' />
-              CREATE LISTING
-            </Button>
+            showCreateButton && !isPublic ? (
+              <Button
+                onClick={() => {
+                  navigationProgress.start()
+                  router.push(appRoutes.trades.listings.create)
+                }}
+                size='lg'
+                className='border-0 bg-gradient-to-r from-blue-600 to-cyan-700 font-bold text-white shadow-lg transition-all hover:scale-105 hover:from-blue-700 hover:to-cyan-800 hover:shadow-xl'
+              >
+                <Plus className='mr-2 h-5 w-5' />
+                CREATE LISTING
+              </Button>
+            ) : null
           }
         />
 
@@ -348,7 +383,7 @@ export default function MarketplacePage() {
               value='service'
               className='text-lg font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600/20 data-[state=active]:to-emerald-600/20'
             >
-              <ShoppingCart className='mr-2 h-4 w-4' />
+              <Briefcase className='mr-2 h-4 w-4' />
               SERVICES
             </TabsTrigger>
           </TabsList>
@@ -405,7 +440,9 @@ export default function MarketplacePage() {
                   placeholder={
                     category === 'domain'
                       ? 'Search domains or users...'
-                      : 'Search by user...'
+                      : category === 'service'
+                        ? 'Search services or freelancers...'
+                        : 'Search by user...'
                   }
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
@@ -433,6 +470,8 @@ export default function MarketplacePage() {
               <div className='mb-6 inline-flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-600/20'>
                 {category === 'domain' ? (
                   <Globe className='h-12 w-12 text-purple-600 dark:text-purple-400' />
+                ) : category === 'service' ? (
+                  <Briefcase className='h-12 w-12 text-green-600 dark:text-green-400' />
                 ) : (
                   <ShoppingCart className='h-12 w-12 text-blue-600 dark:text-blue-400' />
                 )}
@@ -459,7 +498,9 @@ export default function MarketplacePage() {
               </p>
               {!searchQuery &&
                 filterType === 'all' &&
-                filterToken === 'all' && (
+                filterToken === 'all' &&
+                showCreateButton &&
+                !isPublic && (
                   <Button
                     onClick={() => {
                       navigationProgress.start()

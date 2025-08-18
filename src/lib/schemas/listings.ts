@@ -174,7 +174,7 @@ export type AcceptListingInput = z.infer<typeof acceptListingSchema>
 
 // Get listings query schema
 export const getListingsQuerySchema = z.object({
-  listingCategory: z.enum(['p2p', 'domain']).optional(),
+  listingCategory: z.enum(['p2p', 'domain', 'service']).optional(),
   listingType: z.enum(['buy', 'sell']).optional(),
   tokenOffered: z.string().optional(),
   minAmount: z.string().optional(),

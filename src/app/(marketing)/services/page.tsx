@@ -1,17 +1,12 @@
-'use client'
-
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
-
-import { appRoutes } from '@/config/app-routes'
+import { UnifiedMarketplace } from '@/components/blocks/marketplace'
 
 export default function ServicesPage() {
-  const router = useRouter()
-
-  useEffect(() => {
-    // Redirect to freelancers page as Services page
-    router.replace(appRoutes.freelancers)
-  }, [router])
-
-  return null
+  return (
+    <UnifiedMarketplace
+      defaultCategory='service'
+      isPublic={true}
+      title='SERVICES MARKETPLACE'
+      description='Discover professional services and connect with talented freelancers'
+    />
+  )
 }

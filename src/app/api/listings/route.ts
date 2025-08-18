@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams
     const queryObject = {
+      listingCategory: searchParams.get('listingCategory') || undefined,
       listingType: searchParams.get('listingType') || undefined,
       tokenOffered: searchParams.get('tokenOffered') || undefined,
       minAmount: searchParams.get('minAmount') || undefined,

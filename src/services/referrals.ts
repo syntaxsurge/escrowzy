@@ -275,7 +275,7 @@ export class ReferralService {
     const referralLink = await this.createReferralLink(userId)
 
     // Calculate tier benefits
-    const tierBenefits = {
+    const tierBenefits: Record<string, { bonus: string; perks: string }> = {
       bronze: { bonus: '0%', perks: 'Base rewards' },
       silver: { bonus: '10%', perks: 'Priority support' },
       gold: { bonus: '20%', perks: 'Premium features' },
