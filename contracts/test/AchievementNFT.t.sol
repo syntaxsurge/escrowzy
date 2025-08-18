@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import "forge-std/Test.sol";
-import "../src/AchievementNFT.sol";
+import {Test, console} from "forge-std/Test.sol";
+import {AchievementNFT} from "../src/AchievementNFT.sol";
 
 contract AchievementNFTTest is Test {
-    AchievementNFT public achievementNFT;
+    AchievementNFT public achievementNft;
     
     address public owner = address(1);
     address public minter = address(2);
@@ -53,8 +53,8 @@ contract AchievementNFTTest is Test {
     
     function setUp() public {
         vm.startPrank(owner);
-        achievementNFT = new AchievementNFT();
-        achievementNFT.grantMinterRole(minter);
+        achievementNft = new AchievementNFT();
+        achievementNft.grantMinterRole(minter);
         vm.stopPrank();
         
         // Create sample achievements
@@ -65,7 +65,7 @@ contract AchievementNFTTest is Test {
         vm.startPrank(owner);
         
         // First Trade Achievement
-        achievementNFT.createAchievement(
+        achievementNft.createAchievement(
             FIRST_TRADE_ID,
             "First Trade",
             "Complete your first trade",
@@ -78,7 +78,7 @@ contract AchievementNFTTest is Test {
         );
         
         // Volume Achievement
-        achievementNFT.createAchievement(
+        achievementNft.createAchievement(
             VOLUME_10ETH_ID,
             "Volume Trader",
             "Trade 10 ETH volume",
@@ -91,7 +91,7 @@ contract AchievementNFTTest is Test {
         );
         
         // Battle Achievement
-        achievementNFT.createAchievement(
+        achievementNft.createAchievement(
             BATTLE_WIN_ID,
             "Battle Victor",
             "Win your first battle",
@@ -104,7 +104,7 @@ contract AchievementNFTTest is Test {
         );
         
         // Community Achievement
-        achievementNFT.createAchievement(
+        achievementNft.createAchievement(
             COMMUNITY_HELPER_ID,
             "Community Helper",
             "Help resolve disputes",
@@ -117,7 +117,7 @@ contract AchievementNFTTest is Test {
         );
         
         // Special Event Achievement
-        achievementNFT.createAchievement(
+        achievementNft.createAchievement(
             SPECIAL_EVENT_ID,
             "Special Event",
             "Limited time achievement",
@@ -146,7 +146,7 @@ contract AchievementNFTTest is Test {
             AchievementNFT.AchievementRarity.EPIC
         );
         
-        achievementNFT.createAchievement(
+        achievementNft.createAchievement(
             newId,
             "New Achievement",
             "Test description",
@@ -159,7 +159,7 @@ contract AchievementNFTTest is Test {
         );
         
         // Verify achievement was created
-        (,string memory name,,,,uint256 xpReward, uint256 combatPowerReward, bool exists, bool active,) = achievementNFT.achievements(newId);
+        (,string memory name,,,,uint256 xpReward, uint256 combatPowerReward, bool exists, bool active,) = achievementNft.achievements(newId);
         assertEq(name, "New Achievement");
         assertEq(xpReward, 2000);
         assertEq(combatPowerReward, 200);
@@ -218,7 +218,7 @@ contract AchievementNFTTest is Test {
         uris[1] = "ipfs://2";
         uris[2] = "ipfs://3";
         
-        achievementNFT.batchCreateAchievements(
+        achievementNft.batchCreateAchievements(
             ids,
             names,
             descriptions,
@@ -232,7 +232,7 @@ contract AchievementNFTTest is Test {
         
         // Verify all achievements were created
         for (uint256 i = 0; i < ids.length; i++) {
-            (,string memory name,,,,,,,bool exists,) = achievementNFT.achievements(ids[i]);
+            (,string memory name,,,,,,,bool exists,) = achievementNft.achievements(ids[i]);
             assertEq(name, names[i]);
             assertTrue(exists);
         }
@@ -242,14 +242,14 @@ contract AchievementNFTTest is Test {
     
     // Test: Get achievements by category
     function testGetAchievementsByCategory() public view {
-        string[] memory tradingAchievements = achievementNFT.getAchievementsByCategory(
+        string[] memory tradingAchievements = achievementNft.getAchievementsByCategory(
             AchievementNFT.AchievementCategory.TRADING
         );
         
         assertEq(tradingAchievements.length, 1);
         assertEq(tradingAchievements[0], FIRST_TRADE_ID);
         
-        string[] memory battleAchievements = achievementNFT.getAchievementsByCategory(
+        string[] memory battleAchievements = achievementNft.getAchievementsByCategory(
             AchievementNFT.AchievementCategory.BATTLE
         );
         
@@ -261,7 +261,7 @@ contract AchievementNFTTest is Test {
     function testGetAllAchievements() public view {
         (string[] memory ids, string[] memory names, uint8[] memory categories, 
          uint8[] memory rarities, bool[] memory actives, uint256 total) = 
-            achievementNFT.getAllAchievements(0, 3);
+            achievementNft.getAllAchievements(0, 3);
         
         assertEq(ids.length, 3);
         assertEq(total, 5); // We created 5 sample achievements
@@ -272,7 +272,7 @@ contract AchievementNFTTest is Test {
         assertTrue(actives[0]);
         
         // Test pagination
-        (string[] memory ids2,,,,,) = achievementNFT.getAllAchievements(3, 3);
+        (string[] memory ids2,,,,,) = achievementNft.getAllAchievements(3, 3);
         assertEq(ids2.length, 2); // Only 2 achievements left
     }
     
@@ -280,16 +280,16 @@ contract AchievementNFTTest is Test {
     function testMintAchievement() public {
         vm.startPrank(minter);
         
-        uint256 tokenId = achievementNFT.mintAchievement(user1, FIRST_TRADE_ID);
+        uint256 tokenId = achievementNft.mintAchievement(user1, FIRST_TRADE_ID);
         
         assertEq(tokenId, 1);
-        assertEq(achievementNFT.ownerOf(tokenId), user1);
-        assertTrue(achievementNFT.hasAchievement(user1, FIRST_TRADE_ID));
-        assertEq(achievementNFT.getUserAchievementToken(user1, FIRST_TRADE_ID), tokenId);
+        assertEq(achievementNft.ownerOf(tokenId), user1);
+        assertTrue(achievementNft.hasAchievement(user1, FIRST_TRADE_ID));
+        assertEq(achievementNft.getUserAchievementToken(user1, FIRST_TRADE_ID), tokenId);
         
         // Check rewards were granted
-        assertEq(achievementNFT.userTotalXP(user1), 100);
-        assertEq(achievementNFT.userTotalCombatPower(user1), 10);
+        assertEq(achievementNft.userTotalXp(user1), 100);
+        assertEq(achievementNft.userTotalCombatPower(user1), 10);
         
         vm.stopPrank();
     }
@@ -298,10 +298,10 @@ contract AchievementNFTTest is Test {
     function testCannotMintSameAchievementTwice() public {
         vm.startPrank(minter);
         
-        achievementNFT.mintAchievement(user1, FIRST_TRADE_ID);
+        achievementNft.mintAchievement(user1, FIRST_TRADE_ID);
         
-        vm.expectRevert("User already has this achievement");
-        achievementNFT.mintAchievement(user1, FIRST_TRADE_ID);
+        vm.expectRevert(abi.encodeWithSelector(AchievementNFT.UserAlreadyHasAchievement.selector, user1, FIRST_TRADE_ID));
+        achievementNft.mintAchievement(user1, FIRST_TRADE_ID);
         
         vm.stopPrank();
     }
@@ -315,18 +315,18 @@ contract AchievementNFTTest is Test {
         achievementIds[1] = BATTLE_WIN_ID;
         achievementIds[2] = SPECIAL_EVENT_ID;
         
-        uint256[] memory tokenIds = achievementNFT.batchMintAchievements(user1, achievementIds);
+        uint256[] memory tokenIds = achievementNft.batchMintAchievements(user1, achievementIds);
         
         assertEq(tokenIds.length, 3);
-        assertEq(achievementNFT.ownerOf(tokenIds[0]), user1);
-        assertEq(achievementNFT.ownerOf(tokenIds[1]), user1);
-        assertEq(achievementNFT.ownerOf(tokenIds[2]), user1);
+        assertEq(achievementNft.ownerOf(tokenIds[0]), user1);
+        assertEq(achievementNft.ownerOf(tokenIds[1]), user1);
+        assertEq(achievementNft.ownerOf(tokenIds[2]), user1);
         
         // Check total rewards
-        uint256 expectedXP = 100 + 150 + 5000;
-        uint256 expectedCP = 10 + 20 + 500;
-        assertEq(achievementNFT.userTotalXP(user1), expectedXP);
-        assertEq(achievementNFT.userTotalCombatPower(user1), expectedCP);
+        uint256 expectedXp = 100 + 150 + 5000;
+        uint256 expectedCp = 10 + 20 + 500;
+        assertEq(achievementNft.userTotalXp(user1), expectedXp);
+        assertEq(achievementNft.userTotalCombatPower(user1), expectedCp);
         
         vm.stopPrank();
     }
@@ -338,9 +338,9 @@ contract AchievementNFTTest is Test {
         vm.expectEmit(true, true, false, true);
         emit AchievementProgressUpdated(user1, VOLUME_10ETH_ID, 5, 10);
         
-        achievementNFT.updateUserProgress(user1, VOLUME_10ETH_ID, 5);
+        achievementNft.updateUserProgress(user1, VOLUME_10ETH_ID, 5);
         
-        assertEq(achievementNFT.userProgress(user1, VOLUME_10ETH_ID), 5);
+        assertEq(achievementNft.userProgress(user1, VOLUME_10ETH_ID), 5);
         
         vm.stopPrank();
     }
@@ -349,11 +349,11 @@ contract AchievementNFTTest is Test {
     function testIncrementUserProgress() public {
         vm.startPrank(minter);
         
-        achievementNFT.incrementUserProgress(user1, COMMUNITY_HELPER_ID, 2);
-        assertEq(achievementNFT.userProgress(user1, COMMUNITY_HELPER_ID), 2);
+        achievementNft.incrementUserProgress(user1, COMMUNITY_HELPER_ID, 2);
+        assertEq(achievementNft.userProgress(user1, COMMUNITY_HELPER_ID), 2);
         
-        achievementNFT.incrementUserProgress(user1, COMMUNITY_HELPER_ID, 1);
-        assertEq(achievementNFT.userProgress(user1, COMMUNITY_HELPER_ID), 3);
+        achievementNft.incrementUserProgress(user1, COMMUNITY_HELPER_ID, 1);
+        assertEq(achievementNft.userProgress(user1, COMMUNITY_HELPER_ID), 3);
         
         vm.stopPrank();
     }
@@ -363,12 +363,12 @@ contract AchievementNFTTest is Test {
         vm.startPrank(minter);
         
         // Update progress to just below requirement
-        achievementNFT.updateUserProgress(user1, VOLUME_10ETH_ID, 9);
-        assertFalse(achievementNFT.hasAchievement(user1, VOLUME_10ETH_ID));
+        achievementNft.updateUserProgress(user1, VOLUME_10ETH_ID, 9);
+        assertFalse(achievementNft.hasAchievement(user1, VOLUME_10ETH_ID));
         
         // Update to meet requirement - should auto-mint
-        achievementNFT.updateUserProgress(user1, VOLUME_10ETH_ID, 10);
-        assertTrue(achievementNFT.hasAchievement(user1, VOLUME_10ETH_ID));
+        achievementNft.updateUserProgress(user1, VOLUME_10ETH_ID, 10);
+        assertTrue(achievementNft.hasAchievement(user1, VOLUME_10ETH_ID));
         
         vm.stopPrank();
     }
@@ -377,10 +377,10 @@ contract AchievementNFTTest is Test {
     function testGetUserAchievements() public {
         vm.startPrank(minter);
         
-        achievementNFT.mintAchievement(user1, FIRST_TRADE_ID);
-        achievementNFT.mintAchievement(user1, BATTLE_WIN_ID);
+        achievementNft.mintAchievement(user1, FIRST_TRADE_ID);
+        achievementNft.mintAchievement(user1, BATTLE_WIN_ID);
         
-        uint256[] memory userTokens = achievementNFT.getUserAchievements(user1);
+        uint256[] memory userTokens = achievementNft.getUserAchievements(user1);
         assertEq(userTokens.length, 2);
         
         vm.stopPrank();
@@ -390,19 +390,19 @@ contract AchievementNFTTest is Test {
     function testGetUserAchievementStats() public {
         vm.startPrank(minter);
         
-        achievementNFT.mintAchievement(user1, FIRST_TRADE_ID);
-        achievementNFT.mintAchievement(user1, BATTLE_WIN_ID);
+        achievementNft.mintAchievement(user1, FIRST_TRADE_ID);
+        achievementNft.mintAchievement(user1, BATTLE_WIN_ID);
         
         (
             uint256 totalAchievements,
-            uint256 totalXP,
-            uint256 totalCP,
+            uint256 totalXp,
+            uint256 totalCp,
             uint256 completionRate
-        ) = achievementNFT.getUserAchievementStats(user1);
+        ) = achievementNft.getUserAchievementStats(user1);
         
         assertEq(totalAchievements, 2);
-        assertEq(totalXP, 250); // 100 + 150
-        assertEq(totalCP, 30);  // 10 + 20
+        assertEq(totalXp, 250); // 100 + 150
+        assertEq(totalCp, 30);  // 10 + 20
         assertEq(completionRate, 40); // 2 out of 5 = 40%
         
         vm.stopPrank();
@@ -412,15 +412,15 @@ contract AchievementNFTTest is Test {
     function testToggleAchievementActive() public {
         vm.startPrank(owner);
         
-        (,,,,,,,,bool active1,) = achievementNFT.achievements(FIRST_TRADE_ID);
+        (,,,,,,,,bool active1,) = achievementNft.achievements(FIRST_TRADE_ID);
         assertTrue(active1);
         
-        achievementNFT.toggleAchievementActive(FIRST_TRADE_ID);
-        (,,,,,,,,bool active2,) = achievementNFT.achievements(FIRST_TRADE_ID);
+        achievementNft.toggleAchievementActive(FIRST_TRADE_ID);
+        (,,,,,,,,bool active2,) = achievementNft.achievements(FIRST_TRADE_ID);
         assertFalse(active2);
         
-        achievementNFT.toggleAchievementActive(FIRST_TRADE_ID);
-        (,,,,,,,,bool active3,) = achievementNFT.achievements(FIRST_TRADE_ID);
+        achievementNft.toggleAchievementActive(FIRST_TRADE_ID);
+        (,,,,,,,,bool active3,) = achievementNft.achievements(FIRST_TRADE_ID);
         assertTrue(active3);
         
         vm.stopPrank();
@@ -429,12 +429,12 @@ contract AchievementNFTTest is Test {
     // Test: Cannot mint inactive achievement
     function testCannotMintInactiveAchievement() public {
         vm.startPrank(owner);
-        achievementNFT.toggleAchievementActive(FIRST_TRADE_ID);
+        achievementNft.toggleAchievementActive(FIRST_TRADE_ID);
         vm.stopPrank();
         
         vm.startPrank(minter);
-        vm.expectRevert("Achievement is not active");
-        achievementNFT.mintAchievement(user1, FIRST_TRADE_ID);
+        vm.expectRevert(abi.encodeWithSelector(AchievementNFT.AchievementNotActive.selector, FIRST_TRADE_ID));
+        achievementNft.mintAchievement(user1, FIRST_TRADE_ID);
         vm.stopPrank();
     }
     
@@ -442,9 +442,9 @@ contract AchievementNFTTest is Test {
     function testUpdateAchievementMetadata() public {
         vm.startPrank(owner);
         
-        achievementNFT.updateAchievementMetadata(FIRST_TRADE_ID, UPDATED_METADATA_URI);
-        (,,,,,,,,,string memory metadataURI) = achievementNFT.achievements(FIRST_TRADE_ID);
-        assertEq(metadataURI, UPDATED_METADATA_URI);
+        achievementNft.updateAchievementMetadata(FIRST_TRADE_ID, UPDATED_METADATA_URI);
+        (,,,,,,,,,string memory metadataUri) = achievementNft.achievements(FIRST_TRADE_ID);
+        assertEq(metadataUri, UPDATED_METADATA_URI);
         
         vm.stopPrank();
     }
@@ -455,11 +455,11 @@ contract AchievementNFTTest is Test {
         
         vm.startPrank(owner);
         
-        achievementNFT.grantMinterRole(newMinter);
-        assertTrue(achievementNFT.hasRole(achievementNFT.MINTER_ROLE(), newMinter));
+        achievementNft.grantMinterRole(newMinter);
+        assertTrue(achievementNft.hasRole(achievementNft.MINTER_ROLE(), newMinter));
         
-        achievementNFT.revokeMinterRole(newMinter);
-        assertFalse(achievementNFT.hasRole(achievementNFT.MINTER_ROLE(), newMinter));
+        achievementNft.revokeMinterRole(newMinter);
+        assertFalse(achievementNft.hasRole(achievementNft.MINTER_ROLE(), newMinter));
         
         vm.stopPrank();
     }
@@ -467,21 +467,21 @@ contract AchievementNFTTest is Test {
     // Test: Pause and unpause
     function testPauseUnpause() public {
         vm.startPrank(owner);
-        achievementNFT.pause();
+        achievementNft.pause();
         vm.stopPrank();
         
         vm.startPrank(minter);
         vm.expectRevert();
-        achievementNFT.mintAchievement(user1, FIRST_TRADE_ID);
+        achievementNft.mintAchievement(user1, FIRST_TRADE_ID);
         vm.stopPrank();
         
         vm.startPrank(owner);
-        achievementNFT.unpause();
+        achievementNft.unpause();
         vm.stopPrank();
         
         vm.startPrank(minter);
-        uint256 tokenId = achievementNFT.mintAchievement(user1, FIRST_TRADE_ID);
-        assertEq(achievementNFT.ownerOf(tokenId), user1);
+        uint256 tokenId = achievementNft.mintAchievement(user1, FIRST_TRADE_ID);
+        assertEq(achievementNft.ownerOf(tokenId), user1);
         vm.stopPrank();
     }
     
@@ -489,15 +489,15 @@ contract AchievementNFTTest is Test {
     function testGetAchievementStats() public {
         vm.startPrank(minter);
         
-        achievementNFT.mintAchievement(user1, FIRST_TRADE_ID);
-        achievementNFT.mintAchievement(user2, FIRST_TRADE_ID);
-        achievementNFT.mintAchievement(user1, BATTLE_WIN_ID);
+        achievementNft.mintAchievement(user1, FIRST_TRADE_ID);
+        achievementNft.mintAchievement(user2, FIRST_TRADE_ID);
+        achievementNft.mintAchievement(user1, BATTLE_WIN_ID);
         
         (
             uint256 totalMinted,
             uint256 uniqueHolders,
             uint256 totalAchievementTypes
-        ) = achievementNFT.getAchievementStats();
+        ) = achievementNft.getAchievementStats();
         
         assertEq(totalMinted, 3);
         assertEq(uniqueHolders, 2); // user1 and user2
@@ -509,10 +509,10 @@ contract AchievementNFTTest is Test {
     // Test: Token URI
     function testTokenURI() public {
         vm.startPrank(minter);
-        uint256 tokenId = achievementNFT.mintAchievement(user1, FIRST_TRADE_ID);
+        uint256 tokenId = achievementNft.mintAchievement(user1, FIRST_TRADE_ID);
         vm.stopPrank();
         
-        string memory uri = achievementNFT.tokenURI(tokenId);
+        string memory uri = achievementNft.tokenURI(tokenId);
         assertEq(uri, TEST_METADATA_URI);
     }
     
@@ -521,7 +521,7 @@ contract AchievementNFTTest is Test {
         vm.startPrank(unauthorizedUser);
         
         vm.expectRevert();
-        achievementNFT.createAchievement(
+        achievementNft.createAchievement(
             "UNAUTHORIZED",
             "Unauthorized Achievement",
             "Should fail",
@@ -541,7 +541,7 @@ contract AchievementNFTTest is Test {
         vm.startPrank(unauthorizedUser);
         
         vm.expectRevert();
-        achievementNFT.mintAchievement(user1, FIRST_TRADE_ID);
+        achievementNft.mintAchievement(user1, FIRST_TRADE_ID);
         
         vm.stopPrank();
     }

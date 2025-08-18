@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 contract ReputationRegistry is ERC721URIStorage, Ownable {
     uint256 private _tokenIdCounter;
@@ -74,7 +75,7 @@ contract ReputationRegistry is ERC721URIStorage, Ownable {
             averageScore >= MIN_SCORE_FOR_NFT &&
             reputationTokens[user] == 0
         ) {
-            _mintReputationNFT(user);
+            _mintReputationNft(user);
         }
     }
     
@@ -131,19 +132,19 @@ contract ReputationRegistry is ERC721URIStorage, Ownable {
         emit TrustScoreUpdated(user, trust.score, trust.level);
     }
     
-    function _mintReputationNFT(address user) private {
+    function _mintReputationNft(address user) private {
         uint256 tokenId = _tokenIdCounter;
         _tokenIdCounter++;
         
         _safeMint(user, tokenId);
-        _setTokenURI(tokenId, _generateTokenURI(user));
+        _setTokenURI(tokenId, _generateTokenUri(user));
         
         reputationTokens[user] = tokenId;
         
         emit ReputationNFTMinted(user, tokenId);
     }
     
-    function _generateTokenURI(address user) private view returns (string memory) {
+    function _generateTokenUri(address user) private view returns (string memory) {
         ReputationScore storage userRep = reputationScores[user];
         uint256 averageScore = userRep.totalScore / userRep.reviewCount;
         
@@ -194,7 +195,7 @@ contract ReputationRegistry is ERC721URIStorage, Ownable {
         return skillEndorsements[user];
     }
     
-    function hasReputationNFT(address user) external view returns (bool) {
+    function hasReputationNft(address user) external view returns (bool) {
         return reputationTokens[user] > 0;
     }
     

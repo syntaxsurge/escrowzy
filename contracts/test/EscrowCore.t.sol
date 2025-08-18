@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import "forge-std/Test.sol";
-import "../src/EscrowCore.sol";
+import {Test, console} from "forge-std/Test.sol";
+import {EscrowCore} from "../src/EscrowCore.sol";
 
 contract EscrowCoreTest is Test {
     EscrowCore public escrowCore;

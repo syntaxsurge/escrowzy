@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import "forge-std/Test.sol";
-import "../src/SubscriptionManager.sol";
+import {Test, console} from "forge-std/Test.sol";
+import {SubscriptionManager} from "../src/SubscriptionManager.sol";
 
 contract SubscriptionManagerTest is Test {
     SubscriptionManager public subscriptionManager;
@@ -63,7 +63,7 @@ contract SubscriptionManagerTest is Test {
         vm.deal(user, 1 ether);
         vm.prank(user);
         
-        vm.expectRevert("Subscription: incorrect payment");
+        vm.expectRevert(abi.encodeWithSelector(SubscriptionManager.IncorrectPaymentAmount.selector, proPriceWei - 1, proPriceWei));
         subscriptionManager.paySubscription{value: proPriceWei - 1}(user, 1);
     }
 

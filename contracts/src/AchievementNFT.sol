@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import {ERC721, IERC721, IERC721Metadata, IERC165} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721Enumerable, IERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {AccessControl, IAccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Pausable, AccessControl {
     // Custom errors for better gas efficiency and debugging
@@ -51,13 +51,13 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
         uint256 combatPowerReward;
         bool exists;
         bool active;
-        string metadataURI;
+        string metadataUri;
     }
     
     mapping(string => Achievement) public achievements;
     mapping(address => mapping(string => uint256)) public userAchievements;
     mapping(uint256 => string) public tokenAchievementId;
-    mapping(address => uint256) public userTotalXP;
+    mapping(address => uint256) public userTotalXp;
     mapping(address => uint256) public userTotalCombatPower;
     mapping(address => uint256[]) private userTokens;
     
@@ -113,7 +113,7 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
         uint256 xpReward,
         uint256 combatPowerReward,
         uint256 requirement,
-        string memory metadataURI
+        string memory metadataUri
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (achievements[achievementId].exists) {
             revert AchievementAlreadyExists(achievementId);
@@ -135,7 +135,7 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
             combatPowerReward: combatPowerReward,
             exists: true,
             active: true,
-            metadataURI: metadataURI
+            metadataUri: metadataUri
         });
         
         if (requirement > 0) {
@@ -178,7 +178,7 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
         uint256 tokenId = _tokenIdCounter;
         
         _safeMint(user, tokenId);
-        _setTokenURI(tokenId, achievement.metadataURI);
+        _setTokenURI(tokenId, achievement.metadataUri);
         
         userAchievements[user][achievementId] = tokenId;
         tokenAchievementId[tokenId] = achievementId;
@@ -186,7 +186,7 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
         
         // Grant rewards
         if (achievement.xpReward > 0 || achievement.combatPowerReward > 0) {
-            userTotalXP[user] += achievement.xpReward;
+            userTotalXp[user] += achievement.xpReward;
             userTotalCombatPower[user] += achievement.combatPowerReward;
             emit RewardsGranted(user, achievement.xpReward, achievement.combatPowerReward);
         }
@@ -438,12 +438,12 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
     
     function updateAchievementMetadata(
         string memory achievementId,
-        string memory newMetadataURI
+        string memory newMetadataUri
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (!achievements[achievementId].exists) {
             revert AchievementNotFound(achievementId);
         }
-        achievements[achievementId].metadataURI = newMetadataURI;
+        achievements[achievementId].metadataUri = newMetadataUri;
     }
     
     function toggleAchievementActive(
@@ -465,7 +465,7 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
      * @param xpRewards Array of XP rewards
      * @param combatPowerRewards Array of combat power rewards
      * @param requirements Array of achievement requirements
-     * @param metadataURIs Array of metadata URIs
+     * @param metadataUris Array of metadata URIs
      */
     function batchCreateAchievements(
         string[] memory achievementIds,
@@ -476,7 +476,7 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
         uint256[] memory xpRewards,
         uint256[] memory combatPowerRewards,
         uint256[] memory requirements,
-        string[] memory metadataURIs
+        string[] memory metadataUris
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 expectedLength = achievementIds.length;
         if (names.length != expectedLength ||
@@ -486,7 +486,7 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
             xpRewards.length != expectedLength ||
             combatPowerRewards.length != expectedLength ||
             requirements.length != expectedLength ||
-            metadataURIs.length != expectedLength) {
+            metadataUris.length != expectedLength) {
             revert InvalidArrayLengths(expectedLength, names.length);
         }
         
@@ -501,7 +501,7 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
                 xpRewards[i],
                 combatPowerRewards[i],
                 requirements[i],
-                metadataURIs[i]
+                metadataUris[i]
             );
         }
     }
@@ -518,7 +518,7 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
         uint256 xpReward,
         uint256 combatPowerReward,
         uint256 requirement,
-        string memory metadataURI
+        string memory metadataUri
     ) internal {
         if (!achievements[achievementId].exists && bytes(achievementId).length > 0) {
             achievements[achievementId] = Achievement({
@@ -531,7 +531,7 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
                 combatPowerReward: combatPowerReward,
                 exists: true,
                 active: true,
-                metadataURI: metadataURI
+                metadataUri: metadataUri
             });
             
             if (requirement > 0) {
@@ -550,18 +550,18 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
      * @dev Get user's achievement statistics
      * @param user Address of the user
      * @return totalAchievements Total achievements earned
-     * @return totalXP Total XP earned
+     * @return totalXp Total XP earned
      * @return totalCombatPower Total combat power earned
      * @return completionRate Percentage of achievements completed
      */
     function getUserAchievementStats(address user) external view returns (
         uint256 totalAchievements,
-        uint256 totalXP,
+        uint256 totalXp,
         uint256 totalCombatPower,
         uint256 completionRate
     ) {
         totalAchievements = userTokens[user].length;
-        totalXP = userTotalXP[user];
+        totalXp = userTotalXp[user];
         totalCombatPower = userTotalCombatPower[user];
         
         if (totalAchievementTypes > 0) {

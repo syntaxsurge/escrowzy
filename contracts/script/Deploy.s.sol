@@ -3,12 +3,12 @@ pragma solidity ^0.8.25;
 
 // Universal deployment script for all chains
 
-import "forge-std/Script.sol";
-import "../src/SubscriptionManager.sol";
-import "../src/EscrowCore.sol";
-import "../src/AchievementNFT.sol";
-import "../src/MilestoneEscrow.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {Script, console} from "forge-std/Script.sol";
+import {SubscriptionManager} from "../src/SubscriptionManager.sol";
+import {EscrowCore} from "../src/EscrowCore.sol";
+import {AchievementNFT} from "../src/AchievementNFT.sol";
+import {MilestoneEscrow} from "../src/MilestoneEscrow.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Prices} from "../src/generated/Prices.sol";
 
 contract DeployScript is Script {
@@ -68,8 +68,8 @@ contract DeployScript is Script {
         
         // Deploy AchievementNFT
         console.log("Deploying AchievementNFT...");
-        AchievementNFT achievementNFT = new AchievementNFT();
-        console.log("AchievementNFT deployed at:", address(achievementNFT));
+        AchievementNFT achievementNft = new AchievementNFT();
+        console.log("AchievementNFT deployed at:", address(achievementNft));
         
         // Stop and restart broadcast to link contracts
         vm.stopBroadcast();
@@ -115,7 +115,7 @@ contract DeployScript is Script {
         console.log("SubscriptionManager:", address(subscriptionManager));
         console.log("EscrowCore:", address(escrowCore));
         console.log("  -> Linked to SubscriptionManager");
-        console.log("AchievementNFT:", address(achievementNFT));
+        console.log("AchievementNFT:", address(achievementNft));
         console.log("MilestoneEscrow Implementation:", address(milestoneEscrowImplementation));
         console.log("MilestoneEscrow Proxy:", address(milestoneEscrowProxy));
         console.log("  -> Upgradeable with UUPS pattern");
@@ -131,7 +131,7 @@ contract DeployScript is Script {
             '{\n',
             '  "subscriptionManager": "', vm.toString(address(subscriptionManager)), '",\n',
             '  "escrowCore": "', vm.toString(address(escrowCore)), '",\n',
-            '  "achievementNFT": "', vm.toString(address(achievementNFT)), '",\n',
+            '  "achievementNFT": "', vm.toString(address(achievementNft)), '",\n',
             '  "milestoneEscrowImplementation": "', vm.toString(address(milestoneEscrowImplementation)), '",\n',
             '  "milestoneEscrowProxy": "', vm.toString(address(milestoneEscrowProxy)), '",\n',
             '  "chainId": ', vm.toString(block.chainid), ',\n',
@@ -150,14 +150,14 @@ contract DeployScript is Script {
         console.log("Contract Addresses:");
         console.log("  SubscriptionManager:", address(subscriptionManager));
         console.log("  EscrowCore:", address(escrowCore));
-        console.log("  AchievementNFT:", address(achievementNFT));
+        console.log("  AchievementNFT:", address(achievementNft));
         console.log("  MilestoneEscrow Proxy:", address(milestoneEscrowProxy));
         console.log("");
         console.log("Update blockchains.yaml with:");
         console.log("contractAddresses:");
         console.log("  subscriptionManager:", vm.toString(address(subscriptionManager)));
         console.log("  escrowCore:", vm.toString(address(escrowCore)));
-        console.log("  achievementNFT:", vm.toString(address(achievementNFT)));
+        console.log("  achievementNFT:", vm.toString(address(achievementNft)));
         console.log("  milestoneEscrow:", vm.toString(address(milestoneEscrowProxy)));
     }
 }

@@ -512,7 +512,7 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
         }));
 
         // Transfer tokens from user to contract
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        require(IERC20(token).transferFrom(msg.sender, address(this), amount), "Token transfer failed");
 
         emit SubscriptionPaid(team, planKey, newExpiry);
     }

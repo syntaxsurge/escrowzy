@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import "forge-std/Test.sol";
-import "../src/MilestoneEscrow.sol";
-import "../src/EscrowCore.sol";
-import "../src/SubscriptionManager.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {Test, console} from "forge-std/Test.sol";
+import {MilestoneEscrow} from "../src/MilestoneEscrow.sol";
+import {EscrowCore} from "../src/EscrowCore.sol";
+import {SubscriptionManager} from "../src/SubscriptionManager.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract MilestoneEscrowTest is Test {
     MilestoneEscrow public milestoneEscrow;
