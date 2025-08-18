@@ -15,8 +15,6 @@ import type {
   OKXMarketData,
   OKXPriceResult,
   OKXTokenInfo,
-  OKXQuoteResponse,
-  SwapTransaction,
   TokenFilter,
   OKXRequestConfig
 } from '@/types/okx-dex'
@@ -279,24 +277,6 @@ export class OKXDexClient extends BaseAPIClass {
     } catch (error) {
       console.error('Failed to get popular tokens:', error)
       return []
-    }
-  }
-
-  /**
-   * Build swap transaction from quote
-   */
-  public async buildSwapTransaction(
-    quote: OKXQuoteResponse,
-    _userAddress: string
-  ): Promise<SwapTransaction | null> {
-    try {
-      // This is a placeholder implementation
-      // Would need to fetch token info and make actual swap endpoint call
-      console.log('Building swap transaction from quote:', quote)
-      return null
-    } catch (error) {
-      console.error('Failed to build swap transaction:', error)
-      return null
     }
   }
 

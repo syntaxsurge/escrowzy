@@ -229,24 +229,42 @@ export async function syncReputationToBlockchain(
   averageRating: number,
   reviewCount: number,
   isFreelancer: boolean
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; message: string; txHash?: string }> {
   try {
-    // This would typically:
-    // 1. Get user's wallet address
-    // 2. Get the appropriate chain and contract address
-    // 3. Call updateOnchainReputation
-    // 4. Store the transaction hash in the database
+    // Since this is a client-side service, we'll use the API endpoint
+    const response = await fetch('/api/reputation/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId,
+        averageRating,
+        reviewCount,
+        isFreelancer
+      })
+    })
 
-    // For now, returning a placeholder
+    if (!response.ok) {
+      const error = await response.json()
+      return {
+        success: false,
+        message: error.message || 'Failed to sync reputation'
+      }
+    }
+
+    const data = await response.json()
     return {
       success: true,
-      message: 'Reputation sync initiated'
+      message: 'Reputation successfully synced to blockchain',
+      txHash: data.txHash
     }
   } catch (error) {
     console.error('Error syncing reputation to blockchain:', error)
     return {
       success: false,
-      message: 'Failed to sync reputation'
+      message:
+        error instanceof Error ? error.message : 'Failed to sync reputation'
     }
   }
 }

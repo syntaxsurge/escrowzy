@@ -134,64 +134,8 @@ export function WorkspaceActivity({ jobId, job }: WorkspaceActivityProps) {
     return true
   })
 
-  // Generate mock activities if none exist
-  const mockActivities: ActivityItem[] =
-    filteredActivities.length > 0
-      ? filteredActivities
-      : [
-          {
-            id: '1',
-            type: 'milestone_created',
-            title: 'Project kickoff milestone created',
-            description: 'Initial project setup and requirements gathering',
-            user: job.client || { id: 1, name: 'Client', avatarUrl: null },
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
-          },
-          {
-            id: '2',
-            type: 'member_joined',
-            title: 'Freelancer joined the workspace',
-            description: null,
-            user: job.freelancer || {
-              id: 2,
-              name: 'Freelancer',
-              avatarUrl: null
-            },
-            createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
-          },
-          {
-            id: '3',
-            type: 'task_created',
-            title: 'Created task: Design wireframes',
-            description: 'Create initial wireframes for the application',
-            user: job.freelancer || {
-              id: 2,
-              name: 'Freelancer',
-              avatarUrl: null
-            },
-            createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000)
-          },
-          {
-            id: '4',
-            type: 'file_uploaded',
-            title: 'Uploaded project-requirements.pdf',
-            description: 'Initial project requirements document',
-            user: job.client || { id: 1, name: 'Client', avatarUrl: null },
-            createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000)
-          },
-          {
-            id: '5',
-            type: 'time_tracked',
-            title: 'Tracked 2 hours',
-            description: 'Working on wireframe designs',
-            user: job.freelancer || {
-              id: 2,
-              name: 'Freelancer',
-              avatarUrl: null
-            },
-            createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
-          }
-        ]
+  // Use actual activities from API
+  const displayActivities: ActivityItem[] = filteredActivities
 
   return (
     <div className='space-y-6'>
@@ -230,7 +174,7 @@ export function WorkspaceActivity({ jobId, job }: WorkspaceActivityProps) {
 
               {/* Activity items */}
               <div className='space-y-6'>
-                {mockActivities.map((activity, index) => (
+                {displayActivities.map((activity, index) => (
                   <div key={activity.id} className='relative flex gap-4'>
                     {/* Timeline dot */}
                     <div
@@ -305,7 +249,7 @@ export function WorkspaceActivity({ jobId, job }: WorkspaceActivityProps) {
                   </div>
                 ))}
 
-                {mockActivities.length === 0 && (
+                {displayActivities.length === 0 && (
                   <div className='flex flex-col items-center justify-center py-12 text-center'>
                     <Clock className='text-muted-foreground h-12 w-12' />
                     <p className='mt-2 text-sm font-medium'>No activity yet</p>

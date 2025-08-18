@@ -536,36 +536,29 @@ export async function mintAchievementNFT(
   progress: number = 100
 ): Promise<{ tokenId?: number; txHash?: string }> {
   try {
-    // Use database-backed achievement tracking instead of blockchain
-    // This is production-ready and doesn't require actual NFT minting
-    const { recordAchievementMint } = await import(
-      '@/lib/db/queries/achievements'
-    )
-    const { findUserByWalletAddress } = await import('@/lib/db/queries/users')
+    // Use API endpoint for database-backed achievement tracking
+    const response = await fetch('/api/achievements/mint', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to,
+        achievementId,
+        progress
+      })
+    })
 
-    // Find user by wallet address
-    const user = await findUserByWalletAddress(to)
-    if (!user) {
-      console.error('User not found for wallet:', to)
+    if (!response.ok) {
+      console.error('Failed to mint achievement:', response.statusText)
       return {}
     }
 
-    // Generate a unique token ID based on timestamp and user ID
-    const tokenId = Math.floor(Date.now() / 1000) + user.id
-
-    // Generate a deterministic transaction hash for database tracking
-    const txHash = `0x${Buffer.from(`${achievementId}-${user.id}-${Date.now()}`).toString('hex').padEnd(64, '0').slice(0, 64)}`
-
-    // Record the achievement mint in database
-    await recordAchievementMint(user.id, String(achievementId), tokenId, txHash)
-
-    console.log(
-      `Achievement ${achievementId} minted for user ${user.id} with progress ${progress}`
-    )
+    const data = await response.json()
 
     return {
-      tokenId,
-      txHash
+      tokenId: data.tokenId,
+      txHash: data.txHash
     }
   } catch (error) {
     console.error('Error minting achievement:', error)
