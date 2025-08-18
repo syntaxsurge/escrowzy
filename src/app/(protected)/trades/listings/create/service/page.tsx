@@ -7,17 +7,23 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import {
   ArrowLeft,
   Briefcase,
+  ChevronRight,
   Clock,
   DollarSign,
   Plus,
   X,
   Users,
   Award,
-  AlertCircle
+  AlertCircle,
+  Target,
+  Sparkles,
+  Shield
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import { mutate } from 'swr'
 import { z } from 'zod'
 
+import { GamifiedHeader } from '@/components/blocks/trading'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -43,8 +49,10 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
 import { useToast } from '@/hooks/use-toast'
+import { handleFormSuccess } from '@/lib/utils/form'
 
 // Job posting schema
 const createJobSchema = z.object({
@@ -198,16 +206,18 @@ export default function CreateServiceListingPage() {
     try {
       // For now, we'll just show a success message
       // In production, this would create the job posting
-      toast({
-        title: 'Success',
-        description:
-          postingType === 'job'
-            ? 'Your job has been posted successfully!'
-            : 'Your service offer has been created!'
-      })
+      handleFormSuccess(
+        toast,
+        postingType === 'job'
+          ? 'Your job has been posted successfully!'
+          : 'Your service offer has been created!'
+      )
+
+      // Invalidate the listings cache to ensure new listing shows
+      await mutate(apiEndpoints.listings.user)
 
       // Redirect to listings page
-      router.push(appRoutes.trades.listings.base)
+      router.push(appRoutes.trades.myListings)
     } catch (error) {
       console.error('Error submitting job:', error)
       toast({
@@ -221,34 +231,98 @@ export default function CreateServiceListingPage() {
   }
 
   return (
-    <div className='mx-auto max-w-4xl space-y-6'>
+    <div className='container mx-auto max-w-4xl space-y-6 p-4'>
       {/* Header */}
-      <div className='flex items-center gap-4'>
-        <Button variant='ghost' size='icon' onClick={() => router.back()}>
-          <ArrowLeft className='h-5 w-5' />
-        </Button>
-        <div className='flex-1'>
-          <h1 className='text-2xl font-bold'>Post a Service Listing</h1>
-          <p className='text-muted-foreground'>
-            Find talented freelancers or offer your services
-          </p>
-        </div>
-        <Briefcase className='h-8 w-8 text-green-500' />
+      <GamifiedHeader
+        title='CREATE SERVICE LISTING'
+        subtitle='Find talented freelancers or offer your professional services'
+        icon={<Briefcase className='h-8 w-8 text-white' />}
+        actions={
+          <Button
+            variant='outline'
+            onClick={() => router.push(appRoutes.trades.listings.create)}
+          >
+            <ArrowLeft className='mr-2 h-4 w-4' />
+            Back to Options
+          </Button>
+        }
+      />
+
+      {/* Tips Section */}
+      <div className='grid gap-4 md:grid-cols-3'>
+        <Card className='group relative overflow-hidden border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-pink-500/10'>
+          <CardContent className='p-4'>
+            <div className='flex items-center gap-3'>
+              <div className='from-primary rounded-lg bg-gradient-to-br to-purple-600 p-2'>
+                <Target className='h-5 w-5 text-white' />
+              </div>
+              <div>
+                <p className='text-xs font-bold text-purple-600 uppercase dark:text-purple-400'>
+                  Pro Tip
+                </p>
+                <p className='text-sm'>
+                  Clear requirements attract better proposals!
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className='group relative overflow-hidden border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-cyan-500/10'>
+          <CardContent className='p-4'>
+            <div className='flex items-center gap-3'>
+              <div className='rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 p-2'>
+                <Sparkles className='h-5 w-5 text-white' />
+              </div>
+              <div>
+                <p className='text-xs font-bold text-blue-600 uppercase dark:text-blue-400'>
+                  Achievement
+                </p>
+                <p className='text-sm'>
+                  Complete your first project for rewards!
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className='group relative overflow-hidden border-green-500/30 bg-gradient-to-br from-green-500/10 to-emerald-500/10'>
+          <CardContent className='p-4'>
+            <div className='flex items-center gap-3'>
+              <div className='rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-2'>
+                <Shield className='h-5 w-5 text-white' />
+              </div>
+              <div>
+                <p className='text-xs font-bold text-green-600 uppercase dark:text-green-400'>
+                  Secure
+                </p>
+                <p className='text-sm'>Milestone-based escrow protection!</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
-          {/* Posting Type */}
-          <Card>
-            <CardHeader>
-              <CardTitle>What would you like to do?</CardTitle>
-            </CardHeader>
-            <CardContent>
+      {/* Form Card */}
+      <Card className='relative overflow-hidden'>
+        <div className='absolute inset-0 bg-gradient-to-br from-green-500/5 via-emerald-500/5 to-teal-500/5' />
+
+        <CardHeader className='relative'>
+          <CardTitle className='bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-2xl font-black text-transparent'>
+            Service Configuration
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className='relative'>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+              {/* Posting Type */}
               <FormField
                 control={form.control}
                 name='postingType'
                 render={({ field }) => (
                   <FormItem>
+                    <FormLabel>What would you like to do?</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
@@ -295,164 +369,31 @@ export default function CreateServiceListingPage() {
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
 
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {postingType === 'job' ? 'Job Details' : 'Service Details'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='title'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={
-                          postingType === 'job'
-                            ? 'e.g., Build a responsive e-commerce website'
-                            : 'e.g., I will create a professional website for your business'
-                        }
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Make it clear and descriptive
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='categoryId'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Select a category' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {jobCategories.map(category => (
-                          <SelectItem key={category.id} value={category.id}>
-                            <span className='flex items-center gap-2'>
-                              <span>{category.icon}</span>
-                              <span>{category.name}</span>
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='description'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder={
-                          postingType === 'job'
-                            ? 'Describe what you need done, requirements, and deliverables...'
-                            : 'Describe what services you offer, your process, and what clients can expect...'
-                        }
-                        className='min-h-[150px]'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Minimum 50 characters. Be as detailed as possible.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Budget Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Budget & Timeline</CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='budgetType'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Budget Type</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='fixed'>
-                          <span className='flex items-center gap-2'>
-                            <DollarSign className='h-4 w-4' />
-                            Fixed Price
-                          </span>
-                        </SelectItem>
-                        <SelectItem value='hourly'>
-                          <span className='flex items-center gap-2'>
-                            <Clock className='h-4 w-4' />
-                            Hourly Rate
-                          </span>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className='grid grid-cols-2 gap-4'>
+              {/* Basic Information */}
+              <div className='space-y-4'>
+                <h3 className='text-lg font-semibold'>
+                  {postingType === 'job' ? 'Job Details' : 'Service Details'}
+                </h3>
                 <FormField
                   control={form.control}
-                  name='budgetMin'
+                  name='title'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>
-                        {budgetType === 'hourly'
-                          ? 'Min Hourly Rate'
-                          : 'Minimum Budget'}
-                      </FormLabel>
+                      <FormLabel>Title</FormLabel>
                       <FormControl>
-                        <div className='relative'>
-                          <span className='absolute top-1/2 left-3 -translate-y-1/2'>
-                            $
-                          </span>
-                          <Input
-                            type='number'
-                            placeholder='0'
-                            className='pl-8'
-                            {...field}
-                          />
-                        </div>
+                        <Input
+                          placeholder={
+                            postingType === 'job'
+                              ? 'e.g., Build a responsive e-commerce website'
+                              : 'e.g., I will create a professional website for your business'
+                          }
+                          {...field}
+                        />
                       </FormControl>
+                      <FormDescription>
+                        Make it clear and descriptive
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -460,325 +401,470 @@ export default function CreateServiceListingPage() {
 
                 <FormField
                   control={form.control}
-                  name='budgetMax'
+                  name='categoryId'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>
-                        {budgetType === 'hourly'
-                          ? 'Max Hourly Rate'
-                          : 'Maximum Budget'}
-                      </FormLabel>
+                      <FormLabel>Category</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select a category' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {jobCategories.map(category => (
+                            <SelectItem key={category.id} value={category.id}>
+                              <span className='flex items-center gap-2'>
+                                <span>{category.icon}</span>
+                                <span>{category.name}</span>
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='description'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <div className='relative'>
-                          <span className='absolute top-1/2 left-3 -translate-y-1/2'>
-                            $
-                          </span>
-                          <Input
-                            type='number'
-                            placeholder='0'
-                            className='pl-8'
-                            {...field}
-                          />
-                        </div>
+                        <Textarea
+                          placeholder={
+                            postingType === 'job'
+                              ? 'Describe what you need done, requirements, and deliverables...'
+                              : 'Describe what services you offer, your process, and what clients can expect...'
+                          }
+                          className='min-h-[150px]'
+                          {...field}
+                        />
                       </FormControl>
+                      <FormDescription>
+                        Minimum 50 characters. Be as detailed as possible.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name='projectDuration'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Project Duration</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+              {/* Budget & Timeline */}
+              <div className='space-y-4'>
+                <h3 className='text-lg font-semibold'>Budget & Timeline</h3>
+                <FormField
+                  control={form.control}
+                  name='budgetType'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Budget Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='fixed'>
+                            <span className='flex items-center gap-2'>
+                              <DollarSign className='h-4 w-4' />
+                              Fixed Price
+                            </span>
+                          </SelectItem>
+                          <SelectItem value='hourly'>
+                            <span className='flex items-center gap-2'>
+                              <Clock className='h-4 w-4' />
+                              Hourly Rate
+                            </span>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className='grid grid-cols-2 gap-4'>
+                  <FormField
+                    control={form.control}
+                    name='budgetMin'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {budgetType === 'hourly'
+                            ? 'Min Hourly Rate'
+                            : 'Minimum Budget'}
+                        </FormLabel>
+                        <FormControl>
+                          <div className='relative'>
+                            <span className='absolute top-1/2 left-3 -translate-y-1/2'>
+                              $
+                            </span>
+                            <Input
+                              type='number'
+                              placeholder='0'
+                              className='pl-8'
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='budgetMax'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {budgetType === 'hourly'
+                            ? 'Max Hourly Rate'
+                            : 'Maximum Budget'}
+                        </FormLabel>
+                        <FormControl>
+                          <div className='relative'>
+                            <span className='absolute top-1/2 left-3 -translate-y-1/2'>
+                              $
+                            </span>
+                            <Input
+                              type='number'
+                              placeholder='0'
+                              className='pl-8'
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name='projectDuration'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Project Duration</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select duration' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='less_than_week'>
+                            Less than a week
+                          </SelectItem>
+                          <SelectItem value='1_2_weeks'>1-2 weeks</SelectItem>
+                          <SelectItem value='2_4_weeks'>2-4 weeks</SelectItem>
+                          <SelectItem value='1_3_months'>1-3 months</SelectItem>
+                          <SelectItem value='3_6_months'>3-6 months</SelectItem>
+                          <SelectItem value='more_than_6_months'>
+                            More than 6 months
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='deadline'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Deadline (Optional)</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Select duration' />
-                        </SelectTrigger>
+                        <Input type='date' {...field} />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value='less_than_week'>
-                          Less than a week
-                        </SelectItem>
-                        <SelectItem value='1_2_weeks'>1-2 weeks</SelectItem>
-                        <SelectItem value='2_4_weeks'>2-4 weeks</SelectItem>
-                        <SelectItem value='1_3_months'>1-3 months</SelectItem>
-                        <SelectItem value='3_6_months'>3-6 months</SelectItem>
-                        <SelectItem value='more_than_6_months'>
-                          More than 6 months
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormDescription>
+                        When do you need this completed?
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              <FormField
-                control={form.control}
-                name='deadline'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Deadline (Optional)</FormLabel>
-                    <FormControl>
-                      <Input type='date' {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      When do you need this completed?
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+              {/* Skills & Experience */}
+              <div className='space-y-4'>
+                <h3 className='text-lg font-semibold'>Skills & Experience</h3>
+                <FormField
+                  control={form.control}
+                  name='experienceLevel'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Experience Level</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='entry'>
+                            <div>
+                              <div className='font-medium'>Entry Level</div>
+                              <div className='text-muted-foreground text-sm'>
+                                Looking for beginners or students
+                              </div>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value='intermediate'>
+                            <div>
+                              <div className='font-medium'>Intermediate</div>
+                              <div className='text-muted-foreground text-sm'>
+                                Looking for experienced freelancers
+                              </div>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value='expert'>
+                            <div>
+                              <div className='font-medium'>Expert</div>
+                              <div className='text-muted-foreground text-sm'>
+                                Looking for top professionals
+                              </div>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          {/* Skills & Experience */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Skills & Experience</CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='experienceLevel'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Experience Level</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                <FormField
+                  control={form.control}
+                  name='skillsRequired'
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>Required Skills</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='entry'>
-                          <div>
-                            <div className='font-medium'>Entry Level</div>
-                            <div className='text-muted-foreground text-sm'>
-                              Looking for beginners or students
-                            </div>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value='intermediate'>
-                          <div>
-                            <div className='font-medium'>Intermediate</div>
-                            <div className='text-muted-foreground text-sm'>
-                              Looking for experienced freelancers
-                            </div>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value='expert'>
-                          <div>
-                            <div className='font-medium'>Expert</div>
-                            <div className='text-muted-foreground text-sm'>
-                              Looking for top professionals
-                            </div>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                        <div className='space-y-3'>
+                          <Input
+                            placeholder='Search and add skills...'
+                            value={skillSearch}
+                            onChange={e => setSkillSearch(e.target.value)}
+                          />
 
-              <FormField
-                control={form.control}
-                name='skillsRequired'
-                render={() => (
-                  <FormItem>
-                    <FormLabel>Required Skills</FormLabel>
-                    <FormControl>
-                      <div className='space-y-3'>
-                        <Input
-                          placeholder='Search and add skills...'
-                          value={skillSearch}
-                          onChange={e => setSkillSearch(e.target.value)}
-                        />
-
-                        {/* Selected Skills */}
-                        {selectedSkills.length > 0 && (
-                          <div className='flex flex-wrap gap-2'>
-                            {selectedSkills.map(skill => (
-                              <Badge
-                                key={skill}
-                                variant='secondary'
-                                className='cursor-pointer'
-                                onClick={() => removeSkill(skill)}
-                              >
-                                {skill}
-                                <X className='ml-1 h-3 w-3' />
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Skill Suggestions */}
-                        {skillSearch && filteredSkills.length > 0 && (
-                          <div className='rounded-lg border p-2'>
-                            <div className='text-muted-foreground mb-2 text-sm'>
-                              Suggestions:
-                            </div>
+                          {/* Selected Skills */}
+                          {selectedSkills.length > 0 && (
                             <div className='flex flex-wrap gap-2'>
-                              {filteredSkills.slice(0, 10).map(skill => (
+                              {selectedSkills.map(skill => (
                                 <Badge
                                   key={skill}
-                                  variant='outline'
-                                  className='hover:bg-accent cursor-pointer'
-                                  onClick={() => addSkill(skill)}
+                                  variant='secondary'
+                                  className='cursor-pointer'
+                                  onClick={() => removeSkill(skill)}
                                 >
-                                  <Plus className='mr-1 h-3 w-3' />
                                   {skill}
+                                  <X className='ml-1 h-3 w-3' />
                                 </Badge>
                               ))}
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      Add at least one required skill
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+                          )}
 
-          {/* Milestones (Optional) */}
-          {budgetType === 'fixed' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center justify-between'>
-                  <span>Milestones (Optional)</span>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    onClick={() => setShowMilestones(!showMilestones)}
-                  >
-                    {showMilestones ? 'Hide' : 'Add'} Milestones
-                  </Button>
-                </CardTitle>
-              </CardHeader>
+                          {/* Skill Suggestions */}
+                          {skillSearch && filteredSkills.length > 0 && (
+                            <div className='rounded-lg border p-2'>
+                              <div className='text-muted-foreground mb-2 text-sm'>
+                                Suggestions:
+                              </div>
+                              <div className='flex flex-wrap gap-2'>
+                                {filteredSkills.slice(0, 10).map(skill => (
+                                  <Badge
+                                    key={skill}
+                                    variant='outline'
+                                    className='hover:bg-accent cursor-pointer'
+                                    onClick={() => addSkill(skill)}
+                                  >
+                                    <Plus className='mr-1 h-3 w-3' />
+                                    {skill}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Add at least one required skill
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              {showMilestones && (
-                <CardContent className='space-y-4'>
-                  <Alert>
-                    <AlertCircle className='h-4 w-4' />
-                    <AlertDescription>
-                      Break your project into milestones for better payment
-                      management
-                    </AlertDescription>
-                  </Alert>
-
-                  {milestones.map((milestone, index) => (
-                    <div
-                      key={index}
-                      className='space-y-3 rounded-lg border p-4'
+              {/* Milestones (Optional) */}
+              {budgetType === 'fixed' && (
+                <div className='space-y-4'>
+                  <div className='flex items-center justify-between'>
+                    <h3 className='text-lg font-semibold'>
+                      Milestones (Optional)
+                    </h3>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setShowMilestones(!showMilestones)}
                     >
-                      <div className='flex items-center justify-between'>
-                        <Label>Milestone {index + 1}</Label>
-                        <Button
-                          type='button'
-                          variant='ghost'
-                          size='sm'
-                          onClick={() => removeMilestone(index)}
+                      {showMilestones ? 'Hide' : 'Add'} Milestones
+                    </Button>
+                  </div>
+
+                  {showMilestones && (
+                    <div className='space-y-4'>
+                      <Alert>
+                        <AlertCircle className='h-4 w-4' />
+                        <AlertDescription>
+                          Break your project into milestones for better payment
+                          management
+                        </AlertDescription>
+                      </Alert>
+
+                      {milestones.map((milestone, index) => (
+                        <div
+                          key={index}
+                          className='space-y-3 rounded-lg border p-4'
                         >
-                          <X className='h-4 w-4' />
-                        </Button>
-                      </div>
+                          <div className='flex items-center justify-between'>
+                            <Label>Milestone {index + 1}</Label>
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              size='sm'
+                              onClick={() => removeMilestone(index)}
+                            >
+                              <X className='h-4 w-4' />
+                            </Button>
+                          </div>
 
-                      <Input
-                        placeholder='Milestone title'
-                        value={milestone.title}
-                        onChange={e =>
-                          updateMilestone(index, 'title', e.target.value)
-                        }
-                      />
-
-                      <Textarea
-                        placeholder='Milestone description (optional)'
-                        value={milestone.description}
-                        onChange={e =>
-                          updateMilestone(index, 'description', e.target.value)
-                        }
-                      />
-
-                      <div className='grid grid-cols-2 gap-3'>
-                        <div className='relative'>
-                          <span className='absolute top-1/2 left-3 -translate-y-1/2'>
-                            $
-                          </span>
                           <Input
-                            type='number'
-                            placeholder='Amount'
-                            className='pl-8'
-                            value={milestone.amount}
+                            placeholder='Milestone title'
+                            value={milestone.title}
                             onChange={e =>
-                              updateMilestone(index, 'amount', e.target.value)
+                              updateMilestone(index, 'title', e.target.value)
                             }
                           />
+
+                          <Textarea
+                            placeholder='Milestone description (optional)'
+                            value={milestone.description}
+                            onChange={e =>
+                              updateMilestone(
+                                index,
+                                'description',
+                                e.target.value
+                              )
+                            }
+                          />
+
+                          <div className='grid grid-cols-2 gap-3'>
+                            <div className='relative'>
+                              <span className='absolute top-1/2 left-3 -translate-y-1/2'>
+                                $
+                              </span>
+                              <Input
+                                type='number'
+                                placeholder='Amount'
+                                className='pl-8'
+                                value={milestone.amount}
+                                onChange={e =>
+                                  updateMilestone(
+                                    index,
+                                    'amount',
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <Input
+                              type='date'
+                              placeholder='Due date'
+                              value={milestone.dueDate}
+                              onChange={e =>
+                                updateMilestone(
+                                  index,
+                                  'dueDate',
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </div>
                         </div>
+                      ))}
 
-                        <Input
-                          type='date'
-                          placeholder='Due date'
-                          value={milestone.dueDate}
-                          onChange={e =>
-                            updateMilestone(index, 'dueDate', e.target.value)
-                          }
-                        />
-                      </div>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        className='w-full'
+                        onClick={addMilestone}
+                      >
+                        <Plus className='mr-2 h-4 w-4' />
+                        Add Milestone
+                      </Button>
                     </div>
-                  ))}
+                  )}
+                </div>
+              )}
 
+              {/* Submit Buttons */}
+              <div className='border-primary/30 from-primary/10 relative rounded-xl border-2 bg-gradient-to-br to-purple-600/10 p-6'>
+                <div className='bg-primary text-primary-foreground absolute top-0 left-0 flex -translate-y-1/2 items-center gap-2 rounded-full px-4 py-1 text-xs font-black'>
+                  <ChevronRight className='h-3 w-3' />
+                  FINAL STEP
+                </div>
+                <div className='flex justify-between gap-4'>
                   <Button
                     type='button'
                     variant='outline'
-                    className='w-full'
-                    onClick={addMilestone}
+                    size='lg'
+                    onClick={() => router.back()}
+                    disabled={isSubmitting}
+                    className='border-2 font-bold'
                   >
-                    <Plus className='mr-2 h-4 w-4' />
-                    Add Milestone
+                    Cancel
                   </Button>
-                </CardContent>
-              )}
-            </Card>
-          )}
-
-          {/* Submit */}
-          <div className='flex gap-3'>
-            <Button
-              type='button'
-              variant='outline'
-              className='flex-1'
-              onClick={() => router.back()}
-            >
-              Cancel
-            </Button>
-            <LoadingButton
-              type='submit'
-              className='flex-1'
-              isLoading={isSubmitting}
-              disabled={isSubmitting}
-            >
-              {postingType === 'job' ? 'Post Job' : 'Create Service Offer'}
-            </LoadingButton>
-          </div>
-        </form>
-      </Form>
+                  <LoadingButton
+                    type='submit'
+                    size='lg'
+                    isLoading={isSubmitting}
+                    loadingText='Creating...'
+                    className='bg-gradient-to-r from-green-600 to-emerald-700 font-bold text-white shadow-lg hover:from-green-700 hover:to-emerald-800'
+                  >
+                    <Briefcase className='mr-2 h-5 w-5' />
+                    {postingType === 'job'
+                      ? 'POST JOB'
+                      : 'CREATE SERVICE OFFER'}
+                  </LoadingButton>
+                </div>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   )
 }
