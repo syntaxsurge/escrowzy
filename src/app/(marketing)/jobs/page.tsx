@@ -87,9 +87,10 @@ export default function PublicJobsPage() {
       return (
         job.title.toLowerCase().includes(search) ||
         job.description?.toLowerCase().includes(search) ||
-        job.jobSkills?.some((s: any) =>
-          s.skill.name.toLowerCase().includes(search)
-        )
+        (Array.isArray(job.skillsRequired) &&
+          job.skillsRequired.some((skill: string) =>
+            skill.toLowerCase().includes(search)
+          ))
       )
     }
 
@@ -447,16 +448,20 @@ export default function PublicJobsPage() {
                 <CardContent>
                   <div className='flex items-center justify-between'>
                     <div className='flex flex-wrap gap-2'>
-                      {job.jobSkills?.slice(0, 4).map((js: any) => (
-                        <Badge key={js.skill.id} variant='secondary'>
-                          {js.skill.name}
-                        </Badge>
-                      ))}
-                      {job.jobSkills && job.jobSkills.length > 4 && (
-                        <Badge variant='secondary'>
-                          +{job.jobSkills.length - 4} more
-                        </Badge>
-                      )}
+                      {Array.isArray(job.skillsRequired) &&
+                        job.skillsRequired
+                          .slice(0, 4)
+                          .map((skill: string, index: number) => (
+                            <Badge key={index} variant='secondary'>
+                              {skill}
+                            </Badge>
+                          ))}
+                      {Array.isArray(job.skillsRequired) &&
+                        job.skillsRequired.length > 4 && (
+                          <Badge variant='secondary'>
+                            +{job.skillsRequired.length - 4} more
+                          </Badge>
+                        )}
                     </div>
                     {!isConnected ? (
                       <Badge variant='outline'>Connect to Apply</Badge>

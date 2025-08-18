@@ -53,9 +53,9 @@ export async function GET(
       )
     }
 
-    // TODO: Templates functionality requires metadata field in freelancerProfiles table
-    // For now, return empty templates array
-    const templates: ProposalTemplate[] = []
+    // Get templates from metadata field
+    const metadata = (profile[0].metadata || {}) as any
+    const templates: ProposalTemplate[] = metadata.templates || []
 
     // Sort by usage count and last updated
     templates.sort((a, b) => {
@@ -135,9 +135,9 @@ export async function POST(
       )
     }
 
-    // TODO: Templates functionality requires metadata field in freelancerProfiles table
-    // For now, using empty templates array
-    const templates: ProposalTemplate[] = []
+    // Get templates from metadata field
+    const metadata = (profile[0].metadata || {}) as any
+    const templates: ProposalTemplate[] = metadata.templates || []
 
     // Create new template
     const newTemplate: ProposalTemplate = {
@@ -157,8 +157,14 @@ export async function POST(
     // Add template
     templates.push(newTemplate)
 
-    // TODO: Cannot save templates without metadata field in freelancerProfiles table
-    // Skipping save operation for now
+    // Save templates to metadata field
+    await db
+      .update(freelancerProfiles)
+      .set({
+        metadata: { ...metadata, templates },
+        updatedAt: new Date()
+      })
+      .where(eq(freelancerProfiles.userId, Number(id)))
 
     return NextResponse.json({
       success: true,
@@ -221,9 +227,9 @@ export async function PUT(
       )
     }
 
-    // TODO: Templates functionality requires metadata field in freelancerProfiles table
-    // For now, using empty templates array
-    const templates: ProposalTemplate[] = []
+    // Get templates from metadata field
+    const metadata = (profile[0].metadata || {}) as any
+    const templates: ProposalTemplate[] = metadata.templates || []
 
     // Find and update template
     const templateIndex = templates.findIndex(
@@ -256,8 +262,14 @@ export async function PUT(
       updatedAt: new Date()
     }
 
-    // TODO: Cannot save templates without metadata field in freelancerProfiles table
-    // Skipping save operation for now
+    // Save updated templates to metadata field
+    await db
+      .update(freelancerProfiles)
+      .set({
+        metadata: { ...metadata, templates },
+        updatedAt: new Date()
+      })
+      .where(eq(freelancerProfiles.userId, Number(id)))
 
     return NextResponse.json({
       success: true,
@@ -311,9 +323,9 @@ export async function DELETE(
       )
     }
 
-    // TODO: Templates functionality requires metadata field in freelancerProfiles table
-    // For now, using empty templates array
-    const templates: ProposalTemplate[] = []
+    // Get templates from metadata field
+    const metadata = (profile[0].metadata || {}) as any
+    const templates: ProposalTemplate[] = metadata.templates || []
 
     // Filter out the template
     const filteredTemplates = templates.filter(
@@ -327,8 +339,14 @@ export async function DELETE(
       )
     }
 
-    // TODO: Cannot save templates without metadata field in freelancerProfiles table
-    // Skipping save operation for now
+    // Save updated templates to metadata field
+    await db
+      .update(freelancerProfiles)
+      .set({
+        metadata: { ...metadata, templates },
+        updatedAt: new Date()
+      })
+      .where(eq(freelancerProfiles.userId, Number(id)))
 
     return NextResponse.json({
       success: true,
@@ -381,9 +399,9 @@ export async function PATCH(
       )
     }
 
-    // TODO: Templates functionality requires metadata field in freelancerProfiles table
-    // For now, using empty templates array
-    const templates: ProposalTemplate[] = []
+    // Get templates from metadata field
+    const metadata = (profile[0].metadata || {}) as any
+    const templates: ProposalTemplate[] = metadata.templates || []
 
     // Find and increment usage count
     const templateIndex = templates.findIndex(
@@ -401,8 +419,14 @@ export async function PATCH(
       (templates[templateIndex].usageCount || 0) + 1
     templates[templateIndex].updatedAt = new Date()
 
-    // TODO: Cannot save templates without metadata field in freelancerProfiles table
-    // Skipping save operation for now
+    // Save updated templates to metadata field
+    await db
+      .update(freelancerProfiles)
+      .set({
+        metadata: { ...metadata, templates },
+        updatedAt: new Date()
+      })
+      .where(eq(freelancerProfiles.userId, Number(id)))
 
     return NextResponse.json({
       success: true,

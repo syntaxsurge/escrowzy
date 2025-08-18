@@ -236,6 +236,10 @@ export const ACTIVITY_TYPE_CONFIG: Partial<
     label: 'Trade Cancelled',
     variant: 'secondary'
   },
+  [ActivityType.TRADE_EXPIRED]: {
+    label: 'Trade Expired',
+    variant: 'secondary'
+  },
 
   // Listing activities
   [ActivityType.LISTING_CREATED]: {
@@ -351,6 +355,7 @@ export const ACTIVITY_ICONS: Partial<Record<ActivityType, string>> = {
   [ActivityType.TRADE_DISPUTED]: 'AlertCircle',
   [ActivityType.TRADE_REFUNDED]: 'CreditCard',
   [ActivityType.TRADE_CANCELLED]: 'X',
+  [ActivityType.TRADE_EXPIRED]: 'Clock',
 
   // Listing activities
   [ActivityType.LISTING_CREATED]: 'Plus',
@@ -492,6 +497,7 @@ export const ACTIVITY_COLORS: Partial<Record<ActivityType, string>> = {
     'text-orange-600 bg-orange-50 dark:bg-orange-900/30',
   [ActivityType.TRADE_CANCELLED]:
     'text-gray-600 bg-gray-50 dark:bg-gray-900/30',
+  [ActivityType.TRADE_EXPIRED]: 'text-gray-600 bg-gray-50 dark:bg-gray-900/30',
 
   // Listing activities
   [ActivityType.LISTING_CREATED]:

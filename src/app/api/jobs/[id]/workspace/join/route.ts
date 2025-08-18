@@ -3,8 +3,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { and, eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 
+import { pusherChannels, pusherEvents } from '@/config/api-endpoints'
 import { db } from '@/lib/db/drizzle'
-import { jobPostings, workspaceSessions } from '@/lib/db/schema'
+import { jobPostings, workspaceSessions, users } from '@/lib/db/schema'
+import { pusherServer } from '@/lib/pusher-server'
 import { getUser } from '@/services/user'
 
 export async function POST(
@@ -84,7 +86,38 @@ export async function POST(
       .returning()
 
     // Trigger real-time update
-    // TODO: Send Pusher event for user joined
+    if (pusherServer) {
+      // Get user details for the notification
+      const userDetails = await db.query.users.findFirst({
+        where: eq(users.id, user.id)
+      })
+
+      const channel = pusherChannels.chat('job-workspace', jobId.toString())
+      await pusherServer.trigger(channel, pusherEvents.chat.userJoined, {
+        userId: user.id,
+        userName: userDetails?.name || 'Unknown User',
+        sessionId,
+        currentTab: body.currentTab,
+        timestamp: new Date().toISOString()
+      })
+
+      // Also notify all participants in the workspace
+      const otherParticipantId =
+        job.clientId === user.id ? job.freelancerId : job.clientId
+      if (otherParticipantId) {
+        await pusherServer.trigger(
+          pusherChannels.user(otherParticipantId),
+          pusherEvents.notification.created,
+          {
+            type: 'workspace_joined',
+            jobId,
+            jobTitle: job.title,
+            message: `${userDetails?.name || 'Someone'} joined the workspace`,
+            timestamp: new Date().toISOString()
+          }
+        )
+      }
+    }
 
     return NextResponse.json({ success: true, sessionId })
   } catch (error) {

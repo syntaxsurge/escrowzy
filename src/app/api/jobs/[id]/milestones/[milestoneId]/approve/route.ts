@@ -4,8 +4,9 @@ import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { db } from '@/lib/db/drizzle'
-import { earnings, jobMilestones, jobPostings } from '@/lib/db/schema'
+import { earnings, jobMilestones, jobPostings, trades } from '@/lib/db/schema'
 import { pusherServer } from '@/lib/pusher-server'
+import { EscrowCoreService } from '@/services/blockchain/escrow-core.service'
 import { getUser } from '@/services/user'
 
 const approveMilestoneSchema = z.object({
@@ -124,8 +125,64 @@ export async function POST(
         }
       }
 
-      // TODO: Trigger smart contract payment release
-      // This would integrate with EscrowCore.sol to release funds
+      // Trigger smart contract payment release if there's an associated trade
+      if (milestone.job.metadata) {
+        const metadata = milestone.job.metadata as any
+        if (metadata.tradeId) {
+          // Get the trade to find the escrow ID
+          const trade = await db
+            .select()
+            .from(trades)
+            .where(eq(trades.id, metadata.tradeId))
+            .limit(1)
+
+          if (trade[0]?.escrowId && trade[0]?.chainId) {
+            try {
+              // Initialize escrow service for the chain
+              const escrowService = new EscrowCoreService(trade[0].chainId)
+
+              // Get transaction config for confirming delivery
+              const txConfig = escrowService.getConfirmDeliveryConfig(
+                trade[0].escrowId
+              )
+
+              // Log the transaction config for the client to execute
+              console.log('Smart contract payment release ready:', {
+                chainId: trade[0].chainId,
+                escrowId: trade[0].escrowId,
+                contractAddress: txConfig.address,
+                functionName: txConfig.functionName,
+                args: txConfig.args
+              })
+
+              // Store transaction details in milestone metadata for client execution
+              await db
+                .update(jobMilestones)
+                .set({
+                  metadata: {
+                    ...((milestone.milestone.metadata as any) || {}),
+                    pendingTransaction: {
+                      type: 'confirmDelivery',
+                      chainId: trade[0].chainId,
+                      escrowId: trade[0].escrowId,
+                      contractAddress: txConfig.address,
+                      functionName: txConfig.functionName,
+                      args: txConfig.args,
+                      createdAt: new Date().toISOString()
+                    }
+                  }
+                })
+                .where(eq(jobMilestones.id, milestoneId))
+            } catch (error) {
+              console.error(
+                'Failed to prepare smart contract payment release:',
+                error
+              )
+              // Continue without blockchain integration
+            }
+          }
+        }
+      }
     })
 
     // Send real-time notification to freelancer

@@ -4,7 +4,8 @@ import { and, eq, lt } from 'drizzle-orm'
 
 import { envServer } from '@/config/env.server'
 import { db } from '@/lib/db/drizzle'
-import { trades } from '@/lib/db/schema'
+import { trades, teamMembers, teams, ActivityType } from '@/lib/db/schema'
+import { createTradeNotification } from '@/services/notification'
 import { TRADE_STATUS } from '@/types/listings'
 
 export async function GET(request: Request) {
@@ -61,9 +62,37 @@ export async function GET(request: Request) {
     // Log the cancellations
     console.log(`Cancelled ${expiredTrades.length} expired trades:`, tradeIds)
 
-    // TODO: Send notifications to affected users
-    // This would involve querying users and sending them notifications
-    // about their cancelled trades
+    // Send notifications to affected users
+    for (const trade of expiredTrades) {
+      // Get team ID for both users - use a default team if needed
+      const buyerTeam = await db
+        .select()
+        .from(teamMembers)
+        .leftJoin(teams, eq(teamMembers.teamId, teams.id))
+        .where(eq(teamMembers.userId, trade.buyerId))
+        .limit(1)
+
+      const sellerTeam = await db
+        .select()
+        .from(teamMembers)
+        .leftJoin(teams, eq(teamMembers.teamId, teams.id))
+        .where(eq(teamMembers.userId, trade.sellerId))
+        .limit(1)
+
+      const buyerTeamId = buyerTeam[0]?.team_members?.teamId || 1
+      const sellerTeamId = sellerTeam[0]?.team_members?.teamId || 1
+
+      // Create notifications for both parties
+      await createTradeNotification(
+        trade.id,
+        trade.buyerId,
+        trade.sellerId,
+        buyerTeamId,
+        ActivityType.TRADE_EXPIRED,
+        'Your trade has expired due to timeout',
+        'Your trade has expired due to timeout'
+      )
+    }
 
     return NextResponse.json({
       success: true,

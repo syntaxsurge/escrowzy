@@ -2,8 +2,11 @@ import { NextRequest } from 'next/server'
 
 import { apiResponses } from '@/lib/api/server-utils'
 import { getSession } from '@/lib/auth/session'
+import { db } from '@/lib/db/drizzle'
+import { ActivityType, teamMembers } from '@/lib/db/schema'
 import { acceptListingSchema } from '@/lib/schemas/listings'
 import { acceptListingAndCreateTrade } from '@/services/listings'
+import { createNotification } from '@/services/notification'
 
 export async function POST(
   request: NextRequest,
@@ -51,8 +54,30 @@ export async function POST(
       return apiResponses.badRequest('Failed to accept listing')
     }
 
-    // TODO: Add activity logging when user's teamId is available in session
-    // Currently skipping activity log as teamId is required but not available
+    // Add activity logging - get user's team ID if available
+    const { eq } = await import('drizzle-orm')
+    const userTeam = await db
+      .select()
+      .from(teamMembers)
+      .where(eq(teamMembers.userId, session.user.id))
+      .limit(1)
+
+    if (userTeam.length > 0) {
+      await createNotification({
+        userId: session.user.id,
+        teamId: userTeam[0].teamId,
+        action: ActivityType.LISTING_ACCEPTED,
+        title: 'Listing Accepted',
+        message: `Trade #${trade.id} created from listing`,
+        actionUrl: `/trades/${trade.id}`,
+        notificationType: 'listing_accepted',
+        metadata: { listingId, tradeId: trade.id },
+        ipAddress:
+          request.headers.get('x-forwarded-for') ||
+          request.headers.get('x-real-ip') ||
+          undefined
+      })
+    }
 
     return apiResponses.success({
       trade,

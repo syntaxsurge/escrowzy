@@ -13,6 +13,7 @@ import {
   jobCategories,
   freelancerReviews,
   jobPostings,
+  jobBids,
   type FreelancerProfile,
   type NewFreelancerProfile,
   type FreelancerSkill,
@@ -92,6 +93,8 @@ export async function getFreelancerProfileByUserId(
       completionRate: freelancerProfiles.completionRate,
       responseTime: freelancerProfiles.responseTime,
       lastActiveAt: freelancerProfiles.lastActiveAt,
+      metadata: freelancerProfiles.metadata,
+      profileViews: freelancerProfiles.profileViews,
       createdAt: freelancerProfiles.createdAt,
       updatedAt: freelancerProfiles.updatedAt,
       user: {
@@ -410,6 +413,8 @@ export async function searchFreelancers(
       completionRate: freelancerProfiles.completionRate,
       responseTime: freelancerProfiles.responseTime,
       lastActiveAt: freelancerProfiles.lastActiveAt,
+      metadata: freelancerProfiles.metadata,
+      profileViews: freelancerProfiles.profileViews,
       createdAt: freelancerProfiles.createdAt,
       updatedAt: freelancerProfiles.updatedAt,
       user: {
@@ -486,7 +491,9 @@ export async function searchFreelancers(
         skills: skillsMap[profile.id] || [],
         portfolioItems: [], // Will be loaded separately if needed
         reviewCount: 0, // Will be loaded separately if needed
-        avgRating: profile.avgRating / 10 // Convert from int to decimal
+        avgRating: profile.avgRating / 10, // Convert from int to decimal
+        metadata: profile.metadata || {},
+        profileViews: profile.profileViews || 0
       }))
 
   return {
@@ -601,8 +608,12 @@ export async function getFreelancerStats(
     .from(savedFreelancers)
     .where(eq(savedFreelancers.freelancerId, profile[0].id))
 
-  // Get active bids count (would need jobBids table)
-  const activeBids = 0 // TODO: Implement when jobBids are available
+  // Get active bids count
+  const [activeBidsResult] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(jobBids)
+    .where(and(eq(jobBids.freelancerId, userId), eq(jobBids.status, 'pending')))
+  const activeBids = activeBidsResult?.count || 0
 
   // Get completed jobs
   const [completedJobs] = await db
@@ -616,7 +627,7 @@ export async function getFreelancerStats(
     )
 
   return {
-    profileViews: 0, // TODO: Implement view tracking
+    profileViews: profile[0].profileViews || 0, // Now tracked in profileViews field
     savedByClients: savedCount?.count || 0,
     activeBids,
     completedJobs: completedJobs?.count || 0,
@@ -631,6 +642,17 @@ export async function updateLastActive(userId: number): Promise<void> {
   await db
     .update(freelancerProfiles)
     .set({ lastActiveAt: new Date() })
+    .where(eq(freelancerProfiles.userId, userId))
+}
+
+// Increment profile view count
+export async function incrementProfileViews(userId: number): Promise<void> {
+  await db
+    .update(freelancerProfiles)
+    .set({
+      profileViews: sql`${freelancerProfiles.profileViews} + 1`,
+      updatedAt: new Date()
+    })
     .where(eq(freelancerProfiles.userId, userId))
 }
 

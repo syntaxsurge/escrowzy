@@ -1,14 +1,13 @@
 import 'server-only'
 
-import { and, desc, eq, sql, count, avg, or, gte } from 'drizzle-orm'
+import { and, eq, sql, count, avg, gte } from 'drizzle-orm'
 
 import { db } from '../drizzle'
 import {
   users,
   jobPostings,
   clientReviews,
-  freelancerProfiles,
-  trades
+  freelancerProfiles
 } from '../schema'
 
 // Get client stats (for job details page)
@@ -157,27 +156,33 @@ export async function getUserLocation(userId: number): Promise<string | null> {
   const [user] = await db
     .select({
       id: users.id,
-      email: users.email
+      email: users.email,
+      location: users.location
     })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1)
 
-  // For now, return null as users don't have metadata field
-  // TODO: Add location field to users table or freelancer profiles
+  // Return user's location if available
+  if (user?.location) {
+    return user.location
+  }
 
-  // Try to infer from recent trades (payment methods might have country info)
-  const [trade] = await db
+  // Try to get location from freelancer profile if available
+  const [profile] = await db
     .select({
-      id: trades.id
+      metadata: freelancerProfiles.metadata
     })
-    .from(trades)
-    .where(or(eq(trades.sellerId, userId), eq(trades.buyerId, userId)))
-    .orderBy(desc(trades.createdAt))
+    .from(freelancerProfiles)
+    .where(eq(freelancerProfiles.userId, userId))
     .limit(1)
 
-  // Payment method info not available in trades table
-  // Return null for now
+  if (profile?.metadata) {
+    const metadata = profile.metadata as any
+    if (metadata.location) {
+      return metadata.location
+    }
+  }
 
   return null
 }

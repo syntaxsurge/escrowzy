@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { and, eq } from 'drizzle-orm'
 
+import { pusherChannels, pusherEvents } from '@/config/api-endpoints'
 import { db } from '@/lib/db/drizzle'
 import { jobPostings, messages, users } from '@/lib/db/schema'
+import { pusherServer } from '@/lib/pusher-server'
 import { getUser } from '@/services/user'
 
 export async function GET(
@@ -136,7 +138,31 @@ export async function POST(
       }
     }
 
-    // TODO: Send Pusher event for new message
+    // Send Pusher event for new message
+    if (pusherServer) {
+      const channel = pusherChannels.chat('job', jobId.toString())
+      await pusherServer.trigger(channel, pusherEvents.chat.messageNew, {
+        message: messageWithSender,
+        timestamp: new Date().toISOString()
+      })
+
+      // Also notify the other party (client or freelancer)
+      const recipientId =
+        job.clientId === user.id ? job.freelancerId : job.clientId
+      if (recipientId) {
+        await pusherServer.trigger(
+          pusherChannels.user(recipientId),
+          pusherEvents.notification.created,
+          {
+            type: 'new_message',
+            jobId,
+            jobTitle: job.title,
+            message: 'New message in job workspace',
+            timestamp: new Date().toISOString()
+          }
+        )
+      }
+    }
 
     return NextResponse.json({ success: true, message: messageWithSender })
   } catch (error) {

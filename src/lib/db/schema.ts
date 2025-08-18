@@ -30,6 +30,7 @@ export const users = pgTable('users', {
   role: varchar('role', { length: 20 }).notNull().default('user'),
   emailVerified: boolean('email_verified').notNull().default(false),
   avatarPath: text('avatar_path'),
+  location: varchar('location', { length: 100 }), // User's location (city, country)
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow()
 })
@@ -729,6 +730,8 @@ export const freelancerProfiles = pgTable(
     completionRate: integer('completion_rate').notNull().default(100), // percentage
     responseTime: integer('response_time'), // average in hours
     lastActiveAt: timestamp('last_active_at'),
+    metadata: jsonb('metadata').notNull().default('{}'), // For templates, goals, and other flexible data
+    profileViews: integer('profile_views').notNull().default(0), // Track profile views
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow()
   },
@@ -2541,6 +2544,7 @@ export enum ActivityType {
   TRADE_DISPUTED = 'TRADE_DISPUTED',
   TRADE_REFUNDED = 'TRADE_REFUNDED',
   TRADE_CANCELLED = 'TRADE_CANCELLED',
+  TRADE_EXPIRED = 'TRADE_EXPIRED',
 
   // Listing activities
   LISTING_CREATED = 'LISTING_CREATED',

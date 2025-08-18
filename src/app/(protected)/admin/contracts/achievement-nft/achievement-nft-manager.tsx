@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import useSWR from 'swr'
+import useSWR, { mutate } from 'swr'
 
 import {
   Trophy,
@@ -66,12 +66,14 @@ import {
   getExplorerUrl,
   isSupportedChainId,
   getAchievementNFTAddress,
-  getChainConfig
+  getChainConfig,
+  ACHIEVEMENT_NFT_ABI
 } from '@/lib/blockchain'
-import type {
-  CreateAchievementParams,
-  MintAchievementParams,
-  AchievementCategory
+import {
+  AchievementNFTService,
+  type CreateAchievementParams,
+  type MintAchievementParams,
+  type AchievementCategory
 } from '@/services/blockchain/achievement-nft.service'
 
 interface NFTStats {
@@ -336,8 +338,27 @@ export function AchievementNFTManager() {
 
     try {
       await updateUriButton.execute(async () => {
-        // TODO: Implement actual URI update logic
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        // Execute setBaseURI transaction
+        const effectiveChainId = chainId || DEFAULT_CHAIN_ID
+        const nftService = new AchievementNFTService(effectiveChainId)
+
+        // Prepare transaction config for setBaseURI
+        const txConfig = {
+          address: getAchievementNFTAddress(effectiveChainId) as `0x${string}`,
+          abi: ACHIEVEMENT_NFT_ABI,
+          functionName: 'setBaseURI',
+          args: [newBaseUri]
+        }
+
+        await executeTransaction('setBaseURI', [newBaseUri], effectiveChainId, {
+          messages: {
+            pendingMessage: 'Updating base URI...',
+            processingMessage: 'Processing URI update...',
+            confirmedMessage: 'Base URI updated successfully!',
+            failedMessage: 'Failed to update base URI'
+          }
+        })
+
         showSuccessToast(
           'URI updated',
           'Base metadata URI updated successfully'
@@ -357,14 +378,43 @@ export function AchievementNFTManager() {
 
     try {
       await pauseButton.execute(async () => {
-        // TODO: Implement actual pause/unpause logic
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        // Execute pause/unpause transaction
+        const effectiveChainId = chainId || DEFAULT_CHAIN_ID
+        const isPaused = contractSettings?.isPaused || false
+        const functionName = isPaused ? 'unpause' : 'pause'
+
+        // Prepare transaction config for pause/unpause
+        const txConfig = {
+          address: getAchievementNFTAddress(effectiveChainId) as `0x${string}`,
+          abi: ACHIEVEMENT_NFT_ABI,
+          functionName,
+          args: []
+        }
+
+        await executeTransaction(functionName, [], effectiveChainId, {
+          messages: {
+            pendingMessage: isPaused
+              ? 'Resuming contract...'
+              : 'Pausing contract...',
+            processingMessage: isPaused
+              ? 'Processing unpause...'
+              : 'Processing pause...',
+            confirmedMessage: isPaused
+              ? 'Contract resumed!'
+              : 'Contract paused!',
+            failedMessage: isPaused
+              ? 'Failed to resume contract'
+              : 'Failed to pause contract'
+          }
+        })
+
         showSuccessToast(
-          contractSettings?.isPaused ? 'Contract resumed' : 'Contract paused',
-          contractSettings?.isPaused
-            ? 'Minting is now enabled'
-            : 'Minting is now disabled'
+          isPaused ? 'Contract resumed' : 'Contract paused',
+          isPaused ? 'Minting is now enabled' : 'Minting is now disabled'
         )
+
+        // Refresh contract settings
+        mutate(apiEndpoints.admin.achievements.settings)
       })
     } catch (error) {
       showErrorToast('Operation failed', 'Failed to pause/unpause contract')

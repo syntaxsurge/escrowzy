@@ -7,6 +7,7 @@ import {
   completeOnboardingStep,
   onboardingSteps
 } from '@/lib/db/queries/onboarding'
+import { RewardsService } from '@/services/rewards'
 import { getUser } from '@/services/user'
 
 export async function POST(req: NextRequest) {
@@ -40,10 +41,15 @@ export async function POST(req: NextRequest) {
     // Complete the step
     const progress = await completeOnboardingStep(user.id, stepId)
 
-    // TODO: Award XP if applicable (addXp function needs to be implemented)
+    // Award XP if applicable
     let xpAwarded = 0
     if (step.xpReward && step.xpReward > 0) {
-      // await addXp(user.id, step.xpReward, `Completed onboarding step: ${step.title}`)
+      const rewardsService = new RewardsService()
+      await rewardsService.addXP(
+        user.id,
+        step.xpReward,
+        `Completed onboarding step: ${step.title}`
+      )
       xpAwarded = step.xpReward
     }
 

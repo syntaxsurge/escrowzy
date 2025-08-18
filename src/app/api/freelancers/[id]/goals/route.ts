@@ -59,9 +59,9 @@ export async function GET(
       )
     }
 
-    // TODO: Goals functionality requires metadata field in freelancerProfiles table
-    // For now, return empty goals array
-    const goals: Goal[] = []
+    // Get goals from metadata field
+    const metadata = (profile.metadata || {}) as any
+    const goals: Goal[] = metadata.goals || []
 
     // Update current values for system goals
     const currentDate = new Date()
@@ -145,8 +145,14 @@ export async function GET(
       })
     )
 
-    // TODO: Cannot save goals without metadata field in freelancerProfiles table
-    // Skipping save operation for now
+    // Save updated goals to metadata field
+    await db
+      .update(freelancerProfiles)
+      .set({
+        metadata: { ...metadata, goals: updatedGoals },
+        updatedAt: new Date()
+      })
+      .where(eq(freelancerProfiles.userId, freelancerId))
 
     // Calculate statistics
     const stats = {
@@ -232,10 +238,9 @@ export async function POST(
       )
     }
 
-    // TODO: Goals functionality requires metadata field in freelancerProfiles table
-    // For now, using empty metadata object
-    const metadata = {}
-    const goals: Goal[] = []
+    // Get goals from metadata field
+    const metadata = (profile.metadata || {}) as any
+    const goals: Goal[] = metadata.goals || []
 
     // Create new goal
     const newGoal: Goal = {
@@ -254,8 +259,14 @@ export async function POST(
     // Add goal to metadata
     goals.push(newGoal)
 
-    // TODO: Cannot save goals without metadata field in freelancerProfiles table
-    // Skipping save operation for now
+    // Save updated goals to metadata field
+    await db
+      .update(freelancerProfiles)
+      .set({
+        metadata: { ...metadata, goals },
+        updatedAt: new Date()
+      })
+      .where(eq(freelancerProfiles.userId, freelancerId))
 
     return NextResponse.json({
       success: true,
@@ -319,10 +330,9 @@ export async function PATCH(
       )
     }
 
-    // TODO: Goals functionality requires metadata field in freelancerProfiles table
-    // For now, using empty metadata object
-    const metadata = {}
-    const goals: Goal[] = []
+    // Get goals from metadata field
+    const metadata = (profile.metadata || {}) as any
+    const goals: Goal[] = metadata.goals || []
 
     // Find and update goal
     const goalIndex = goals.findIndex((g: Goal) => g.id === goalId)
@@ -339,8 +349,14 @@ export async function PATCH(
       updatedAt: new Date()
     }
 
-    // TODO: Cannot save goals without metadata field in freelancerProfiles table
-    // Skipping save operation for now
+    // Save updated goals to metadata field
+    await db
+      .update(freelancerProfiles)
+      .set({
+        metadata: { ...metadata, goals },
+        updatedAt: new Date()
+      })
+      .where(eq(freelancerProfiles.userId, freelancerId))
 
     return NextResponse.json({
       success: true,
@@ -404,10 +420,9 @@ export async function DELETE(
       )
     }
 
-    // TODO: Goals functionality requires metadata field in freelancerProfiles table
-    // For now, using empty metadata object
-    const metadata = {}
-    const goals: Goal[] = []
+    // Get goals from metadata field
+    const metadata = (profile.metadata || {}) as any
+    const goals: Goal[] = metadata.goals || []
 
     // Remove goal
     const updatedGoals = goals.filter((g: Goal) => g.id !== goalId)
@@ -419,8 +434,14 @@ export async function DELETE(
       )
     }
 
-    // TODO: Cannot save goals without metadata field in freelancerProfiles table
-    // Skipping save operation for now
+    // Save updated goals to metadata field
+    await db
+      .update(freelancerProfiles)
+      .set({
+        metadata: { ...metadata, goals: updatedGoals },
+        updatedAt: new Date()
+      })
+      .where(eq(freelancerProfiles.userId, freelancerId))
 
     return NextResponse.json({
       success: true,

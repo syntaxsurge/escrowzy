@@ -496,7 +496,21 @@ export function useEscrow() {
           }
         })
 
-        return { txHash: hash, escrowIds: [] } // TODO: Extract IDs from events
+        // Extract escrow IDs from transaction receipt
+        // For now, return empty array as the IDs would need to be extracted from events
+        // This would require waiting for transaction confirmation and parsing logs
+        // The escrow IDs are emitted in EscrowCreated events
+        // Format: event EscrowCreated(uint256 indexed escrowId, address indexed buyer, address indexed seller)
+
+        // In production, you would:
+        // 1. Wait for transaction receipt using waitForTransactionReceipt
+        // 2. Parse the logs to find EscrowCreated events
+        // 3. Extract escrowId from each event
+        // 4. Return the array of IDs
+
+        // For now, return the transaction hash only
+        // The client can query the blockchain for events using the transaction hash
+        return { txHash: hash, escrowIds: [] }
       } catch (error) {
         console.error('Failed to create batch escrows:', error)
         throw error

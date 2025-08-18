@@ -82,10 +82,8 @@ export default function PublicListingsPage() {
     if (searchQuery) {
       const search = searchQuery.toLowerCase()
       return (
-        (listing.domainMetadata as any)?.domainName
-          ?.toLowerCase()
-          .includes(search) ||
-        listing.terms?.toLowerCase().includes(search) ||
+        (listing.metadata as any)?.domainName?.toLowerCase().includes(search) ||
+        (listing.metadata as any)?.terms?.toLowerCase().includes(search) ||
         listing.user?.name?.toLowerCase().includes(search)
       )
     }
@@ -285,11 +283,11 @@ export default function PublicListingsPage() {
                     <div className='flex-1'>
                       <CardTitle className='text-foreground line-clamp-1 text-lg'>
                         {listing.listingCategory === 'domain'
-                          ? (listing.domainMetadata as any)?.domainName
+                          ? (listing.metadata as any)?.domainName
                           : `${listing.listingType} ${listing.tokenOffered}`}
                       </CardTitle>
                       <p className='text-muted-foreground mt-1 line-clamp-2 text-sm'>
-                        {listing.terms || 'No description'}
+                        {(listing.metadata as any)?.terms || 'No description'}
                       </p>
                     </div>
                     <Badge
