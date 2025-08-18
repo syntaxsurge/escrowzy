@@ -1,5 +1,3 @@
-import 'server-only'
-
 import { seedFreelancerData } from './seed-freelancer'
 import { seedJobsData } from './seed-jobs'
 import { seedScheduledTasks } from './seed-scheduled-tasks'

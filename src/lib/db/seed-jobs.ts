@@ -1,4 +1,4 @@
-import { db } from './drizzle'
+import { db } from './drizzle-node'
 import { jobCategories, skills } from './schema'
 
 export async function seedJobsData() {

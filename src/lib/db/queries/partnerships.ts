@@ -3,27 +3,25 @@ import { and, desc, eq, gte, sql, sum } from 'drizzle-orm'
 import { db } from '../drizzle'
 import { escrowListings, partnerCommissions, partners, users } from '../schema'
 
-export async function getPartnershipByUserId(userId: number) {
+export async function getPartnershipByEmail(email: string) {
   const partnership = await db
     .select({
       id: partners.id,
-      userId: partners.userId,
-      companyName: partners.companyName,
-      websiteUrl: partners.websiteUrl,
-      contactEmail: partners.contactEmail,
-      contactPhone: partners.contactPhone,
-      partnershipType: partners.partnershipType,
+      organizationName: partners.organizationName,
+      website: partners.website,
+      email: partners.email,
+      phone: partners.phone,
+      partnerType: partners.partnerType,
       commissionRate: partners.commissionRate,
       customTerms: partners.customTerms,
-      totalEarnedCommission: partners.totalEarnedCommission,
-      totalPendingCommission: partners.totalPendingCommission,
+      totalRevenue: partners.totalRevenue,
       totalReferrals: partners.totalReferrals,
       status: partners.status,
       startDate: partners.approvedAt,
       createdAt: partners.createdAt
     })
     .from(partners)
-    .where(eq(partners.userId, userId))
+    .where(eq(partners.email, email))
     .limit(1)
 
   return partnership[0] || null

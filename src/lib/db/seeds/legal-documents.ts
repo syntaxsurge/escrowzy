@@ -1,4 +1,4 @@
-import { db } from '../drizzle'
+import { db } from '../drizzle-node'
 import { adminSettings } from '../schema'
 import type { User } from '../schema'
 

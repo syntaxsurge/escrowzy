@@ -10,13 +10,12 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const categoryId = searchParams.get('categoryId')
 
-    let query = db.select().from(skills)
-
-    if (categoryId) {
-      query = query.where(eq(skills.categoryId, parseInt(categoryId)))
-    }
-
-    const skillsList = await query.orderBy(skills.name)
+    const skillsList = categoryId
+      ? await db
+          .select()
+          .from(skills)
+          .where(eq(skills.categoryId, parseInt(categoryId)))
+      : await db.select().from(skills)
 
     return NextResponse.json({
       success: true,

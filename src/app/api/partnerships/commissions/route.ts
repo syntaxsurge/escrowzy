@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { getServerSession } from '@/lib/auth/session'
 import {
-  getPartnershipByUserId,
+  getPartnershipByEmail,
   getPartnerCommissions
 } from '@/lib/db/queries/partnerships'
+import { findUserById } from '@/lib/db/queries/users'
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,7 +18,15 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const partnership = await getPartnershipByUserId(session.user.id)
+    const user = await findUserById(session.user.id)
+    if (!user?.email) {
+      return NextResponse.json(
+        { error: 'User email not found' },
+        { status: 404 }
+      )
+    }
+
+    const partnership = await getPartnershipByEmail(user.email)
 
     if (!partnership || partnership.status !== 'active') {
       return NextResponse.json(

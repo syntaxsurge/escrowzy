@@ -14,7 +14,7 @@ export const blockchainConfig: BlockchainConfig = {
       name: 'Core Testnet',
       rpcUrl: 'https://rpc.test2.btcs.network',
       explorerUrl: 'https://scan.test2.btcs.network',
-      logo: 'https://scan.coredao.org/static/media/logo.c1d0f86f4f44fb96e27e.svg',
+      logo: 'https://cce0d8d61ee429e248d8dae9ad142327.ipfscdn.io/ipfs/QmdUgiGaD6fGjhb9x1NvfccvEBBFq2YHSm9yb8FNhpwHkW',
       nativeCurrency: {
         name: 'Core',
         symbol: 'tCORE',
@@ -35,7 +35,7 @@ export const blockchainConfig: BlockchainConfig = {
       name: 'Core',
       rpcUrl: 'https://rpc.coredao.org',
       explorerUrl: 'https://scan.coredao.org',
-      logo: 'https://scan.coredao.org/static/media/logo.c1d0f86f4f44fb96e27e.svg',
+      logo: 'https://cce0d8d61ee429e248d8dae9ad142327.ipfscdn.io/ipfs/QmdUgiGaD6fGjhb9x1NvfccvEBBFq2YHSm9yb8FNhpwHkW',
       nativeCurrency: {
         name: 'Core',
         symbol: 'CORE',

@@ -1,6 +1,6 @@
 import { emailConfig } from '@/config/business-constants'
 
-import { db } from '../drizzle'
+import { db } from '../drizzle-node'
 import { teams, teamMembers, teamInvitations } from '../schema'
 import type { User } from '../schema'
 

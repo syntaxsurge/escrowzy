@@ -1,4 +1,6 @@
-import { db } from './drizzle'
+import { eq } from 'drizzle-orm'
+
+import { db } from './drizzle-node'
 import { scheduledTasks } from './schema'
 
 export async function seedScheduledTasks() {
@@ -170,7 +172,7 @@ export async function seedScheduledTasks() {
       await db
         .update(scheduledTasks)
         .set({ nextRunAt: nextRun })
-        .where({ id: task.id })
+        .where(eq(scheduledTasks.id, task.id))
     }
   }
 

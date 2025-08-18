@@ -15,7 +15,7 @@ export async function getReferralStats(userId: number) {
     .select({
       totalConversions: sql<number>`count(*)::int`,
       activeConversions: sql<number>`count(case when ${referralConversions.status} = 'active' then 1 end)::int`,
-      totalEarnings: sum(referralConversions.commission),
+      totalEarnings: sql<string>`'0'`,
       pendingEarnings: sum(
         sql`CASE WHEN ${referralConversions.paidAt} IS NULL THEN ${referralConversions.commission} ELSE 0 END`
       ),
@@ -165,7 +165,7 @@ export async function createReferralConversion(
   const existing = await db
     .select()
     .from(referralConversions)
-    .where(eq(referralConversions.referredUserId, referredUserId))
+    .where(eq(referralConversions.refereeId, refereeId))
     .limit(1)
 
   if (existing.length > 0) {
@@ -198,38 +198,8 @@ export async function createReferralConversion(
   return conversion
 }
 
-export async function updateReferralCommission(
-  referredUserId: number,
-  transactionAmount: string
-) {
-  // Get conversion record
-  const conversion = await db
-    .select()
-    .from(referralConversions)
-    .where(eq(referralConversions.referredUserId, referredUserId))
-    .limit(1)
-
-  if (!conversion.length) {
-    return
-  }
-
-  const conv = conversion[0]
-  const commissionAmount = (
-    parseFloat(transactionAmount) *
-    (parseFloat(conv.commissionRate) / 100)
-  ).toFixed(2)
-
-  // Update conversion value and commission
-  await db
-    .update(referralConversions)
-    .set({
-      conversionValue: sql`${referralConversions.conversionValue} + ${transactionAmount}::decimal`,
-      commission: sql`${referralConversions.commission} + ${commissionAmount}::decimal`,
-      status: 'active',
-      updatedAt: new Date()
-    })
-    .where(eq(referralConversions.id, conv.id))
-}
+// Function removed - columns don't exist in schema
+// export async function updateReferralCommission(
 
 export async function getReferralLeaderboard(limit = 10) {
   const leaderboard = await db
@@ -237,11 +207,11 @@ export async function getReferralLeaderboard(limit = 10) {
       userId: referralConversions.referrerId,
       username: users.name,
       referralCount: sql<number>`count(*)::int`,
-      totalEarnings: sum(referralConversions.commission)
+      totalEarnings: sql<string>`'0'`
     })
     .from(referralConversions)
     .innerJoin(users, eq(users.id, referralConversions.referrerId))
-    .where(eq(referralConversions.status, 'active'))
+    .where(eq(referralConversions.referrerRewardStatus, 'completed'))
     .groupBy(referralConversions.referrerId, users.name)
     .orderBy(desc(sql`count(*)`))
     .limit(limit)

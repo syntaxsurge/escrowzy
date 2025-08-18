@@ -1,10 +1,14 @@
-import 'server-only'
-
 import { execSync } from 'node:child_process'
 
 import postgres from 'postgres'
+import { z } from 'zod'
 
-import { envServer } from '@/config/env.server'
+// Parse environment variables directly for Node.js script
+const envSchema = z.object({
+  POSTGRES_URL: z.string().url()
+})
+
+const env = envSchema.parse(process.env)
 
 /**
  * Completely wipes the current Postgres schema, then runs migrations
@@ -14,7 +18,7 @@ import { envServer } from '@/config/env.server'
  */
 async function main() {
   /* -------------------------------- Drop schema ------------------------------- */
-  const sql = postgres(envServer.POSTGRES_URL, { max: 1 })
+  const sql = postgres(env.POSTGRES_URL, { max: 1 })
   try {
     console.log('⏳  Dropping existing schema…')
     await sql.unsafe('DROP SCHEMA IF EXISTS public CASCADE')

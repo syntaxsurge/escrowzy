@@ -1,7 +1,6 @@
-import 'server-only'
-
-import { db } from '@/lib/db/drizzle'
 import { jobCategories, skills } from '@/lib/db/schema'
+
+import { db } from './drizzle-node'
 
 export async function seedFreelancerData() {
   console.log('🌱 Seeding freelancer marketplace data...')

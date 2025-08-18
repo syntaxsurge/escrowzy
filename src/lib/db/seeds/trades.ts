@@ -1,6 +1,6 @@
 import { getSupportedChainIds, getNativeCurrencySymbol } from '@/lib/blockchain'
 
-import { db } from '../drizzle'
+import { db } from '../drizzle-node'
 import { trades, escrowListings, battles, userTradingStats } from '../schema'
 import type { User } from '../schema'
 

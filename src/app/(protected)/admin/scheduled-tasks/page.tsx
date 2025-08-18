@@ -51,7 +51,7 @@ export default function ScheduledTasksPage() {
     '/api/admin/scheduled-tasks',
     async (url: string) => {
       const response = await api.get(url)
-      return response
+      return response.data || []
     },
     {
       refreshInterval: 30000 // Refresh every 30 seconds

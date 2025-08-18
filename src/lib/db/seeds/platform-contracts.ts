@@ -6,7 +6,7 @@ import {
   getAchievementNFTAddress
 } from '@/lib/blockchain'
 
-import { db } from '../drizzle'
+import { db } from '../drizzle-node'
 import { platformContracts } from '../schema'
 
 // Generate contract seeds from blockchain config

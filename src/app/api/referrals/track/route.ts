@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import {
   trackReferralClick,
-  trackReferralConversion
+  createReferralConversion
 } from '@/lib/db/queries/referrals'
 
 export async function POST(req: NextRequest) {
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       result = await trackReferralClick(code)
     } else if (action === 'conversion' && referredUserId) {
       // Track conversion event
-      result = await trackReferralConversion(code, referredUserId, 'signup')
+      result = await createReferralConversion(code, referredUserId)
     } else {
       return NextResponse.json(
         { error: 'Invalid action type' },
