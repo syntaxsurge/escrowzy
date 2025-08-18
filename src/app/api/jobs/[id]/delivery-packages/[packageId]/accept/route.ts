@@ -2,19 +2,27 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { eq } from 'drizzle-orm'
 
-import { db } from '@/lib/db'
+import { db } from '@/lib/db/drizzle'
 import { deliveryPackages, jobPostings } from '@/lib/db/schema'
-import { requireAuth } from '@/lib/middleware/auth'
+import { getUser } from '@/services/user'
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; packageId: string }> }
 ) {
   try {
-    const { id, packageId } = await params
-    const user = await requireAuth(request)
+    const { id, packageId: packageIdParam } = await params
+    const user = await getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const jobId = parseInt(id)
-    const packageId = parseInt(packageId)
+    const packageId = parseInt(packageIdParam)
     const body = await request.json()
 
     // Verify client access

@@ -55,7 +55,15 @@ interface SocialShareProps {
   trackShares?: boolean
 }
 
-const SHARE_PLATFORMS = {
+const SHARE_PLATFORMS: Record<
+  string,
+  {
+    name: string
+    icon: any
+    color: string
+    shareUrl: (...args: any[]) => string
+  }
+> = {
   twitter: {
     name: 'Twitter',
     icon: Twitter,
@@ -67,7 +75,7 @@ const SHARE_PLATFORMS = {
     name: 'Facebook',
     icon: Facebook,
     color: 'text-[#1877F2]',
-    shareUrl: (url: string) =>
+    shareUrl: (url: string, _text?: string, _hashtags?: string[]) =>
       `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
   },
   linkedin: {
@@ -81,14 +89,14 @@ const SHARE_PLATFORMS = {
     name: 'WhatsApp',
     icon: MessageSquare,
     color: 'text-[#25D366]',
-    shareUrl: (url: string, text: string) =>
+    shareUrl: (url: string, text: string, _hashtags?: string[]) =>
       `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`
   },
   telegram: {
     name: 'Telegram',
     icon: Send,
     color: 'text-[#0088cc]',
-    shareUrl: (url: string, text: string) =>
+    shareUrl: (url: string, text: string, _hashtags?: string[]) =>
       `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`
   },
   email: {
@@ -184,8 +192,7 @@ export function SocialSharing({
       setTimeout(() => setCopied(false), 2000)
       toast({
         title: 'Link copied!',
-        description: 'The link has been copied to your clipboard.',
-        duration: 2000
+        description: 'The link has been copied to your clipboard.'
       })
       trackShare('copy')
     } catch (error) {
@@ -326,7 +333,7 @@ export function SocialSharing({
               </div>
 
               {/* Native share (mobile) */}
-              {typeof navigator !== 'undefined' && navigator.share && (
+              {typeof navigator !== 'undefined' && 'share' in navigator && (
                 <Button
                   onClick={handleNativeShare}
                   className='w-full'
@@ -389,7 +396,7 @@ export function SocialSharing({
           )}
         </DropdownMenuItem>
 
-        {typeof navigator !== 'undefined' && navigator.share && (
+        {typeof navigator !== 'undefined' && 'share' in navigator && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem

@@ -256,7 +256,10 @@ export async function getUserReferralStats(userId: number) {
           )
       : []
 
-  const totalClicks = links.reduce((sum, link) => sum + link.clickCount, 0)
+  const totalClicks = links.reduce(
+    (sum, link) => sum + (link.clickCount || 0),
+    0
+  )
   const totalConversions = conversions.length
   const totalEarnings = links.reduce((sum, link) => {
     const earnings = link.totalEarnings
@@ -286,7 +289,11 @@ export async function getUserReferralStats(userId: number) {
     claimedRewards,
     links,
     recentConversions: conversions
-      .sort((a, b) => b.convertedAt.getTime() - a.convertedAt.getTime())
+      .sort((a, b) => {
+        const bTime = b.convertedAt ? b.convertedAt.getTime() : 0
+        const aTime = a.convertedAt ? a.convertedAt.getTime() : 0
+        return bTime - aTime
+      })
       .slice(0, 10)
   }
 }

@@ -19,7 +19,9 @@ export const ChainConfigSchema = z.object({
   contractAddresses: z.object({
     subscriptionManager: z.string().optional().default(''),
     escrowCore: z.string().optional().default(''),
-    achievementNFT: z.string().optional().default('')
+    achievementNFT: z.string().optional().default(''),
+    milestoneEscrow: z.string().optional().default(''),
+    reputationRegistry: z.string().optional().default('')
   })
 })
 

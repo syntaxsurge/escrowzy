@@ -13,7 +13,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string; bidId: string }> }
 ) {
   try {
-    const { id, bidId } = await params
+    const { id, bidId: bidIdParam } = await params
     const user = await getUser()
 
     if (!user) {
@@ -24,7 +24,7 @@ export async function GET(
     }
 
     const jobId = parseInt(id)
-    const bidId = parseInt(bidId)
+    const bidId = parseInt(bidIdParam)
 
     if (isNaN(jobId) || isNaN(bidId)) {
       return NextResponse.json(
@@ -65,10 +65,9 @@ export async function GET(
     const bidMessages = await db
       .select({
         id: messages.id,
-        bidId: messages.relatedId,
+        bidId: messages.bidId,
         senderId: messages.senderId,
-        message: messages.message,
-        attachments: messages.attachments,
+        message: messages.content,
         messageType: messages.messageType,
         metadata: messages.metadata,
         createdAt: messages.createdAt,
@@ -81,10 +80,7 @@ export async function GET(
       .from(messages)
       .leftJoin(users, eq(messages.senderId, users.id))
       .where(
-        and(
-          eq(messages.relatedId, bidId),
-          eq(messages.relatedType, 'bid_negotiation')
-        )
+        and(eq(messages.bidId, bidId), eq(messages.contextType, 'job_proposal'))
       )
       .orderBy(messages.createdAt)
 
@@ -107,6 +103,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string; bidId: string }> }
 ) {
   try {
+    const { id, bidId: bidIdParam } = await params
     const user = await getUser()
 
     if (!user) {
@@ -117,7 +114,7 @@ export async function POST(
     }
 
     const jobId = parseInt(id)
-    const bidId = parseInt(bidId)
+    const bidId = parseInt(bidIdParam)
 
     if (isNaN(jobId) || isNaN(bidId)) {
       return NextResponse.json(
@@ -161,15 +158,13 @@ export async function POST(
     const [newMessage] = await db
       .insert(messages)
       .values({
+        contextType: 'job_proposal',
+        contextId: bidId.toString(),
         senderId: user.id,
-        receiverId: user.id === job.clientId ? bid.freelancerId : job.clientId,
-        relatedType: 'bid_negotiation',
-        relatedId: bidId,
-        message,
+        content: message,
         messageType,
         metadata: metadata || {},
-        attachments: attachments || [],
-        isRead: false
+        bidId
       })
       .returning()
 

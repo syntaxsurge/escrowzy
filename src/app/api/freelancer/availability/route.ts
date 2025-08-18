@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const profile = await db
       .select()
       .from(freelancerProfiles)
-      .where(eq(freelancerProfiles.userId, auth.userId))
+      .where(eq(freelancerProfiles.userId, auth.id))
       .limit(1)
 
     if (!profile || profile.length === 0) {
@@ -54,7 +54,7 @@ export async function PUT(request: NextRequest) {
     const profile = await db
       .select()
       .from(freelancerProfiles)
-      .where(eq(freelancerProfiles.userId, auth.userId))
+      .where(eq(freelancerProfiles.userId, auth.id))
       .limit(1)
 
     if (!profile || profile.length === 0) {
@@ -73,7 +73,7 @@ export async function PUT(request: NextRequest) {
           ? Math.floor(body.hoursPerWeek / 8)
           : profile[0].responseTime
       })
-      .where(eq(freelancerProfiles.userId, auth.userId))
+      .where(eq(freelancerProfiles.userId, auth.id))
       .returning()
 
     return apiResponses.success({

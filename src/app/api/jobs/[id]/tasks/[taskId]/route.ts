@@ -2,19 +2,26 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { eq } from 'drizzle-orm'
 
-import { db } from '@/lib/db'
+import { db } from '@/lib/db/drizzle'
 import { jobPostings, jobTasks } from '@/lib/db/schema'
-import { requireAuth } from '@/lib/middleware/auth'
+import { getUser } from '@/services/user'
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; taskId: string }> }
 ) {
   try {
-    const { id, taskId } = await params
-    const user = await requireAuth(request)
+    const { id, taskId: taskIdParam } = await params
+    const user = await getUser()
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const jobId = parseInt(id)
-    const taskId = parseInt(taskId)
+    const taskId = parseInt(taskIdParam)
     const body = await request.json()
 
     // Verify access
@@ -98,9 +105,17 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; taskId: string }> }
 ) {
   try {
-    const user = await requireAuth(request)
+    const { id, taskId: taskIdParam } = await params
+    const user = await getUser()
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const jobId = parseInt(id)
-    const taskId = parseInt(taskId)
+    const taskId = parseInt(taskIdParam)
 
     // Verify access
     const job = await db.query.jobPostings.findFirst({

@@ -37,18 +37,19 @@ interface Recommendation {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await verifySession()
-    if (!session || Number(params.id) !== session.userId) {
+    if (!session || Number(id) !== session.user.id) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    const freelancerId = Number(params.id)
+    const freelancerId = Number(id)
     const recommendations: Recommendation[] = []
 
     // Get freelancer profile
@@ -111,7 +112,7 @@ export async function GET(
         skillName: skills.name,
         yearsOfExperience: freelancerSkills.yearsOfExperience,
         skillLevel: freelancerSkills.skillLevel,
-        verified: freelancerSkills.verified
+        verified: freelancerSkills.isVerified
       })
       .from(freelancerSkills)
       .leftJoin(skills, eq(freelancerSkills.skillId, skills.id))
@@ -241,7 +242,7 @@ export async function GET(
     }
 
     // 4. Pricing Strategy
-    if (profile.hourlyRate && profile.hourlyRate < 30) {
+    if (profile.hourlyRate && parseFloat(profile.hourlyRate) < 30) {
       recommendations.push({
         id: 'pricing_increase',
         type: 'pricing',

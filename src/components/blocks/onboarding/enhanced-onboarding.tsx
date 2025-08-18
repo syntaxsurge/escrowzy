@@ -30,9 +30,8 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
-import { useApiRequest } from '@/hooks/use-api'
 import { useToast } from '@/hooks/use-toast'
-import { cn } from '@/lib'
+import { cn } from '@/lib/utils'
 
 interface OnboardingStep {
   id: number
@@ -76,26 +75,42 @@ export function EnhancedOnboarding({
   const [progress, setProgress] = useState<OnboardingProgress | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const { mutate: completeStep } = useApiRequest({
-    url: '/api/onboarding/complete',
-    method: 'POST',
-    onSuccess: data => {
-      updateStepStatus(currentStepIndex, 'completed')
-      toast({
-        title: 'Step Completed!',
-        description: `You earned ${data.xpReward} XP!`,
-        duration: 3000
+  const completeStep = async (stepKey: string) => {
+    try {
+      const response = await fetch('/api/onboarding/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stepKey })
       })
-    }
-  })
+      const data = await response.json()
 
-  const { mutate: skipStep } = useApiRequest({
-    url: '/api/onboarding/skip',
-    method: 'POST',
-    onSuccess: () => {
-      updateStepStatus(currentStepIndex, 'skipped')
+      if (response.ok) {
+        updateStepStatus(currentStepIndex, 'completed')
+        toast({
+          title: 'Step Completed!',
+          description: `You earned ${data.xpReward} XP!`
+        })
+      }
+    } catch (error) {
+      console.error('Failed to complete step:', error)
     }
-  })
+  }
+
+  const skipStep = async (stepKey: string) => {
+    try {
+      const response = await fetch('/api/onboarding/skip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stepKey })
+      })
+
+      if (response.ok) {
+        updateStepStatus(currentStepIndex, 'skipped')
+      }
+    } catch (error) {
+      console.error('Failed to skip step:', error)
+    }
+  }
 
   // Fetch onboarding progress
   useEffect(() => {
@@ -158,7 +173,7 @@ export function EnhancedOnboarding({
     // Complete current step
     const currentStep = progress.steps[currentStepIndex]
     if (currentStep && !currentStep.completed && !currentStep.skipped) {
-      completeStep({ stepId: currentStep.id })
+      completeStep(currentStep.key)
     }
 
     // Move to next step
@@ -174,7 +189,7 @@ export function EnhancedOnboarding({
 
     const currentStep = progress.steps[currentStepIndex]
     if (currentStep) {
-      skipStep({ stepId: currentStep.id })
+      skipStep(currentStep.key)
     }
 
     // Move to next step or complete
@@ -192,8 +207,7 @@ export function EnhancedOnboarding({
     // Show completion celebration
     toast({
       title: '🎉 Onboarding Complete!',
-      description: "You're all set to start using the platform.",
-      duration: 5000
+      description: "You're all set to start using the platform."
     })
   }
 

@@ -11,14 +11,14 @@ import { submitFreelancerReview } from '@/services/reviews'
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession()
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
     const validatedData = freelancerReviewSchema.parse(body)
 
-    const result = await submitFreelancerReview(session.userId, validatedData)
+    const result = await submitFreelancerReview(session.user.id, validatedData)
 
     if (!result.success) {
       return NextResponse.json({ error: result.message }, { status: 400 })

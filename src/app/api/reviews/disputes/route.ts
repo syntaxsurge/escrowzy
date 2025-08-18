@@ -1,24 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { eq } from 'drizzle-orm'
+
 import { getServerSession } from '@/lib/auth'
+import { db } from '@/lib/db/drizzle'
 import {
   createReviewDispute,
   getDisputesByUser,
   getPendingDisputes
 } from '@/lib/db/queries/review-disputes'
+import { users } from '@/lib/db/schema'
 import { reviewDisputeSchema } from '@/lib/schemas/review-disputes'
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession()
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
     const validatedData = reviewDisputeSchema.parse(body)
 
-    const result = await createReviewDispute(session.userId, validatedData)
+    const result = await createReviewDispute(session.user.id, validatedData)
 
     if (!result.success) {
       return NextResponse.json({ error: result.message }, { status: 400 })
@@ -44,19 +48,28 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession()
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const searchParams = request.nextUrl.searchParams
     const type = searchParams.get('type')
 
-    if (type === 'pending' && session.user?.role === 'admin') {
-      const disputes = await getPendingDisputes()
-      return NextResponse.json({ disputes })
+    if (type === 'pending') {
+      // Check if user is admin
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, session.user.id))
+        .limit(1)
+
+      if (user && user.role === 'admin') {
+        const disputes = await getPendingDisputes()
+        return NextResponse.json({ disputes })
+      }
     }
 
-    const disputes = await getDisputesByUser(session.userId)
+    const disputes = await getDisputesByUser(session.user.id)
     return NextResponse.json({ disputes })
   } catch (error) {
     console.error('Error fetching disputes:', error)

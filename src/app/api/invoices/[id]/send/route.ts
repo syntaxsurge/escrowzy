@@ -80,7 +80,6 @@ export async function POST(
       .update(invoices)
       .set({
         status: 'sent',
-        sentAt: new Date(),
         updatedAt: new Date()
       })
       .where(eq(invoices.id, invoiceId))
@@ -101,7 +100,7 @@ export async function POST(
           <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
             <p><strong>Amount:</strong> ${invoice.amount} ${invoice.currency}</p>
-            <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
+            <p><strong>Due Date:</strong> ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'Not specified'}</p>
             ${invoice.description ? `<p><strong>Description:</strong> ${invoice.description}</p>` : ''}
           </div>
           

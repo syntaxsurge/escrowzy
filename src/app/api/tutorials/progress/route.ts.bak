@@ -1,0 +1,40 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+import { getSession } from '@/lib/auth'
+import { getUserTutorialProgress } from '@/lib/db/queries/tutorials'
+
+export async function GET(req: NextRequest) {
+  try {
+    const _session = await getSession()
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    const searchParams = req.nextUrl.searchParams
+    const tutorialId = searchParams.get('tutorialId')
+
+    if (!tutorialId) {
+      return NextResponse.json(
+        { error: 'Tutorial ID is required' },
+        { status: 400 }
+      )
+    }
+
+    const progress = await getUserTutorialProgress(
+      session.user.id,
+      parseInt(tutorialId)
+    )
+
+    return NextResponse.json(progress)
+  } catch (_error) {
+    console.error('Failed to fetch tutorial progress:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch tutorial progress' },
+      { status: 500 }
+    )
+  }
+}

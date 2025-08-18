@@ -22,7 +22,6 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useSession } from '@/hooks/use-session'
-
 // Portfolio upload will be implemented in future update
 // Education form will be implemented in future update
 import { freelancerProfileSchema } from '@/lib/schemas/freelancer'

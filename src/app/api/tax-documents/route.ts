@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type')
 
     // Build query conditions
-    const conditions = [eq(taxDocuments.freelancerId, user.id)]
+    const conditions = [eq(taxDocuments.userId, user.id)]
 
     if (year) {
       conditions.push(eq(taxDocuments.year, parseInt(year)))
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       .from(taxDocuments)
       .where(
         and(
-          eq(taxDocuments.freelancerId, user.id),
+          eq(taxDocuments.userId, user.id),
           eq(taxDocuments.year, validatedData.year),
           eq(taxDocuments.documentType, validatedData.documentType)
         )
@@ -167,8 +167,8 @@ export async function POST(request: NextRequest) {
         },
         recipientInfo: {
           name: user.name || 'N/A',
-          address: user.address || 'N/A',
-          tin: user.taxId || 'N/A'
+          address: 'N/A', // Would be fetched from user profile in production
+          tin: 'N/A' // Would be fetched from user tax info in production
         }
       }
     } else if (validatedData.documentType === 'w9') {
@@ -198,10 +198,10 @@ export async function POST(request: NextRequest) {
     const [document] = await db
       .insert(taxDocuments)
       .values({
-        freelancerId: user.id,
+        userId: user.id,
         year: validatedData.year,
         documentType: validatedData.documentType,
-        metadata: documentContent,
+        taxInfo: documentContent,
         status: 'generated',
         documentUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/tax-documents/${user.id}/${validatedData.year}/${validatedData.documentType}` // This would be actual file URL in production
       })

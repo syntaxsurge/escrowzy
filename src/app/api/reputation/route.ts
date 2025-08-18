@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { getAuthSession } from '@/lib/auth'
+import { db } from '@/lib/db/drizzle'
 import {
   getUserReputation,
   getTopReputationUsers,
   getUserReputationNFTs
 } from '@/lib/db/queries/reputation'
+import { users } from '@/lib/db/schema'
 import { reputationSyncService } from '@/services/reputation-sync.service'
 
 const querySchema = z.object({
@@ -118,8 +121,16 @@ export async function POST(request: NextRequest) {
     const userId = body.userId || session.user.id
 
     // Only allow syncing own reputation or admin can sync any
-    if (userId !== session.user.id && session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (userId !== session.user.id) {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, session.user.id))
+        .limit(1)
+
+      if (!user || user.role !== 'admin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
     }
 
     // Perform reputation sync

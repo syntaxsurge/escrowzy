@@ -35,7 +35,6 @@ import {
   useWizard
 } from '@/components/ui/wizard'
 import { useSession } from '@/hooks/use-session'
-
 // Portfolio upload will be implemented in future update
 import { freelancerProfileSchema } from '@/lib/schemas/freelancer'
 

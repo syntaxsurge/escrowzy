@@ -11,7 +11,8 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
+    const params = await context.params
+    const { id } = params
     const session = await getSession()
     if (!session) {
       return NextResponse.json(
@@ -20,7 +21,6 @@ export async function GET(
       )
     }
 
-    const params = await context.params
     const userId = parseInt(id)
 
     // Check if user is requesting their own stats

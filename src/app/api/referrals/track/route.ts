@@ -20,16 +20,10 @@ export async function POST(req: NextRequest) {
 
     if (action === 'click') {
       // Track click event
-      const ipAddress =
-        req.headers.get('x-forwarded-for') ||
-        req.headers.get('x-real-ip') ||
-        'unknown'
-      const userAgent = req.headers.get('user-agent') || 'unknown'
-
-      result = await trackReferralClick(code, ipAddress, userAgent)
+      result = await trackReferralClick(code)
     } else if (action === 'conversion' && referredUserId) {
       // Track conversion event
-      result = await trackReferralConversion(code, referredUserId)
+      result = await trackReferralConversion(code, referredUserId, 'signup')
     } else {
       return NextResponse.json(
         { error: 'Invalid action type' },

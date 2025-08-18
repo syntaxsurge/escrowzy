@@ -5,8 +5,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { eq } from 'drizzle-orm'
 
-import { requireAuth } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { getUserFromRequest } from '@/lib/auth'
+import { db } from '@/lib/db/drizzle'
 import { fileVersions, jobPostings } from '@/lib/db/schema'
 
 export async function GET(
@@ -15,7 +15,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const user = await requireAuth(request)
+    const user = await getUserFromRequest()
     const fileVersionId = parseInt(id)
 
     // Get file version with job info
@@ -38,7 +38,7 @@ export async function GET(
       where: eq(jobPostings.id, fileVersion.jobId)
     })
 
-    if (!job || (job.clientId !== user.id && job.freelancerId !== user.id)) {
+    if (!job || (job.clientId !== user?.id && job.freelancerId !== user?.id)) {
       return NextResponse.json(
         { success: false, error: 'Access denied' },
         { status: 403 }

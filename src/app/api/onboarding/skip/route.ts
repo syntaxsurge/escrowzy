@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { requireAuth } from '@/lib/auth/middleware'
 import { skipOnboardingStep } from '@/lib/db/queries/onboarding'
+import { getUser } from '@/services/user'
 
 export async function POST(req: NextRequest) {
   try {
-    const { user } = await requireAuth(req)
+    const user = await getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { stepId } = await req.json()
 
     if (!stepId) {

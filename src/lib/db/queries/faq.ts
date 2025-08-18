@@ -7,7 +7,7 @@ import {
   eq,
   ilike,
   inArray,
-  isNull,
+  isNotNull,
   or,
   sql
 } from 'drizzle-orm'
@@ -369,7 +369,7 @@ export async function getFaqFeedback(faqId?: number, limit = 50) {
     })
     .from(faqVotes)
     .leftJoin(faqItems, eq(faqVotes.faqId, faqItems.id))
-    .where(and(...conditions, isNull(faqVotes.feedback).not()))
+    .where(and(...conditions, isNotNull(faqVotes.feedback)))
     .orderBy(desc(faqVotes.createdAt))
     .limit(limit)
 }

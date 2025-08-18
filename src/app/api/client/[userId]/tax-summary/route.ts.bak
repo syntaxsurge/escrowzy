@@ -1,0 +1,263 @@
+import 'server-only'
+
+import { NextRequest, NextResponse } from 'next/server'
+
+import { and, eq, gte, lte, sql } from 'drizzle-orm'
+
+import { withAuth } from '@/lib/api/auth-middleware'
+import { db } from '@/lib/db/drizzle'
+import {
+  jobBids,
+  jobCategories,
+  jobMilestones,
+  jobPostings,
+  users
+} from '@/lib/db/schema'
+
+interface TaxSummary {
+  year: number
+  totalSpent: number
+  platformFees: number
+  netPayments: number
+  categorizedExpenses: Array<{
+    category: string
+    amount: number
+    percentage: number
+  }>
+  quarterlyBreakdown: Array<{
+    quarter: string
+    spent: number
+    fees: number
+    net: number
+  }>
+  vendorPayments: Array<{
+    vendorId: number
+    vendorName: string
+    vendorTaxId: string | null
+    totalPaid: number
+    paymentsCount: number
+  }>
+  deductibleExpenses: {
+    platformFees: number
+    serviceFees: number
+    contractorPayments: number
+    total: number
+  }
+}
+
+export const GET = withAuth(
+  async (
+    request: NextRequest,
+    context: { session: any; params?: { userId: string } }
+  ) => {
+    try {
+      const clientId = parseInt(context.params?.userId || '0')
+      const { searchParams } = new URL(request.url)
+
+      const year = parseInt(
+        searchParams.get('year') || new Date().getFullYear().toString()
+      )
+      const startDate = new Date(year, 0, 1)
+      const endDate = new Date(year, 11, 31, 23, 59, 59)
+
+      // Get all approved milestones for the year
+      const yearlyPayments = await db
+        .select({
+          milestone: jobMilestones,
+          job: jobPostings,
+          category: jobCategories,
+          freelancer: users,
+          quarter: sql<string>`EXTRACT(QUARTER FROM ${jobMilestones.createdAt})`,
+          month: sql<string>`EXTRACT(MONTH FROM ${jobMilestones.createdAt})`
+        })
+        .from(jobMilestones)
+        .innerJoin(jobPostings, eq(jobPostings.id, jobMilestones.jobId))
+        .leftJoin(jobCategories, eq(jobCategories.id, jobPostings.categoryId))
+        .innerJoin(
+          jobBids,
+          and(eq(jobBids.jobId, jobPostings.id), eq(jobBids.status, 'accepted'))
+        )
+        .innerJoin(users, eq(users.id, jobBids.freelancerId))
+        .where(
+          and(
+            eq(jobPostings.clientId, clientId),
+            eq(jobMilestones.status, 'approved'),
+            gte(jobMilestones.createdAt, startDate),
+            lte(jobMilestones.createdAt, endDate)
+          )
+        )
+
+      // Calculate totals
+      const totalSpent = yearlyPayments.reduce(
+        (sum, payment) => sum + parseFloat(payment.milestone.amount),
+        0
+      )
+      const platformFees = totalSpent * 0.1 // 10% platform fee
+      const netPayments = totalSpent - platformFees
+
+      // Group by category
+      const categoryMap = new Map<string, number>()
+      yearlyPayments.forEach(payment => {
+        const category = payment.category?.name || 'Uncategorized'
+        const current = categoryMap.get(category) || 0
+        categoryMap.set(
+          category,
+          current + parseFloat(payment.milestone.amount)
+        )
+      })
+
+      const categorizedExpenses = Array.from(categoryMap.entries()).map(
+        ([category, amount]) => ({
+          category,
+          amount,
+          percentage: totalSpent > 0 ? (amount / totalSpent) * 100 : 0
+        })
+      )
+
+      // Group by quarter
+      const quarterMap = new Map<string, { spent: number; count: number }>()
+      yearlyPayments.forEach(payment => {
+        const quarter = `Q${payment.quarter} ${year}`
+        const current = quarterMap.get(quarter) || { spent: 0, count: 0 }
+        quarterMap.set(quarter, {
+          spent: current.spent + parseFloat(payment.milestone.amount),
+          count: current.count + 1
+        })
+      })
+
+      const quarterlyBreakdown = Array.from(quarterMap.entries()).map(
+        ([quarter, data]) => ({
+          quarter,
+          spent: data.spent,
+          fees: data.spent * 0.1,
+          net: data.spent * 0.9
+        })
+      )
+
+      // Group by vendor
+      const vendorMap = new Map<
+        number,
+        { name: string; total: number; count: number }
+      >()
+      yearlyPayments.forEach(payment => {
+        const vendorId = payment.freelancer.id
+        const current = vendorMap.get(vendorId) || {
+          name: payment.freelancer.name || 'Unknown',
+          total: 0,
+          count: 0
+        }
+        vendorMap.set(vendorId, {
+          name: current.name,
+          total: current.total + parseFloat(payment.milestone.amount),
+          count: current.count + 1
+        })
+      })
+
+      const vendorPayments = Array.from(vendorMap.entries())
+        .map(([vendorId, data]) => ({
+          vendorId,
+          vendorName: data.name,
+          vendorTaxId: null, // Would need to be stored in user profile
+          totalPaid: data.total,
+          paymentsCount: data.count
+        }))
+        .filter(vendor => vendor.totalPaid >= 600) // IRS 1099 threshold
+
+      // Calculate deductible expenses
+      const deductibleExpenses = {
+        platformFees,
+        serviceFees: platformFees, // Same as platform fees in this case
+        contractorPayments: netPayments,
+        total: totalSpent
+      }
+
+      const taxSummary: TaxSummary = {
+        year,
+        totalSpent,
+        platformFees,
+        netPayments,
+        categorizedExpenses,
+        quarterlyBreakdown,
+        vendorPayments,
+        deductibleExpenses
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: taxSummary
+      })
+    } catch (_error) {
+      console.error('Failed to generate tax summary:', error)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to generate tax summary'
+        },
+        { status: 500 }
+      )
+    }
+  }
+)
+
+export const POST = withAuth(
+  async (
+    request: NextRequest,
+    context: { session: any; params?: { userId: string } }
+  ) => {
+    try {
+      const clientId = parseInt(context.params?.userId || '0')
+      const body = await request.json()
+      const { year, format } = body
+
+      // Generate tax documents
+      if (format === '1099') {
+        // Generate 1099 forms for vendors who received $600+
+        const taxYear = year || new Date().getFullYear()
+
+        // This would integrate with a tax form generation service
+        const downloadUrl = `/api/client/${clientId}/tax-documents/1099-${taxYear}.pdf`
+
+        return NextResponse.json({
+          success: true,
+          data: { downloadUrl }
+        })
+      }
+
+      if (format === 'summary') {
+        // Generate detailed tax summary PDF
+        const taxYear = year || new Date().getFullYear()
+        const downloadUrl = `/api/client/${clientId}/tax-documents/summary-${taxYear}.pdf`
+
+        return NextResponse.json({
+          success: true,
+          data: { downloadUrl }
+        })
+      }
+
+      if (format === 'csv') {
+        // Export transactions as CSV for accounting software
+        const taxYear = year || new Date().getFullYear()
+        const downloadUrl = `/api/client/${clientId}/tax-documents/transactions-${taxYear}.csv`
+
+        return NextResponse.json({
+          success: true,
+          data: { downloadUrl }
+        })
+      }
+
+      return NextResponse.json(
+        { success: false, error: 'Invalid format' },
+        { status: 400 }
+      )
+    } catch (_error) {
+      console.error('Failed to generate tax documents:', error)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to generate tax documents'
+        },
+        { status: 500 }
+      )
+    }
+  }
+)

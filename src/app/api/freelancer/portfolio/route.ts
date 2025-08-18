@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const profile = await db
       .select()
       .from(freelancerProfiles)
-      .where(eq(freelancerProfiles.userId, auth.userId))
+      .where(eq(freelancerProfiles.userId, auth.id))
       .limit(1)
 
     if (!profile || profile.length === 0) {
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const profile = await db
       .select()
       .from(freelancerProfiles)
-      .where(eq(freelancerProfiles.userId, auth.userId))
+      .where(eq(freelancerProfiles.userId, auth.id))
       .limit(1)
 
     if (!profile || profile.length === 0) {

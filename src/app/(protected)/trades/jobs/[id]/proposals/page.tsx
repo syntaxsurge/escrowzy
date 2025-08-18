@@ -105,7 +105,7 @@ export default function JobProposalsPage() {
     `/api/jobs/${jobId}`,
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? response.job : null
+      return response.success ? (response as any).job : null
     }
   )
 
@@ -118,7 +118,7 @@ export default function JobProposalsPage() {
     `/api/jobs/${jobId}/bids`,
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? response.bids : []
+      return response.success ? (response as any).bids : []
     }
   )
 
@@ -502,12 +502,13 @@ export default function JobProposalsPage() {
                                   {bid.freelancerProfile.rating.toFixed(1)}
                                 </span>
                               )}
-                              {bid.freelancerProfile?.completedJobs > 0 && (
-                                <span className='flex items-center gap-1'>
-                                  <Award className='h-3 w-3' />
-                                  {bid.freelancerProfile.completedJobs} jobs
-                                </span>
-                              )}
+                              {bid.freelancerProfile?.completedJobs &&
+                                bid.freelancerProfile.completedJobs > 0 && (
+                                  <span className='flex items-center gap-1'>
+                                    <Award className='h-3 w-3' />
+                                    {bid.freelancerProfile?.completedJobs} jobs
+                                  </span>
+                                )}
                             </div>
 
                             <Collapsible
@@ -556,23 +557,23 @@ export default function JobProposalsPage() {
                                 )}
 
                                 {bid.attachments &&
-                                  bid.attachments.length > 0 && (
-                                    <div>
-                                      <h4 className='mb-2 font-medium'>
-                                        Attachments
-                                      </h4>
-                                      <div className='flex flex-wrap gap-2'>
-                                        {(bid.attachments as any[]).map(
-                                          (attachment, idx) => (
-                                            <Badge key={idx} variant='outline'>
-                                              <FileText className='mr-1 h-3 w-3' />
-                                              {attachment.name}
-                                            </Badge>
-                                          )
-                                        )}
-                                      </div>
+                                (bid.attachments as any[]).length > 0 ? (
+                                  <div>
+                                    <h4 className='mb-2 font-medium'>
+                                      Attachments
+                                    </h4>
+                                    <div className='flex flex-wrap gap-2'>
+                                      {(bid.attachments as any[]).map(
+                                        (attachment, idx) => (
+                                          <Badge key={idx} variant='outline'>
+                                            <FileText className='mr-1 h-3 w-3' />
+                                            {(attachment as any).name}
+                                          </Badge>
+                                        )
+                                      )}
                                     </div>
-                                  )}
+                                  </div>
+                                ) : null}
                               </CollapsibleContent>
                             </Collapsible>
                           </div>

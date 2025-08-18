@@ -230,13 +230,13 @@ export function useMilestoneEscrow() {
   const { address } = useAccount()
   const { toast } = useToast()
   const publicClient = usePublicClient()
-  const { contractAddresses } = useBlockchainConfig()
+  const config = useBlockchainConfig()
 
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const contractAddress = contractAddresses?.milestoneEscrow as
-    | Address
-    | undefined
+  // Get contract address from the first chain (coreTestnet)
+  const contractAddress = config.chains.coreTestnet?.contractAddresses
+    ?.milestoneEscrow as Address | undefined
 
   // Write contract hooks
   const { writeContract: createMilestones, data: createHash } =

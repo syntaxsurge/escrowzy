@@ -1,13 +1,13 @@
 import { redirect } from 'next/navigation'
 
 import { AdminReviewModeration } from '@/components/blocks/admin/review-moderation'
-import { getServerSession } from '@/lib/auth'
+import { getUser } from '@/services/user'
 
 export default async function AdminReviewsPage() {
-  const session = await getServerSession()
+  const user = await getUser()
 
   // Check if user is admin
-  if (!session || session.user?.role !== 'admin') {
+  if (!user || user.role !== 'admin') {
     redirect('/dashboard')
   }
 

@@ -86,7 +86,7 @@ export default function FreelancerBidsPage() {
     async (url: string) => {
       const response = await api.get(url)
       return response.success
-        ? response.stats
+        ? (response as any).stats
         : {
             totalBids: 0,
             activeBids: 0,
@@ -108,7 +108,7 @@ export default function FreelancerBidsPage() {
       : null,
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? response : { bids: [], total: 0 }
+      return response.success ? (response as any) : { bids: [], total: 0 }
     }
   )
 

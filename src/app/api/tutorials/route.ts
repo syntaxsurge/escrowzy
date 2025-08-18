@@ -1,21 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { getServerSession } from '@/lib/auth/session'
 import { getTutorialsList } from '@/lib/db/queries/tutorials'
 
 export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams
-    const type = searchParams.get('type') as 'interactive' | 'video' | null
     const category = searchParams.get('category')
-
-    const session = await getServerSession(req)
-    const userId = session?.user?.id
+    const difficulty = searchParams.get('difficulty')
 
     const tutorials = await getTutorialsList(
-      userId,
-      type || undefined,
-      category || undefined
+      category || undefined,
+      difficulty || undefined
     )
 
     return NextResponse.json(tutorials)

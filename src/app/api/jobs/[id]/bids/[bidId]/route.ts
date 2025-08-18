@@ -14,9 +14,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string; bidId: string }> }
 ) {
   try {
-    const { id, bidId } = await params
+    const { id, bidId: bidIdParam } = await params
     const jobId = parseInt(id)
-    const bidId = parseInt(bidId)
+    const bidId = parseInt(bidIdParam)
 
     if (isNaN(jobId) || isNaN(bidId)) {
       return NextResponse.json(
@@ -84,8 +84,9 @@ export async function PATCH(
       )
     }
 
+    const { id, bidId: bidIdParam } = await params
     const jobId = parseInt(id)
-    const bidId = parseInt(bidId)
+    const bidId = parseInt(bidIdParam)
 
     if (isNaN(jobId) || isNaN(bidId)) {
       return NextResponse.json(
@@ -335,8 +336,9 @@ export async function DELETE(
       )
     }
 
+    const { id, bidId: bidIdParam } = await params
     const jobId = parseInt(id)
-    const bidId = parseInt(bidId)
+    const bidId = parseInt(bidIdParam)
 
     if (isNaN(jobId) || isNaN(bidId)) {
       return NextResponse.json(

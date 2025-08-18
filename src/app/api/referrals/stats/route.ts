@@ -8,7 +8,7 @@ import {
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(req)
+    const session = await getServerSession()
 
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -21,15 +21,9 @@ export async function GET(req: NextRequest) {
     const type = searchParams.get('type') || 'personal'
 
     if (type === 'leaderboard') {
-      const period =
-        (searchParams.get('period') as
-          | 'daily'
-          | 'weekly'
-          | 'monthly'
-          | 'all_time') || 'monthly'
       const limit = parseInt(searchParams.get('limit') || '10')
 
-      const leaderboard = await getReferralLeaderboard(period, limit)
+      const leaderboard = await getReferralLeaderboard(limit)
 
       return NextResponse.json(leaderboard)
     } else {

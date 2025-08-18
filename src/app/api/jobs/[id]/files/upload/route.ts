@@ -5,14 +5,14 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { eq } from 'drizzle-orm'
 
-import { db } from '@/lib/db'
+import { db } from '@/lib/db/drizzle'
 import {
   attachments,
   fileVersions,
   jobPostings,
   messages
 } from '@/lib/db/schema'
-import { requireAuth } from '@/lib/middleware/auth'
+import { getUser } from '@/services/user'
 
 export async function POST(
   request: NextRequest,
@@ -20,7 +20,14 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const user = await requireAuth(request)
+    const user = await getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
     const jobId = parseInt(id)
 
     // Verify access

@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
             jobId: record.job.id,
             milestoneId: record.milestone.id,
             amount: record.milestone.amount,
-            tip: '0',
+            netAmount: record.milestone.amount,
             currency: 'USD',
             status: 'completed',
             description: `Auto-released payment for milestone: ${record.milestone.title}`,

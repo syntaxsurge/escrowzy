@@ -6,14 +6,14 @@ import { getReviewAnalytics } from '@/lib/db/queries/reviews'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession()
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const searchParams = request.nextUrl.searchParams
     const userId = searchParams.get('userId')
       ? parseInt(searchParams.get('userId')!)
-      : session.userId
+      : session.user.id
     const dateFrom = searchParams.get('dateFrom')
       ? new Date(searchParams.get('dateFrom')!)
       : undefined

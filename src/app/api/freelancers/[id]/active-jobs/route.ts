@@ -193,7 +193,6 @@ export async function GET(
           submittedAt: jobMilestones.submittedAt,
           approvedAt: jobMilestones.approvedAt,
           autoReleaseEnabled: jobMilestones.autoReleaseEnabled,
-          autoReleaseDate: jobMilestones.autoReleaseDate,
           jobTitle: sql<string>`(
             SELECT title FROM ${jobPostings} WHERE id = ${jobMilestones.jobId}
           )`

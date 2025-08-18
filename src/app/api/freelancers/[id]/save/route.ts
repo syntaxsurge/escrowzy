@@ -48,6 +48,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(

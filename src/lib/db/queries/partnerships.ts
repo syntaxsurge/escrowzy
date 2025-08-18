@@ -152,7 +152,7 @@ export async function trackPartnerCommission(
   const partner = await getPartner(data.partnerId)
   if (partner) {
     const totalRevenue =
-      parseFloat(partner.totalRevenue) + parseFloat(data.amount)
+      parseFloat(partner.totalRevenue || '0') + parseFloat(data.amount)
 
     await db
       .update(partners)
@@ -341,8 +341,8 @@ export async function updatePartnerTier(partnerId: number): Promise<Partner> {
   }
 
   const newTier = calculatePartnerTier(
-    parseFloat(partner.totalRevenue),
-    partner.totalReferrals
+    parseFloat(partner.totalRevenue || '0'),
+    partner.totalReferrals || 0
   )
 
   if (newTier !== partner.tier) {
@@ -386,3 +386,8 @@ export async function getPartnerPerformanceMetrics(
     .groupBy(sql`date(${partnerCommissions.createdAt})`)
     .orderBy(asc(sql`date(${partnerCommissions.createdAt})`))
 }
+
+// Aliases for compatibility
+export const applyForPartnership = createPartner
+export const getPartnershipByUserId = getPartner
+export const getPartnershipStats = getPartnerStats

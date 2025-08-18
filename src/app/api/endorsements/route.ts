@@ -23,7 +23,7 @@ const endorsementSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession()
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user can endorse
     const { canEndorse, reason } = await canEndorseUser(
-      session.userId,
+      session.user.id,
       validatedData.endorsedUserId
     )
 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     const endorsement = await createSkillEndorsement({
-      endorserId: session.userId,
+      endorserId: session.user.id,
       ...validatedData
     })
 

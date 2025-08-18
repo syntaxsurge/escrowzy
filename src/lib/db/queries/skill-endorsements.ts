@@ -22,7 +22,7 @@ export interface EndorsementWithDetails extends SkillEndorsement {
   skill: {
     id: number
     name: string
-    category: string | null
+    categoryId: number | null
   }
   job?: {
     id: number
@@ -109,7 +109,11 @@ export async function getUserSkillEndorsements(
         walletAddress: users.walletAddress,
         avatarPath: users.avatarPath
       },
-      skill: skills,
+      skill: {
+        id: skills.id,
+        name: skills.name,
+        categoryId: skills.categoryId
+      },
       job: jobPostings
     })
     .from(skillEndorsements)
@@ -128,11 +132,7 @@ export async function getUserSkillEndorsements(
       walletAddress: '',
       avatarPath: null
     },
-    skill: {
-      id: row.skill.id,
-      name: row.skill.name,
-      category: row.skill.categoryId
-    },
+    skill: row.skill,
     job: row.job
       ? {
           id: row.job.id,
@@ -219,7 +219,7 @@ export async function deleteSkillEndorsement(
       )
     )
 
-  return result.rowCount > 0
+  return result.length > 0
 }
 
 export async function verifyEndorsement(
@@ -284,7 +284,11 @@ export async function getEndorsementsBySkill(
         walletAddress: users.walletAddress,
         avatarPath: users.avatarPath
       },
-      skill: skills,
+      skill: {
+        id: skills.id,
+        name: skills.name,
+        categoryId: skills.categoryId
+      },
       job: jobPostings
     })
     .from(skillEndorsements)
@@ -312,11 +316,7 @@ export async function getEndorsementsBySkill(
       walletAddress: '',
       avatarPath: null
     },
-    skill: {
-      id: row.skill.id,
-      name: row.skill.name,
-      category: row.skill.categoryId
-    },
+    skill: row.skill,
     job: row.job
       ? {
           id: row.job.id,
@@ -385,11 +385,7 @@ export async function getMutualEndorsements(
         walletAddress: '',
         avatarPath: null
       },
-      skill: {
-        id: row.skill.id,
-        name: row.skill.name,
-        category: row.skill.categoryId
-      },
+      skill: row.skill,
       job: null
     })),
     user2ToUser1: endorsements2to1.map(row => ({
@@ -406,11 +402,7 @@ export async function getMutualEndorsements(
         walletAddress: '',
         avatarPath: null
       },
-      skill: {
-        id: row.skill.id,
-        name: row.skill.name,
-        category: row.skill.categoryId
-      },
+      skill: row.skill,
       job: null
     })),
     mutualSkills

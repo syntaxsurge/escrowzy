@@ -14,9 +14,9 @@ export async function POST(
   request: Request,
   props: { params: Promise<{ id: string }> }
 ) {
-  const params = await props.params
   try {
-    const { id } = await params
+    const params = await props.params
+    const { id } = params
     const session = await getSession()
     if (!session) {
       return NextResponse.json(

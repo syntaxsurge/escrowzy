@@ -36,6 +36,7 @@ import {
   getFreelancerStats,
   getFreelancerReviews
 } from '@/lib/db/queries/freelancers'
+import { getFreelancerPlatformStats } from '@/lib/db/queries/user-stats'
 
 export default async function FreelancerProfilePage() {
   const auth = await getAuth()
@@ -50,6 +51,7 @@ export default async function FreelancerProfilePage() {
 
   const stats = await getFreelancerStats(auth.id)
   const reviews = await getFreelancerReviews(auth.id, { limit: 5 })
+  const platformStats = await getFreelancerPlatformStats()
 
   const averageRating =
     reviews.length > 0
@@ -141,7 +143,7 @@ export default async function FreelancerProfilePage() {
                 </div>
               </div>
 
-              <ProfileCompleteness profile={profile} />
+              <ProfileCompleteness profile={profile as any} />
 
               <div className='space-y-3'>
                 <h3 className='font-semibold'>Skills</h3>
@@ -423,6 +425,57 @@ export default async function FreelancerProfilePage() {
                   View Dashboard
                 </Link>
               </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Platform Statistics</CardTitle>
+            </CardHeader>
+            <CardContent className='space-y-4'>
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between text-sm'>
+                  <span className='text-muted-foreground'>
+                    Active Freelancers
+                  </span>
+                  <span className='font-semibold'>
+                    {platformStats.activeFreelancers.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between text-sm'>
+                  <span className='text-muted-foreground'>Average Rating</span>
+                  <div className='flex items-center gap-1'>
+                    <Star className='h-3 w-3 fill-yellow-500 text-yellow-500' />
+                    <span className='font-semibold'>
+                      {platformStats.averageRating > 0
+                        ? platformStats.averageRating.toFixed(1)
+                        : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between text-sm'>
+                  <span className='text-muted-foreground'>
+                    Average Success Rate
+                  </span>
+                  <span className='font-semibold'>
+                    {platformStats.averageSuccessRate}%
+                  </span>
+                </div>
+              </div>
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between text-sm'>
+                  <span className='text-muted-foreground'>
+                    Total Freelancers
+                  </span>
+                  <span className='font-semibold'>
+                    {platformStats.totalFreelancers.toLocaleString()}
+                  </span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 

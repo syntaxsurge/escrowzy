@@ -1,0 +1,403 @@
+import 'server-only'
+
+import { NextRequest, NextResponse } from 'next/server'
+
+import { and, count, desc, eq, inArray, sql } from 'drizzle-orm'
+
+import { withAuth } from '@/lib/api/auth-middleware'
+import { db } from '@/lib/db/drizzle'
+import {
+  freelancerProfiles,
+  freelancerReviews,
+  freelancerSkills,
+  jobBids,
+  jobInvitations,
+  jobMilestones,
+  jobPostings,
+  skills,
+  users
+} from '@/lib/db/schema'
+
+interface TalentPipeline {
+  savedFreelancers: Array<{
+    id: number
+    name: string
+    title: string | null
+    skills: string[]
+    hourlyRate: number | null
+    availability: string
+    rating: number
+    completedJobs: number
+    lastWorkedDate: Date | null
+  }>
+  invitedFreelancers: Array<{
+    id: number
+    name: string
+    jobId: number
+    jobTitle: string
+    invitationId: number
+    invitationStatus: string
+    invitedAt: Date
+  }>
+  shortlistedCandidates: Array<{
+    id: number
+    name: string
+    jobId: number
+    jobTitle: string
+    bidId: number
+    bidAmount: string
+    deliveryDays: number
+    proposalSummary: string
+  }>
+  interviewScheduled: Array<{
+    freelancerId: number
+    freelancerName: string
+    jobId: number
+    jobTitle: string
+    interviewDate: Date
+    interviewType: string
+    notes: string | null
+  }>
+  talentRecommendations: Array<{
+    id: number
+    name: string
+    title: string | null
+    matchScore: number
+    matchedSkills: string[]
+    hourlyRate: number | null
+    rating: number
+    completedProjects: number
+    successRate: number
+  }>
+}
+
+export const GET = withAuth(
+  async (
+    request: NextRequest,
+    context: { session: any; params?: { userId: string } }
+  ) => {
+    try {
+      const clientId = parseInt(context.params?.userId || '0')
+      const { searchParams } = new URL(request.url)
+      const action = searchParams.get('action')
+
+      // Get client's job IDs for context
+      const clientJobs = await db
+        .select({ id: jobPostings.id })
+        .from(jobPostings)
+        .where(eq(jobPostings.clientId, clientId))
+
+      const jobIds = clientJobs.map(j => j.id)
+
+      if (action === 'pipeline') {
+        // Get saved/favorited freelancers (those who worked with client before)
+        const previousFreelancers = await db
+          .select({
+            freelancer: users,
+            profile: freelancerProfiles,
+            lastProject: sql<Date>`MAX(${jobMilestones.createdAt})`,
+            projectCount: count(sql`DISTINCT ${jobPostings.id}`)
+          })
+          .from(jobBids)
+          .innerJoin(users, eq(users.id, jobBids.freelancerId))
+          .leftJoin(freelancerProfiles, eq(freelancerProfiles.userId, users.id))
+          .innerJoin(jobPostings, eq(jobPostings.id, jobBids.jobId))
+          .leftJoin(jobMilestones, eq(jobMilestones.jobId, jobPostings.id))
+          .where(
+            and(
+              eq(jobPostings.clientId, clientId),
+              eq(jobBids.status, 'accepted')
+            )
+          )
+          .groupBy(users.id, freelancerProfiles.id)
+          .limit(20)
+
+        // Get freelancer skills
+        const freelancerIds = previousFreelancers.map(f => f.freelancer.id)
+        const freelancerSkillsData =
+          freelancerIds.length > 0
+            ? await db
+                .select({
+                  freelancerId: freelancerSkills.freelancerId,
+                  skillName: skills.name
+                })
+                .from(freelancerSkills)
+                .innerJoin(skills, eq(skills.id, freelancerSkills.skillId))
+                .where(inArray(freelancerSkills.freelancerId, freelancerIds))
+            : []
+
+        const skillsMap = freelancerSkillsData.reduce(
+          (acc, curr) => {
+            if (!acc[curr.freelancerId]) acc[curr.freelancerId] = []
+            acc[curr.freelancerId].push(curr.skillName)
+            return acc
+          },
+          {} as Record<number, string[]>
+        )
+
+        // Get invited freelancers
+        const invitations =
+          jobIds.length > 0
+            ? await db
+                .select({
+                  invitation: jobInvitations,
+                  freelancer: users,
+                  job: jobPostings
+                })
+                .from(jobInvitations)
+                .innerJoin(users, eq(users.id, jobInvitations.freelancerId))
+                .innerJoin(
+                  jobPostings,
+                  eq(jobPostings.id, jobInvitations.jobId)
+                )
+                .where(inArray(jobInvitations.jobId, jobIds))
+                .orderBy(desc(jobInvitations.createdAt))
+                .limit(20)
+            : []
+
+        // Get shortlisted candidates
+        const shortlisted =
+          jobIds.length > 0
+            ? await db
+                .select({
+                  bid: jobBids,
+                  freelancer: users,
+                  job: jobPostings
+                })
+                .from(jobBids)
+                .innerJoin(users, eq(users.id, jobBids.freelancerId))
+                .innerJoin(jobPostings, eq(jobPostings.id, jobBids.jobId))
+                .where(
+                  and(
+                    inArray(jobBids.jobId, jobIds),
+                    eq(jobBids.status, 'shortlisted')
+                  )
+                )
+                .limit(20)
+            : []
+
+        // Get freelancer ratings
+        const ratingsData =
+          freelancerIds.length > 0
+            ? await db
+                .select({
+                  freelancerId: freelancerReviews.freelancerId,
+                  avgRating: sql<number>`AVG(${freelancerReviews.rating})`,
+                  totalReviews: count()
+                })
+                .from(freelancerReviews)
+                .where(inArray(freelancerReviews.freelancerId, freelancerIds))
+                .groupBy(freelancerReviews.freelancerId)
+            : []
+
+        const ratingsMap = Object.fromEntries(
+          ratingsData.map(r => [r.freelancerId, r.avgRating])
+        )
+
+        const pipeline: TalentPipeline = {
+          savedFreelancers: previousFreelancers.map(
+            ({ freelancer, profile, lastProject, projectCount }) => ({
+              id: freelancer.id,
+              name: freelancer.name || 'Unknown',
+              title: profile?.professionalTitle || null,
+              skills: skillsMap[freelancer.id] || [],
+              hourlyRate: profile?.hourlyRate
+                ? parseFloat(profile.hourlyRate)
+                : null,
+              availability: profile?.availability || 'unknown',
+              rating: ratingsMap[freelancer.id] || 0,
+              completedJobs: projectCount,
+              lastWorkedDate: lastProject || null
+            })
+          ),
+          invitedFreelancers: invitations.map(
+            ({ invitation, freelancer, job }) => ({
+              id: freelancer.id,
+              name: freelancer.name || 'Unknown',
+              jobId: job.id,
+              jobTitle: job.title,
+              invitationId: invitation.id,
+              invitationStatus: invitation.status,
+              invitedAt: invitation.createdAt
+            })
+          ),
+          shortlistedCandidates: shortlisted.map(
+            ({ bid, freelancer, job }) => ({
+              id: freelancer.id,
+              name: freelancer.name || 'Unknown',
+              jobId: job.id,
+              jobTitle: job.title,
+              bidId: bid.id,
+              bidAmount: bid.bidAmount,
+              deliveryDays: bid.deliveryDays,
+              proposalSummary: bid.proposalText?.substring(0, 200) || ''
+            })
+          ),
+          interviewScheduled: [], // Would need separate interview tracking
+          talentRecommendations: [] // Will be calculated based on job requirements
+        }
+
+        return NextResponse.json({
+          success: true,
+          data: pipeline
+        })
+      }
+
+      // Default: Get talent recommendations
+      const activeJob = await db
+        .select()
+        .from(jobPostings)
+        .where(
+          and(
+            eq(jobPostings.clientId, clientId),
+            eq(jobPostings.status, 'open')
+          )
+        )
+        .limit(1)
+
+      if (!activeJob.length) {
+        return NextResponse.json({
+          success: true,
+          data: { recommendations: [] }
+        })
+      }
+
+      // Get job required skills
+      const requiredSkills = (activeJob[0].skillsRequired as string[]) || []
+
+      // Find freelancers with matching skills
+      const matchingFreelancers =
+        requiredSkills.length > 0
+          ? await db
+              .select({
+                freelancer: users,
+                profile: freelancerProfiles,
+                matchedSkills: sql<number>`COUNT(DISTINCT ${skills.name})`,
+                skillNames: sql<string[]>`ARRAY_AGG(DISTINCT ${skills.name})`
+              })
+              .from(freelancerProfiles)
+              .innerJoin(users, eq(users.id, freelancerProfiles.userId))
+              .innerJoin(
+                freelancerSkills,
+                eq(freelancerSkills.freelancerId, freelancerProfiles.id)
+              )
+              .innerJoin(skills, eq(skills.id, freelancerSkills.skillId))
+              .where(sql`${skills.name} = ANY(${requiredSkills})`)
+              .groupBy(users.id, freelancerProfiles.id)
+              .orderBy(desc(sql`COUNT(DISTINCT ${skills.name})`))
+              .limit(10)
+          : []
+
+      const recommendations = matchingFreelancers.map(
+        ({ freelancer, profile, matchedSkills, skillNames }) => ({
+          id: freelancer.id,
+          name: freelancer.name || 'Unknown',
+          title: profile?.professionalTitle,
+          matchScore:
+            requiredSkills.length > 0
+              ? (Number(matchedSkills) / requiredSkills.length) * 100
+              : 0,
+          matchedSkills: skillNames || [],
+          hourlyRate: profile?.hourlyRate,
+          rating: 0, // Would need to fetch ratings
+          completedProjects: 0, // Would need to fetch from jobs
+          successRate: 0 // Would need to calculate
+        })
+      )
+
+      return NextResponse.json({
+        success: true,
+        data: { recommendations }
+      })
+    } catch (_error) {
+      console.error('Failed to fetch talent data:', error)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to fetch talent data'
+        },
+        { status: 500 }
+      )
+    }
+  }
+)
+
+export const POST = withAuth(
+  async (
+    request: NextRequest,
+    context: { session: any; params?: { userId: string } }
+  ) => {
+    try {
+      const clientId = parseInt(context.params?.userId || '0')
+      const body = await request.json()
+      const { action, data } = body
+
+      switch (action) {
+        case 'invite': {
+          const { jobId, freelancerIds, message } = data
+
+          // Create bulk invitations
+          const invitations = freelancerIds.map((freelancerId: number) => ({
+            jobId,
+            freelancerId,
+            invitedBy: clientId,
+            message,
+            status: 'pending' as const,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }))
+
+          const created = await db
+            .insert(jobInvitations)
+            .values(invitations)
+            .returning()
+
+          return NextResponse.json({
+            success: true,
+            data: created
+          })
+        }
+
+        case 'shortlist': {
+          const { bidId } = data
+
+          await db
+            .update(jobBids)
+            .set({
+              status: 'shortlisted',
+              updatedAt: new Date()
+            })
+            .where(eq(jobBids.id, bidId))
+
+          return NextResponse.json({
+            success: true,
+            message: 'Candidate shortlisted'
+          })
+        }
+
+        case 'schedule-interview': {
+          // Would need to implement interview scheduling
+          return NextResponse.json({
+            success: false,
+            error: 'Interview scheduling not yet implemented'
+          })
+        }
+
+        default:
+          return NextResponse.json(
+            { success: false, error: 'Invalid action' },
+            { status: 400 }
+          )
+      }
+    } catch (_error) {
+      console.error('Failed to process talent action:', error)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to process action'
+        },
+        { status: 500 }
+      )
+    }
+  }
+)

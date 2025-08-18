@@ -1,21 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { eq } from 'drizzle-orm'
+
 import { getAuthSession } from '@/lib/auth'
+import { db } from '@/lib/db/drizzle'
+import { users } from '@/lib/db/schema'
 import { reputationSyncService } from '@/services/reputation-sync.service'
 
 /**
  * POST /api/reputation/decay
  * Apply reputation decay to inactive users (admin only)
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const session = await getAuthSession()
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Only admins can trigger decay
-    if (session.user.role !== 'admin') {
+    // Check if user is admin
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1)
+
+    if (!user || user.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden. Admin access required.' },
         { status: 403 }

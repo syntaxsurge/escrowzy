@@ -235,7 +235,7 @@ export default function ScheduledTasksPage() {
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
-              {autoReleaseStatus?.pendingAutoRelease || 0}
+              {(autoReleaseStatus as any)?.pendingAutoRelease || 0}
             </div>
             <p className='text-muted-foreground text-xs'>
               Milestones awaiting release
@@ -252,7 +252,7 @@ export default function ScheduledTasksPage() {
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
-              {autoReleaseStatus?.overdueMilestones || 0}
+              {(autoReleaseStatus as any)?.overdueMilestones || 0}
             </div>
             <p className='text-muted-foreground text-xs'>Require attention</p>
           </CardContent>

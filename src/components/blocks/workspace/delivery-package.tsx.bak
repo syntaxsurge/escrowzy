@@ -1,0 +1,488 @@
+'use client'
+
+import { useState } from 'react'
+
+import { format } from 'date-fns'
+import {
+  CheckCircle2,
+  Download,
+  FileText,
+  Package,
+  Send,
+  Shield
+} from 'lucide-react'
+import useSWR from 'swr'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
+import { Textarea } from '@/components/ui/textarea'
+import { api } from '@/lib/api/http-client'
+
+interface DeliveryPackageProps {
+  jobId: number
+  milestoneId?: number
+  isClient: boolean
+  isFreelancer: boolean
+  onPackageDelivered?: () => void
+}
+
+interface FileItem {
+  id: number
+  filename: string
+  size: number
+  mimeType: string
+  selected: boolean
+}
+
+interface DeliveryPackageData {
+  id: number
+  packageName: string
+  description: string
+  files: number[]
+  status: string
+  deliveryNote: string | null
+  acceptanceNote: string | null
+  deliveredAt: Date | null
+  acceptedAt: Date | null
+  deliveredBy: {
+    id: number
+    name: string
+    avatarUrl: string | null
+  }
+}
+
+export function DeliveryPackage({
+  jobId,
+  milestoneId,
+  isClient,
+  isFreelancer,
+  onPackageDelivered
+}: DeliveryPackageProps) {
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [showAcceptDialog, setShowAcceptDialog] = useState(false)
+  const [selectedPackage, setSelectedPackage] =
+    useState<DeliveryPackageData | null>(null)
+  const [packageData, setPackageData] = useState({
+    packageName: '',
+    description: '',
+    deliveryNote: '',
+    files: [] as number[]
+  })
+  const [acceptanceNote, setAcceptanceNote] = useState('')
+  const [digitalSignature, setDigitalSignature] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Fetch delivery packages
+  const { data: packages = [], mutate } = useSWR(
+    `/api/jobs/${jobId}/delivery-packages`,
+    async (url: string) => {
+      const response = await api.get(url)
+      return response.success ? (response as any).packages : []
+    }
+  )
+
+  // Fetch available files
+  const { data: availableFiles = [] } = useSWR(
+    `/api/jobs/${jobId}/files`,
+    async (url: string) => {
+      const response = await api.get(url)
+      return response.success ? (response as any).files : []
+    }
+  )
+
+  // Create delivery package
+  const handleCreatePackage = async () => {
+    if (!packageData.packageName || packageData.files.length === 0) {
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      await api.post(`/api/jobs/${jobId}/delivery-packages`, {
+        ...packageData,
+        milestoneId,
+        status: 'delivered'
+      })
+
+      mutate()
+      setShowCreateDialog(false)
+      setPackageData({
+        packageName: '',
+        description: '',
+        deliveryNote: '',
+        files: []
+      })
+
+      if (onPackageDelivered) {
+        onPackageDelivered()
+      }
+    } catch (_error) {
+      console.error('Failed to create delivery package:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Accept delivery package
+  const handleAcceptPackage = async () => {
+    if (!selectedPackage || !digitalSignature) {
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      await api.patch(
+        `/api/jobs/${jobId}/delivery-packages/${selectedPackage.id}/accept`,
+        {
+          acceptanceNote,
+          signature: digitalSignature
+        }
+      )
+
+      mutate()
+      setShowAcceptDialog(false)
+      setSelectedPackage(null)
+      setAcceptanceNote('')
+      setDigitalSignature('')
+    } catch (_error) {
+      console.error('Failed to accept package:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Toggle file selection
+  const toggleFileSelection = (fileId: number) => {
+    setPackageData(prev => ({
+      ...prev,
+      files: prev.files.includes(fileId)
+        ? prev.files.filter(id => id !== fileId)
+        : [...prev.files, fileId]
+    }))
+  }
+
+  // Format file size
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  return (
+    <div className='space-y-6'>
+      {/* Header */}
+      <div className='flex items-center justify-between'>
+        <div>
+          <h3 className='text-lg font-semibold'>Delivery Packages</h3>
+          <p className='text-muted-foreground text-sm'>
+            Formal delivery of project files and assets
+          </p>
+        </div>
+        {isFreelancer && (
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button className='gap-2'>
+                <Package className='h-4 w-4' />
+                Create Package
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='sm:max-w-2xl'>
+              <DialogHeader>
+                <DialogTitle>Create Delivery Package</DialogTitle>
+                <DialogDescription>
+                  Bundle files for formal delivery to the client
+                </DialogDescription>
+              </DialogHeader>
+              <div className='space-y-4'>
+                <div>
+                  <Label htmlFor='packageName'>Package Name</Label>
+                  <Input
+                    id='packageName'
+                    value={packageData.packageName}
+                    onChange={e =>
+                      setPackageData({
+                        ...packageData,
+                        packageName: e.target.value
+                      })
+                    }
+                    placeholder='Final Deliverables v1.0'
+                  />
+                </div>
+                <div>
+                  <Label htmlFor='description'>Description</Label>
+                  <Textarea
+                    id='description'
+                    value={packageData.description}
+                    onChange={e =>
+                      setPackageData({
+                        ...packageData,
+                        description: e.target.value
+                      })
+                    }
+                    placeholder='Describe the contents of this package...'
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label>Select Files</Label>
+                  <ScrollArea className='mt-2 h-[200px] rounded-lg border p-4'>
+                    <div className='space-y-2'>
+                      {availableFiles.map((file: any) => (
+                        <div
+                          key={file.id}
+                          className='hover:bg-muted flex cursor-pointer items-center gap-3 rounded p-2'
+                          onClick={() => toggleFileSelection(file.id)}
+                        >
+                          <Checkbox
+                            checked={packageData.files.includes(file.id)}
+                            onCheckedChange={() => toggleFileSelection(file.id)}
+                          />
+                          <FileText className='text-muted-foreground h-4 w-4' />
+                          <div className='flex-1'>
+                            <p className='text-sm font-medium'>
+                              {file.filename}
+                            </p>
+                            <p className='text-muted-foreground text-xs'>
+                              {formatFileSize(file.size)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                  <p className='text-muted-foreground mt-2 text-xs'>
+                    {packageData.files.length} files selected
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor='deliveryNote'>Delivery Note</Label>
+                  <Textarea
+                    id='deliveryNote'
+                    value={packageData.deliveryNote}
+                    onChange={e =>
+                      setPackageData({
+                        ...packageData,
+                        deliveryNote: e.target.value
+                      })
+                    }
+                    placeholder='Any special notes for the client...'
+                    rows={3}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant='outline'
+                  onClick={() => setShowCreateDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreatePackage}
+                  disabled={
+                    isSubmitting ||
+                    !packageData.packageName ||
+                    packageData.files.length === 0
+                  }
+                  className='gap-2'
+                >
+                  <Send className='h-4 w-4' />
+                  Deliver Package
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+
+      {/* Delivery Packages List */}
+      <div className='grid gap-4'>
+        {packages.map((pkg: DeliveryPackageData) => (
+          <Card key={pkg.id}>
+            <CardHeader>
+              <div className='flex items-start justify-between'>
+                <div>
+                  <CardTitle className='text-base'>{pkg.packageName}</CardTitle>
+                  <p className='text-muted-foreground mt-1 text-sm'>
+                    {pkg.description}
+                  </p>
+                </div>
+                <Badge
+                  variant={
+                    pkg.status === 'accepted'
+                      ? 'default'
+                      : pkg.status === 'delivered'
+                        ? 'secondary'
+                        : 'outline'
+                  }
+                >
+                  {pkg.status}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className='space-y-4'>
+              <div className='flex items-center justify-between text-sm'>
+                <div className='text-muted-foreground flex items-center gap-2'>
+                  <Package className='h-4 w-4' />
+                  <span>{pkg.files.length} files</span>
+                </div>
+                <div className='text-muted-foreground'>
+                  Delivered by {pkg.deliveredBy.name} on{' '}
+                  {pkg.deliveredAt &&
+                    format(new Date(pkg.deliveredAt), 'MMM dd, yyyy')}
+                </div>
+              </div>
+
+              {pkg.deliveryNote && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className='mb-1 text-sm font-medium'>Delivery Note:</p>
+                    <p className='text-muted-foreground text-sm'>
+                      {pkg.deliveryNote}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {pkg.status === 'accepted' && pkg.acceptanceNote && (
+                <>
+                  <Separator />
+                  <div className='rounded-lg bg-green-50 p-3'>
+                    <div className='mb-2 flex items-center gap-2'>
+                      <Shield className='h-4 w-4 text-green-600' />
+                      <p className='text-sm font-medium text-green-900'>
+                        Accepted on{' '}
+                        {pkg.acceptedAt &&
+                          format(new Date(pkg.acceptedAt), 'MMM dd, yyyy')}
+                      </p>
+                    </div>
+                    <p className='text-sm text-green-800'>
+                      {pkg.acceptanceNote}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              <div className='flex gap-2'>
+                <Button variant='outline' size='sm' className='gap-2'>
+                  <Download className='h-4 w-4' />
+                  Download All
+                </Button>
+                {isClient && pkg.status === 'delivered' && (
+                  <Button
+                    size='sm'
+                    className='gap-2'
+                    onClick={() => {
+                      setSelectedPackage(pkg)
+                      setShowAcceptDialog(true)
+                    }}
+                  >
+                    <CheckCircle2 className='h-4 w-4' />
+                    Accept Delivery
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+
+        {packages.length === 0 && (
+          <Card>
+            <CardContent className='flex flex-col items-center justify-center py-12'>
+              <Package className='text-muted-foreground h-12 w-12' />
+              <p className='mt-2 text-sm font-medium'>
+                No delivery packages yet
+              </p>
+              <p className='text-muted-foreground text-xs'>
+                {isFreelancer
+                  ? 'Create a package to deliver files to the client'
+                  : 'Packages will appear here when delivered'}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Accept Package Dialog */}
+      {selectedPackage && (
+        <Dialog open={showAcceptDialog} onOpenChange={setShowAcceptDialog}>
+          <DialogContent className='sm:max-w-lg'>
+            <DialogHeader>
+              <DialogTitle>Accept Delivery Package</DialogTitle>
+              <DialogDescription>
+                Review and accept the delivered files
+              </DialogDescription>
+            </DialogHeader>
+            <div className='space-y-4'>
+              <div>
+                <p className='text-sm font-medium'>
+                  {selectedPackage.packageName}
+                </p>
+                <p className='text-muted-foreground mt-1 text-sm'>
+                  {selectedPackage.files.length} files delivered
+                </p>
+              </div>
+              <div>
+                <Label htmlFor='acceptanceNote'>
+                  Acceptance Note (Optional)
+                </Label>
+                <Textarea
+                  id='acceptanceNote'
+                  value={acceptanceNote}
+                  onChange={e => setAcceptanceNote(e.target.value)}
+                  placeholder='Any feedback or notes about the delivery...'
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor='signature'>Digital Signature*</Label>
+                <Input
+                  id='signature'
+                  value={digitalSignature}
+                  onChange={e => setDigitalSignature(e.target.value)}
+                  placeholder='Type your full name to sign'
+                />
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  By signing, you confirm receipt and acceptance of the
+                  delivered files
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant='outline'
+                onClick={() => setShowAcceptDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAcceptPackage}
+                disabled={isSubmitting || !digitalSignature}
+                className='gap-2'
+              >
+                <CheckCircle2 className='h-4 w-4' />
+                Accept & Sign
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  )
+}

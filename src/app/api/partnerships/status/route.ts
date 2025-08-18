@@ -8,7 +8,7 @@ import {
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(req)
+    const session = await getServerSession()
 
     if (!session?.user?.id) {
       return NextResponse.json(

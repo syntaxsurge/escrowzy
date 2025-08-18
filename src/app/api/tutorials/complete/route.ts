@@ -5,7 +5,7 @@ import { completeTutorial } from '@/lib/db/queries/tutorials'
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(req)
+    const session = await getServerSession()
 
     if (!session?.user?.id) {
       return NextResponse.json(

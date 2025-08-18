@@ -36,7 +36,7 @@ export async function PUT(
     const profile = await db
       .select()
       .from(freelancerProfiles)
-      .where(eq(freelancerProfiles.userId, auth.userId))
+      .where(eq(freelancerProfiles.userId, auth.id))
       .limit(1)
 
     if (!profile || profile.length === 0) {
@@ -108,7 +108,7 @@ export async function DELETE(
     const profile = await db
       .select()
       .from(freelancerProfiles)
-      .where(eq(freelancerProfiles.userId, auth.userId))
+      .where(eq(freelancerProfiles.userId, auth.id))
       .limit(1)
 
     if (!profile || profile.length === 0) {

@@ -25,7 +25,9 @@ export const blockchainConfig: BlockchainConfig = {
       contractAddresses: {
         subscriptionManager: '0x761D0dbB45654513AdF1BF6b5D217C0f8B3c5737',
         escrowCore: '0x27E9062ee91A0D60De39984346cAeD53bE68024c',
-        achievementNFT: '0x158E396020b4A86f351D766fC7748C862c493b6B'
+        achievementNFT: '0x158E396020b4A86f351D766fC7748C862c493b6B',
+        milestoneEscrow: '',
+        reputationRegistry: ''
       }
     },
     coreMainnet: {
@@ -44,7 +46,9 @@ export const blockchainConfig: BlockchainConfig = {
       contractAddresses: {
         subscriptionManager: '',
         escrowCore: '',
-        achievementNFT: ''
+        achievementNFT: '',
+        milestoneEscrow: '',
+        reputationRegistry: ''
       }
     }
   }

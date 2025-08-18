@@ -1,0 +1,506 @@
+'use client'
+
+import { useState } from 'react'
+
+import { format } from 'date-fns'
+import {
+  AlertCircle,
+  Ban,
+  CheckCircle,
+  DollarSign,
+  FileText,
+  RefreshCcw,
+  ShieldAlert
+} from 'lucide-react'
+import { toast } from 'sonner'
+import useSWR from 'swr'
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { LoadingButton } from '@/components/ui/loading-button'
+import { Separator } from '@/components/ui/separator'
+import { Textarea } from '@/components/ui/textarea'
+import { api } from '@/lib/api/http-client'
+
+interface MilestoneRefundProps {
+  jobId: number
+  milestoneId: number
+  milestoneTitle: string
+  milestoneAmount: string
+  milestoneStatus: string
+  isClient: boolean
+  isFreelancer: boolean
+  onRefundRequested?: () => void
+  onDisputeResolved?: () => void
+}
+
+export function MilestoneRefund({
+  jobId,
+  milestoneId,
+  milestoneTitle,
+  milestoneAmount,
+  milestoneStatus,
+  isClient,
+  isFreelancer,
+  onRefundRequested,
+  onDisputeResolved
+}: MilestoneRefundProps) {
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false)
+  const [isResolveDialogOpen, setIsResolveDialogOpen] = useState(false)
+  const [reason, setReason] = useState('')
+  const [refundAmount, setRefundAmount] = useState(milestoneAmount)
+  const [evidence, setEvidence] = useState<string[]>([])
+  const [resolution, setResolution] = useState<
+    'approve' | 'reject' | 'partial'
+  >('approve')
+  const [partialAmount, setPartialAmount] = useState('')
+  const [resolutionNote, setResolutionNote] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Fetch refund status
+  const { data: refundData, mutate: mutateRefund } = useSWR(
+    `/api/jobs/${jobId}/milestones/${milestoneId}/refund`,
+    async (url: string) => {
+      const response = await api.get(url)
+      return response.success ? (response as any).refund : null
+    },
+    {
+      refreshInterval: milestoneStatus === 'disputed' ? 30000 : 0 // Refresh every 30s if disputed
+    }
+  )
+
+  const handleRequestRefund = async () => {
+    if (!reason.trim()) {
+      toast.error('Please provide a reason for the refund')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const response = await api.post(
+        `/api/jobs/${jobId}/milestones/${milestoneId}/refund`,
+        {
+          reason,
+          refundAmount:
+            refundAmount !== milestoneAmount ? refundAmount : undefined,
+          evidence:
+            evidence.length > 0
+              ? evidence.map(url => ({
+                  type: 'link',
+                  url,
+                  description: 'Supporting evidence'
+                }))
+              : undefined
+        }
+      )
+
+      if (response.success) {
+        toast.success('Refund request submitted')
+        setIsRequestDialogOpen(false)
+        setReason('')
+        setRefundAmount(milestoneAmount)
+        setEvidence([])
+        mutateRefund()
+        onRefundRequested?.()
+      } else {
+        toast.error(response.error || 'Failed to request refund')
+      }
+    } catch (_error) {
+      toast.error('Failed to request refund')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleResolveDispute = async () => {
+    if (resolution === 'partial' && !partialAmount) {
+      toast.error('Please enter the partial refund amount')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const response = await api.put(
+        `/api/jobs/${jobId}/milestones/${milestoneId}/refund`,
+        {
+          action: resolution,
+          amount: resolution === 'partial' ? partialAmount : undefined,
+          note: resolutionNote
+        }
+      )
+
+      if (response.success) {
+        toast.success('Dispute resolved successfully')
+        setIsResolveDialogOpen(false)
+        setResolutionNote('')
+        setPartialAmount('')
+        mutateRefund()
+        onDisputeResolved?.()
+      } else {
+        toast.error(response.error || 'Failed to resolve dispute')
+      }
+    } catch (_error) {
+      toast.error('Failed to resolve dispute')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const canRequestRefund =
+    isClient && ['submitted', 'approved'].includes(milestoneStatus)
+  const canResolveDispute =
+    milestoneStatus === 'disputed' && (isClient || isFreelancer)
+  const isDisputed = refundData?.isDisputed || milestoneStatus === 'disputed'
+
+  return (
+    <>
+      {/* Dispute Status Alert */}
+      {isDisputed && refundData && (
+        <Alert className='mb-4'>
+          <ShieldAlert className='h-4 w-4' />
+          <AlertTitle>Milestone Disputed</AlertTitle>
+          <AlertDescription>
+            <div className='mt-2 space-y-2'>
+              <p className='text-sm'>
+                <strong>Reason:</strong> {refundData.refundRequest?.reason}
+              </p>
+              <p className='text-sm'>
+                <strong>Amount:</strong> $
+                {refundData.refundRequest?.amount || milestoneAmount}
+              </p>
+              <p className='text-muted-foreground text-sm'>
+                Disputed on {format(new Date(refundData.disputedAt), 'PPP')}
+              </p>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Refund Resolution Status */}
+      {refundData?.refundResolution && (
+        <Card className='mb-4'>
+          <CardHeader>
+            <CardTitle className='flex items-center gap-2 text-base'>
+              {refundData.refundResolution.action === 'approve' ? (
+                <CheckCircle className='h-5 w-5 text-green-500' />
+              ) : refundData.refundResolution.action === 'reject' ? (
+                <Ban className='h-5 w-5 text-red-500' />
+              ) : (
+                <AlertCircle className='h-5 w-5 text-yellow-500' />
+              )}
+              Dispute Resolution
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='space-y-2 text-sm'>
+              <div className='flex justify-between'>
+                <span className='text-muted-foreground'>Status:</span>
+                <Badge
+                  variant={
+                    refundData.refundResolution.action === 'approve'
+                      ? 'success'
+                      : refundData.refundResolution.action === 'reject'
+                        ? 'destructive'
+                        : 'warning'
+                  }
+                >
+                  {refundData.refundResolution.action === 'approve'
+                    ? 'Refunded'
+                    : refundData.refundResolution.action === 'reject'
+                      ? 'Rejected'
+                      : 'Partial Refund'}
+                </Badge>
+              </div>
+              {refundData.refundResolution.amount && (
+                <div className='flex justify-between'>
+                  <span className='text-muted-foreground'>Amount:</span>
+                  <span className='font-medium'>
+                    ${refundData.refundResolution.amount}
+                  </span>
+                </div>
+              )}
+              {refundData.refundResolution.note && (
+                <div>
+                  <span className='text-muted-foreground'>Note:</span>
+                  <p className='mt-1'>{refundData.refundResolution.note}</p>
+                </div>
+              )}
+              <div className='flex justify-between'>
+                <span className='text-muted-foreground'>Resolved:</span>
+                <span>
+                  {format(
+                    new Date(refundData.refundResolution.resolvedAt),
+                    'PPP'
+                  )}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Action Buttons */}
+      <div className='flex gap-2'>
+        {/* Request Refund Button (Client Only) */}
+        {canRequestRefund && (
+          <Dialog
+            open={isRequestDialogOpen}
+            onOpenChange={setIsRequestDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button variant='outline' size='sm'>
+                <RefreshCcw className='mr-2 h-4 w-4' />
+                Request Refund
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='sm:max-w-[500px]'>
+              <DialogHeader>
+                <DialogTitle>Request Refund</DialogTitle>
+                <DialogDescription>
+                  Request a refund for milestone: {milestoneTitle}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className='space-y-4 py-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='reason'>Reason for Refund</Label>
+                  <Textarea
+                    id='reason'
+                    placeholder="Please explain why you're requesting a refund..."
+                    value={reason}
+                    onChange={e => setReason(e.target.value)}
+                    rows={4}
+                  />
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='amount'>Refund Amount</Label>
+                  <div className='relative'>
+                    <DollarSign className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+                    <Input
+                      id='amount'
+                      type='number'
+                      placeholder={milestoneAmount}
+                      value={refundAmount}
+                      onChange={e => setRefundAmount(e.target.value)}
+                      className='pl-9'
+                    />
+                  </div>
+                  <p className='text-muted-foreground text-xs'>
+                    Leave as is for full refund, or enter partial amount
+                  </p>
+                </div>
+
+                <div className='space-y-2'>
+                  <Label>Evidence Links (Optional)</Label>
+                  {evidence.map((link, index) => (
+                    <div key={index} className='flex gap-2'>
+                      <Input
+                        value={link}
+                        onChange={e => {
+                          const newEvidence = [...evidence]
+                          newEvidence[index] = e.target.value
+                          setEvidence(newEvidence)
+                        }}
+                        placeholder='https://example.com/evidence'
+                      />
+                      <Button
+                        size='sm'
+                        variant='ghost'
+                        onClick={() => {
+                          setEvidence(evidence.filter((_, i) => i !== index))
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    onClick={() => setEvidence([...evidence, ''])}
+                  >
+                    <FileText className='mr-2 h-4 w-4' />
+                    Add Evidence Link
+                  </Button>
+                </div>
+
+                <Alert>
+                  <AlertCircle className='h-4 w-4' />
+                  <AlertDescription>
+                    The freelancer will be notified and given 72 hours to
+                    respond to this dispute.
+                  </AlertDescription>
+                </Alert>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsRequestDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <LoadingButton
+                  onClick={handleRequestRefund}
+                  isLoading={isSubmitting}
+                  variant='destructive'
+                >
+                  Request Refund
+                </LoadingButton>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Resolve Dispute Button */}
+        {canResolveDispute && (
+          <Dialog
+            open={isResolveDialogOpen}
+            onOpenChange={setIsResolveDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button size='sm'>
+                <CheckCircle className='mr-2 h-4 w-4' />
+                Resolve Dispute
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='sm:max-w-[500px]'>
+              <DialogHeader>
+                <DialogTitle>Resolve Dispute</DialogTitle>
+                <DialogDescription>
+                  Choose how to resolve this refund dispute
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className='space-y-4 py-4'>
+                <div className='space-y-2'>
+                  <Label>Resolution Type</Label>
+                  <div className='space-y-2'>
+                    <label className='flex items-center space-x-2'>
+                      <input
+                        type='radio'
+                        value='approve'
+                        checked={resolution === 'approve'}
+                        onChange={e => setResolution(e.target.value as any)}
+                      />
+                      <span>Approve Full Refund (${milestoneAmount})</span>
+                    </label>
+                    <label className='flex items-center space-x-2'>
+                      <input
+                        type='radio'
+                        value='partial'
+                        checked={resolution === 'partial'}
+                        onChange={e => setResolution(e.target.value as any)}
+                      />
+                      <span>Approve Partial Refund</span>
+                    </label>
+                    <label className='flex items-center space-x-2'>
+                      <input
+                        type='radio'
+                        value='reject'
+                        checked={resolution === 'reject'}
+                        onChange={e => setResolution(e.target.value as any)}
+                      />
+                      <span>Reject Refund Request</span>
+                    </label>
+                  </div>
+                </div>
+
+                {resolution === 'partial' && (
+                  <div className='space-y-2'>
+                    <Label htmlFor='partial-amount'>
+                      Partial Refund Amount
+                    </Label>
+                    <div className='relative'>
+                      <DollarSign className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+                      <Input
+                        id='partial-amount'
+                        type='number'
+                        placeholder='0.00'
+                        value={partialAmount}
+                        onChange={e => setPartialAmount(e.target.value)}
+                        className='pl-9'
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className='space-y-2'>
+                  <Label htmlFor='resolution-note'>
+                    Resolution Note (Optional)
+                  </Label>
+                  <Textarea
+                    id='resolution-note'
+                    placeholder='Add any notes about this resolution...'
+                    value={resolutionNote}
+                    onChange={e => setResolutionNote(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+
+                <Separator />
+
+                {/* Summary */}
+                <div className='bg-muted space-y-2 rounded-lg p-3'>
+                  <h4 className='font-medium'>Resolution Summary</h4>
+                  <div className='space-y-1 text-sm'>
+                    <div className='flex justify-between'>
+                      <span className='text-muted-foreground'>Action:</span>
+                      <span className='font-medium'>
+                        {resolution === 'approve'
+                          ? 'Approve Full Refund'
+                          : resolution === 'partial'
+                            ? 'Approve Partial Refund'
+                            : 'Reject Refund'}
+                      </span>
+                    </div>
+                    <div className='flex justify-between'>
+                      <span className='text-muted-foreground'>Amount:</span>
+                      <span className='font-medium'>
+                        $
+                        {resolution === 'approve'
+                          ? milestoneAmount
+                          : resolution === 'partial'
+                            ? partialAmount || '0'
+                            : '0'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsResolveDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <LoadingButton
+                  onClick={handleResolveDispute}
+                  isLoading={isSubmitting}
+                >
+                  Confirm Resolution
+                </LoadingButton>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+    </>
+  )
+}

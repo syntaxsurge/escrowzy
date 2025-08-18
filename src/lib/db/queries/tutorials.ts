@@ -496,3 +496,6 @@ export async function updateVideoTutorial(
 
   return updated
 }
+
+// Alias for compatibility
+export const getTutorialsList = getTutorials

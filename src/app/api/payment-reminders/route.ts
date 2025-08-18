@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       }
 
       clientId = invoice.clientId
-      defaultMessage = `Reminder: Invoice ${invoice.invoiceNumber} is due on ${new Date(invoice.dueDate).toLocaleDateString()}`
+      defaultMessage = `Reminder: Invoice ${invoice.invoiceNumber} is due on ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'soon'}`
     } else if (
       validatedData.reminderType === 'milestone' &&
       validatedData.milestoneId
@@ -330,7 +330,7 @@ export async function PUT(request: NextRequest) {
             <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0;">
               <p><strong>Invoice Number:</strong> ${record.invoice.invoiceNumber}</p>
               <p><strong>Amount Due:</strong> ${record.invoice.amount} ${record.invoice.currency}</p>
-              <p><strong>Due Date:</strong> ${new Date(record.invoice.dueDate).toLocaleDateString()}</p>
+              <p><strong>Due Date:</strong> ${record.invoice.dueDate ? new Date(record.invoice.dueDate).toLocaleDateString() : 'Not specified'}</p>
             </div>
             
             <p>Please make payment as soon as possible to avoid any service interruption.</p>

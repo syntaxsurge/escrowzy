@@ -38,7 +38,7 @@ export async function GET(
       .select()
       .from(jobMilestones)
       .where(eq(jobMilestones.jobId, jobId))
-      .orderBy(desc(jobMilestones.order))
+      .orderBy(desc(jobMilestones.sortOrder))
 
     return NextResponse.json({
       success: true,
@@ -59,6 +59,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -102,10 +103,10 @@ export async function POST(
 
     // Get the current max order value
     const existingMilestones = await db
-      .select({ maxOrder: jobMilestones.order })
+      .select({ maxOrder: jobMilestones.sortOrder })
       .from(jobMilestones)
       .where(eq(jobMilestones.jobId, jobId))
-      .orderBy(desc(jobMilestones.order))
+      .orderBy(desc(jobMilestones.sortOrder))
       .limit(1)
 
     const nextOrder =
@@ -122,7 +123,7 @@ export async function POST(
         description: validatedData.description,
         amount: validatedData.amount,
         dueDate: new Date(validatedData.dueDate),
-        order: validatedData.order ?? nextOrder,
+        sortOrder: validatedData.order ?? nextOrder,
         status: 'pending'
       })
       .returning()
@@ -153,6 +154,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -204,7 +206,7 @@ export async function PATCH(
     const updatePromises = milestonesToUpdate.map(milestone =>
       db
         .update(jobMilestones)
-        .set({ order: milestone.order })
+        .set({ sortOrder: milestone.order || milestone.sortOrder })
         .where(
           and(
             eq(jobMilestones.id, milestone.id),
@@ -220,7 +222,7 @@ export async function PATCH(
       .select()
       .from(jobMilestones)
       .where(eq(jobMilestones.jobId, jobId))
-      .orderBy(desc(jobMilestones.order))
+      .orderBy(desc(jobMilestones.sortOrder))
 
     return NextResponse.json({
       success: true,

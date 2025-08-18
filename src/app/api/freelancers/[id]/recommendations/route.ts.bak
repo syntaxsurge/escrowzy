@@ -1,0 +1,431 @@
+import 'server-only'
+
+import { NextRequest, NextResponse } from 'next/server'
+
+import { and, desc, eq, gte, sql } from 'drizzle-orm'
+
+import { getSession } from '@/lib/auth'
+import { db } from '@/lib/db/drizzle'
+import {
+  freelancerProfiles,
+  freelancerReviews,
+  freelancerSkills,
+  jobBids,
+  jobCategories,
+  jobPostings,
+  skills
+} from '@/lib/db/schema'
+
+interface Recommendation {
+  id: string
+  type:
+    | 'skill'
+    | 'profile'
+    | 'pricing'
+    | 'availability'
+    | 'portfolio'
+    | 'certification'
+    | 'networking'
+  priority: 'high' | 'medium' | 'low'
+  title: string
+  description: string
+  impact: string
+  actionItems: string[]
+  estimatedTimeToComplete?: string
+  potentialEarningsIncrease?: number
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const params_awaited = await params
+    const _session = await getSession()
+    if (!session || Number(params_awaited.id) !== session.user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const freelancerId = Number(params_awaited.id)
+    const recommendations: Recommendation[] = []
+
+    // Get freelancer profile
+    const [profile] = await db
+      .select()
+      .from(freelancerProfiles)
+      .where(eq(freelancerProfiles.userId, freelancerId))
+      .limit(1)
+
+    if (!profile) {
+      return NextResponse.json(
+        { success: false, error: 'Profile not found' },
+        { status: 404 }
+      )
+    }
+
+    // Get freelancer stats
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    // Get proposal stats
+    const proposalStats = await db
+      .select({
+        total: sql<number>`COUNT(*)`,
+        accepted: sql<number>`COUNT(CASE WHEN ${jobBids.status} = 'accepted' THEN 1 END)`,
+        rejected: sql<number>`COUNT(CASE WHEN ${jobBids.status} = 'rejected' THEN 1 END)`,
+        pending: sql<number>`COUNT(CASE WHEN ${jobBids.status} = 'pending' THEN 1 END)`
+      })
+      .from(jobBids)
+      .where(
+        and(
+          eq(jobBids.freelancerId, freelancerId),
+          gte(jobBids.createdAt, thirtyDaysAgo)
+        )
+      )
+
+    const conversionRate = proposalStats[0]?.total
+      ? (proposalStats[0].accepted / proposalStats[0].total) * 100
+      : 0
+
+    // Get review stats
+    const reviewStats = await db
+      .select({
+        avgRating: sql<number>`AVG(${freelancerReviews.rating})`,
+        totalReviews: sql<number>`COUNT(*)`,
+        avgCommunication: sql<number>`AVG(${freelancerReviews.communicationRating})`,
+        avgQuality: sql<number>`AVG(${freelancerReviews.qualityRating})`,
+        avgDeadline: sql<number>`AVG(${freelancerReviews.deadlineRating})`
+      })
+      .from(freelancerReviews)
+      .where(eq(freelancerReviews.freelancerId, freelancerId))
+
+    const avgRating = reviewStats[0]?.avgRating || 0
+    const totalReviews = reviewStats[0]?.totalReviews || 0
+
+    // Get skills data
+    const freelancerSkillsData = await db
+      .select({
+        skillId: freelancerSkills.skillId,
+        skillName: skills.name,
+        yearsOfExperience: freelancerSkills.yearsOfExperience,
+        skillLevel: freelancerSkills.skillLevel,
+        verified: freelancerSkills.verifiedAt
+      })
+      .from(freelancerSkills)
+      .leftJoin(skills, eq(freelancerSkills.skillId, skills.id))
+      .where(eq(freelancerSkills.freelancerId, profile.id))
+
+    // Get recent job categories
+    const recentJobCategories = await db
+      .select({
+        categoryId: jobPostings.categoryId,
+        categoryName: jobCategories.name,
+        count: sql<number>`COUNT(*)`
+      })
+      .from(jobBids)
+      .leftJoin(jobPostings, eq(jobBids.jobId, jobPostings.id))
+      .leftJoin(jobCategories, eq(jobPostings.categoryId, jobCategories.id))
+      .where(
+        and(
+          eq(jobBids.freelancerId, freelancerId),
+          eq(jobBids.status, 'accepted')
+        )
+      )
+      .groupBy(jobPostings.categoryId, jobCategories.name)
+      .orderBy(desc(sql`COUNT(*)`))
+      .limit(5)
+
+    // Generate recommendations based on analysis
+
+    // 1. Profile Completeness
+    if (!profile.bio || profile.bio.length < 100) {
+      recommendations.push({
+        id: 'profile_bio',
+        type: 'profile',
+        priority: 'high',
+        title: 'Complete Your Professional Bio',
+        description:
+          'A detailed bio helps clients understand your expertise and experience',
+        impact: 'Profiles with detailed bios receive 40% more job invitations',
+        actionItems: [
+          'Write a 200-300 word professional bio',
+          'Highlight your key skills and experience',
+          'Include your unique value proposition',
+          'Mention notable projects or achievements'
+        ],
+        estimatedTimeToComplete: '30 minutes',
+        potentialEarningsIncrease: 25
+      })
+    }
+
+    if (!profile.portfolioUrl) {
+      recommendations.push({
+        id: 'profile_portfolio',
+        type: 'portfolio',
+        priority: 'high',
+        title: 'Add Portfolio URL',
+        description: 'Showcase your work with a portfolio website',
+        impact: 'Freelancers with portfolios win 60% more projects',
+        actionItems: [
+          'Create a portfolio website or use a platform like Behance',
+          'Include your best 5-10 projects',
+          'Add case studies with results',
+          'Update your profile with the portfolio URL'
+        ],
+        estimatedTimeToComplete: '2-3 hours',
+        potentialEarningsIncrease: 35
+      })
+    }
+
+    // 2. Skill Recommendations
+    if (freelancerSkillsData.length < 5) {
+      recommendations.push({
+        id: 'skills_add_more',
+        type: 'skill',
+        priority: 'medium',
+        title: 'Add More Skills to Your Profile',
+        description: `You currently have ${freelancerSkillsData.length} skills listed. Adding more relevant skills increases visibility`,
+        impact: 'Profiles with 5-10 skills get 45% more views',
+        actionItems: [
+          'Review job postings in your field',
+          'Identify in-demand skills you possess',
+          'Add 3-5 more relevant skills',
+          'Get skills verified through tests or certifications'
+        ],
+        estimatedTimeToComplete: '1 hour',
+        potentialEarningsIncrease: 20
+      })
+    }
+
+    const unverifiedSkills = freelancerSkillsData.filter(s => !s.verified)
+    if (unverifiedSkills.length > 0) {
+      recommendations.push({
+        id: 'skills_verification',
+        type: 'certification',
+        priority: 'medium',
+        title: 'Verify Your Skills',
+        description: `${unverifiedSkills.length} of your skills are unverified`,
+        impact: 'Verified skills increase trust and win rate by 30%',
+        actionItems: [
+          'Take skill assessment tests',
+          'Upload relevant certifications',
+          'Complete online courses with certificates',
+          'Request endorsements from past clients'
+        ],
+        estimatedTimeToComplete: '2-4 hours',
+        potentialEarningsIncrease: 15
+      })
+    }
+
+    // 3. Proposal Optimization
+    if (conversionRate < 10) {
+      recommendations.push({
+        id: 'proposal_optimization',
+        type: 'profile',
+        priority: 'high',
+        title: 'Improve Your Proposal Success Rate',
+        description: `Your current proposal acceptance rate is ${conversionRate.toFixed(1)}% (industry average: 15-20%)`,
+        impact: 'Better proposals can triple your project wins',
+        actionItems: [
+          'Create proposal templates for common project types',
+          "Personalize each proposal to the client's needs",
+          'Include relevant portfolio samples',
+          'Respond to job posts within 2 hours',
+          'Keep proposals concise (200-300 words)'
+        ],
+        estimatedTimeToComplete: '2 hours',
+        potentialEarningsIncrease: 50
+      })
+    }
+
+    // 4. Pricing Strategy
+    if (profile.hourlyRate && parseFloat(profile.hourlyRate) < 30) {
+      recommendations.push({
+        id: 'pricing_increase',
+        type: 'pricing',
+        priority: 'medium',
+        title: 'Consider Increasing Your Rates',
+        description:
+          'Your hourly rate is below market average for your skill level',
+        impact:
+          'Strategic rate increases can boost earnings by 40% without losing clients',
+        actionItems: [
+          'Research rates for similar freelancers',
+          'Increase rates by 10-15% for new clients',
+          'Highlight your unique value proposition',
+          'Offer package deals for higher perceived value'
+        ],
+        estimatedTimeToComplete: '1 hour',
+        potentialEarningsIncrease: 40
+      })
+    }
+
+    // 5. Review Performance
+    if (avgRating > 0 && avgRating < 4.5) {
+      recommendations.push({
+        id: 'review_improvement',
+        type: 'profile',
+        priority: 'high',
+        title: 'Improve Your Client Satisfaction',
+        description: `Your average rating is ${avgRating.toFixed(1)}/5. Top freelancers maintain 4.8+`,
+        impact: 'Higher ratings lead to 2x more job invitations',
+        actionItems: [
+          'Set clear expectations upfront',
+          'Communicate progress regularly',
+          'Deliver work before deadlines',
+          'Offer one free revision',
+          'Follow up after project completion'
+        ],
+        estimatedTimeToComplete: 'Ongoing',
+        potentialEarningsIncrease: 30
+      })
+    }
+
+    if (
+      reviewStats[0]?.avgCommunication &&
+      reviewStats[0].avgCommunication < 4.5
+    ) {
+      recommendations.push({
+        id: 'communication_improvement',
+        type: 'profile',
+        priority: 'medium',
+        title: 'Enhance Communication Skills',
+        description: 'Clients rate your communication below average',
+        impact: 'Better communication increases repeat business by 50%',
+        actionItems: [
+          'Respond to messages within 2-4 hours',
+          'Send daily progress updates',
+          'Use video calls for complex discussions',
+          'Create a communication schedule with clients'
+        ],
+        estimatedTimeToComplete: 'Ongoing'
+      })
+    }
+
+    // 6. Availability Optimization
+    if (profile.availability === 'unavailable') {
+      recommendations.push({
+        id: 'availability_update',
+        type: 'availability',
+        priority: 'high',
+        title: 'Update Your Availability Status',
+        description: 'Your profile shows as unavailable, reducing visibility',
+        impact: 'Available freelancers get 5x more job invitations',
+        actionItems: [
+          'Set your status to "Available" or "Busy"',
+          'Update your calendar regularly',
+          'Set realistic availability hours',
+          'Use auto-responders when away'
+        ],
+        estimatedTimeToComplete: '5 minutes',
+        potentialEarningsIncrease: 60
+      })
+    }
+
+    // 7. Specialization Recommendation
+    if (recentJobCategories.length > 5) {
+      recommendations.push({
+        id: 'specialization_focus',
+        type: 'profile',
+        priority: 'medium',
+        title: 'Consider Specializing in Fewer Categories',
+        description: "You're working across many different categories",
+        impact: 'Specialists earn 40% more than generalists',
+        actionItems: [
+          `Focus on your top 2-3 categories: ${recentJobCategories
+            .slice(0, 3)
+            .map(c => c.categoryName)
+            .join(', ')}`,
+          'Build deep expertise in these areas',
+          'Create specialized portfolio pieces',
+          'Adjust your profile to highlight specialization'
+        ],
+        estimatedTimeToComplete: '3 hours',
+        potentialEarningsIncrease: 35
+      })
+    }
+
+    // 8. Networking Recommendations
+    if (totalReviews < 5) {
+      recommendations.push({
+        id: 'build_reputation',
+        type: 'networking',
+        priority: 'high',
+        title: 'Build Your Reputation with More Projects',
+        description: `You have ${totalReviews} reviews. Aim for at least 10`,
+        impact: 'Freelancers with 10+ reviews win 3x more projects',
+        actionItems: [
+          'Apply to 5-10 jobs daily',
+          'Consider taking 1-2 smaller projects at lower rates',
+          'Request reviews from all completed projects',
+          'Follow up with past clients for testimonials'
+        ],
+        estimatedTimeToComplete: 'Ongoing',
+        potentialEarningsIncrease: 45
+      })
+    }
+
+    // Sort recommendations by priority
+    const priorityOrder = { high: 0, medium: 1, low: 2 }
+    recommendations.sort(
+      (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]
+    )
+
+    // Calculate growth score
+    const growthScore = Math.round(
+      100 -
+        recommendations.filter(r => r.priority === 'high').length * 15 -
+        recommendations.filter(r => r.priority === 'medium').length * 7
+    )
+
+    // Get insights
+    const insights = {
+      profileCompleteness: Math.round(
+        (profile.bio ? 20 : 0) +
+          (profile.portfolioUrl ? 20 : 0) +
+          (profile.linkedinUrl ? 10 : 0) +
+          (profile.githubUrl ? 10 : 0) +
+          (freelancerSkillsData.length >= 5
+            ? 20
+            : freelancerSkillsData.length * 4) +
+          (profile.hourlyRate ? 20 : 0)
+      ),
+      proposalSuccess: conversionRate,
+      clientSatisfaction: avgRating > 0 ? (avgRating / 5) * 100 : 0,
+      skillDemand:
+        (freelancerSkillsData.filter(s => s.verified).length /
+          Math.max(freelancerSkillsData.length, 1)) *
+        100,
+      overallGrowthPotential: recommendations
+        .filter(r => r.potentialEarningsIncrease)
+        .reduce((sum, r) => sum + (r.potentialEarningsIncrease || 0), 0)
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        recommendations,
+        growthScore,
+        insights,
+        summary: {
+          totalRecommendations: recommendations.length,
+          highPriority: recommendations.filter(r => r.priority === 'high')
+            .length,
+          mediumPriority: recommendations.filter(r => r.priority === 'medium')
+            .length,
+          lowPriority: recommendations.filter(r => r.priority === 'low').length,
+          potentialEarningsIncrease: Math.round(insights.overallGrowthPotential)
+        }
+      }
+    })
+  } catch (_error) {
+    console.error('Error generating recommendations:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to generate recommendations' },
+      { status: 500 }
+    )
+  }
+}

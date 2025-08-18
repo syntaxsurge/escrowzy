@@ -1,0 +1,79 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+import {
+  getJobDrafts,
+  saveJobDraft,
+  updateJobDraft
+} from '@/lib/db/queries/jobs'
+import { getUser } from '@/services/user'
+
+// GET /api/jobs/drafts - Get user's job drafts
+export async function GET(_request: NextRequest) {
+  try {
+    const _user = await getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const drafts = await getJobDrafts(user.id)
+
+    return NextResponse.json({
+      success: true,
+      drafts
+    })
+  } catch (_error) {
+    console.error('Error fetching drafts:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch drafts' },
+      { status: 500 }
+    )
+  }
+}
+
+// POST /api/jobs/drafts - Save job as draft
+export async function POST(request: NextRequest) {
+  try {
+    const _user = await getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+
+    // Save or update draft
+    let draftId: number
+    if (body.id) {
+      // Update existing draft
+      const updated = await updateJobDraft(body.id, user.id, body)
+      if (!updated) {
+        return NextResponse.json(
+          { success: false, error: 'Draft not found or unauthorized' },
+          { status: 404 }
+        )
+      }
+      draftId = body.id
+    } else {
+      // Create new draft
+      draftId = await saveJobDraft(user.id, body)
+    }
+
+    return NextResponse.json({
+      success: true,
+      draftId
+    })
+  } catch (_error) {
+    console.error('Error saving draft:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to save draft' },
+      { status: 500 }
+    )
+  }
+}

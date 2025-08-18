@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { and, eq } from 'drizzle-orm'
 
-import { db } from '@/lib/db'
+import { db } from '@/lib/db/drizzle'
 import { jobPostings, workspaceSessions } from '@/lib/db/schema'
-import { requireAuth } from '@/lib/middleware/auth'
+import { getUser } from '@/services/user'
 
 export async function PATCH(
   request: NextRequest,
@@ -12,7 +12,14 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params
-    const user = await requireAuth(request)
+    const user = await getUser()
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const jobId = parseInt(id)
     const body = await request.json()
 

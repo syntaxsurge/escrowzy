@@ -8,14 +8,14 @@ import { submitClientReview } from '@/services/reviews'
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession()
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
     const validatedData = clientReviewSchema.parse(body)
 
-    const result = await submitClientReview(session.userId, validatedData)
+    const result = await submitClientReview(session.user.id, validatedData)
 
     if (!result.success) {
       return NextResponse.json({ error: result.message }, { status: 400 })

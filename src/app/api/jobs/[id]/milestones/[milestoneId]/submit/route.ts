@@ -29,7 +29,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
-    const { id, milestoneId } = await params
+    const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -39,7 +39,7 @@ export async function POST(
     }
 
     const jobId = parseInt(id)
-    const milestoneId = parseInt(milestoneId)
+    const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(
@@ -97,9 +97,8 @@ export async function POST(
       .set({
         status: 'submitted',
         submissionUrl: validatedData.submissionUrl,
-        submissionNotes: validatedData.submissionNotes,
+        submissionNote: validatedData.submissionNotes,
         submittedAt: new Date(),
-        files: validatedData.files || [],
         updatedAt: new Date()
       })
       .where(eq(jobMilestones.id, milestoneId))

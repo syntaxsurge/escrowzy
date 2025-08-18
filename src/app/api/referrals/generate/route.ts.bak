@@ -1,0 +1,49 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+import { getSession } from '@/lib/auth'
+import { generateReferralCode } from '@/lib/db/queries/referrals'
+
+export async function POST(req: NextRequest) {
+  try {
+    const _session = await getSession()
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    const { campaignSource, customSlug } = await req.json()
+
+    const referralCode = await generateReferralCode(session.user.id)
+    const referralLink = {
+      code: referralCode,
+      campaignSource,
+      customSlug
+    }
+
+    if (!referralLink) {
+      return NextResponse.json(
+        { error: 'Failed to generate referral link' },
+        { status: 500 }
+      )
+    }
+
+    // Construct the full URL
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://escrowzy.com'
+    const fullUrl = `${baseUrl}/ref/${referralLink.code}`
+
+    return NextResponse.json({
+      link: referralLink,
+      fullUrl,
+      message: 'Referral link generated successfully'
+    })
+  } catch (_error) {
+    console.error('Failed to generate referral link:', error)
+    return NextResponse.json(
+      { error: 'Failed to generate referral link' },
+      { status: 500 }
+    )
+  }
+}

@@ -192,8 +192,7 @@ export async function PATCH(request: NextRequest) {
     const [alert] = await db
       .select()
       .from(jobAlerts)
-      .where(eq(jobAlerts.id, id))
-      .where(eq(jobAlerts.userId, user.id))
+      .where(and(eq(jobAlerts.id, id), eq(jobAlerts.userId, user.id)))
       .limit(1)
 
     if (!alert) {
@@ -273,8 +272,7 @@ export async function DELETE(request: NextRequest) {
     const [alert] = await db
       .select()
       .from(jobAlerts)
-      .where(eq(jobAlerts.id, parseInt(id)))
-      .where(eq(jobAlerts.userId, user.id))
+      .where(and(eq(jobAlerts.id, parseInt(id)), eq(jobAlerts.userId, user.id)))
       .limit(1)
 
     if (!alert) {

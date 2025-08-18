@@ -18,8 +18,8 @@ export async function POST(
   }
 
   try {
-    const { id } = await params
     const params = await context.params
+    const { id } = params
     const escrowId = id
     // const body = await request.json()
     // const { signature, message } = body

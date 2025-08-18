@@ -5,7 +5,7 @@ import { applyForPartnership } from '@/lib/db/queries/partnerships'
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(req)
+    const session = await getServerSession()
 
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -33,10 +33,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const application = await applyForPartnership(
-      session.user.id,
-      applicationData
-    )
+    const application = await applyForPartnership({
+      ...applicationData,
+      userId: session.user.id
+    })
 
     if (!application) {
       return NextResponse.json(

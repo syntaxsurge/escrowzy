@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       return apiResponses.unauthorized()
     }
 
-    const profile = await getFreelancerProfileByUserId(auth.userId)
+    const profile = await getFreelancerProfileByUserId(auth.id)
 
     if (!profile) {
       return apiResponses.notFound('Freelancer profile not found')
@@ -41,31 +41,23 @@ export async function POST(request: NextRequest) {
     const validatedData = freelancerProfileSchema.parse(body)
 
     // Check if profile already exists
-    const existingProfile = await getFreelancerProfileByUserId(auth.userId)
+    const existingProfile = await getFreelancerProfileByUserId(auth.id)
     if (existingProfile) {
       return apiResponses.badRequest('Profile already exists')
     }
 
     // Create the profile with skills and portfolio items
-    const profile = await createFreelancerProfile({
-      userId: auth.userId,
+    const profile = await createFreelancerProfile(auth.id, {
       professionalTitle: validatedData.professionalTitle,
       bio: validatedData.bio,
-      hourlyRate: validatedData.hourlyRate.toString(),
+      hourlyRate: validatedData.hourlyRate?.toString(),
       availability: validatedData.availability,
       yearsOfExperience: validatedData.yearsOfExperience,
       timezone: validatedData.timezone,
       portfolioUrl: validatedData.portfolioUrl,
       linkedinUrl: validatedData.linkedinUrl,
       githubUrl: validatedData.githubUrl,
-      languages: validatedData.languages,
-      skills:
-        validatedData.skills?.map(skill => ({
-          skillId: skill.skillId,
-          yearsOfExperience: skill.yearsOfExperience || 0,
-          skillLevel: skill.skillLevel || 'beginner'
-        })) || [],
-      portfolioItems: validatedData.portfolioItems || []
+      languages: validatedData.languages
     })
 
     return apiResponses.success({ profile })
@@ -84,13 +76,13 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
 
     // Get existing profile
-    const existingProfile = await getFreelancerProfileByUserId(auth.userId)
+    const existingProfile = await getFreelancerProfileByUserId(auth.id)
     if (!existingProfile) {
       return apiResponses.notFound('Profile not found')
     }
 
     // Update the profile
-    const updatedProfile = await updateFreelancerProfile(auth.userId, {
+    const updatedProfile = await updateFreelancerProfile(auth.id, {
       professionalTitle: body.professionalTitle,
       bio: body.bio,
       hourlyRate: body.hourlyRate?.toString(),
@@ -100,9 +92,7 @@ export async function PUT(request: NextRequest) {
       portfolioUrl: body.portfolioUrl,
       linkedinUrl: body.linkedinUrl,
       githubUrl: body.githubUrl,
-      languages: body.languages,
-      skills: body.skills,
-      portfolioItems: body.portfolioItems
+      languages: body.languages
     })
 
     return apiResponses.success({ profile: updatedProfile })

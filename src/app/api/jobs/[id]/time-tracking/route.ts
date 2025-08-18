@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { and, desc, eq, gte } from 'drizzle-orm'
 
-import { db } from '@/lib/db'
+import { db } from '@/lib/db/drizzle'
 import { jobPostings, timeTracking } from '@/lib/db/schema'
-import { requireAuth } from '@/lib/middleware/auth'
+import { getUser } from '@/services/user'
 
 export async function GET(
   request: NextRequest,
@@ -12,7 +12,14 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const user = await requireAuth(request)
+    const user = await getUser()
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const jobId = parseInt(id)
 
     // Verify access
@@ -76,7 +83,15 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await requireAuth(request)
+    const { id } = await params
+    const user = await getUser()
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const jobId = parseInt(id)
     const body = await request.json()
 

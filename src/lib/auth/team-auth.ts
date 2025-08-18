@@ -77,3 +77,14 @@ export async function requireTeamOwner(
 
   return result
 }
+
+// Aliases for compatibility
+export const validateTeamMember = requireTeamMember
+export const requireTeamRole = requireTeamMember
+export async function getTeamMemberRole(
+  teamId: number,
+  userId: number
+): Promise<string | null> {
+  const result = await checkTeamAccess(teamId, userId)
+  return result.membership?.role || null
+}

@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { desc, eq } from 'drizzle-orm'
 
-import { requireAuth } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { getUserFromRequest } from '@/lib/auth'
+import { db } from '@/lib/db/drizzle'
 import { fileAnnotations, fileVersions, users } from '@/lib/db/schema'
 
 export async function GET(
@@ -12,7 +12,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const user = await requireAuth(request)
+    const user = await getUserFromRequest()
     const fileVersionId = parseInt(id)
 
     // Verify access to file
@@ -85,7 +85,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await requireAuth(request)
+    const { id } = await params
+    const user = await getUserFromRequest()
     const fileVersionId = parseInt(id)
     const body = await request.json()
 
@@ -98,6 +99,13 @@ export async function POST(
       return NextResponse.json(
         { success: false, error: 'File not found' },
         { status: 404 }
+      )
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
       )
     }
 

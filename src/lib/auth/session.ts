@@ -64,3 +64,7 @@ export async function clearSession() {
     path: '/'
   })
 }
+
+// Alias for getSession to maintain compatibility with different naming conventions
+export const verifySession = getSession
+export const getServerSession = getSession

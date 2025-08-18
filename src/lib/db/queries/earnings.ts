@@ -7,7 +7,7 @@ import {
   earnings,
   jobMilestones,
   jobPostings,
-  timeEntries,
+  timeTracking,
   users,
   withdrawals
 } from '../schema'
@@ -385,12 +385,12 @@ export async function getEarningsStatistics(freelancerId: number) {
   // Get time tracking stats if available
   const [timeStats] = await db
     .select({
-      totalHours: sql<number>`COALESCE(SUM(${timeEntries.duration}) / 60.0, 0)`,
-      billableHours: sql<number>`COALESCE(SUM(CASE WHEN ${timeEntries.isBillable} THEN ${timeEntries.duration} ELSE 0 END) / 60.0, 0)`,
-      avgHourlyRate: sql<number>`AVG(CAST(${timeEntries.hourlyRate} AS DECIMAL))`
+      totalHours: sql<number>`COALESCE(SUM(${timeTracking.duration}) / 60.0, 0)`,
+      billableHours: sql<number>`COALESCE(SUM(CASE WHEN ${timeTracking.isBillable} THEN ${timeTracking.duration} ELSE 0 END) / 60.0, 0)`,
+      avgHourlyRate: sql<number>`AVG(CAST(${timeTracking.hourlyRate} AS DECIMAL))`
     })
-    .from(timeEntries)
-    .where(eq(timeEntries.userId, freelancerId))
+    .from(timeTracking)
+    .where(eq(timeTracking.userId, freelancerId))
 
   return {
     currentMonthEarnings: currentMonthAmount,
@@ -415,8 +415,7 @@ export async function getUpcomingPayments(freelancerId: number) {
       dueDate: jobMilestones.dueDate,
       status: jobMilestones.status,
       clientName: users.name,
-      autoReleaseEnabled: jobMilestones.autoReleaseEnabled,
-      autoReleaseDate: jobMilestones.autoReleaseDate
+      autoReleaseEnabled: jobMilestones.autoReleaseEnabled
     })
     .from(jobMilestones)
     .innerJoin(jobPostings, eq(jobMilestones.jobId, jobPostings.id))
@@ -437,8 +436,7 @@ export async function getUpcomingPayments(freelancerId: number) {
     dueDate: m.dueDate,
     status: m.status,
     clientName: m.clientName || 'Unknown Client',
-    autoReleaseEnabled: m.autoReleaseEnabled,
-    autoReleaseDate: m.autoReleaseDate
+    autoReleaseEnabled: m.autoReleaseEnabled
   }))
 }
 

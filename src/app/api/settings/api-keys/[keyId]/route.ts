@@ -7,9 +7,9 @@ export async function GET(
   context: { params: Promise<{ keyId: string }> }
 ) {
   try {
-    const { keyId } = await params
     const params = await context.params
-    const keyId = parseInt(keyId)
+    const { keyId: keyIdParam } = params
+    const keyId = parseInt(keyIdParam)
     if (isNaN(keyId)) {
       return NextResponse.json({ error: 'Invalid key ID' }, { status: 400 })
     }
@@ -33,7 +33,8 @@ export async function DELETE(
 ) {
   try {
     const params = await context.params
-    const keyId = parseInt(keyId)
+    const { keyId: keyIdParam } = params
+    const keyId = parseInt(keyIdParam)
     if (isNaN(keyId)) {
       return NextResponse.json({ error: 'Invalid key ID' }, { status: 400 })
     }

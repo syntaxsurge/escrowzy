@@ -637,6 +637,10 @@ export async function updateLastActive(userId: number): Promise<void> {
 // Alias for getFreelancerProfileByUserId (used in profile pages)
 export const getFreelancerProfile = getFreelancerProfileByUserId
 
+// Aliases for compatibility with route handlers
+export const createFreelancerProfile = upsertFreelancerProfile
+export const updateFreelancerProfile = upsertFreelancerProfile
+
 // Placeholder for reviews function - needs to be implemented based on schema
 export async function getFreelancerReviews(
   userId: number,

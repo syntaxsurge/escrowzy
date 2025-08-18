@@ -7,10 +7,11 @@ import {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const category = await getFaqCategoryBySlug(params.slug)
+    const { slug } = await params
+    const category = await getFaqCategoryBySlug(slug)
 
     if (!category) {
       return NextResponse.json({ error: 'Category not found' }, { status: 404 })

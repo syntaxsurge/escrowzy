@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get user session if exists (voting can be anonymous)
-    const session = await getServerSession(req)
+    const session = await getServerSession()
     const userId = session?.user?.id
 
     // Get session ID for anonymous users

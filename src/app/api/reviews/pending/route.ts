@@ -6,11 +6,11 @@ import { getReviewPrompts } from '@/services/reviews'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession()
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const prompts = await getReviewPrompts(session.userId)
+    const prompts = await getReviewPrompts(session.user.id)
 
     return NextResponse.json({
       prompts,

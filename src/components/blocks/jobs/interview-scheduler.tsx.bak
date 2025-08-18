@@ -1,0 +1,318 @@
+'use client'
+
+import { useState } from 'react'
+
+import { format } from 'date-fns'
+import { Calendar, Clock, MapPin, Phone, User, Video } from 'lucide-react'
+import { toast } from 'sonner'
+
+import { Button } from '@/components/ui/button'
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { api } from '@/lib/api/http-client'
+
+interface InterviewSchedulerProps {
+  jobId: number
+  bidId: number
+  freelancerId: number
+  freelancerName: string
+  onScheduled?: () => void
+}
+
+export function InterviewScheduler({
+  jobId,
+  bidId,
+  freelancerId,
+  freelancerName,
+  onScheduled
+}: InterviewSchedulerProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isScheduling, setIsScheduling] = useState(false)
+
+  // Form state
+  const [date, setDate] = useState<Date | undefined>(new Date())
+  const [time, setTime] = useState('14:00')
+  const [duration, setDuration] = useState('30')
+  const [meetingType, setMeetingType] = useState('video')
+  const [meetingLink, setMeetingLink] = useState('')
+  const [location, setLocation] = useState('')
+  const [notes, setNotes] = useState('')
+
+  const handleSchedule = async () => {
+    if (!date) {
+      toast.error('Please select a date')
+      return
+    }
+
+    // Combine date and time
+    const [hours, minutes] = time.split(':').map(Number)
+    const scheduledAt = new Date(date)
+    scheduledAt.setHours(hours, minutes, 0, 0)
+
+    // Validate scheduled time is in the future
+    if (scheduledAt <= new Date()) {
+      toast.error('Please select a future date and time')
+      return
+    }
+
+    // Validate meeting details
+    if (meetingType === 'video' && !meetingLink) {
+      // Auto-generate meeting link will be handled by API
+    } else if (meetingType === 'in-person' && !location) {
+      toast.error('Please provide a location for the in-person meeting')
+      return
+    }
+
+    setIsScheduling(true)
+
+    try {
+      const response = await api.post('/api/interviews', {
+        jobId,
+        bidId,
+        freelancerId,
+        scheduledAt: scheduledAt.toISOString(),
+        duration: parseInt(duration),
+        meetingType,
+        meetingLink: meetingType === 'video' ? meetingLink : undefined,
+        location: meetingType === 'in-person' ? location : undefined,
+        notes
+      })
+
+      if (response.success) {
+        toast.success('Interview scheduled successfully')
+        setIsOpen(false)
+        onScheduled?.()
+
+        // Reset form
+        setDate(new Date())
+        setTime('14:00')
+        setDuration('30')
+        setMeetingType('video')
+        setMeetingLink('')
+        setLocation('')
+        setNotes('')
+      } else {
+        toast.error(response.error || 'Failed to schedule interview')
+      }
+    } catch (_error) {
+      toast.error('Failed to schedule interview')
+    } finally {
+      setIsScheduling(false)
+    }
+  }
+
+  const generateTimeOptions = () => {
+    const options = []
+    for (let hour = 8; hour < 20; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const timeStr = `${hour.toString().padStart(2, '0')}:${minute
+          .toString()
+          .padStart(2, '0')}`
+        options.push(timeStr)
+      }
+    }
+    return options
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button size='sm' variant='outline'>
+          <Calendar className='mr-2 h-4 w-4' />
+          Schedule Interview
+        </Button>
+      </DialogTrigger>
+      <DialogContent className='max-w-2xl'>
+        <DialogHeader>
+          <DialogTitle>Schedule Interview with {freelancerName}</DialogTitle>
+          <DialogDescription>
+            Set up an interview to discuss the project in detail
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className='grid gap-6 py-4'>
+          {/* Date Selection */}
+          <div>
+            <Label>Interview Date</Label>
+            <CalendarComponent
+              mode='single'
+              selected={date}
+              onSelect={setDate}
+              disabled={date => date < new Date()}
+              className='rounded-md border'
+            />
+          </div>
+
+          {/* Time Selection */}
+          <div className='grid grid-cols-2 gap-4'>
+            <div>
+              <Label htmlFor='time'>Time</Label>
+              <Select value={time} onValueChange={setTime}>
+                <SelectTrigger id='time'>
+                  <Clock className='mr-2 h-4 w-4' />
+                  <SelectValue placeholder='Select time' />
+                </SelectTrigger>
+                <SelectContent className='h-[200px]'>
+                  {generateTimeOptions().map(timeOption => (
+                    <SelectItem key={timeOption} value={timeOption}>
+                      {timeOption}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor='duration'>Duration</Label>
+              <Select value={duration} onValueChange={setDuration}>
+                <SelectTrigger id='duration'>
+                  <SelectValue placeholder='Select duration' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='15'>15 minutes</SelectItem>
+                  <SelectItem value='30'>30 minutes</SelectItem>
+                  <SelectItem value='45'>45 minutes</SelectItem>
+                  <SelectItem value='60'>1 hour</SelectItem>
+                  <SelectItem value='90'>1.5 hours</SelectItem>
+                  <SelectItem value='120'>2 hours</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Meeting Type */}
+          <div>
+            <Label>Meeting Type</Label>
+            <RadioGroup value={meetingType} onValueChange={setMeetingType}>
+              <div className='flex items-center space-x-2'>
+                <RadioGroupItem value='video' id='video' />
+                <Label
+                  htmlFor='video'
+                  className='flex cursor-pointer items-center'
+                >
+                  <Video className='mr-2 h-4 w-4' />
+                  Video Call
+                </Label>
+              </div>
+              <div className='flex items-center space-x-2'>
+                <RadioGroupItem value='phone' id='phone' />
+                <Label
+                  htmlFor='phone'
+                  className='flex cursor-pointer items-center'
+                >
+                  <Phone className='mr-2 h-4 w-4' />
+                  Phone Call
+                </Label>
+              </div>
+              <div className='flex items-center space-x-2'>
+                <RadioGroupItem value='in-person' id='in-person' />
+                <Label
+                  htmlFor='in-person'
+                  className='flex cursor-pointer items-center'
+                >
+                  <User className='mr-2 h-4 w-4' />
+                  In-Person
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Meeting Details */}
+          {meetingType === 'video' && (
+            <div>
+              <Label htmlFor='meeting-link'>
+                Meeting Link (Optional - will be auto-generated if not provided)
+              </Label>
+              <Input
+                id='meeting-link'
+                placeholder='https://zoom.us/j/...'
+                value={meetingLink}
+                onChange={e => setMeetingLink(e.target.value)}
+              />
+            </div>
+          )}
+
+          {meetingType === 'in-person' && (
+            <div>
+              <Label htmlFor='location'>Location *</Label>
+              <div className='relative'>
+                <MapPin className='text-muted-foreground absolute top-3 left-3 h-4 w-4' />
+                <Input
+                  id='location'
+                  placeholder='123 Main St, City, State'
+                  className='pl-10'
+                  value={location}
+                  onChange={e => setLocation(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Notes */}
+          <div>
+            <Label htmlFor='notes'>Notes (Optional)</Label>
+            <Textarea
+              id='notes'
+              placeholder='Any additional information or agenda items...'
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          {/* Preview */}
+          {date && (
+            <div className='bg-muted rounded-lg p-4'>
+              <h4 className='mb-2 font-medium'>Interview Summary</h4>
+              <div className='space-y-1 text-sm'>
+                <p>
+                  <strong>Date:</strong> {format(date, 'EEEE, MMMM d, yyyy')}
+                </p>
+                <p>
+                  <strong>Time:</strong> {time} ({duration} minutes)
+                </p>
+                <p>
+                  <strong>Type:</strong>{' '}
+                  {meetingType.charAt(0).toUpperCase() + meetingType.slice(1)}
+                </p>
+                {meetingType === 'in-person' && location && (
+                  <p>
+                    <strong>Location:</strong> {location}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant='outline' onClick={() => setIsOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSchedule} disabled={isScheduling}>
+            {isScheduling ? 'Scheduling...' : 'Schedule Interview'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

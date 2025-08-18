@@ -30,7 +30,8 @@ import type {
   NewActivityLog,
   NewEmailVerificationRequest
 } from '@/lib/db/schema'
-import { sendInvitationEmail, sendVerificationEmail } from '@/lib/email'
+import { sendInvitationEmail } from '@/lib/email/invitation'
+import { sendVerificationEmail } from '@/lib/email/verification'
 import { deleteAccountSchema, updateAccountSchema } from '@/lib/schemas/account'
 import {
   inviteTeamMemberSchema,

@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, isNotNull, sql } from 'drizzle-orm'
 
 import { db } from '../drizzle'
 import {
@@ -10,6 +10,9 @@ import {
   type OnboardingProgress,
   type NewOnboardingStep
 } from '../schema'
+
+// Re-export for use in other modules
+export { onboardingSteps } from '../schema'
 
 // Get all onboarding steps for a category
 export async function getOnboardingSteps(category: string) {
@@ -220,8 +223,10 @@ export async function getMostSkippedSteps(limit = 10) {
       onboardingProgress,
       eq(onboardingProgress.stepId, onboardingSteps.id)
     )
-    .where(isNull(onboardingProgress.skippedAt).not())
+    .where(isNotNull(onboardingProgress.skippedAt))
     .groupBy(onboardingSteps.id)
     .orderBy(desc(sql`count(${onboardingProgress.skippedAt})`))
     .limit(limit)
 }
+
+// Note: Use getOnboardingSteps function instead of direct table access

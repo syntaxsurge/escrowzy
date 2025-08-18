@@ -366,7 +366,7 @@ export function SpendingAnalytics({
                     >
                       {(
                         analytics?.categoryBreakdown || spending.byCategory
-                      ).map((entry, index) => (
+                      ).map((entry: any, index: number) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={COLORS[index % COLORS.length]}
@@ -381,7 +381,7 @@ export function SpendingAnalytics({
                 <div className='space-y-2'>
                   <h3 className='mb-3 font-medium'>Category Breakdown</h3>
                   {(analytics?.categoryBreakdown || spending.byCategory).map(
-                    (cat, index) => (
+                    (cat: any, index: number) => (
                       <div
                         key={index}
                         className='flex items-center justify-between rounded-lg border p-2'

@@ -127,7 +127,7 @@ export default function JobWorkspacePage() {
       // Clean up on unmount
       return () => {
         api.post(`/api/jobs/${jobId}/workspace/leave`).catch(console.error)
-        pusherClient.unsubscribe(`workspace-${jobId}`)
+        pusherClient?.unsubscribe(`workspace-${jobId}`)
       }
     }
 
@@ -180,7 +180,7 @@ export default function JobWorkspacePage() {
         </p>
         <Button
           className='mt-4'
-          onClick={() => router.push(appRoutes.jobs.list)}
+          onClick={() => router.push(appRoutes.trades.jobs.base)}
         >
           Back to Jobs
         </Button>

@@ -10,7 +10,7 @@ import {
 import { db } from '@/lib/db/drizzle'
 import { emailVerificationRequests, users } from '@/lib/db/schema'
 import type { NewEmailVerificationRequest } from '@/lib/db/schema'
-import { sendVerificationEmail } from '@/lib/email'
+import { sendVerificationEmail } from '@/lib/email/verification'
 
 export async function POST() {
   try {

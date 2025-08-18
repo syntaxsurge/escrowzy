@@ -1,7 +1,7 @@
 import { apiEndpoints } from '@/config/api-endpoints'
 import { envPublic } from '@/config/env.public'
 
-import { sendEmail } from './index'
+import { sendEmail } from './utils'
 
 const APP_URL = envPublic.NEXT_PUBLIC_APP_URL
 

@@ -187,7 +187,7 @@ export class ReputationSyncService {
             .set({
               reputationScore: newScore,
               metadata: {
-                ...rep.metadata,
+                ...((rep.metadata as object) || {}),
                 lastDecay: new Date().toISOString()
               },
               updatedAt: new Date()

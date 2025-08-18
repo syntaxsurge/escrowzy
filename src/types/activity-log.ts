@@ -59,12 +59,14 @@ export function getActivityFilterConditions(filterType: string): string[] {
   }
 }
 
-export const ACTIVITY_TYPE_CONFIG: Record<
-  ActivityType,
-  {
-    label: string
-    variant: 'default' | 'secondary' | 'destructive' | 'outline'
-  }
+export const ACTIVITY_TYPE_CONFIG: Partial<
+  Record<
+    ActivityType,
+    {
+      label: string
+      variant: 'default' | 'secondary' | 'destructive' | 'outline'
+    }
+  >
 > = {
   // Security activities
   [ActivityType.SIGN_IN]: { label: 'Sign In', variant: 'default' },
@@ -294,7 +296,7 @@ export const ACTIVITY_TYPE_CONFIG: Record<
   }
 }
 
-export const ACTIVITY_ICONS: Record<ActivityType, string> = {
+export const ACTIVITY_ICONS: Partial<Record<ActivityType, string>> = {
   // Security
   [ActivityType.SIGN_IN]: 'Activity',
   [ActivityType.SIGN_OUT]: 'Activity',
@@ -403,7 +405,7 @@ export function getActivityIcon(activityType: ActivityType) {
   return iconComponentMap[iconName as keyof typeof iconComponentMap] || Activity
 }
 
-export const ACTIVITY_COLORS: Record<ActivityType, string> = {
+export const ACTIVITY_COLORS: Partial<Record<ActivityType, string>> = {
   // Security - Sign in/out
   [ActivityType.SIGN_IN]: 'text-green-600 bg-green-50 dark:bg-green-900/30',
   [ActivityType.SIGN_OUT]: 'text-gray-600 bg-gray-50 dark:bg-gray-900/30',

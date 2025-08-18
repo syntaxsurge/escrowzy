@@ -114,6 +114,43 @@ export async function getPlatformStats() {
   }
 }
 
+// Get freelancer platform statistics
+export async function getFreelancerPlatformStats() {
+  // Get total active freelancers
+  const activeFreelancersCount = await getActiveFreelancersCount()
+
+  // Get average rating of all freelancers
+  const [avgRatingResult] = await db
+    .select({
+      avgRating: sql<number>`AVG(CAST(${freelancerProfiles.avgRating} AS DECIMAL) / 10)`
+    })
+    .from(freelancerProfiles)
+    .where(sql`${freelancerProfiles.avgRating} > 0`)
+
+  // Get average success rate (completion rate)
+  const [avgSuccessRateResult] = await db
+    .select({
+      avgSuccessRate: avg(freelancerProfiles.completionRate)
+    })
+    .from(freelancerProfiles)
+
+  // Get total freelancers registered
+  const [totalFreelancersResult] = await db
+    .select({ count: count() })
+    .from(freelancerProfiles)
+
+  return {
+    activeFreelancers: activeFreelancersCount,
+    totalFreelancers: totalFreelancersResult.count,
+    averageRating: avgRatingResult.avgRating
+      ? parseFloat(avgRatingResult.avgRating.toFixed(1))
+      : 0,
+    averageSuccessRate: avgSuccessRateResult.avgSuccessRate
+      ? Math.round(parseFloat(avgSuccessRateResult.avgSuccessRate.toString()))
+      : 0
+  }
+}
+
 // Get user's location from profile or trades
 export async function getUserLocation(userId: number): Promise<string | null> {
   // First check if user has location in their profile

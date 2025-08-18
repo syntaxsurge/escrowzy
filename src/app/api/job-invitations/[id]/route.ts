@@ -94,6 +94,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
 
     if (!user) {
@@ -166,7 +167,7 @@ export async function PATCH(
       .update(jobInvitations)
       .set({
         status,
-        updatedAt: new Date()
+        respondedAt: new Date()
       })
       .where(eq(jobInvitations.id, invitationId))
       .returning()
@@ -221,6 +222,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
 
     if (!user) {

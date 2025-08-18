@@ -1,0 +1,65 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+import { eq } from 'drizzle-orm'
+
+import { requireAuth } from '@/lib/auth/auth-utils'
+import { db } from '@/lib/db/drizzle'
+import { completeOnboardingStep } from '@/lib/db/queries/onboarding'
+import { onboardingSteps } from '@/lib/db/schema'
+// import { addXp } from '@/lib/db/queries/rewards' // TODO: Implement rewards module
+
+export async function POST(req: NextRequest) {
+  try {
+    const authResult = await requireAuth()
+    if (!authResult.user) {
+      return authResult.error!
+    }
+    const _user = authResult.user
+    const { stepId } = await req.json()
+
+    if (!stepId) {
+      return NextResponse.json(
+        { error: 'Step ID is required' },
+        { status: 400 }
+      )
+    }
+
+    // Get step details
+    const [step] = await db
+      .select()
+      .from(onboardingSteps)
+      .where(eq(onboardingSteps.id, stepId))
+      .limit(1)
+
+    if (!step) {
+      return NextResponse.json({ error: 'Step not found' }, { status: 404 })
+    }
+
+    // Complete the step
+    const progress = await completeOnboardingStep(user.id, stepId)
+
+    // Award XP if applicable
+    let xpAwarded = 0
+    if (step.xpReward && step.xpReward > 0) {
+      // TODO: Implement rewards module
+      // await addXp(
+      //   user.id,
+      //   step.xpReward,
+      //   `Completed onboarding step: ${step.title}`
+      // )
+      xpAwarded = step.xpReward
+    }
+
+    return NextResponse.json({
+      progress,
+      xpReward: xpAwarded,
+      message: 'Step completed successfully'
+    })
+  } catch (_error) {
+    console.error('Failed to complete onboarding step:', error)
+    return NextResponse.json(
+      { error: 'Failed to complete onboarding step' },
+      { status: 500 }
+    )
+  }
+}

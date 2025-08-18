@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
-import { toast } from '@/hooks/use-toast'
+import { useToast } from '@/hooks/use-toast'
 
 import { ReputationBadge } from './reputation-badge'
 
@@ -54,6 +54,7 @@ export function ReputationCard({
   showActions = false,
   className
 }: ReputationCardProps) {
+  const { toast } = useToast()
   const [reputation, setReputation] = useState<ReputationData | null>(null)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)

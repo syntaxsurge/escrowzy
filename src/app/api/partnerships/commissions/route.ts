@@ -8,7 +8,7 @@ import {
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(req)
+    const session = await getServerSession()
 
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     }
 
     const searchParams = req.nextUrl.searchParams
-    const period = searchParams.get('period') || 'all'
+    const _period = searchParams.get('period') || 'all'
     const status = searchParams.get('status') as
       | 'pending'
       | 'paid'
@@ -36,7 +36,6 @@ export async function GET(req: NextRequest) {
 
     const commissions = await getPartnerCommissions(
       partnership.id,
-      period,
       status || undefined
     )
 
@@ -62,8 +61,7 @@ export async function GET(req: NextRequest) {
       totals,
       partnership: {
         id: partnership.id,
-        commissionRate: partnership.commissionRate,
-        paymentFrequency: partnership.paymentFrequency
+        commissionRate: partnership.commissionRate
       }
     })
   } catch (error) {

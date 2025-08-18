@@ -187,8 +187,7 @@ export function FaqSystem({
       if (response.ok) {
         toast({
           title: 'Thank you for your feedback!',
-          description: 'Your vote has been recorded.',
-          duration: 3000
+          description: 'Your vote has been recorded.'
         })
 
         // Update local state
@@ -237,8 +236,7 @@ export function FaqSystem({
       if (response.ok) {
         toast({
           title: 'Feedback submitted',
-          description: 'Thank you for helping us improve our FAQ.',
-          duration: 3000
+          description: 'Thank you for helping us improve our FAQ.'
         })
         setFeedbackDialog(null)
         setFeedbackText('')

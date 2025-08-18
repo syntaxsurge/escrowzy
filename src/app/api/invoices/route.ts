@@ -168,9 +168,8 @@ export async function POST(request: NextRequest) {
         description: validatedData.description,
         dueDate: new Date(validatedData.dueDate),
         items: validatedData.items || [],
-        tax: '0',
-        discount: '0',
-        total: validatedData.amount
+        taxAmount: '0',
+        discountAmount: '0'
       })
       .returning()
 

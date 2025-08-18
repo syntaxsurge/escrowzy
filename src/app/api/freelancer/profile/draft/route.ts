@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const draft = await db
       .select()
       .from(profileDrafts)
-      .where(eq(profileDrafts.userId, auth.userId))
+      .where(eq(profileDrafts.userId, auth.id))
       .limit(1)
 
     if (!draft || draft.length === 0) {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     const existingDraft = await db
       .select()
       .from(profileDrafts)
-      .where(eq(profileDrafts.userId, auth.userId))
+      .where(eq(profileDrafts.userId, auth.id))
       .limit(1)
 
     if (existingDraft.length > 0) {
@@ -54,11 +54,11 @@ export async function POST(request: NextRequest) {
           data: body,
           updatedAt: new Date()
         })
-        .where(eq(profileDrafts.userId, auth.userId))
+        .where(eq(profileDrafts.userId, auth.id))
     } else {
       // Create new draft
       await db.insert(profileDrafts).values({
-        userId: auth.userId,
+        userId: auth.id,
         data: body
       })
     }
@@ -76,7 +76,7 @@ export async function DELETE(request: NextRequest) {
       return apiResponses.unauthorized()
     }
 
-    await db.delete(profileDrafts).where(eq(profileDrafts.userId, auth.userId))
+    await db.delete(profileDrafts).where(eq(profileDrafts.userId, auth.id))
 
     return apiResponses.success({ message: 'Draft deleted successfully' })
   } catch (error) {

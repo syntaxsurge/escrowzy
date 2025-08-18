@@ -20,7 +20,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
-    const { id, milestoneId } = await params
+    const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -30,7 +30,7 @@ export async function POST(
     }
 
     const jobId = parseInt(id)
-    const milestoneId = parseInt(milestoneId)
+    const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(
@@ -88,7 +88,6 @@ export async function POST(
           status: 'approved',
           feedback: validatedData.feedback,
           approvedAt: new Date(),
-          rating: validatedData.rating,
           updatedAt: new Date()
         })
         .where(eq(jobMilestones.id, milestoneId))
@@ -104,11 +103,25 @@ export async function POST(
           jobId,
           milestoneId,
           amount: finalAmount.toString(),
+          netAmount: finalAmount.toString(),
           type: 'milestone',
           status: 'completed',
-          description: `Payment for milestone: ${milestone.milestone.title}`,
-          tip: tipAmount > 0 ? tipAmount.toString() : null
+          description: `Payment for milestone: ${milestone.milestone.title}`
         })
+
+        // Create separate tip earning if there's a tip
+        if (tipAmount > 0) {
+          await tx.insert(earnings).values({
+            freelancerId: milestone.job.freelancerId,
+            jobId,
+            milestoneId,
+            amount: tipAmount.toString(),
+            netAmount: tipAmount.toString(),
+            type: 'tip',
+            status: 'completed',
+            description: `Tip for milestone: ${milestone.milestone.title}`
+          })
+        }
       }
 
       // TODO: Trigger smart contract payment release

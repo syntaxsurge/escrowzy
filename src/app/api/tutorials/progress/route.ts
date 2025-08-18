@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { getServerSession } from '@/lib/auth/session'
-import { getUserTutorialProgress } from '@/lib/db/queries/tutorials'
+import { getAllUserTutorialProgress } from '@/lib/db/queries/tutorials'
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
-    const session = await getServerSession(req)
+    const session = await getServerSession()
 
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const progress = await getUserTutorialProgress(session.user.id)
+    const progress = await getAllUserTutorialProgress(session.user.id)
 
     return NextResponse.json(progress)
   } catch (error) {

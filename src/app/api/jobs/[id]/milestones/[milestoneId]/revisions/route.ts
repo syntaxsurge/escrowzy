@@ -20,8 +20,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
-    const { milestoneId } = await params
-    const milestoneId = parseInt(milestoneId)
+    const { milestoneId: milestoneIdParam } = await params
+    const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(milestoneId)) {
       return NextResponse.json(
@@ -55,7 +55,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -65,7 +65,7 @@ export async function POST(
     }
 
     const jobId = parseInt(id)
-    const milestoneId = parseInt(milestoneId)
+    const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(
@@ -126,8 +126,10 @@ export async function POST(
           milestoneId,
           requestedBy: user.id,
           reason: validatedData.reason,
-          details: validatedData.details,
-          requestedChanges: validatedData.requestedChanges || [],
+          details:
+            validatedData.details ||
+            validatedData.requestedChanges?.join('\n') ||
+            '',
           status: 'pending'
         })
         .returning()
@@ -137,8 +139,6 @@ export async function POST(
         .update(jobMilestones)
         .set({
           status: 'in_progress',
-          revisionCount: (milestone.milestone.revisionCount || 0) + 1,
-          lastRevisionAt: new Date(),
           updatedAt: new Date()
         })
         .where(eq(jobMilestones.id, milestoneId))
@@ -187,6 +187,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
+    const { milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -220,7 +221,7 @@ export async function PATCH(
     }
 
     // Get the milestone and job to check permissions
-    const milestoneId = parseInt(milestoneId)
+    const milestoneId = parseInt(milestoneIdParam)
     const [milestone] = await db
       .select({
         milestone: jobMilestones,
@@ -254,9 +255,8 @@ export async function PATCH(
       .update(milestoneRevisions)
       .set({
         status,
-        response,
-        respondedAt: new Date(),
-        updatedAt: new Date()
+        responseNote: response,
+        respondedAt: new Date()
       })
       .where(eq(milestoneRevisions.id, revisionId))
       .returning()

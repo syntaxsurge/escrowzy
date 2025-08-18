@@ -2,7 +2,7 @@ import 'server-only'
 
 import { NextRequest, NextResponse } from 'next/server'
 
-import { and, desc, eq, inArray } from 'drizzle-orm'
+import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 
 import { verifySession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
@@ -10,18 +10,19 @@ import { jobBids, jobMilestones, jobPostings, users } from '@/lib/db/schema'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await verifySession()
-    if (!session || Number(params.id) !== session.userId) {
+    if (!session || Number(id) !== session.user.id) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    const freelancerId = Number(params.id)
+    const freelancerId = Number(id)
 
     // Get all accepted bids for this freelancer where job is completed or cancelled
     const acceptedBids = await db
@@ -29,7 +30,7 @@ export async function GET(
         id: jobBids.id,
         jobId: jobBids.jobId,
         bidAmount: jobBids.bidAmount,
-        deliveryTimeDays: jobBids.deliveryTimeDays,
+        deliveryTimeDays: jobBids.deliveryDays,
         status: jobBids.status,
         createdAt: jobBids.createdAt,
         job: {
@@ -46,7 +47,7 @@ export async function GET(
         client: {
           id: users.id,
           name: users.name,
-          avatar: users.avatar
+          avatar: users.avatarPath
         }
       })
       .from(jobBids)
@@ -67,10 +68,10 @@ export async function GET(
     const milestoneStats = await db
       .select({
         jobId: jobMilestones.jobId,
-        totalMilestones: db.$count(jobMilestones.id),
-        completedMilestones: db.$count(eq(jobMilestones.status, 'approved')),
-        totalAmount: db.sql<number>`SUM(${jobMilestones.amount})`,
-        paidAmount: db.sql<number>`SUM(CASE WHEN ${jobMilestones.status} = 'approved' THEN ${jobMilestones.amount} ELSE 0 END)`
+        totalMilestones: sql<number>`COUNT(${jobMilestones.id})`,
+        completedMilestones: sql<number>`COUNT(CASE WHEN ${jobMilestones.status} = 'approved' THEN 1 END)`,
+        totalAmount: sql<number>`SUM(${jobMilestones.amount})`,
+        paidAmount: sql<number>`SUM(CASE WHEN ${jobMilestones.status} = 'approved' THEN ${jobMilestones.amount} ELSE 0 END)`
       })
       .from(jobMilestones)
       .where(inArray(jobMilestones.jobId, jobIds))
@@ -136,11 +137,12 @@ export async function GET(
 // Archive a job (mark it as completed/cancelled)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await verifySession()
-    if (!session || Number(params.id) !== session.userId) {
+    if (!session || Number(id) !== session.user.id) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -163,7 +165,7 @@ export async function POST(
       .where(
         and(
           eq(jobBids.jobId, jobId),
-          eq(jobBids.freelancerId, Number(params.id)),
+          eq(jobBids.freelancerId, Number(id)),
           eq(jobBids.status, 'accepted')
         )
       )

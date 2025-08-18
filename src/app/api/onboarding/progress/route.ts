@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { requireAuth } from '@/lib/auth/middleware'
 import { getUserOnboardingProgress } from '@/lib/db/queries/onboarding'
+import { getUser } from '@/services/user'
 
 export async function GET(req: NextRequest) {
   try {
-    const { user } = await requireAuth(req)
+    const user = await getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const searchParams = req.nextUrl.searchParams
     const category = searchParams.get('category') || 'new_user'

@@ -1,0 +1,418 @@
+import 'server-only'
+
+import { eq, and, desc, sql } from 'drizzle-orm'
+
+import { db } from '../drizzle'
+import { skillEndorsements, users, skills, jobPostings } from '../schema'
+import type { SkillEndorsement } from '../schema'
+
+export interface EndorsementWithDetails extends SkillEndorsement {
+  endorser: {
+    id: number
+    name: string | null
+    walletAddress: string
+    avatarPath: string | null
+  }
+  endorsedUser: {
+    id: number
+    name: string | null
+    walletAddress: string
+    avatarPath: string | null
+  }
+  skill: {
+    id: number
+    name: string
+    category: string | null
+  }
+  job?: {
+    id: number
+    title: string
+  } | null
+}
+
+export interface SkillEndorsementStats {
+  skillId: number
+  skillName: string
+  totalEndorsements: number
+  averageRating: number
+  verifiedEndorsements: number
+  uniqueEndorsers: number
+}
+
+export async function createSkillEndorsement(data: {
+  endorserId: number
+  endorsedUserId: number
+  skillId: number
+  rating: number
+  relationship?: string
+  projectContext?: string
+  jobId?: number
+}): Promise<SkillEndorsement> {
+  // Check if endorsement already exists
+  const existing = await db
+    .select()
+    .from(skillEndorsements)
+    .where(
+      and(
+        eq(skillEndorsements.endorserId, data.endorserId),
+        eq(skillEndorsements.endorsedUserId, data.endorsedUserId),
+        eq(skillEndorsements.skillId, data.skillId)
+      )
+    )
+    .limit(1)
+
+  if (existing.length > 0) {
+    // Update existing endorsement
+    const [updated] = await db
+      .update(skillEndorsements)
+      .set({
+        rating: data.rating,
+        relationship: data.relationship,
+        projectContext: data.projectContext,
+        jobId: data.jobId,
+        verified: !!data.jobId, // Auto-verify if linked to a job
+        updatedAt: new Date()
+      })
+      .where(eq(skillEndorsements.id, existing[0].id))
+      .returning()
+
+    return updated
+  }
+
+  // Create new endorsement
+  const [endorsement] = await db
+    .insert(skillEndorsements)
+    .values({
+      endorserId: data.endorserId,
+      endorsedUserId: data.endorsedUserId,
+      skillId: data.skillId,
+      rating: data.rating,
+      relationship: data.relationship,
+      projectContext: data.projectContext,
+      jobId: data.jobId,
+      verified: !!data.jobId // Auto-verify if linked to a job
+    })
+    .returning()
+
+  return endorsement
+}
+
+export async function getUserSkillEndorsements(
+  userId: number
+): Promise<EndorsementWithDetails[]> {
+  const endorsements = await db
+    .select({
+      endorsement: skillEndorsements,
+      endorser: {
+        id: users.id,
+        name: users.name,
+        walletAddress: users.walletAddress,
+        avatarPath: users.avatarPath
+      },
+      skill: skills,
+      job: jobPostings
+    })
+    .from(skillEndorsements)
+    .innerJoin(users, eq(skillEndorsements.endorserId, users.id))
+    .innerJoin(skills, eq(skillEndorsements.skillId, skills.id))
+    .leftJoin(jobPostings, eq(skillEndorsements.jobId, jobPostings.id))
+    .where(eq(skillEndorsements.endorsedUserId, userId))
+    .orderBy(desc(skillEndorsements.createdAt))
+
+  return endorsements.map(row => ({
+    ...row.endorsement,
+    endorser: row.endorser,
+    endorsedUser: {
+      id: userId,
+      name: null,
+      walletAddress: '',
+      avatarPath: null
+    },
+    skill: {
+      id: row.skill.id,
+      name: row.skill.name,
+      category: row.skill.categoryId ? String(row.skill.categoryId) : null
+    },
+    job: row.job
+      ? {
+          id: row.job.id,
+          title: row.job.title
+        }
+      : null
+  }))
+}
+
+export async function getSkillEndorsementStats(
+  userId: number
+): Promise<SkillEndorsementStats[]> {
+  const stats = await db
+    .select({
+      skillId: skillEndorsements.skillId,
+      skillName: skills.name,
+      totalEndorsements: sql<number>`count(*)`,
+      averageRating: sql<number>`avg(${skillEndorsements.rating})`,
+      verifiedEndorsements: sql<number>`sum(case when ${skillEndorsements.verified} then 1 else 0 end)`,
+      uniqueEndorsers: sql<number>`count(distinct ${skillEndorsements.endorserId})`
+    })
+    .from(skillEndorsements)
+    .innerJoin(skills, eq(skillEndorsements.skillId, skills.id))
+    .where(eq(skillEndorsements.endorsedUserId, userId))
+    .groupBy(skillEndorsements.skillId, skills.name)
+    .orderBy(desc(sql`count(*)`))
+
+  return stats.map(s => ({
+    skillId: s.skillId,
+    skillName: s.skillName,
+    totalEndorsements: Number(s.totalEndorsements),
+    averageRating: Math.round(Number(s.averageRating) * 10) / 10,
+    verifiedEndorsements: Number(s.verifiedEndorsements),
+    uniqueEndorsers: Number(s.uniqueEndorsers)
+  }))
+}
+
+export async function getTopEndorsedSkills(
+  userId: number,
+  limit: number = 5
+): Promise<SkillEndorsementStats[]> {
+  const stats = await getSkillEndorsementStats(userId)
+  return stats.slice(0, limit)
+}
+
+export async function canEndorseUser(
+  endorserId: number,
+  endorsedUserId: number
+): Promise<{ canEndorse: boolean; reason?: string }> {
+  if (endorserId === endorsedUserId) {
+    return { canEndorse: false, reason: 'Cannot endorse yourself' }
+  }
+
+  // Check if they've worked together on a job
+  const sharedJobs = await db
+    .select({ jobId: jobPostings.id })
+    .from(jobPostings)
+    .where(
+      and(
+        eq(jobPostings.status, 'completed'),
+        sql`(${jobPostings.clientId} = ${endorserId} AND ${jobPostings.freelancerId} = ${endorsedUserId}) OR 
+            (${jobPostings.clientId} = ${endorsedUserId} AND ${jobPostings.freelancerId} = ${endorserId})`
+      )
+    )
+    .limit(1)
+
+  if (sharedJobs.length === 0) {
+    return { canEndorse: true } // Allow endorsement but not verified
+  }
+
+  return { canEndorse: true }
+}
+
+export async function deleteSkillEndorsement(
+  endorsementId: number,
+  userId: number
+): Promise<boolean> {
+  const _result = await db
+    .delete(skillEndorsements)
+    .where(
+      and(
+        eq(skillEndorsements.id, endorsementId),
+        eq(skillEndorsements.endorserId, userId)
+      )
+    )
+
+  return result.length > 0
+}
+
+export async function verifyEndorsement(
+  endorsementId: number,
+  jobId: number
+): Promise<boolean> {
+  // Verify that the endorsement is related to a completed job
+  const [job] = await db
+    .select()
+    .from(jobPostings)
+    .where(and(eq(jobPostings.id, jobId), eq(jobPostings.status, 'completed')))
+    .limit(1)
+
+  if (!job) {
+    return false
+  }
+
+  const [endorsement] = await db
+    .select()
+    .from(skillEndorsements)
+    .where(eq(skillEndorsements.id, endorsementId))
+    .limit(1)
+
+  if (!endorsement) {
+    return false
+  }
+
+  // Verify the endorser and endorsed user were involved in the job
+  const isValid =
+    (job.clientId === endorsement.endorserId &&
+      job.freelancerId === endorsement.endorsedUserId) ||
+    (job.clientId === endorsement.endorsedUserId &&
+      job.freelancerId === endorsement.endorserId)
+
+  if (!isValid) {
+    return false
+  }
+
+  // Update the endorsement as verified
+  await db
+    .update(skillEndorsements)
+    .set({
+      verified: true,
+      jobId: jobId,
+      updatedAt: new Date()
+    })
+    .where(eq(skillEndorsements.id, endorsementId))
+
+  return true
+}
+
+export async function getEndorsementsBySkill(
+  userId: number,
+  skillId: number
+): Promise<EndorsementWithDetails[]> {
+  const endorsements = await db
+    .select({
+      endorsement: skillEndorsements,
+      endorser: {
+        id: users.id,
+        name: users.name,
+        walletAddress: users.walletAddress,
+        avatarPath: users.avatarPath
+      },
+      skill: skills,
+      job: jobPostings
+    })
+    .from(skillEndorsements)
+    .innerJoin(users, eq(skillEndorsements.endorserId, users.id))
+    .innerJoin(skills, eq(skillEndorsements.skillId, skills.id))
+    .leftJoin(jobPostings, eq(skillEndorsements.jobId, jobPostings.id))
+    .where(
+      and(
+        eq(skillEndorsements.endorsedUserId, userId),
+        eq(skillEndorsements.skillId, skillId)
+      )
+    )
+    .orderBy(
+      desc(skillEndorsements.verified),
+      desc(skillEndorsements.rating),
+      desc(skillEndorsements.createdAt)
+    )
+
+  return endorsements.map(row => ({
+    ...row.endorsement,
+    endorser: row.endorser,
+    endorsedUser: {
+      id: userId,
+      name: null,
+      walletAddress: '',
+      avatarPath: null
+    },
+    skill: {
+      id: row.skill.id,
+      name: row.skill.name,
+      category: row.skill.categoryId ? String(row.skill.categoryId) : null
+    },
+    job: row.job
+      ? {
+          id: row.job.id,
+          title: row.job.title
+        }
+      : null
+  }))
+}
+
+export async function getMutualEndorsements(
+  userId1: number,
+  userId2: number
+): Promise<{
+  user1ToUser2: EndorsementWithDetails[]
+  user2ToUser1: EndorsementWithDetails[]
+  mutualSkills: number[]
+}> {
+  const [endorsements1to2, endorsements2to1] = await Promise.all([
+    db
+      .select({
+        endorsement: skillEndorsements,
+        skill: skills
+      })
+      .from(skillEndorsements)
+      .innerJoin(skills, eq(skillEndorsements.skillId, skills.id))
+      .where(
+        and(
+          eq(skillEndorsements.endorserId, userId1),
+          eq(skillEndorsements.endorsedUserId, userId2)
+        )
+      ),
+    db
+      .select({
+        endorsement: skillEndorsements,
+        skill: skills
+      })
+      .from(skillEndorsements)
+      .innerJoin(skills, eq(skillEndorsements.skillId, skills.id))
+      .where(
+        and(
+          eq(skillEndorsements.endorserId, userId2),
+          eq(skillEndorsements.endorsedUserId, userId1)
+        )
+      )
+  ])
+
+  const mutualSkills = [
+    ...new Set([
+      ...endorsements1to2.map(e => e.endorsement.skillId),
+      ...endorsements2to1.map(e => e.endorsement.skillId)
+    ])
+  ]
+
+  return {
+    user1ToUser2: endorsements1to2.map(row => ({
+      ...row.endorsement,
+      endorser: {
+        id: userId1,
+        name: null,
+        walletAddress: '',
+        avatarPath: null
+      },
+      endorsedUser: {
+        id: userId2,
+        name: null,
+        walletAddress: '',
+        avatarPath: null
+      },
+      skill: {
+        id: row.skill.id,
+        name: row.skill.name,
+        category: row.skill.categoryId ? String(row.skill.categoryId) : null
+      },
+      job: null
+    })),
+    user2ToUser1: endorsements2to1.map(row => ({
+      ...row.endorsement,
+      endorser: {
+        id: userId2,
+        name: null,
+        walletAddress: '',
+        avatarPath: null
+      },
+      endorsedUser: {
+        id: userId1,
+        name: null,
+        walletAddress: '',
+        avatarPath: null
+      },
+      skill: {
+        id: row.skill.id,
+        name: row.skill.name,
+        category: row.skill.categoryId ? String(row.skill.categoryId) : null
+      },
+      job: null
+    })),
+    mutualSkills
+  }
+}

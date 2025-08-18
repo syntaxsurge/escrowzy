@@ -1,0 +1,68 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+import { eq } from 'drizzle-orm'
+
+import { getSession } from '@/lib/auth'
+import { db } from '@/lib/db/drizzle'
+import { getPartnerStats } from '@/lib/db/queries/partnerships'
+import { partners, users } from '@/lib/db/schema'
+
+export async function GET(_req: NextRequest) {
+  try {
+    const _session = await getSession()
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    // Get user details to find email
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1)
+
+    if (!user?.email) {
+      return NextResponse.json({
+        hasPartnership: false,
+        message: 'No email associated with user'
+      })
+    }
+
+    const userEmail = user.email
+
+    const [partnership] = await db
+      .select()
+      .from(partners)
+      .where(eq(partners.email, userEmail))
+      .limit(1)
+
+    if (!partnership) {
+      return NextResponse.json({
+        hasPartnership: false,
+        message: 'No active partnership found'
+      })
+    }
+
+    // Get partnership stats if active
+    let stats = null
+    if (partnership.status === 'active') {
+      stats = await getPartnerStats(partnership.id)
+    }
+
+    return NextResponse.json({
+      hasPartnership: true,
+      partnership,
+      stats
+    })
+  } catch (_error) {
+    console.error('Failed to fetch partnership status:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch partnership status' },
+      { status: 500 }
+    )
+  }
+}

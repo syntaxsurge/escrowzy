@@ -413,3 +413,11 @@ export async function getReferralLeaderboard(limit: number = 10): Promise<
 
   return leaderboard
 }
+
+// Aliases for compatibility
+export const generateReferralLink = generateReferralCode
+export const getReferralStats = getReferralProgram
+export {
+  trackReferralClick,
+  trackReferralConversion
+} from './enhanced-referrals'

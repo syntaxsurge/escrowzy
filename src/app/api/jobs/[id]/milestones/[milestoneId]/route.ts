@@ -25,8 +25,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
-    const { milestoneId } = await params
-    const milestoneId = parseInt(milestoneId)
+    const { milestoneId: milestoneIdParam } = await params
+    const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(milestoneId)) {
       return NextResponse.json(
@@ -67,7 +67,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -77,7 +77,7 @@ export async function PATCH(
     }
 
     const jobId = parseInt(id)
-    const milestoneId = parseInt(milestoneId)
+    const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(
@@ -234,6 +234,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
+    const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -243,7 +244,7 @@ export async function DELETE(
     }
 
     const jobId = parseInt(id)
-    const milestoneId = parseInt(milestoneId)
+    const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(

@@ -53,14 +53,14 @@ export function WorkspaceChat({ jobId, job, currentUser }: WorkspaceChatProps) {
   useEffect(() => {
     if (!pusherClient) return
 
-    const channel = pusherClient.subscribe(`job-${jobId}-chat`)
+    const channel = pusherClient?.subscribe(`job-${jobId}-chat`)
 
-    channel.bind('new-message', (data: Message) => {
+    channel?.bind('new-message', (data: Message) => {
       mutate([...messages, data], false)
     })
 
     return () => {
-      pusherClient.unsubscribe(`job-${jobId}-chat`)
+      pusherClient?.unsubscribe(`job-${jobId}-chat`)
     }
   }, [jobId, messages, mutate])
 

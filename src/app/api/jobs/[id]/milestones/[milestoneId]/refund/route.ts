@@ -11,7 +11,7 @@ import {
   milestoneChats,
   users
 } from '@/lib/db/schema'
-import { sendEmail } from '@/lib/email'
+import { sendEmail } from '@/lib/email/utils'
 import { pusherServer } from '@/lib/pusher-server'
 import { getUser } from '@/services/user'
 
@@ -35,7 +35,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
-    const { id, milestoneId } = await params
+    const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -45,7 +45,7 @@ export async function POST(
     }
 
     const jobId = parseInt(id)
-    const milestoneId = parseInt(milestoneId)
+    const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(
@@ -241,6 +241,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
+    const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -250,7 +251,7 @@ export async function PUT(
     }
 
     const jobId = parseInt(id)
-    const milestoneId = parseInt(milestoneId)
+    const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(
@@ -458,6 +459,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string; milestoneId: string }> }
 ) {
   try {
+    const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -467,7 +469,7 @@ export async function GET(
     }
 
     const jobId = parseInt(id)
-    const milestoneId = parseInt(milestoneId)
+    const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
       return NextResponse.json(

@@ -5,7 +5,7 @@ import { generateReferralLink } from '@/lib/db/queries/referrals'
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(req)
+    const session = await getServerSession()
 
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -14,13 +14,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { campaignSource, customSlug } = await req.json()
-
-    const referralLink = await generateReferralLink(
-      session.user.id,
-      campaignSource,
-      customSlug
-    )
+    const referralLink = await generateReferralLink(session.user.id)
 
     if (!referralLink) {
       return NextResponse.json(
@@ -31,10 +25,10 @@ export async function POST(req: NextRequest) {
 
     // Construct the full URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://escrowzy.com'
-    const fullUrl = `${baseUrl}/ref/${referralLink.code}`
+    const fullUrl = `${baseUrl}/ref/${referralLink}`
 
     return NextResponse.json({
-      link: referralLink,
+      code: referralLink,
       fullUrl,
       message: 'Referral link generated successfully'
     })

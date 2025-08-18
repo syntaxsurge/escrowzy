@@ -29,7 +29,7 @@ const updateInvoiceSchema = z.object({
 
 // GET /api/invoices/[id] - Get specific invoice
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -121,6 +121,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(
@@ -202,17 +203,19 @@ export async function PATCH(
     if (validatedData.dueDate)
       updateData.dueDate = new Date(validatedData.dueDate)
     if (validatedData.items) updateData.items = validatedData.items
-    if (validatedData.tax) updateData.tax = validatedData.tax
-    if (validatedData.discount) updateData.discount = validatedData.discount
+    if (validatedData.tax) updateData.taxAmount = validatedData.tax
+    if (validatedData.discount)
+      updateData.discountAmount = validatedData.discount
 
     // Calculate total if amount, tax, or discount changed
     if (validatedData.amount || validatedData.tax || validatedData.discount) {
       const amount = parseFloat(validatedData.amount || invoice.amount)
-      const tax = parseFloat(validatedData.tax || invoice.tax || '0')
+      const tax = parseFloat(validatedData.tax || invoice.taxAmount || '0')
       const discount = parseFloat(
-        validatedData.discount || invoice.discount || '0'
+        validatedData.discount || invoice.discountAmount || '0'
       )
-      updateData.total = (amount + tax - discount).toString()
+      // Note: Total calculation removed as there's no total field in invoices table
+      // Consider adding total as a computed field or storing in metadata
     }
 
     // Update the invoice
@@ -259,10 +262,11 @@ export async function PATCH(
 
 // DELETE /api/invoices/[id] - Delete invoice
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getUser()
     if (!user) {
       return NextResponse.json(

@@ -102,11 +102,6 @@ export function SkillEndorsementCard({
               {renderStars(endorsement.rating)}
             </div>
           </div>
-          {endorsement.skill.category && (
-            <Badge variant='outline' className='text-xs'>
-              {endorsement.skill.category}
-            </Badge>
-          )}
         </div>
 
         {endorsement.projectContext && (

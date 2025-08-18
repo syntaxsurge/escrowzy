@@ -11,7 +11,7 @@ export async function POST(
   try {
     const { id } = await params
     const session = await getServerSession()
-    if (!session?.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -32,7 +32,7 @@ export async function POST(
     }
 
     const result = await respondToReview(
-      session.userId,
+      session.user.id,
       reviewId,
       type,
       validatedData

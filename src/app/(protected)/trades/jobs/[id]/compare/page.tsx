@@ -71,7 +71,7 @@ export default function CompareFreelancersPage() {
     `/api/jobs/${jobId}`,
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? response.job : null
+      return response.success ? (response as any).job : null
     }
   )
 
@@ -80,7 +80,7 @@ export default function CompareFreelancersPage() {
     BidWithRelations[]
   >(`/api/jobs/${jobId}/bids`, async (url: string) => {
     const response = await api.get(url)
-    return response.success ? response.bids : []
+    return response.success ? (response as any).bids : []
   })
 
   // Check ownership
