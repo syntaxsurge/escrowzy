@@ -18,7 +18,6 @@ import {
   ShoppingBag,
   Briefcase,
   Globe,
-  Hash,
   DollarSign
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
@@ -453,12 +452,14 @@ function UserMenu() {
   )
 }
 
-function PublicNavigation({ 
-  isMobileMenuOpen, 
-  setIsMobileMenuOpen 
+function PublicNavigation({
+  isMobileMenuOpen,
+  setIsMobileMenuOpen,
+  user
 }: {
   isMobileMenuOpen: boolean
   setIsMobileMenuOpen: (open: boolean) => void
+  user: User | null | undefined
 }) {
   const [isBrowseOpen, setIsBrowseOpen] = useState(false)
 
@@ -488,15 +489,6 @@ function PublicNavigation({
               >
                 <Users className='h-4 w-4' />
                 <span>Freelancers</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link
-                href={appRoutes.jobs}
-                className='flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:text-green-700 focus:bg-gradient-to-r focus:from-green-50 focus:to-emerald-50 focus:text-green-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-green-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-green-400'
-              >
-                <Briefcase className='h-4 w-4' />
-                <span>Jobs</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
@@ -542,9 +534,9 @@ function PublicNavigation({
       <MobileMenu
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
-        className='bg-background/95 backdrop-blur-xl top-[60px] border-t border-border'
+        className='bg-background/95 border-border top-[60px] border-t backdrop-blur-xl'
       >
-        <div className='space-y-1 p-4 max-h-[calc(100vh-80px)] overflow-y-auto'>
+        <div className='max-h-[calc(100vh-80px)] space-y-1 overflow-y-auto p-4'>
           <div className='text-muted-foreground mb-3 px-3 text-xs font-semibold tracking-wider uppercase'>
             Browse
           </div>
@@ -553,16 +545,8 @@ function PublicNavigation({
             className='text-foreground hover:bg-muted active:bg-muted flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-all'
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            <Users className='h-5 w-5 text-primary' />
+            <Users className='text-primary h-5 w-5' />
             <span>Freelancers</span>
-          </Link>
-          <Link
-            href={appRoutes.jobs}
-            className='text-foreground hover:bg-muted active:bg-muted flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-all'
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            <Briefcase className='h-5 w-5 text-emerald-600' />
-            <span>Jobs</span>
           </Link>
           <Link
             href='/listings?category=p2p'
@@ -599,6 +583,23 @@ function PublicNavigation({
             <DollarSign className='h-5 w-5 text-yellow-600' />
             <span>Pricing</span>
           </Link>
+
+          <div className='border-border my-3 border-t' />
+
+          {/* Settings Section - Mobile Only */}
+          <div className='text-muted-foreground mb-3 px-3 text-xs font-semibold tracking-wider uppercase'>
+            Settings
+          </div>
+
+          {/* Theme Toggle */}
+          <div className='px-3 py-2'>
+            <ThemeToggle />
+          </div>
+
+          {/* Network Selector */}
+          <div className='px-3 py-2'>
+            <NetworkSelector isAuthenticated={!!user} />
+          </div>
         </div>
       </MobileMenu>
     </>
@@ -637,9 +638,10 @@ export default function Header() {
         </Link>
 
         {/* Center Navigation */}
-        <PublicNavigation 
+        <PublicNavigation
           isMobileMenuOpen={isMobileMenuOpen}
           setIsMobileMenuOpen={setIsMobileMenuOpen}
+          user={user}
         />
 
         {/* Right Side Actions */}
@@ -657,15 +659,15 @@ export default function Header() {
               <Menu className='h-5 w-5' />
             )}
           </Button>
-          
-          {/* Desktop Actions */}
-          <div className='hidden md:flex items-center gap-2'>
+
+          {/* Desktop Actions - Show theme and network on desktop only */}
+          <div className='hidden items-center gap-2 md:flex'>
             <ThemeToggle />
             <NetworkSelector isAuthenticated={!!user} />
             {/* Only show notifications when user is authenticated */}
             {isConnected && user && <NotificationDropdown />}
           </div>
-          
+
           <UserMenu />
         </div>
       </div>

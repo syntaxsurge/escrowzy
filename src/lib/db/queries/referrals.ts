@@ -1,4 +1,4 @@
-import { desc, eq, sql, sum } from 'drizzle-orm'
+import { desc, eq, sql } from 'drizzle-orm'
 
 import { db } from '../drizzle'
 import { referralConversions, referralLinks, users } from '../schema'
@@ -14,20 +14,21 @@ export async function getReferralStats(userId: number) {
   const conversions = await db
     .select({
       totalConversions: sql<number>`count(*)::int`,
-      activeConversions: sql<number>`count(case when ${referralConversions.status} = 'active' then 1 end)::int`,
+      activeConversions: sql<number>`count(case when ${referralConversions.referrerRewardStatus} = 'paid' then 1 end)::int`,
       totalEarnings: sql<string>`'0'`,
-      pendingEarnings: sum(
-        sql`CASE WHEN ${referralConversions.paidAt} IS NULL THEN ${referralConversions.commission} ELSE 0 END`
-      ),
-      totalValue: sum(referralConversions.conversionValue)
+      pendingEarnings: sql<string>`'0'`,
+      totalValue: sql<string>`'0'`
     })
     .from(referralConversions)
     .where(eq(referralConversions.referrerId, userId))
 
   // Calculate total clicks
-  const totalClicks = links.reduce((sum, link) => sum + link.clicks, 0)
+  const totalClicks = links.reduce(
+    (sum, link) => sum + (link.clickCount || 0),
+    0
+  )
   const totalConversions = links.reduce(
-    (sum, link) => sum + link.conversions,
+    (sum, link) => sum + (link.conversionCount || 0),
     0
   )
 
@@ -84,15 +85,15 @@ export async function getReferredUsers(userId: number) {
     .select({
       id: referralConversions.id,
       referredUser: users.walletAddress,
-      status: referralConversions.status,
-      joinedAt: referralConversions.createdAt,
-      earnings: referralConversions.commission,
+      status: referralConversions.referrerRewardStatus,
+      joinedAt: referralConversions.convertedAt,
+      earnings: sql<string>`'0'`,
       trades: sql<number>`0` // This would need to be calculated from actual trades
     })
     .from(referralConversions)
-    .innerJoin(users, eq(users.id, referralConversions.referredUserId))
+    .innerJoin(users, eq(users.id, referralConversions.refereeId))
     .where(eq(referralConversions.referrerId, userId))
-    .orderBy(desc(referralConversions.createdAt))
+    .orderBy(desc(referralConversions.convertedAt))
 
   return referrals
 }
@@ -123,10 +124,10 @@ export async function generateReferralLink(
     .values({
       userId,
       code,
-      campaignSource,
-      customSlug,
-      clicks: 0,
-      conversions: 0,
+      customAlias: customSlug,
+      clickCount: 0,
+      conversionCount: 0,
+      metadata: { source: campaignSource },
       isActive: true
     })
     .returning()
@@ -138,7 +139,7 @@ export async function trackReferralClick(code: string) {
   await db
     .update(referralLinks)
     .set({
-      clicks: sql`${referralLinks.clicks} + 1`,
+      clickCount: sql`${referralLinks.clickCount} + 1`,
       updatedAt: new Date()
     })
     .where(eq(referralLinks.code, code))
@@ -146,7 +147,7 @@ export async function trackReferralClick(code: string) {
 
 export async function createReferralConversion(
   code: string,
-  referredUserId: number
+  refereeId: number
 ) {
   // Get referral link
   const link = await db
@@ -178,11 +179,10 @@ export async function createReferralConversion(
     .values({
       referralLinkId: referralLink.id,
       referrerId: referralLink.userId,
-      referredUserId,
-      status: 'pending',
-      conversionValue: '0',
-      commission: '0',
-      commissionRate: '10' // Default 10% commission
+      refereeId,
+      conversionType: 'signup',
+      referrerRewardStatus: 'pending',
+      refereeRewardStatus: 'pending'
     })
     .returning()
 
@@ -190,7 +190,7 @@ export async function createReferralConversion(
   await db
     .update(referralLinks)
     .set({
-      conversions: sql`${referralLinks.conversions} + 1`,
+      conversionCount: sql`${referralLinks.conversionCount} + 1`,
       updatedAt: new Date()
     })
     .where(eq(referralLinks.id, referralLink.id))

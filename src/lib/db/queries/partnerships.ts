@@ -1,7 +1,7 @@
-import { and, desc, eq, gte, sql, sum } from 'drizzle-orm'
+import { and, count, desc, eq, gte, sql, sum } from 'drizzle-orm'
 
 import { db } from '../drizzle'
-import { escrowListings, partnerCommissions, partners, users } from '../schema'
+import { partnerCommissions, partners } from '../schema'
 
 export async function getPartnershipByEmail(email: string) {
   const partnership = await db
@@ -55,15 +55,14 @@ export async function getPartnershipStats(partnerId: number) {
       )
     )
 
-  // Get active users (unique users who made transactions through partner)
-  const activeUsers = await db
-    .selectDistinct({ userId: users.id })
-    .from(users)
-    .innerJoin(escrowListings, eq(escrowListings.userId, users.id))
+  // Get active transactions count (number of commissions in last 30 days)
+  const activeTransactionsResult = await db
+    .select({ count: count() })
+    .from(partnerCommissions)
     .where(
       and(
-        eq(escrowListings.partnerId, partnerId),
-        gte(escrowListings.createdAt, thirtyDaysAgo)
+        eq(partnerCommissions.partnerId, partnerId),
+        gte(partnerCommissions.createdAt, thirtyDaysAgo)
       )
     )
 
@@ -75,7 +74,7 @@ export async function getPartnershipStats(partnerId: number) {
     totalCommissions: stats?.totalCommissions || '0',
     pendingCommissions: stats?.pendingCommissions || '0',
     avgTransactionSize: recentCommissions[0]?.avgTransactionSize || '0',
-    activeUsers: activeUsers.length
+    activeTransactions: activeTransactionsResult[0]?.count || 0
   }
 }
 
@@ -125,20 +124,21 @@ export async function createPartnership(data: {
   const [partnership] = await db
     .insert(partners)
     .values({
-      userId: data.userId,
-      companyName: data.companyName,
-      websiteUrl: data.websiteUrl,
-      contactEmail: data.contactEmail,
-      contactPhone: data.contactPhone,
-      partnershipType: data.partnershipType,
+      organizationName: data.companyName,
+      contactName: data.companyName, // Using company name as contact name for now
+      email: data.contactEmail,
+      phone: data.contactPhone,
+      website: data.websiteUrl,
+      partnerType: data.partnershipType,
+      tier: 'bronze', // Default tier
       commissionRate: '10', // Default rate, admin can adjust
-      customTerms: data.proposedTerms,
-      status: 'pending',
-      notes: JSON.stringify({
+      customTerms: {
+        proposedTerms: data.proposedTerms,
         estimatedVolume: data.estimatedVolume,
         userBase: data.userBase,
         additionalInfo: data.additionalInfo
-      })
+      },
+      status: 'pending'
     })
     .returning()
 
@@ -194,15 +194,6 @@ export async function recordPartnerCommission(data: {
     })
     .returning()
 
-  // Update partner's total pending commission
-  await db
-    .update(partners)
-    .set({
-      totalPendingCommission: sql`${partners.totalPendingCommission} + ${commissionAmount}::decimal`,
-      updatedAt: new Date()
-    })
-    .where(eq(partners.id, data.partnerId))
-
   return commission
 }
 
@@ -219,7 +210,7 @@ export async function applyForPartnership(data: {
   additionalInfo?: string
 }) {
   // Check if user already has a partnership
-  const existing = await getPartnershipByUserId(data.userId)
+  const existing = await getPartnershipByEmail(data.contactEmail)
   if (existing) {
     return null // User already has a partnership
   }
@@ -253,13 +244,11 @@ export async function processPartnerPayout(
     0
   )
 
-  // Update partner totals
+  // Update partner's total revenue
   await db
     .update(partners)
     .set({
-      totalEarnedCommission: sql`${partners.totalEarnedCommission} + ${totalPaid}::decimal`,
-      totalPendingCommission: sql`${partners.totalPendingCommission} - ${totalPaid}::decimal`,
-      updatedAt: new Date()
+      totalRevenue: sql`${partners.totalRevenue} + ${totalPaid}::decimal`
     })
     .where(eq(partners.id, partnerId))
 

@@ -582,15 +582,17 @@ export default function JobProposalsPage() {
                         <div className='flex items-center gap-2'>
                           {bid.status === 'pending' && (
                             <>
-                              <BidNegotiationChat
+                              {/* TODO: Implement BidNegotiationChat component */}
+                              {/* <BidNegotiationChat
                                 bid={bid}
                                 jobTitle={job?.title || ''}
                                 isClient={true}
                                 onTermsAccepted={() =>
                                   handleBidAction(bid.id, 'accept')
                                 }
-                              />
-                              <InterviewScheduler
+                              /> */}
+                              {/* TODO: Implement InterviewScheduler component */}
+                              {/* <InterviewScheduler
                                 jobId={parseInt(jobId)}
                                 bidId={bid.id}
                                 freelancerId={bid.freelancerId}
@@ -598,7 +600,7 @@ export default function JobProposalsPage() {
                                   bid.freelancer?.name || 'Freelancer'
                                 }
                                 onScheduled={() => mutateBids()}
-                              />
+                              /> */}
                               <Button
                                 size='sm'
                                 variant='outline'
@@ -623,7 +625,8 @@ export default function JobProposalsPage() {
 
                           {bid.status === 'shortlisted' && (
                             <>
-                              <InterviewScheduler
+                              {/* TODO: Implement InterviewScheduler component */}
+                              {/* <InterviewScheduler
                                 jobId={parseInt(jobId)}
                                 bidId={bid.id}
                                 freelancerId={bid.freelancerId}
@@ -631,7 +634,7 @@ export default function JobProposalsPage() {
                                   bid.freelancer?.name || 'Freelancer'
                                 }
                                 onScheduled={() => mutateBids()}
-                              />
+                              /> */}
                               <Button
                                 size='sm'
                                 onClick={() =>

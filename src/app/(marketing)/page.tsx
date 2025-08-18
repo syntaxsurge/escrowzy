@@ -20,7 +20,6 @@ import {
   Flame,
   Target,
   HandshakeIcon,
-  DollarSign,
   Lock,
   Rocket,
   Crown,
@@ -39,6 +38,7 @@ import {
   Hash,
   Layers
 } from 'lucide-react'
+import useSWR from 'swr'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -111,12 +111,20 @@ function FloatingAchievement({
   )
 }
 
+const fetcher = (url: string) => fetch(url).then(res => res.json())
+
 export default function HomePage() {
   const [combatPower, setCombatPower] = useState(450)
   const [selectedTier, setSelectedTier] = useState('pro')
   const [battleWinner, setBattleWinner] = useState<
     'player' | 'opponent' | null
   >(null)
+
+  // Fetch real-time platform stats
+  const { data: stats, error } = useSWR('/api/platform/stats', fetcher, {
+    refreshInterval: 30000, // Refresh every 30 seconds
+    revalidateOnFocus: true
+  })
 
   // Sample achievements for floating animation
   const floatingAchievements = [
@@ -127,13 +135,6 @@ export default function HomePage() {
     ACHIEVEMENTS.ARENA_CHAMPION,
     ACHIEVEMENTS.SOCIAL_BUTTERFLY
   ]
-
-  const platformStats = {
-    verifiedFreelancers: 2847,
-    secureEscrows: 15324,
-    disputeResolution: 99.8,
-    protectedFunds: 8450000
-  }
 
   const tierFees = {
     free: { fee: 2.5, battles: 3, teamMembers: 1 },
@@ -175,40 +176,53 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             className='mb-8 flex flex-wrap justify-center gap-6 text-center'
           >
-            {[
-              {
-                label: 'Verified Freelancers',
-                value: platformStats.verifiedFreelancers,
-                icon: UserCheck,
-                color: 'text-green-400'
-              },
-              {
-                label: 'Secure Escrows',
-                value: platformStats.secureEscrows,
-                icon: ShieldCheck,
-                color: 'text-blue-400'
-              },
-              {
-                label: 'Resolution Rate',
-                value: platformStats.disputeResolution,
-                icon: CheckCircle2,
-                color: 'text-emerald-400',
-                suffix: '%'
-              },
-              {
-                label: 'Protected Funds',
-                value: platformStats.protectedFunds,
-                icon: Lock,
-                color: 'text-yellow-400',
-                prefix: '$'
-              }
-            ].map((stat, i) => (
+            {(stats
+              ? [
+                  {
+                    label: 'Platform Users',
+                    value: stats.totalUsers || 0,
+                    icon: Users,
+                    color: 'text-green-400'
+                  },
+                  {
+                    label: 'Active Listings',
+                    value: stats.activeListings || 0,
+                    icon: Activity,
+                    color: 'text-blue-400',
+                    tooltip: stats.listingBreakdown
+                      ? `P2P: ${stats.listingBreakdown.p2p} | Domains: ${stats.listingBreakdown.domain} | Services: ${stats.listingBreakdown.service}`
+                      : ''
+                  },
+                  {
+                    label: 'Live Escrows',
+                    value: stats.activeEscrows || 0,
+                    icon: ShieldCheck,
+                    color: 'text-purple-400'
+                  },
+                  {
+                    label: 'Daily Battles',
+                    value: stats.dailyBattles || 0,
+                    icon: Swords,
+                    color: 'text-red-400'
+                  }
+                ]
+              : [
+                  // Loading state - show skeleton values
+                  {
+                    label: 'Loading...',
+                    value: 0,
+                    icon: Activity,
+                    color: 'text-gray-400'
+                  }
+                ]
+            ).map((stat, i) => (
               <motion.div
                 key={stat.label}
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: i * 0.1 }}
-                className='rounded-lg border border-white/10 bg-black/40 px-4 py-2 backdrop-blur-sm'
+                className='group relative rounded-lg border border-white/10 bg-black/40 px-4 py-2 backdrop-blur-sm transition-all hover:border-white/20'
+                title={(stat as any).tooltip}
               >
                 <div className='flex items-center gap-2'>
                   <stat.icon className={cn('h-4 w-4', stat.color)} />
@@ -221,6 +235,13 @@ export default function HomePage() {
                     </p>
                   </div>
                 </div>
+                {(stat as any).tooltip && (
+                  <div className='absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 group-hover:block'>
+                    <div className='rounded bg-black/90 px-2 py-1 text-xs whitespace-nowrap text-white'>
+                      {(stat as any).tooltip}
+                    </div>
+                  </div>
+                )}
               </motion.div>
             ))}
           </motion.div>

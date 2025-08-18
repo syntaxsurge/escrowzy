@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 import {
   Plus,
@@ -69,10 +69,12 @@ export function UnifiedMarketplace({
     | 'domain'
     | 'service'
     | null
-  
+
   // Use URL category if available, otherwise use defaultCategory
   // When no category in URL and defaultCategory is 'all', treat it as 'all'
-  const category = categoryFromUrl || (defaultCategory === 'all' && !categoryFromUrl ? 'all' : defaultCategory)
+  const category =
+    categoryFromUrl ||
+    (defaultCategory === 'all' && !categoryFromUrl ? 'all' : defaultCategory)
 
   // Update URL when category changes
   const handleCategoryChange = (newCategory: string) => {

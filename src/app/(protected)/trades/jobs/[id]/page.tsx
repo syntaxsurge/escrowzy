@@ -740,8 +740,8 @@ export default function JobDetailsPage() {
             </CardContent>
           </Card>
 
-          {/* Similar Jobs */}
-          <FeaturedJobsMini className='lg:sticky lg:top-4' />
+          {/* TODO: Implement FeaturedJobsMini component */}
+          {/* <FeaturedJobsMini className='lg:sticky lg:top-4' /> */}
         </div>
       </div>
     </div>

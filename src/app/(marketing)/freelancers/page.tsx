@@ -36,16 +36,17 @@ interface SearchParams {
 async function FreelancersList({
   searchParams
 }: {
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }) {
+  const params = await searchParams
   const filters = {
-    search: searchParams.search,
-    skills: searchParams.skills?.split(',').map(Number).filter(Boolean),
-    minRate: searchParams.minRate ? parseInt(searchParams.minRate) : undefined,
-    maxRate: searchParams.maxRate ? parseInt(searchParams.maxRate) : undefined,
-    experienceLevel: searchParams.experienceLevel,
-    availability: searchParams.availability,
-    sortBy: searchParams.sortBy || 'newest',
+    search: params.search,
+    skills: params.skills?.split(',').map(Number).filter(Boolean),
+    minRate: params.minRate ? parseInt(params.minRate) : undefined,
+    maxRate: params.maxRate ? parseInt(params.maxRate) : undefined,
+    experienceLevel: params.experienceLevel,
+    availability: params.availability,
+    sortBy: params.sortBy || 'newest',
     limit: 20
   }
 
@@ -60,7 +61,7 @@ async function FreelancersList({
           </div>
           <h3 className='mb-2 text-2xl font-black'>NO FREELANCERS FOUND</h3>
           <p className='text-muted-foreground mb-6'>
-            {searchParams.search
+            {params.search
               ? 'Try adjusting your search or filters'
               : 'Be the first to join as a freelancer'}
           </p>
@@ -127,8 +128,9 @@ async function FreelancerStats() {
 export default async function FreelancersDirectoryPage({
   searchParams
 }: {
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }) {
+  const params = await searchParams
   return (
     <div className='from-background via-background to-primary/5 dark:to-primary/10 min-h-screen bg-gradient-to-br'>
       <div className='container mx-auto space-y-8 py-6'>
@@ -161,13 +163,13 @@ export default async function FreelancersDirectoryPage({
                 <Input
                   name='search'
                   placeholder='Search by name, title, or skills...'
-                  defaultValue={searchParams.search}
+                  defaultValue={params.search}
                   className='flex-1'
                 />
 
                 <Select
                   name='experienceLevel'
-                  defaultValue={searchParams.experienceLevel}
+                  defaultValue={params.experienceLevel}
                 >
                   <SelectTrigger className='w-full sm:w-[180px]'>
                     <SelectValue placeholder='Experience Level' />
@@ -182,7 +184,7 @@ export default async function FreelancersDirectoryPage({
 
                 <Select
                   name='availability'
-                  defaultValue={searchParams.availability}
+                  defaultValue={params.availability}
                 >
                   <SelectTrigger className='w-full sm:w-[140px]'>
                     <SelectValue placeholder='Availability' />
@@ -197,7 +199,7 @@ export default async function FreelancersDirectoryPage({
 
                 <Select
                   name='sortBy'
-                  defaultValue={searchParams.sortBy || 'newest'}
+                  defaultValue={params.sortBy || 'newest'}
                 >
                   <SelectTrigger className='w-full sm:w-[160px]'>
                     <SelectValue placeholder='Sort by' />

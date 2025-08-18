@@ -422,9 +422,10 @@ export default function JobApplyPage() {
                 <div className='flex items-center justify-between'>
                   <CardTitle>Your Proposal</CardTitle>
                   <div className='flex items-center gap-2'>
-                    <BidTemplateSelector
+                    {/* TODO: Implement BidTemplateSelector component */}
+                    {/* <BidTemplateSelector
                       onSelectTemplate={handleTemplateSelect}
-                    />
+                    /> */}
                     <Button
                       type='button'
                       variant='ghost'
