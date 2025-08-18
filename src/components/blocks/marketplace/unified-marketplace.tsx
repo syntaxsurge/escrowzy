@@ -58,38 +58,24 @@ export function UnifiedMarketplace({
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Read category from URL params if available, otherwise use defaultCategory
+  const [filterType, setFilterType] = useState<'all' | 'buy' | 'sell'>('all')
+  const [filterToken, setFilterToken] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Get category from URL or use default
   const categoryFromUrl = searchParams.get('category') as
     | 'all'
     | 'p2p'
     | 'domain'
     | 'service'
     | null
-  const initialCategory = categoryFromUrl || defaultCategory
-
-  const [category, setCategory] = useState<
-    'all' | 'p2p' | 'domain' | 'service'
-  >(initialCategory)
-  const [filterType, setFilterType] = useState<'all' | 'buy' | 'sell'>('all')
-  const [filterToken, setFilterToken] = useState<string>('all')
-  const [searchQuery, setSearchQuery] = useState('')
-
-  // Update category when URL params change
-  useEffect(() => {
-    const categoryFromUrl = searchParams.get('category') as
-      | 'all'
-      | 'p2p'
-      | 'domain'
-      | 'service'
-      | null
-    if (categoryFromUrl && categoryFromUrl !== category) {
-      setCategory(categoryFromUrl)
-    }
-  }, [searchParams, category])
+  
+  // Use URL category if available, otherwise use defaultCategory
+  // When no category in URL and defaultCategory is 'all', treat it as 'all'
+  const category = categoryFromUrl || (defaultCategory === 'all' && !categoryFromUrl ? 'all' : defaultCategory)
 
   // Update URL when category changes
   const handleCategoryChange = (newCategory: string) => {
-    setCategory(newCategory as any)
     const params = new URLSearchParams(searchParams.toString())
     if (newCategory === 'all') {
       params.delete('category')
