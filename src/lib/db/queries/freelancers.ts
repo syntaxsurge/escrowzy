@@ -641,6 +641,59 @@ export const getFreelancerProfile = getFreelancerProfileByUserId
 export const createFreelancerProfile = upsertFreelancerProfile
 export const updateFreelancerProfile = upsertFreelancerProfile
 
+// Get platform statistics for freelancers page
+export async function getFreelancerPlatformStats(): Promise<{
+  activeFreelancers: number
+  avgRating: number
+  successRate: number
+}> {
+  try {
+    // Get count of active freelancers (those who were active in last 30 days)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    const [activeCount] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(freelancerProfiles)
+      .where(
+        and(
+          eq(freelancerProfiles.availability, 'available'),
+          gte(freelancerProfiles.lastActiveAt, thirtyDaysAgo)
+        )
+      )
+
+    // Get average rating across all freelancers (convert from int 1-50 to decimal 1-5)
+    const [ratingResult] = await db
+      .select({
+        avgRating: sql<number>`COALESCE(AVG(CASE WHEN ${freelancerProfiles.avgRating} > 0 THEN ${freelancerProfiles.avgRating} / 10.0 ELSE NULL END), 0)`
+      })
+      .from(freelancerProfiles)
+      .where(sql`${freelancerProfiles.avgRating} > 0`)
+
+    // Get average completion rate (success rate)
+    const [successResult] = await db
+      .select({
+        avgCompletionRate: sql<number>`COALESCE(AVG(${freelancerProfiles.completionRate}), 0)`
+      })
+      .from(freelancerProfiles)
+      .where(sql`${freelancerProfiles.totalJobs} > 0`)
+
+    return {
+      activeFreelancers: activeCount?.count || 0,
+      avgRating: Math.round((ratingResult?.avgRating || 0) * 10) / 10, // Round to 1 decimal
+      successRate: Math.round(successResult?.avgCompletionRate || 0)
+    }
+  } catch (error) {
+    console.error('Error fetching platform stats:', error)
+    // Return default values if error
+    return {
+      activeFreelancers: 0,
+      avgRating: 0,
+      successRate: 0
+    }
+  }
+}
+
 // Placeholder for reviews function - needs to be implemented based on schema
 export async function getFreelancerReviews(
   userId: number,

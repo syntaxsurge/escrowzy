@@ -13,7 +13,10 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { searchFreelancers } from '@/lib/db/queries/freelancers'
+import {
+  searchFreelancers,
+  getFreelancerPlatformStats
+} from '@/lib/db/queries/freelancers'
 
 async function FreelancersList({
   searchParams
@@ -155,6 +158,10 @@ export default async function FreelancersDirectoryPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const params = await searchParams
+
+  // Fetch real platform statistics
+  const stats = await getFreelancerPlatformStats()
+
   return (
     <div className='from-background to-muted/20 min-h-screen bg-gradient-to-b'>
       <div className='container mx-auto px-4 py-12'>
@@ -222,7 +229,11 @@ export default async function FreelancersDirectoryPage({
                     <div>
                       <div className='mb-1 flex items-center justify-center gap-2'>
                         <Users className='text-primary h-4 w-4' />
-                        <span className='text-2xl font-bold'>500+</span>
+                        <span className='text-2xl font-bold'>
+                          {stats.activeFreelancers > 0
+                            ? stats.activeFreelancers.toLocaleString()
+                            : '0'}
+                        </span>
                       </div>
                       <p className='text-muted-foreground text-sm'>
                         Active Freelancers
@@ -231,7 +242,11 @@ export default async function FreelancersDirectoryPage({
                     <div>
                       <div className='mb-1 flex items-center justify-center gap-2'>
                         <Star className='h-4 w-4 text-yellow-500' />
-                        <span className='text-2xl font-bold'>4.8</span>
+                        <span className='text-2xl font-bold'>
+                          {stats.avgRating > 0
+                            ? stats.avgRating.toFixed(1)
+                            : 'N/A'}
+                        </span>
                       </div>
                       <p className='text-muted-foreground text-sm'>
                         Average Rating
@@ -240,7 +255,11 @@ export default async function FreelancersDirectoryPage({
                     <div>
                       <div className='mb-1 flex items-center justify-center gap-2'>
                         <Award className='h-4 w-4 text-green-500' />
-                        <span className='text-2xl font-bold'>95%</span>
+                        <span className='text-2xl font-bold'>
+                          {stats.successRate > 0
+                            ? `${stats.successRate}%`
+                            : 'N/A'}
+                        </span>
                       </div>
                       <p className='text-muted-foreground text-sm'>
                         Success Rate
