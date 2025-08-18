@@ -277,7 +277,7 @@ export default function JobApplyPage() {
                     addSuffix: true
                   })}
                 </span>
-                <span>{job.bidCount} proposals</span>
+                <span>{job.currentBidsCount} proposals</span>
               </div>
             </div>
 

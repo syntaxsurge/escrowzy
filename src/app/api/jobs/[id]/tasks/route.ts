@@ -63,14 +63,14 @@ export async function GET(
         estimatedHours: jobTasks.estimatedHours,
         actualHours: jobTasks.actualHours,
         tags: jobTasks.tags,
-        position: jobTasks.position,
+        sortOrder: jobTasks.sortOrder,
         createdAt: jobTasks.createdAt
       })
       .from(jobTasks)
       .leftJoin(users, eq(jobTasks.assignedTo, users.id))
       .leftJoin(jobMilestones, eq(jobTasks.milestoneId, jobMilestones.id))
       .where(eq(jobTasks.jobId, jobId))
-      .orderBy(jobTasks.position)
+      .orderBy(jobTasks.sortOrder)
 
     return NextResponse.json({ success: true, tasks })
   } catch (error) {
@@ -132,7 +132,7 @@ export async function POST(
         estimatedHours: body.estimatedHours || null,
         createdBy: user.id,
         tags: body.tags || [],
-        position: 0
+        sortOrder: 0
       })
       .returning()
 

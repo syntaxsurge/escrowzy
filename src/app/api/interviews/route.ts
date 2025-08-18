@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
         scheduledAt: new Date(scheduledAt),
         duration,
         meetingType,
-        meetingLink: finalMeetingLink,
+        meetingUrl: finalMeetingLink,
         location,
         notes,
         status: 'scheduled',
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
           bidId,
           scheduledAt: newInterview.scheduledAt,
           meetingType,
-          meetingLink: finalMeetingLink
+          meetingUrl: finalMeetingLink
         }
       })
     } catch (notificationError) {

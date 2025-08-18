@@ -241,17 +241,11 @@ export async function getShortlistedBids(
 export async function createBid(bidData: NewJobBid): Promise<JobBid> {
   const [newBid] = await db.insert(jobBids).values(bidData).returning()
 
-  // Update job bid count and average
+  // Update job bid count
   await db
     .update(jobPostings)
     .set({
-      bidCount: sql`${jobPostings.bidCount} + 1`,
-      avgBidAmount: sql`
-        CASE 
-          WHEN ${jobPostings.avgBidAmount} IS NULL THEN ${newBid.bidAmount}
-          ELSE ((CAST(${jobPostings.avgBidAmount} AS DECIMAL) * ${jobPostings.bidCount} + CAST(${newBid.bidAmount} AS DECIMAL)) / (${jobPostings.bidCount} + 1))::VARCHAR
-        END
-      `,
+      currentBidsCount: sql`${jobPostings.currentBidsCount} + 1`,
       updatedAt: new Date()
     })
     .where(eq(jobPostings.id, bidData.jobId))

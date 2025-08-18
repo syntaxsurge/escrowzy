@@ -210,7 +210,7 @@ export async function seedTrades(users: {
       totalTrades: 50,
       successfulTrades: 48,
       totalVolume: '150000',
-      avgCompletionTime: 35, // minutes
+      // avgCompletionTime: 35, // minutes
       disputesWon: 2,
       disputesLost: 0,
       rating: 5
@@ -220,7 +220,7 @@ export async function seedTrades(users: {
       totalTrades: 15,
       successfulTrades: 14,
       totalVolume: '25000',
-      avgCompletionTime: 45,
+      // avgCompletionTime: 45,
       disputesWon: 1,
       disputesLost: 0,
       rating: 5
@@ -230,7 +230,7 @@ export async function seedTrades(users: {
       totalTrades: 8,
       successfulTrades: 7,
       totalVolume: '12000',
-      avgCompletionTime: 50,
+      // avgCompletionTime: 50,
       disputesWon: 0,
       disputesLost: 1,
       rating: 4
@@ -240,7 +240,7 @@ export async function seedTrades(users: {
       totalTrades: 30,
       successfulTrades: 29,
       totalVolume: '85000',
-      avgCompletionTime: 40,
+      // avgCompletionTime: 40,
       disputesWon: 1,
       disputesLost: 0,
       rating: 5
@@ -250,7 +250,7 @@ export async function seedTrades(users: {
       totalTrades: 75,
       successfulTrades: 73,
       totalVolume: '500000',
-      avgCompletionTime: 30,
+      // avgCompletionTime: 30,
       disputesWon: 2,
       disputesLost: 0,
       rating: 5

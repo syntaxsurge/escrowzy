@@ -861,7 +861,8 @@ async function updateTradingStats(
         if (data?.rating) {
           // Calculate new average rating
           const totalRatings = stats.successfulTrades
-          const currentTotal = stats.rating * totalRatings
+          const currentRating = stats.rating || 0
+          const currentTotal = currentRating * totalRatings
           const newAverage = (currentTotal + data.rating) / (totalRatings + 1)
           updates.rating = Math.round(newAverage * 10) / 10
         }

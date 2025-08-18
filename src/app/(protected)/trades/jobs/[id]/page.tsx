@@ -270,7 +270,7 @@ export default function JobDetailsPage() {
                       </span>
                       <span className='flex items-center gap-1'>
                         <Users className='h-4 w-4' />
-                        {job.bidCount} proposals
+                        {job.currentBidsCount} proposals
                       </span>
                     </div>
                   </div>
@@ -335,15 +335,6 @@ export default function JobDetailsPage() {
                   >
                     {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                   </Badge>
-                  {job.isFeatured && (
-                    <Badge
-                      variant='default'
-                      className='bg-gradient-to-r from-yellow-500 to-orange-500'
-                    >
-                      <Star className='mr-1 h-3 w-3' />
-                      Featured
-                    </Badge>
-                  )}
                   <Badge variant='outline'>
                     {job.category?.icon} {job.category?.name}
                   </Badge>
@@ -619,30 +610,18 @@ export default function JobDetailsPage() {
                 </div>
               )}
 
-              {job.projectDuration && (
-                <div>
-                  <p className='text-muted-foreground mb-1 text-sm'>Duration</p>
-                  <p className='font-medium'>{job.projectDuration}</p>
-                </div>
-              )}
 
               <Separator />
 
               <div className='space-y-3'>
                 <div className='flex items-center justify-between text-sm'>
                   <span className='text-muted-foreground'>Views</span>
-                  <span className='font-medium'>{job.viewCount}</span>
+                  <span className='font-medium'>{job.viewsCount}</span>
                 </div>
                 <div className='flex items-center justify-between text-sm'>
                   <span className='text-muted-foreground'>Proposals</span>
-                  <span className='font-medium'>{job.bidCount}</span>
+                  <span className='font-medium'>{job.currentBidsCount}</span>
                 </div>
-                {job.avgBidAmount && (
-                  <div className='flex items-center justify-between text-sm'>
-                    <span className='text-muted-foreground'>Avg Bid</span>
-                    <span className='font-medium'>${job.avgBidAmount}</span>
-                  </div>
-                )}
               </div>
 
               {isFreelancer && !hasApplied && job.status === 'open' && (

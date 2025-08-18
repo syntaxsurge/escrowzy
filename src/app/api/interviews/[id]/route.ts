@@ -202,7 +202,7 @@ export async function PATCH(
 
       if (body.notes !== undefined) updateData.notes = body.notes
       if (body.meetingLink !== undefined)
-        updateData.meetingLink = body.meetingLink
+        updateData.meetingUrl = body.meetingLink
       if (body.location !== undefined) updateData.location = body.location
       if (body.duration !== undefined) updateData.duration = body.duration
     }

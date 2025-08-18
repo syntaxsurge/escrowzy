@@ -290,8 +290,8 @@ export async function getUserReferralStats(userId: number) {
     links,
     recentConversions: conversions
       .sort((a, b) => {
-        const bTime = b.convertedAt ? b.convertedAt.getTime() : 0
-        const aTime = a.convertedAt ? a.convertedAt.getTime() : 0
+        const bTime = b.createdAt ? b.createdAt.getTime() : 0
+        const aTime = a.createdAt ? a.createdAt.getTime() : 0
         return bTime - aTime
       })
       .slice(0, 10)

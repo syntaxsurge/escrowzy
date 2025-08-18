@@ -389,7 +389,7 @@ export async function DELETE(
     await db
       .update(jobPostings)
       .set({
-        bidCount: sql`GREATEST(${jobPostings.bidCount} - 1, 0)`,
+        currentBidsCount: sql`GREATEST(${jobPostings.currentBidsCount} - 1, 0)`,
         updatedAt: new Date()
       })
       .where(eq(jobPostings.id, jobId))

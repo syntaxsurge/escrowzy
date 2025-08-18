@@ -5,7 +5,7 @@ import { and, desc, eq } from 'drizzle-orm'
 import { securityConstants } from '@/config/business-constants'
 import { statusConstants } from '@/config/status-constants'
 import { db } from '@/lib/db/drizzle'
-import { apiKeys, paymentHistory, teamMembers } from '@/lib/db/schema'
+import { apiKeys, paymentHistory, teamMembers, teams } from '@/lib/db/schema'
 import { getUser } from '@/services/user'
 
 const API_KEY_PREFIX = 'esk_'
@@ -46,40 +46,42 @@ export async function createApiKey(
   }
 
   // Get user's team membership
-  const membership = await db.query.teamMembers.findFirst({
-    where: eq(teamMembers.userId, authUser.id),
-    with: {
-      team: true
-    }
-  })
+  const [membership] = await db
+    .select({
+      teamId: teamMembers.teamId,
+      teamName: teams.name
+    })
+    .from(teamMembers)
+    .leftJoin(teams, eq(teamMembers.teamId, teams.id))
+    .where(eq(teamMembers.userId, authUser.id))
+    .limit(1)
 
-  if (!membership) {
-    throw new Error('User does not belong to a team')
-  }
-
-  const userTeam = membership.team
-
-  if (!userTeam) {
+  if (!membership || !membership.teamId) {
     throw new Error('User does not belong to a team')
   }
 
   // Check if user has enterprise subscription
-  const hasEnterprise = await db.query.paymentHistory.findFirst({
-    where: and(
-      eq(paymentHistory.teamId, userTeam.id),
-      eq(paymentHistory.planId, statusConstants.subscriptionPlans.ENTERPRISE),
-      eq(paymentHistory.status, 'confirmed')
+  const [hasEnterprise] = await db
+    .select()
+    .from(paymentHistory)
+    .where(
+      and(
+        eq(paymentHistory.teamId, membership.teamId),
+        eq(paymentHistory.planId, statusConstants.subscriptionPlans.ENTERPRISE),
+        eq(paymentHistory.status, 'confirmed')
+      )
     )
-  })
+    .limit(1)
 
   if (!hasEnterprise) {
     throw new Error('API keys are only available for Enterprise plan users')
   }
 
   // Check existing API keys limit (10 per team)
-  const existingKeys = await db.query.apiKeys.findMany({
-    where: and(eq(apiKeys.teamId, userTeam.id), eq(apiKeys.isActive, true))
-  })
+  const existingKeys = await db
+    .select()
+    .from(apiKeys)
+    .where(and(eq(apiKeys.teamId, membership.teamId), eq(apiKeys.isActive, true)))
 
   if (existingKeys.length >= 10) {
     throw new Error('Maximum number of API keys (10) reached')
@@ -100,7 +102,7 @@ export async function createApiKey(
     .insert(apiKeys)
     .values({
       userId: authUser.id,
-      teamId: userTeam.id,
+      teamId: membership.teamId,
       name: data.name,
       keyHash: hash,
       keyPrefix: prefix,
@@ -149,7 +151,7 @@ export async function getApiKeys(): Promise<ApiKeyResponse[]> {
 
   // Get all API keys for the team
   const keys = await db.query.apiKeys.findMany({
-    where: eq(apiKeys.teamId, userTeam.id),
+    where: eq(apiKeys.teamId, membership.teamId),
     orderBy: [desc(apiKeys.createdAt)]
   })
 

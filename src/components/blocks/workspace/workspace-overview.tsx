@@ -317,12 +317,6 @@ export function WorkspaceOverview({
                 {job.experienceLevel}
               </p>
             </div>
-            <div>
-              <p className='text-muted-foreground text-sm'>Project Duration</p>
-              <p className='text-sm font-medium'>
-                {job.projectDuration || 'Not specified'}
-              </p>
-            </div>
           </div>
 
           {job.skillsRequired && job.skillsRequired.length > 0 && (

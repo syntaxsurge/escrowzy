@@ -294,14 +294,25 @@ export async function addReviewResponse(
 ): Promise<void> {
   const table = type === 'freelancer' ? freelancerReviews : clientReviews
 
-  await db
-    .update(table)
-    .set({
-      response,
-      respondedAt: new Date(),
-      updatedAt: new Date()
-    })
-    .where(eq(table.id, reviewId))
+  if (type === 'freelancer') {
+    await db
+      .update(freelancerReviews)
+      .set({
+        response,
+        responseAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(freelancerReviews.id, reviewId))
+  } else {
+    await db
+      .update(clientReviews)
+      .set({
+        response,
+        respondedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(clientReviews.id, reviewId))
+  }
 }
 
 export async function checkReviewExists(

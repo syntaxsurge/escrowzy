@@ -246,17 +246,11 @@ export async function POST(
       })
       .returning()
 
-    // Update job bid count and average
+    // Update job bid count
     await db
       .update(jobPostings)
       .set({
-        bidCount: sql`${jobPostings.bidCount} + 1`,
-        avgBidAmount: sql`
-          CASE 
-            WHEN ${jobPostings.avgBidAmount} IS NULL THEN ${newBid.bidAmount}
-            ELSE ((CAST(${jobPostings.avgBidAmount} AS DECIMAL) * ${jobPostings.bidCount} + CAST(${newBid.bidAmount} AS DECIMAL)) / (${jobPostings.bidCount} + 1))::VARCHAR
-          END
-        `,
+        currentBidsCount: sql`${jobPostings.currentBidsCount} + 1`,
         updatedAt: new Date()
       })
       .where(eq(jobPostings.id, jobId))

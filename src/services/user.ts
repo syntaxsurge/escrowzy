@@ -10,6 +10,7 @@ import { db } from '../lib/db/drizzle'
 import {
   activityLogs,
   teamMembers,
+  teams,
   users,
   ActivityType
 } from '../lib/db/schema'
@@ -126,41 +127,63 @@ export async function getTeamForUser() {
     return null
   }
 
-  // Get all team memberships for the user
-  const allMemberships = await db.query.teamMembers.findMany({
-    where: eq(teamMembers.userId, user.id),
-    with: {
-      team: {
-        with: {
-          teamMembers: {
-            with: {
-              user: {
-                columns: {
-                  id: true,
-                  name: true,
-                  walletAddress: true,
-                  email: true
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  })
+  // Get user's team memberships
+  const userMemberships = await db
+    .select()
+    .from(teamMembers)
+    .where(eq(teamMembers.userId, user.id))
 
-  if (!allMemberships.length) {
+  if (!userMemberships.length) {
     return null
   }
 
-  // Prioritize collaborative teams (teams with more than 1 member) over intrinsic teams
-  const collaborativeTeam = allMemberships.find(
-    membership => membership.team.teamMembers.length > 1
-  )
+  // Get the first team
+  const firstMembership = userMemberships[0]
 
-  // Return collaborative team if exists, otherwise return the first intrinsic team
-  const selectedMembership = collaborativeTeam || allMemberships[0]
-  return selectedMembership?.team || null
+  // Get team data
+  const teamData = await db
+    .select()
+    .from(teams)
+    .where(eq(teams.id, firstMembership.teamId))
+    .limit(1)
+
+  if (!teamData[0]) {
+    return null
+  }
+
+  // Get all team members
+  const allTeamMembers = await db
+    .select({
+      id: teamMembers.id,
+      userId: teamMembers.userId,
+      teamId: teamMembers.teamId,
+      role: teamMembers.role,
+      joinedAt: teamMembers.joinedAt,
+      userName: users.name,
+      userEmail: users.email,
+      userWalletAddress: users.walletAddress
+    })
+    .from(teamMembers)
+    .leftJoin(users, eq(teamMembers.userId, users.id))
+    .where(eq(teamMembers.teamId, teamData[0].id))
+
+  // Structure the data to match TeamDataWithMembers
+  return {
+    ...teamData[0],
+    teamMembers: allTeamMembers.map(member => ({
+      id: member.id,
+      userId: member.userId,
+      teamId: member.teamId,
+      role: member.role,
+      joinedAt: member.joinedAt,
+      user: {
+        id: member.userId,
+        name: member.userName,
+        email: member.userEmail,
+        walletAddress: member.userWalletAddress
+      }
+    }))
+  }
 }
 
 export const getTeam = getTeamForUser

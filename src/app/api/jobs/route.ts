@@ -90,7 +90,6 @@ export async function POST(request: NextRequest) {
         deadline: body.deadline ? new Date(body.deadline) : null,
         skillsRequired: body.skillsRequired || [],
         experienceLevel: body.experienceLevel || 'intermediate',
-        projectDuration: body.projectDuration,
         visibility: body.visibility || 'public',
         status: body.status || 'open',
         attachments: body.attachments || [],

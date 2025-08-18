@@ -105,14 +105,7 @@ export async function POST(
     await db
       .update(jobPostings)
       .set({
-        bidCount: job.bidCount + 1,
-        avgBidAmount: job.avgBidAmount
-          ? (
-              (parseFloat(job.avgBidAmount) * job.bidCount +
-                parseFloat(bidAmount)) /
-              (job.bidCount + 1)
-            ).toFixed(2)
-          : bidAmount,
+        currentBidsCount: job.currentBidsCount + 1,
         updatedAt: new Date()
       })
       .where(eq(jobPostings.id, jobId))

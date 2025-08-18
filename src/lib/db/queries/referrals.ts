@@ -86,14 +86,14 @@ export async function getReferredUsers(userId: number) {
       id: referralConversions.id,
       referredUser: users.walletAddress,
       status: referralConversions.referrerRewardStatus,
-      joinedAt: referralConversions.convertedAt,
+      joinedAt: referralConversions.createdAt,
       earnings: sql<string>`'0'`,
       trades: sql<number>`0` // This would need to be calculated from actual trades
     })
     .from(referralConversions)
     .innerJoin(users, eq(users.id, referralConversions.refereeId))
     .where(eq(referralConversions.referrerId, userId))
-    .orderBy(desc(referralConversions.convertedAt))
+    .orderBy(desc(referralConversions.createdAt))
 
   return referrals
 }

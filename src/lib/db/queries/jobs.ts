@@ -28,17 +28,13 @@ export interface JobPostingWithRelations {
   deadline: Date | null
   skillsRequired: any
   experienceLevel: string
-  projectDuration: string | null
   visibility: string
   status: string
   attachments: any
   metadata: any
   freelancerId: number | null
-  viewCount: number
-  bidCount: number
-  avgBidAmount: string | null
-  isFeatured: boolean
-  featuredUntil: Date | null
+  viewsCount: number
+  currentBidsCount: number
   createdAt: Date
   updatedAt: Date
   client: Omit<User, 'passwordHash'>
@@ -102,17 +98,13 @@ export async function getJobById(
       deadline: jobPostings.deadline,
       skillsRequired: jobPostings.skillsRequired,
       experienceLevel: jobPostings.experienceLevel,
-      projectDuration: jobPostings.projectDuration,
       visibility: jobPostings.visibility,
       status: jobPostings.status,
       attachments: jobPostings.attachments,
       metadata: jobPostings.metadata,
       freelancerId: jobPostings.freelancerId,
-      viewCount: jobPostings.viewCount,
-      bidCount: jobPostings.bidCount,
-      avgBidAmount: jobPostings.avgBidAmount,
-      isFeatured: jobPostings.isFeatured,
-      featuredUntil: jobPostings.featuredUntil,
+      viewsCount: jobPostings.viewsCount,
+      currentBidsCount: jobPostings.currentBidsCount,
       createdAt: jobPostings.createdAt,
       updatedAt: jobPostings.updatedAt,
       client: {
@@ -197,7 +189,7 @@ export async function getJobById(
   // Increment view count
   await db
     .update(jobPostings)
-    .set({ viewCount: sql`${jobPostings.viewCount} + 1` })
+    .set({ viewsCount: sql`${jobPostings.viewsCount} + 1` })
     .where(eq(jobPostings.id, jobId))
 
   return {
@@ -278,17 +270,13 @@ export async function getJobsWithFilters(filters: JobFilters): Promise<{
       deadline: jobPostings.deadline,
       skillsRequired: jobPostings.skillsRequired,
       experienceLevel: jobPostings.experienceLevel,
-      projectDuration: jobPostings.projectDuration,
       visibility: jobPostings.visibility,
       status: jobPostings.status,
       attachments: jobPostings.attachments,
       metadata: jobPostings.metadata,
       freelancerId: jobPostings.freelancerId,
-      viewCount: jobPostings.viewCount,
-      bidCount: jobPostings.bidCount,
-      avgBidAmount: jobPostings.avgBidAmount,
-      isFeatured: jobPostings.isFeatured,
-      featuredUntil: jobPostings.featuredUntil,
+      viewsCount: jobPostings.viewsCount,
+      currentBidsCount: jobPostings.currentBidsCount,
       createdAt: jobPostings.createdAt,
       updatedAt: jobPostings.updatedAt,
       client: {
@@ -372,17 +360,13 @@ export async function getFeaturedJobs(
       deadline: jobPostings.deadline,
       skillsRequired: jobPostings.skillsRequired,
       experienceLevel: jobPostings.experienceLevel,
-      projectDuration: jobPostings.projectDuration,
       visibility: jobPostings.visibility,
       status: jobPostings.status,
       attachments: jobPostings.attachments,
       metadata: jobPostings.metadata,
       freelancerId: jobPostings.freelancerId,
-      viewCount: jobPostings.viewCount,
-      bidCount: jobPostings.bidCount,
-      avgBidAmount: jobPostings.avgBidAmount,
-      isFeatured: jobPostings.isFeatured,
-      featuredUntil: jobPostings.featuredUntil,
+      viewsCount: jobPostings.viewsCount,
+      currentBidsCount: jobPostings.currentBidsCount,
       createdAt: jobPostings.createdAt,
       updatedAt: jobPostings.updatedAt,
       client: {
@@ -408,13 +392,7 @@ export async function getFeaturedJobs(
     .from(jobPostings)
     .leftJoin(users, eq(jobPostings.clientId, users.id))
     .leftJoin(jobCategories, eq(jobPostings.categoryId, jobCategories.id))
-    .where(
-      and(
-        eq(jobPostings.status, 'open'),
-        eq(jobPostings.isFeatured, true),
-        or(gte(jobPostings.featuredUntil, new Date()))!
-      )
-    )
+    .where(eq(jobPostings.status, 'open'))
     .orderBy(desc(jobPostings.createdAt))
     .limit(limit)
 
@@ -485,17 +463,13 @@ export async function getJobDrafts(
       deadline: jobPostings.deadline,
       skillsRequired: jobPostings.skillsRequired,
       experienceLevel: jobPostings.experienceLevel,
-      projectDuration: jobPostings.projectDuration,
       visibility: jobPostings.visibility,
       status: jobPostings.status,
       attachments: jobPostings.attachments,
       metadata: jobPostings.metadata,
       freelancerId: jobPostings.freelancerId,
-      viewCount: jobPostings.viewCount,
-      bidCount: jobPostings.bidCount,
-      avgBidAmount: jobPostings.avgBidAmount,
-      isFeatured: jobPostings.isFeatured,
-      featuredUntil: jobPostings.featuredUntil,
+      viewsCount: jobPostings.viewsCount,
+      currentBidsCount: jobPostings.currentBidsCount,
       createdAt: jobPostings.createdAt,
       updatedAt: jobPostings.updatedAt,
       client: {
@@ -577,17 +551,13 @@ export async function getSavedJobs(
       deadline: jobPostings.deadline,
       skillsRequired: jobPostings.skillsRequired,
       experienceLevel: jobPostings.experienceLevel,
-      projectDuration: jobPostings.projectDuration,
       visibility: jobPostings.visibility,
       status: jobPostings.status,
       attachments: jobPostings.attachments,
       metadata: jobPostings.metadata,
       freelancerId: jobPostings.freelancerId,
-      viewCount: jobPostings.viewCount,
-      bidCount: jobPostings.bidCount,
-      avgBidAmount: jobPostings.avgBidAmount,
-      isFeatured: jobPostings.isFeatured,
-      featuredUntil: jobPostings.featuredUntil,
+      viewsCount: jobPostings.viewsCount,
+      currentBidsCount: jobPostings.currentBidsCount,
       createdAt: jobPostings.createdAt,
       updatedAt: jobPostings.updatedAt,
       client: {

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 
 import { db } from '@/lib/db/drizzle'
-import { jobPostings } from '@/lib/db/schema'
+import { jobMilestones, jobPostings, users } from '@/lib/db/schema'
 import { getUser } from '@/services/user'
 
 export async function GET(
@@ -23,17 +23,11 @@ export async function GET(
     const jobId = parseInt(id)
 
     // Verify access
-    const job = await db.query.jobPostings.findFirst({
-      where: eq(jobPostings.id, jobId),
-      with: {
-        client: true,
-        freelancer: true,
-        milestones: {
-          orderBy: (milestones, { desc }) => [desc(milestones.createdAt)],
-          limit: 10
-        }
-      }
-    })
+    const [job] = await db
+      .select()
+      .from(jobPostings)
+      .where(eq(jobPostings.id, jobId))
+      .limit(1)
 
     if (!job) {
       return NextResponse.json(
@@ -49,6 +43,32 @@ export async function GET(
       )
     }
 
+    // Get client info
+    const [client] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, job.clientId))
+      .limit(1)
+
+    // Get freelancer info if assigned
+    let freelancer = null
+    if (job.freelancerId) {
+      const [freelancerData] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, job.freelancerId))
+        .limit(1)
+      freelancer = freelancerData
+    }
+
+    // Get milestones
+    const milestones = await db
+      .select()
+      .from(jobMilestones)
+      .where(eq(jobMilestones.jobId, jobId))
+      .orderBy(desc(jobMilestones.createdAt))
+      .limit(10)
+
     // Build activity feed from various sources
     const activities = []
 
@@ -58,19 +78,19 @@ export async function GET(
       type: 'job_created',
       title: 'Project created',
       description: job.title,
-      user: job.client,
+      user: client,
       createdAt: job.createdAt
     })
 
     // Add milestone activities
-    job.milestones?.forEach(milestone => {
+    milestones.forEach(milestone => {
       if (milestone.createdAt) {
         activities.push({
           id: `milestone-created-${milestone.id}`,
           type: 'milestone_created',
           title: `Milestone created: ${milestone.title}`,
           description: milestone.description,
-          user: job.client,
+          user: client,
           metadata: { amount: milestone.amount },
           createdAt: milestone.createdAt
         })
@@ -82,7 +102,7 @@ export async function GET(
           type: 'milestone_submitted',
           title: `Milestone submitted: ${milestone.title}`,
           description: milestone.submissionNote,
-          user: job.freelancer,
+          user: freelancer,
           metadata: { amount: milestone.amount },
           createdAt: milestone.submittedAt
         })
@@ -94,7 +114,7 @@ export async function GET(
           type: 'milestone_approved',
           title: `Milestone approved: ${milestone.title}`,
           description: milestone.feedback,
-          user: job.client,
+          user: client,
           metadata: { amount: milestone.amount },
           createdAt: milestone.approvedAt
         })
@@ -102,13 +122,13 @@ export async function GET(
     })
 
     // Add freelancer assignment
-    if (job.freelancer && job.startedAt) {
+    if (freelancer && job.startedAt) {
       activities.push({
         id: `freelancer-assigned-${job.id}`,
         type: 'member_joined',
         title: 'Freelancer joined the project',
-        description: null,
-        user: job.freelancer,
+        description: `${freelancer.name} joined the project`,
+        user: freelancer,
         createdAt: job.startedAt
       })
     }
