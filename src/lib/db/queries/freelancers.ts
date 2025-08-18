@@ -8,7 +8,6 @@ import {
   freelancerSkills,
   skills,
   portfolioItems,
-  savedFreelancers,
   users,
   jobCategories,
   freelancerReviews,
@@ -60,7 +59,6 @@ export interface FreelancerFilters {
 
 export interface ProfileStats {
   profileViews: number
-  savedByClients: number
   activeBids: number
   completedJobs: number
   totalEarnings: string
@@ -502,84 +500,6 @@ export async function searchFreelancers(
   }
 }
 
-// Save/unsave freelancer
-export async function toggleSavedFreelancer(
-  clientId: number,
-  freelancerId: number
-): Promise<{ saved: boolean }> {
-  // Check if already saved
-  const existing = await db
-    .select()
-    .from(savedFreelancers)
-    .where(
-      and(
-        eq(savedFreelancers.clientId, clientId),
-        eq(savedFreelancers.freelancerId, freelancerId)
-      )
-    )
-    .limit(1)
-
-  if (existing.length > 0) {
-    // Remove from saved
-    await db
-      .delete(savedFreelancers)
-      .where(
-        and(
-          eq(savedFreelancers.clientId, clientId),
-          eq(savedFreelancers.freelancerId, freelancerId)
-        )
-      )
-    return { saved: false }
-  } else {
-    // Add to saved
-    await db.insert(savedFreelancers).values({
-      clientId,
-      freelancerId
-    })
-    return { saved: true }
-  }
-}
-
-// Get saved freelancers for a client
-export async function getSavedFreelancers(
-  clientId: number
-): Promise<FreelancerProfileWithRelations[]> {
-  const saved = await db
-    .select({
-      freelancerId: savedFreelancers.freelancerId
-    })
-    .from(savedFreelancers)
-    .where(eq(savedFreelancers.clientId, clientId))
-    .orderBy(desc(savedFreelancers.createdAt))
-
-  if (saved.length === 0) return []
-
-  const freelancerIds = saved.map(s => s.freelancerId)
-  const profiles = await Promise.all(
-    freelancerIds.map(id => getFreelancerProfileById(id))
-  )
-
-  return profiles.filter(p => p !== null) as FreelancerProfileWithRelations[]
-}
-
-// Check if freelancer is saved
-export async function isFreelancerSaved(
-  clientId: number,
-  freelancerId: number
-): Promise<boolean> {
-  const [result] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(savedFreelancers)
-    .where(
-      and(
-        eq(savedFreelancers.clientId, clientId),
-        eq(savedFreelancers.freelancerId, freelancerId)
-      )
-    )
-
-  return result.count > 0
-}
-
 // Get freelancer stats
 export async function getFreelancerStats(
   userId: number
@@ -593,7 +513,6 @@ export async function getFreelancerStats(
   if (!profile[0]) {
     return {
       profileViews: 0,
-      savedByClients: 0,
       activeBids: 0,
       completedJobs: 0,
       totalEarnings: '0',
@@ -601,12 +520,6 @@ export async function getFreelancerStats(
       completionRate: 100
     }
   }
-
-  // Get saved count
-  const [savedCount] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(savedFreelancers)
-    .where(eq(savedFreelancers.freelancerId, profile[0].id))
 
   // Get active bids count
   const [activeBidsResult] = await db
@@ -628,7 +541,6 @@ export async function getFreelancerStats(
 
   return {
     profileViews: profile[0].profileViews || 0, // Now tracked in profileViews field
-    savedByClients: savedCount?.count || 0,
     activeBids,
     completedJobs: completedJobs?.count || 0,
     totalEarnings: profile[0].totalEarnings,

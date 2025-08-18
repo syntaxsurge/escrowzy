@@ -1298,25 +1298,6 @@ export const portfolioItems = pgTable(
   ]
 )
 
-export const savedFreelancers = pgTable(
-  'saved_freelancers',
-  {
-    id: serial('id').primaryKey(),
-    clientId: integer('client_id')
-      .notNull()
-      .references(() => users.id),
-    freelancerId: integer('freelancer_id')
-      .notNull()
-      .references(() => freelancerProfiles.id),
-    note: text('note'),
-    createdAt: timestamp('created_at').notNull().defaultNow()
-  },
-  table => [
-    index('idx_saved_freelancers_client').on(table.clientId),
-    unique('unique_saved_freelancer').on(table.clientId, table.freelancerId)
-  ]
-)
-
 export const savedJobs = pgTable(
   'saved_jobs',
   {
@@ -1863,7 +1844,6 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     relationName: 'skillEndorsed'
   }),
   verificationBadges: many(verificationBadges),
-  savedFreelancers: many(savedFreelancers),
   savedJobs: many(savedJobs)
 }))
 
@@ -2181,8 +2161,7 @@ export const freelancerProfilesRelations = relations(
       references: [users.id]
     }),
     skills: many(freelancerSkills),
-    portfolioItems: many(portfolioItems),
-    savedByClients: many(savedFreelancers)
+    portfolioItems: many(portfolioItems)
   })
 )
 
@@ -2359,20 +2338,6 @@ export const portfolioItemsRelations = relations(portfolioItems, ({ one }) => ({
     references: [jobCategories.id]
   })
 }))
-
-export const savedFreelancersRelations = relations(
-  savedFreelancers,
-  ({ one }) => ({
-    client: one(users, {
-      fields: [savedFreelancers.clientId],
-      references: [users.id]
-    }),
-    freelancer: one(freelancerProfiles, {
-      fields: [savedFreelancers.freelancerId],
-      references: [freelancerProfiles.id]
-    })
-  })
-)
 
 export const savedJobsRelations = relations(savedJobs, ({ one }) => ({
   freelancer: one(users, {
@@ -2653,8 +2618,6 @@ export type VerificationBadge = typeof verificationBadges.$inferSelect
 export type NewVerificationBadge = typeof verificationBadges.$inferInsert
 export type PortfolioItem = typeof portfolioItems.$inferSelect
 export type NewPortfolioItem = typeof portfolioItems.$inferInsert
-export type SavedFreelancer = typeof savedFreelancers.$inferSelect
-export type NewSavedFreelancer = typeof savedFreelancers.$inferInsert
 export type SavedJob = typeof savedJobs.$inferSelect
 export type NewSavedJob = typeof savedJobs.$inferInsert
 

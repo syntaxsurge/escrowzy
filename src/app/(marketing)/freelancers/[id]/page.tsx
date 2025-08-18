@@ -14,7 +14,6 @@ import {
   User,
   Target,
   Eye,
-  Users as UsersIcon,
   Trophy,
   Zap,
   Shield,
@@ -25,7 +24,6 @@ import {
 
 import { HireFreelancerButton } from '@/components/blocks/freelancers/hire-freelancer-button'
 import { PortfolioGallery } from '@/components/blocks/freelancers/portfolio-gallery'
-import { SaveProfileButton } from '@/components/blocks/freelancers/save-profile-button'
 import { SendMessageButton } from '@/components/blocks/freelancers/send-message-button'
 import { VerifiedBadge } from '@/components/blocks/freelancers/verified-badge'
 import {
@@ -48,8 +46,7 @@ import { getAuth } from '@/lib/auth/auth-utils'
 import {
   getFreelancerProfile,
   getFreelancerStats,
-  getFreelancerReviews,
-  isFreelancerSaved
+  getFreelancerReviews
 } from '@/lib/db/queries/freelancers'
 import { RewardsService } from '@/services/rewards'
 
@@ -87,7 +84,6 @@ export default async function PublicFreelancerProfilePage({
     : null
 
   const isOwnProfile = auth?.id === userId
-  const isSaved = auth ? await isFreelancerSaved(auth.id, profile.id) : false
   const averageRating =
     reviews.length > 0
       ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) /
@@ -267,13 +263,6 @@ export default async function PublicFreelancerProfilePage({
                     <span className='text-gray-400'>views</span>
                   </div>
                   <div className='flex items-center gap-2'>
-                    <UsersIcon className='h-4 w-4 text-gray-400' />
-                    <span className='font-semibold text-white'>
-                      {stats.savedByClients}
-                    </span>
-                    <span className='text-gray-400'>followers</span>
-                  </div>
-                  <div className='flex items-center gap-2'>
                     <Trophy className='h-4 w-4 text-gray-400' />
                     <span className='font-semibold text-white'>
                       {stats.completedJobs}
@@ -317,11 +306,6 @@ export default async function PublicFreelancerProfilePage({
                     <SendMessageButton
                       currentUserId={auth?.id}
                       targetUserId={userId}
-                      isAuthenticated={!!auth}
-                    />
-                    <SaveProfileButton
-                      freelancerId={id}
-                      isSaved={isSaved}
                       isAuthenticated={!!auth}
                     />
                   </>
