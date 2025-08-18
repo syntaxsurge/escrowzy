@@ -10,6 +10,13 @@ export const appRoutes = {
   dbError: '/db-error',
   invite: (token: string) => `/invite/${token}`,
 
+  // Public pages
+  freelancers: '/freelancers',
+  jobs: '/jobs',
+  listings: '/listings',
+  domains: '/listings?category=domain',
+  services: '/freelancers',
+
   chat: {
     base: '/chat',
     direct: (contextId: string) => `/chat/direct/${contextId}`,

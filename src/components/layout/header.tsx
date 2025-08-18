@@ -12,8 +12,14 @@ import {
   Monitor,
   MessageSquare,
   Edit2,
+  Menu,
+  X,
   Users,
-  Briefcase
+  ShoppingBag,
+  Briefcase,
+  Globe,
+  Hash,
+  DollarSign
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import useSWR from 'swr'
@@ -23,6 +29,7 @@ import { SignMessageButton } from '@/components/blocks/blockchain/sign-message-b
 import { UnifiedConnectButton } from '@/components/blocks/blockchain/unified-connect-button'
 import { WalletNetworkSection } from '@/components/blocks/blockchain/unified-wallet-network-section'
 import { NotificationDropdown } from '@/components/blocks/notification-dropdown'
+import { MobileMenu } from '@/components/blocks/responsive'
 import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -364,22 +371,6 @@ function UserMenu() {
                         <span>Freelancer Profile</span>
                       </Link>
                     </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                      className='text-foreground cursor-pointer rounded-xl border-0 px-4 py-3 text-sm font-medium transition-all hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:text-green-700 focus:bg-gradient-to-r focus:from-green-50 focus:to-emerald-50 focus:text-green-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-green-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-green-400'
-                      asChild
-                    >
-                      <Link
-                        href='/freelancers'
-                        className='flex w-full items-center'
-                        onClick={() => menuState.close()}
-                      >
-                        <div className='mr-3 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 p-2'>
-                          <Briefcase className='h-4 w-4 text-white' />
-                        </div>
-                        <span>Browse Freelancers</span>
-                      </Link>
-                    </DropdownMenuItem>
                   </div>
 
                   {/* Disconnect Button - Now opens wallet modal */}
@@ -462,6 +453,166 @@ function UserMenu() {
   )
 }
 
+function PublicNavigation() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isBrowseOpen, setIsBrowseOpen] = useState(false)
+
+  return (
+    <>
+      {/* Desktop Navigation */}
+      <nav className='hidden items-center gap-1 lg:flex'>
+        {/* Browse Dropdown */}
+        <DropdownMenu open={isBrowseOpen} onOpenChange={setIsBrowseOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant='ghost'
+              className='text-muted-foreground hover:text-foreground hover:bg-muted h-9 gap-1 px-3 text-sm font-medium transition-all'
+            >
+              Browse
+              <ChevronDown className='h-3.5 w-3.5 transition-transform duration-200 data-[state=open]:rotate-180' />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align='start'
+            className='border-border bg-background/95 mt-2 w-56 rounded-xl border shadow-lg backdrop-blur-xl'
+          >
+            <DropdownMenuItem asChild>
+              <Link
+                href={appRoutes.freelancers}
+                className='flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-700 focus:bg-gradient-to-r focus:from-blue-50 focus:to-purple-50 focus:text-blue-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-blue-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-blue-400'
+              >
+                <Users className='h-4 w-4' />
+                <span>Freelancers</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link
+                href={appRoutes.jobs}
+                className='flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:text-green-700 focus:bg-gradient-to-r focus:from-green-50 focus:to-emerald-50 focus:text-green-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-green-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-green-400'
+              >
+                <Briefcase className='h-4 w-4' />
+                <span>Jobs</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link
+                href={appRoutes.listings}
+                className='flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-700 focus:bg-gradient-to-r focus:from-purple-50 focus:to-pink-50 focus:text-purple-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-purple-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-purple-400'
+              >
+                <ShoppingBag className='h-4 w-4' />
+                <span>P2P Marketplace</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link
+                href={appRoutes.domains}
+                className='flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 hover:text-indigo-700 focus:bg-gradient-to-r focus:from-indigo-50 focus:to-blue-50 focus:text-indigo-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-indigo-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-indigo-400'
+              >
+                <Globe className='h-4 w-4' />
+                <span>Domain Names</span>
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Services Link */}
+        <Link
+          href={appRoutes.services}
+          className='text-muted-foreground hover:text-foreground hover:bg-muted inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-all'
+        >
+          Services
+        </Link>
+
+        {/* Pricing Link */}
+        <Link
+          href={appRoutes.pricing}
+          className='text-muted-foreground hover:text-foreground hover:bg-muted inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-all'
+        >
+          Pricing
+        </Link>
+      </nav>
+
+      {/* Mobile Menu Button */}
+      <Button
+        variant='ghost'
+        size='icon'
+        className='lg:hidden'
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      >
+        {isMobileMenuOpen ? (
+          <X className='h-5 w-5' />
+        ) : (
+          <Menu className='h-5 w-5' />
+        )}
+      </Button>
+
+      {/* Mobile Menu */}
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        className='bg-background top-[60px]'
+      >
+        <div className='space-y-1 p-4'>
+          <div className='text-muted-foreground mb-2 px-3 text-xs font-semibold tracking-wider uppercase'>
+            Browse
+          </div>
+          <Link
+            href={appRoutes.freelancers}
+            className='text-foreground hover:bg-muted flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all'
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <Users className='h-4 w-4' />
+            <span>Freelancers</span>
+          </Link>
+          <Link
+            href={appRoutes.jobs}
+            className='text-foreground hover:bg-muted flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all'
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <Briefcase className='h-4 w-4' />
+            <span>Jobs</span>
+          </Link>
+          <Link
+            href={appRoutes.listings}
+            className='text-foreground hover:bg-muted flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all'
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <ShoppingBag className='h-4 w-4' />
+            <span>P2P Marketplace</span>
+          </Link>
+          <Link
+            href={appRoutes.domains}
+            className='text-foreground hover:bg-muted flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all'
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <Globe className='h-4 w-4' />
+            <span>Domain Names</span>
+          </Link>
+
+          <div className='border-border my-2 border-t' />
+
+          <Link
+            href={appRoutes.services}
+            className='text-foreground hover:bg-muted flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all'
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <Hash className='h-4 w-4' />
+            <span>Services</span>
+          </Link>
+          <Link
+            href={appRoutes.pricing}
+            className='text-foreground hover:bg-muted flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all'
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <DollarSign className='h-4 w-4' />
+            <span>Pricing</span>
+          </Link>
+        </div>
+      </MobileMenu>
+    </>
+  )
+}
+
 export default function Header() {
   const { isConnected } = useUnifiedWalletInfo()
   const { data: userData } = useSWR<{ user: User | null }>(
@@ -469,11 +620,11 @@ export default function Header() {
     swrFetcher
   )
   const user = userData?.user
-  // const walletProvider = getWalletProvider()
 
   return (
     <header className='border-border bg-background/80 sticky top-0 z-50 border-b backdrop-blur-xl'>
       <div className='relative mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8'>
+        {/* Logo */}
         <Link
           href={appRoutes.home}
           className='group flex items-center space-x-3 transition-all duration-200'
@@ -492,6 +643,10 @@ export default function Header() {
           </span>
         </Link>
 
+        {/* Center Navigation */}
+        <PublicNavigation />
+
+        {/* Right Side Actions */}
         <div className='flex items-center gap-2'>
           <ThemeToggle />
           <NetworkSelector isAuthenticated={!!user} />

@@ -201,10 +201,12 @@ export const apiEndpoints = {
   },
   jobs: {
     base: '/api/jobs',
+    list: '/api/jobs',
     byId: (id: string | number) => `/api/jobs/${id}`,
     categories: '/api/jobs/categories',
     drafts: '/api/jobs/drafts',
     featured: '/api/jobs/featured',
+    platformStats: '/api/jobs/platform-stats',
     search: '/api/jobs/search',
     save: (id: string | number) => `/api/jobs/${id}/save`,
     apply: (id: string | number) => `/api/jobs/${id}/apply`
