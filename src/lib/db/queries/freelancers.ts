@@ -58,7 +58,6 @@ export interface FreelancerFilters {
 }
 
 export interface ProfileStats {
-  profileViews: number
   activeBids: number
   completedJobs: number
   totalEarnings: string
@@ -92,7 +91,6 @@ export async function getFreelancerProfileByUserId(
       responseTime: freelancerProfiles.responseTime,
       lastActiveAt: freelancerProfiles.lastActiveAt,
       metadata: freelancerProfiles.metadata,
-      profileViews: freelancerProfiles.profileViews,
       createdAt: freelancerProfiles.createdAt,
       updatedAt: freelancerProfiles.updatedAt,
       user: {
@@ -412,7 +410,6 @@ export async function searchFreelancers(
       responseTime: freelancerProfiles.responseTime,
       lastActiveAt: freelancerProfiles.lastActiveAt,
       metadata: freelancerProfiles.metadata,
-      profileViews: freelancerProfiles.profileViews,
       createdAt: freelancerProfiles.createdAt,
       updatedAt: freelancerProfiles.updatedAt,
       user: {
@@ -490,8 +487,7 @@ export async function searchFreelancers(
         portfolioItems: [], // Will be loaded separately if needed
         reviewCount: 0, // Will be loaded separately if needed
         avgRating: profile.avgRating / 10, // Convert from int to decimal
-        metadata: profile.metadata || {},
-        profileViews: profile.profileViews || 0
+        metadata: profile.metadata || {}
       }))
 
   return {
@@ -512,7 +508,6 @@ export async function getFreelancerStats(
 
   if (!profile[0]) {
     return {
-      profileViews: 0,
       activeBids: 0,
       completedJobs: 0,
       totalEarnings: '0',
@@ -540,7 +535,6 @@ export async function getFreelancerStats(
     )
 
   return {
-    profileViews: profile[0].profileViews || 0, // Now tracked in profileViews field
     activeBids,
     completedJobs: completedJobs?.count || 0,
     totalEarnings: profile[0].totalEarnings,
@@ -554,17 +548,6 @@ export async function updateLastActive(userId: number): Promise<void> {
   await db
     .update(freelancerProfiles)
     .set({ lastActiveAt: new Date() })
-    .where(eq(freelancerProfiles.userId, userId))
-}
-
-// Increment profile view count
-export async function incrementProfileViews(userId: number): Promise<void> {
-  await db
-    .update(freelancerProfiles)
-    .set({
-      profileViews: sql`${freelancerProfiles.profileViews} + 1`,
-      updatedAt: new Date()
-    })
     .where(eq(freelancerProfiles.userId, userId))
 }
 

@@ -13,7 +13,6 @@ import {
   CheckCircle,
   User,
   Target,
-  Eye,
   Trophy,
   Zap,
   Shield,
@@ -255,13 +254,6 @@ export default async function PublicFreelancerProfilePage({
 
                 {/* Social Stats */}
                 <div className='mt-4 flex flex-wrap items-center justify-center gap-6 md:justify-start'>
-                  <div className='flex items-center gap-2'>
-                    <Eye className='h-4 w-4 text-gray-400' />
-                    <span className='font-semibold text-white'>
-                      {stats.profileViews.toLocaleString()}
-                    </span>
-                    <span className='text-gray-400'>views</span>
-                  </div>
                   <div className='flex items-center gap-2'>
                     <Trophy className='h-4 w-4 text-gray-400' />
                     <span className='font-semibold text-white'>
@@ -859,17 +851,6 @@ export default async function PublicFreelancerProfilePage({
                     </div>
                     <p className='mt-1 text-xl font-bold text-purple-500'>
                       ${parseFloat(stats.totalEarnings).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className='rounded-lg bg-gradient-to-br from-blue-500/10 to-cyan-500/10 p-3'>
-                    <div className='flex items-center gap-2'>
-                      <Eye className='h-4 w-4 text-blue-500' />
-                      <p className='text-muted-foreground text-xs'>
-                        Fame Points
-                      </p>
-                    </div>
-                    <p className='mt-1 text-xl font-bold text-blue-500'>
-                      {stats.profileViews.toLocaleString()}
                     </p>
                   </div>
                 </div>

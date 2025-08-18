@@ -729,7 +729,6 @@ export const freelancerProfiles = pgTable(
     responseTime: integer('response_time'), // average in hours
     lastActiveAt: timestamp('last_active_at'),
     metadata: jsonb('metadata').notNull().default('{}'), // For templates, goals, and other flexible data
-    profileViews: integer('profile_views').notNull().default(0), // Track profile views
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow()
   },

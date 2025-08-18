@@ -376,12 +376,6 @@ export default async function FreelancerProfilePage() {
                       ${parseFloat(stats.totalEarnings).toFixed(0)}
                     </p>
                   </div>
-                  <div className='space-y-1'>
-                    <p className='text-muted-foreground text-xs'>
-                      Profile Views
-                    </p>
-                    <p className='text-lg font-bold'>{stats.profileViews}</p>
-                  </div>
                 </div>
               </CardContent>
             </Card>
