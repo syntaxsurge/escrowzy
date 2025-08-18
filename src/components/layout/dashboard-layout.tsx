@@ -23,7 +23,8 @@ import {
   Zap,
   Target,
   Coins,
-  CreditCard
+  CreditCard,
+  Briefcase
 } from 'lucide-react'
 
 import { AutoBreadcrumb } from '@/components/layout/auto-breadcrumb'
@@ -139,6 +140,14 @@ export function DashboardLayoutClient({
           icon: UserCircle,
           label: 'Profile',
           description: 'Your Stats',
+          xp: null,
+          isNew: false
+        },
+        {
+          href: '/profile/freelancer',
+          icon: Briefcase,
+          label: 'Freelancer Profile',
+          description: 'Your Professional Profile',
           xp: null,
           isNew: false
         },

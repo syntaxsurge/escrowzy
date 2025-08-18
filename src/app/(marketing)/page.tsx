@@ -129,10 +129,10 @@ export default function HomePage() {
   ]
 
   const platformStats = {
-    totalUsers: 12847,
-    activeTrades: 324,
-    battlesNow: 89,
-    totalVolume: 54280000
+    verifiedFreelancers: 2847,
+    secureEscrows: 15324,
+    disputeResolution: 99.8,
+    protectedFunds: 8450000
   }
 
   const tierFees = {
@@ -177,27 +177,28 @@ export default function HomePage() {
           >
             {[
               {
-                label: 'Active Users',
-                value: platformStats.totalUsers,
-                icon: Users,
+                label: 'Verified Freelancers',
+                value: platformStats.verifiedFreelancers,
+                icon: UserCheck,
                 color: 'text-green-400'
               },
               {
-                label: 'Live Trades',
-                value: platformStats.activeTrades,
-                icon: TrendingUp,
+                label: 'Secure Escrows',
+                value: platformStats.secureEscrows,
+                icon: ShieldCheck,
                 color: 'text-blue-400'
               },
               {
-                label: 'Battles Now',
-                value: platformStats.battlesNow,
-                icon: Swords,
-                color: 'text-red-400'
+                label: 'Resolution Rate',
+                value: platformStats.disputeResolution,
+                icon: CheckCircle2,
+                color: 'text-emerald-400',
+                suffix: '%'
               },
               {
-                label: 'Total Volume',
-                value: platformStats.totalVolume,
-                icon: DollarSign,
+                label: 'Protected Funds',
+                value: platformStats.protectedFunds,
+                icon: Lock,
                 color: 'text-yellow-400',
                 prefix: '$'
               }
@@ -214,8 +215,9 @@ export default function HomePage() {
                   <div className='text-left'>
                     <p className='text-xs text-gray-400'>{stat.label}</p>
                     <p className='text-lg font-bold text-white'>
-                      {stat.prefix}
+                      {(stat as any).prefix}
                       <AnimatedCounter value={stat.value} />
+                      {(stat as any).suffix}
                     </p>
                   </div>
                 </div>
