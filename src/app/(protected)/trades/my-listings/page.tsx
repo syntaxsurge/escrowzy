@@ -11,7 +11,9 @@ import {
   Eye,
   Activity,
   Zap,
-  Globe
+  Globe,
+  ShoppingCart,
+  DollarSign
 } from 'lucide-react'
 import useSWR from 'swr'
 
@@ -32,7 +34,7 @@ import type { EscrowListingWithUser } from '@/types/listings'
 export default function MyListingsPage() {
   const router = useRouter()
   const [categoryFilter, setCategoryFilter] = useState<
-    'all' | 'p2p' | 'domain'
+    'all' | 'p2p' | 'domain' | 'service'
   >('all')
 
   // Fetch user's listings
@@ -107,54 +109,101 @@ export default function MyListingsPage() {
   const _actualTotalCount = listingsData?.listings?.length || 0
 
   // Prepare stats cards based on category filter
-  const statsCards: StatCard[] = [
-    {
-      title:
-        categoryFilter === 'domain'
-          ? 'Active Domains'
-          : categoryFilter === 'p2p'
-            ? 'Active P2P'
-            : 'Active Listings',
-      value: actualActiveCount,
-      subtitle: 'Currently active offers',
-      icon:
-        categoryFilter === 'domain' ? (
-          <Globe className='h-5 w-5 text-white' />
-        ) : (
-          <ListPlus className='h-5 w-5 text-white' />
-        ),
-      badge: 'ACTIVE',
-      colorScheme: categoryFilter === 'domain' ? 'purple' : 'green'
-    },
-    {
-      title: 'Total Views',
-      value: userStatsData?.totalViews ?? 0,
-      subtitle: 'All-time listing views',
-      icon: <Eye className='h-5 w-5 text-white' />,
-      badge: 'VISIBILITY',
-      colorScheme: 'blue'
-    },
-    {
-      title: 'Conversion Rate',
-      value: userStatsData?.conversionRate
-        ? `${userStatsData.conversionRate}%`
-        : '0%',
-      subtitle: 'Listings to trades',
-      icon: <TrendingUp className='h-5 w-5 text-white' />,
-      badge: 'PERFORMANCE',
-      colorScheme: 'purple'
-    },
-    {
-      title: 'Avg Response Time',
-      value: userStatsData?.avgResponseTime
-        ? `${userStatsData.avgResponseTime}m`
-        : 'N/A',
-      subtitle: 'Time to first response',
-      icon: <Activity className='h-5 w-5 text-white' />,
-      badge: 'SPEED',
-      colorScheme: 'yellow'
-    }
-  ]
+  const statsCards: StatCard[] =
+    categoryFilter === 'service'
+      ? [
+          {
+            title: 'Active Services',
+            value: actualActiveCount,
+            subtitle: 'Services available',
+            icon: <ShoppingCart className='h-5 w-5 text-white' />,
+            badge: 'SERVICES',
+            colorScheme: 'green'
+          },
+          {
+            title: 'Avg Rate',
+            value:
+              activeListings.length > 0
+                ? `$${Math.round(
+                    activeListings.reduce(
+                      (sum: number, l: EscrowListingWithUser) =>
+                        sum + parseFloat(l.pricePerUnit || l.amount || '0'),
+                      0
+                    ) / activeListings.length
+                  )}`
+                : '$0',
+            subtitle: 'Average service rate',
+            icon: <DollarSign className='h-5 w-5 text-white' />,
+            badge: 'PRICING',
+            colorScheme: 'purple'
+          },
+          {
+            title: 'Total Views',
+            value: userStatsData?.totalViews ?? 0,
+            subtitle: 'All-time service views',
+            icon: <Eye className='h-5 w-5 text-white' />,
+            badge: 'VISIBILITY',
+            colorScheme: 'blue'
+          },
+          {
+            title: 'Response Time',
+            value: userStatsData?.avgResponseTime
+              ? `${userStatsData.avgResponseTime}m`
+              : 'N/A',
+            subtitle: 'Time to first response',
+            icon: <Activity className='h-5 w-5 text-white' />,
+            badge: 'SPEED',
+            colorScheme: 'yellow'
+          }
+        ]
+      : [
+          {
+            title:
+              categoryFilter === 'domain'
+                ? 'Active Domains'
+                : categoryFilter === 'p2p'
+                  ? 'Active P2P'
+                  : 'Active Listings',
+            value: actualActiveCount,
+            subtitle: 'Currently active offers',
+            icon:
+              categoryFilter === 'domain' ? (
+                <Globe className='h-5 w-5 text-white' />
+              ) : (
+                <ListPlus className='h-5 w-5 text-white' />
+              ),
+            badge: 'ACTIVE',
+            colorScheme: categoryFilter === 'domain' ? 'purple' : 'green'
+          },
+          {
+            title: 'Total Views',
+            value: userStatsData?.totalViews ?? 0,
+            subtitle: 'All-time listing views',
+            icon: <Eye className='h-5 w-5 text-white' />,
+            badge: 'VISIBILITY',
+            colorScheme: 'blue'
+          },
+          {
+            title: 'Conversion Rate',
+            value: userStatsData?.conversionRate
+              ? `${userStatsData.conversionRate}%`
+              : '0%',
+            subtitle: 'Listings to trades',
+            icon: <TrendingUp className='h-5 w-5 text-white' />,
+            badge: 'PERFORMANCE',
+            colorScheme: 'purple'
+          },
+          {
+            title: 'Avg Response Time',
+            value: userStatsData?.avgResponseTime
+              ? `${userStatsData.avgResponseTime}m`
+              : 'N/A',
+            subtitle: 'Time to first response',
+            icon: <Activity className='h-5 w-5 text-white' />,
+            badge: 'SPEED',
+            colorScheme: 'yellow'
+          }
+        ]
 
   return (
     <div className='from-background via-background to-primary/5 dark:to-primary/10 min-h-screen bg-gradient-to-br'>
@@ -167,7 +216,9 @@ export default function MyListingsPage() {
               ? 'Manage your domain listings'
               : categoryFilter === 'p2p'
                 ? 'Manage your P2P crypto offers'
-                : 'Manage all your marketplace listings'
+                : categoryFilter === 'service'
+                  ? 'Manage your professional services'
+                  : 'Manage all your marketplace listings'
           }
           icon={<Shield className='h-8 w-8 text-white' />}
           actions={
@@ -191,7 +242,7 @@ export default function MyListingsPage() {
           onValueChange={v => setCategoryFilter(v as any)}
           className='w-full'
         >
-          <TabsList className='bg-background/50 border-primary/20 grid h-14 w-full grid-cols-3 border-2 backdrop-blur-sm'>
+          <TabsList className='bg-background/50 border-primary/20 grid h-14 w-full grid-cols-4 border-2 backdrop-blur-sm'>
             <TabsTrigger
               value='all'
               className='data-[state=active]:from-primary/20 text-lg font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:to-purple-600/20'
@@ -211,6 +262,13 @@ export default function MyListingsPage() {
             >
               <Globe className='mr-2 h-4 w-4' />
               DOMAINS
+            </TabsTrigger>
+            <TabsTrigger
+              value='service'
+              className='text-lg font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600/20 data-[state=active]:to-emerald-600/20'
+            >
+              <ShoppingCart className='mr-2 h-4 w-4' />
+              SERVICES
             </TabsTrigger>
           </TabsList>
         </Tabs>

@@ -1,17 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { Briefcase } from 'lucide-react'
-import useSWR from 'swr'
 
 import { AuthRequiredModal } from '@/components/blocks/freelancers/auth-required-modal'
 import { Button } from '@/components/ui/button'
-import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
 import { useUnifiedWalletInfo } from '@/context'
-import { swrConfig, swrFetcher } from '@/lib/api/swr'
 
 interface HireFreelancerButtonProps {
   freelancerId: string
@@ -30,7 +27,7 @@ interface HireFreelancerButtonProps {
 
 export function HireFreelancerButton({
   freelancerId,
-  isAuthenticated: _initialAuth, // Unused, we'll check auth internally
+  isAuthenticated,
   className = 'w-full bg-gradient-to-r from-green-600 to-emerald-700 font-bold text-white shadow-lg transition-all hover:scale-105 hover:from-green-700 hover:to-emerald-800 hover:shadow-xl',
   variant = 'default',
   showIcon = true,
@@ -38,31 +35,6 @@ export function HireFreelancerButton({
 }: HireFreelancerButtonProps) {
   const { isConnected } = useUnifiedWalletInfo()
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const [hasCheckedAuth, setHasCheckedAuth] = useState(false)
-
-  // Use SWR to check if user has a team (is authenticated with dashboard)
-  const { data: teamData, isLoading: teamLoading } = useSWR(
-    isConnected ? apiEndpoints.team : null,
-    swrFetcher,
-    {
-      ...swrConfig,
-      revalidateOnFocus: false,
-      onError: () => {
-        setHasCheckedAuth(true)
-      },
-      onSuccess: () => {
-        setHasCheckedAuth(true)
-      }
-    }
-  )
-
-  useEffect(() => {
-    if (!isConnected) {
-      setHasCheckedAuth(false)
-    }
-  }, [isConnected])
-
-  const isAuthenticated = !!teamData && !teamLoading && hasCheckedAuth
 
   const handleClick = (e: React.MouseEvent) => {
     if (!isConnected || !isAuthenticated) {
@@ -96,11 +68,11 @@ export function HireFreelancerButton({
       <AuthRequiredModal
         open={showAuthModal}
         onOpenChange={setShowAuthModal}
-        title={!isConnected ? 'Sign in to Hire' : 'Sign to Access Dashboard'}
+        title={!isConnected ? 'Sign in to Hire' : 'Sign in to Hire'}
         description={
           !isConnected
             ? 'Connect your wallet to hire this freelancer and create a job.'
-            : 'Sign the message to access your dashboard and hire this freelancer.'
+            : 'Please sign in to hire this freelancer and create a job.'
         }
         isConnected={isConnected}
         isAuthenticated={isAuthenticated}
