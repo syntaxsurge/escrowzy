@@ -17,7 +17,10 @@ import {
   TrendingUp,
   Hash,
   ExternalLink,
-  DollarSign
+  DollarSign,
+  Activity,
+  Star,
+  Trophy
 } from 'lucide-react'
 import { toast } from 'sonner'
 import useSWR from 'swr'
@@ -37,7 +40,12 @@ import {
   showSuccessToast,
   showErrorToast
 } from '@/components/blocks/toast-manager'
-import { ModernLayout } from '@/components/layout/modern-layout'
+import {
+  GamifiedHeader,
+  GamifiedStatsCards,
+  type StatCard
+} from '@/components/blocks/trading'
+import { Card, CardContent } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
@@ -536,143 +544,207 @@ export default function PricingPage() {
     }
   }
 
+  // Prepare stats cards for pricing page
+  const pricingStatsCards: StatCard[] = useMemo(() => {
+    const activeUsers = teamData?.totalMembers || 0
+    const totalPlans = plans.length
+    const hasTeamPlan = currentTeamPlan && currentTeamPlan !== 'free'
+    const hasIndividualPlan =
+      currentIndividualPlan && currentIndividualPlan !== 'free'
+
+    return [
+      {
+        title: 'Available Plans',
+        value: totalPlans,
+        subtitle: 'Choose your path',
+        icon: <Trophy className='h-5 w-5 text-white' />,
+        badge: 'PLANS',
+        colorScheme: 'purple'
+      },
+      {
+        title: 'Active Subscriptions',
+        value: (hasTeamPlan ? 1 : 0) + (hasIndividualPlan ? 1 : 0),
+        subtitle: 'Current active plans',
+        icon: <Activity className='h-5 w-5 text-white' />,
+        badge: 'ACTIVE',
+        colorScheme: 'green'
+      },
+      {
+        title: 'Team Members',
+        value: activeUsers,
+        subtitle: 'Users in your team',
+        icon: <Users className='h-5 w-5 text-white' />,
+        badge: 'TEAM',
+        colorScheme: 'blue'
+      },
+      {
+        title: 'Savings',
+        value: hasTeamPlan ? '30%' : '0%',
+        subtitle: 'With team plan',
+        icon: <Star className='h-5 w-5 text-white' />,
+        badge: 'VALUE',
+        colorScheme: 'yellow'
+      }
+    ]
+  }, [plans, teamData, currentTeamPlan, currentIndividualPlan])
+
   return (
     <>
-      <ModernLayout
-        title='Choose Your Plan'
-        description='Pay with native cryptocurrency for instant activation'
-        addPadding={true}
-        centerText={true}
-      >
-        {teamLoading ? (
-          <LoadingWrapper
-            isLoading={true}
-            size='lg'
-            className='mx-auto max-w-2xl'
-          >
-            <></>
-          </LoadingWrapper>
-        ) : plansLoading ? (
-          <LoadingWrapper
-            isLoading={true}
-            size='lg'
-            className='mx-auto max-w-2xl'
-          >
-            <></>
-          </LoadingWrapper>
-        ) : hasConfigurationError || plans.length === 0 ? (
-          <div className='mx-auto max-w-2xl text-center'>
-            {hasConfigurationError ? (
-              <div className='rounded-lg border border-amber-200 bg-amber-50 p-6 dark:border-amber-800 dark:bg-amber-950/20'>
-                <h3 className='mb-2 text-lg font-medium text-amber-800 dark:text-amber-200'>
-                  Contract Not Deployed
-                </h3>
-                <p className='text-amber-700 dark:text-amber-300'>
-                  The subscription contract is not yet deployed on{' '}
-                  {isSupportedChainId(stableChainId)
-                    ? SUPPORTED_NETWORKS[stableChainId as SupportedChainIds]
-                        ?.name
-                    : 'this network'}
-                  .
-                </p>
-                <p className='mt-3 text-sm text-amber-600 dark:text-amber-400'>
-                  Please switch to a different network using the network
-                  selector in the header.
-                </p>
-              </div>
-            ) : plansError ? (
-              <div className='rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-950/20'>
-                <h3 className='mb-2 text-lg font-medium text-red-800 dark:text-red-200'>
-                  Price Loading Error
-                </h3>
-                <p className='text-red-700 dark:text-red-300'>
-                  Unable to load current pricing. This may be due to network
-                  connectivity issues or temporary API unavailability. Please
-                  try refreshing the page.
-                </p>
-                <p className='mt-2 text-sm text-red-600 dark:text-red-400'>
-                  Error: {plansError.message || 'Failed to fetch pricing data'}
-                </p>
-              </div>
-            ) : (
-              <div className='rounded-lg border border-amber-200 bg-amber-50 p-6 dark:border-amber-800 dark:bg-amber-950/20'>
-                <p className='text-amber-800 dark:text-amber-200'>
-                  Loading pricing plans... If this message persists, please
-                  check your network connection.
-                </p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Individual Plans */}
-            <div className='mb-12'>
-              <h2 className='mb-6 text-center text-2xl font-bold'>
-                Individual Plans
-              </h2>
-              <p className='text-muted-foreground mb-6 text-center'>
-                Choose the perfect plan for your personal needs with instant
-                cryptocurrency payment
-              </p>
-              <div className='mx-auto grid max-w-6xl gap-8 md:grid-cols-3'>
-                {plans
-                  .filter(plan => !plan.isTeamPlan)
-                  .map(plan => (
-                    <PricingCard
-                      key={plan.id}
-                      plan={plan}
-                      currentPlan={currentIndividualPlan}
-                      isSubscriptionActive={isIndividualSubscriptionActive}
-                      onUpgrade={planId => handleUpgrade(planId, false)}
-                      isAuthenticated={!!teamData}
-                      isConnected={isConnected}
-                      isLoading={
-                        teamLoading || Boolean(teamData && paymentLoading)
-                      }
-                      isTeamPlan={false}
-                      subscriptionExpiresAt={
-                        personalSubscriptionData?.subscriptionExpiresAt
-                      }
-                    />
-                  ))}
-              </div>
-            </div>
+      <div className='from-background via-background to-primary/5 dark:to-primary/10 min-h-screen bg-gradient-to-br'>
+        <div className='container mx-auto space-y-8 py-6'>
+          {/* Gaming Header */}
+          <GamifiedHeader
+            title='PRICING PLANS'
+            subtitle='Pay with native cryptocurrency for instant activation'
+            icon={<CreditCard className='h-8 w-8 text-white' />}
+          />
 
-            {/* Team Plans */}
-            {plans.filter(plan => plan.isTeamPlan).length > 0 && (
-              <div>
-                <h2 className='mb-6 text-center text-2xl font-bold'>
-                  Team Plans
-                </h2>
-                <p className='text-muted-foreground mb-6 text-center'>
-                  Team plans provide access to all team members when purchased
-                  by the team owner
-                </p>
-                <div className='mx-auto grid max-w-4xl gap-8 md:grid-cols-2'>
-                  {plans
-                    .filter(plan => plan.isTeamPlan)
-                    .map(plan => (
-                      <PricingCard
-                        key={plan.id}
-                        plan={plan}
-                        currentPlan={currentTeamPlan || ''}
-                        isSubscriptionActive={isTeamSubscriptionActive}
-                        onUpgrade={planId => handleUpgrade(planId, true)}
-                        isAuthenticated={!!teamData}
-                        isConnected={isConnected}
-                        isLoading={
-                          teamLoading || Boolean(teamData && paymentLoading)
-                        }
-                        isTeamPlan={true}
-                        subscriptionExpiresAt={teamData?.subscriptionExpiresAt}
-                      />
-                    ))}
+          {/* Stats Cards */}
+          {!teamLoading && !plansLoading && plans.length > 0 && (
+            <GamifiedStatsCards cards={pricingStatsCards} />
+          )}
+
+          {teamLoading ? (
+            <LoadingWrapper
+              isLoading={true}
+              size='lg'
+              className='mx-auto max-w-2xl'
+            >
+              <></>
+            </LoadingWrapper>
+          ) : plansLoading ? (
+            <LoadingWrapper
+              isLoading={true}
+              size='lg'
+              className='mx-auto max-w-2xl'
+            >
+              <></>
+            </LoadingWrapper>
+          ) : hasConfigurationError || plans.length === 0 ? (
+            <div className='mx-auto max-w-2xl text-center'>
+              {hasConfigurationError ? (
+                <div className='rounded-lg border border-amber-200 bg-amber-50 p-6 dark:border-amber-800 dark:bg-amber-950/20'>
+                  <h3 className='mb-2 text-lg font-medium text-amber-800 dark:text-amber-200'>
+                    Contract Not Deployed
+                  </h3>
+                  <p className='text-amber-700 dark:text-amber-300'>
+                    The subscription contract is not yet deployed on{' '}
+                    {isSupportedChainId(stableChainId)
+                      ? SUPPORTED_NETWORKS[stableChainId as SupportedChainIds]
+                          ?.name
+                      : 'this network'}
+                    .
+                  </p>
+                  <p className='mt-3 text-sm text-amber-600 dark:text-amber-400'>
+                    Please switch to a different network using the network
+                    selector in the header.
+                  </p>
                 </div>
-              </div>
-            )}
-          </>
-        )}
-      </ModernLayout>
+              ) : plansError ? (
+                <div className='rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-950/20'>
+                  <h3 className='mb-2 text-lg font-medium text-red-800 dark:text-red-200'>
+                    Price Loading Error
+                  </h3>
+                  <p className='text-red-700 dark:text-red-300'>
+                    Unable to load current pricing. This may be due to network
+                    connectivity issues or temporary API unavailability. Please
+                    try refreshing the page.
+                  </p>
+                  <p className='mt-2 text-sm text-red-600 dark:text-red-400'>
+                    Error:{' '}
+                    {plansError.message || 'Failed to fetch pricing data'}
+                  </p>
+                </div>
+              ) : (
+                <div className='rounded-lg border border-amber-200 bg-amber-50 p-6 dark:border-amber-800 dark:bg-amber-950/20'>
+                  <p className='text-amber-800 dark:text-amber-200'>
+                    Loading pricing plans... If this message persists, please
+                    check your network connection.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Individual Plans Section */}
+              <Card className='border-primary/20 from-primary/5 border-2 bg-gradient-to-br to-purple-600/5'>
+                <CardContent className='p-8'>
+                  <div className='mb-8 text-center'>
+                    <h2 className='from-primary bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text text-3xl font-black text-transparent'>
+                      INDIVIDUAL PLANS
+                    </h2>
+                    <p className='text-muted-foreground mt-2'>
+                      Choose the perfect plan for your personal needs with
+                      instant cryptocurrency payment
+                    </p>
+                  </div>
+                  <div className='mx-auto grid max-w-6xl gap-8 md:grid-cols-3'>
+                    {plans
+                      .filter(plan => !plan.isTeamPlan)
+                      .map(plan => (
+                        <PricingCard
+                          key={plan.id}
+                          plan={plan}
+                          currentPlan={currentIndividualPlan}
+                          isSubscriptionActive={isIndividualSubscriptionActive}
+                          onUpgrade={planId => handleUpgrade(planId, false)}
+                          isAuthenticated={!!teamData}
+                          isConnected={isConnected}
+                          isLoading={
+                            teamLoading || Boolean(teamData && paymentLoading)
+                          }
+                          isTeamPlan={false}
+                          subscriptionExpiresAt={
+                            personalSubscriptionData?.subscriptionExpiresAt
+                          }
+                        />
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Team Plans Section */}
+              {plans.filter(plan => plan.isTeamPlan).length > 0 && (
+                <Card className='border-primary/20 from-primary/5 border-2 bg-gradient-to-br to-purple-600/5'>
+                  <CardContent className='p-8'>
+                    <div className='mb-8 text-center'>
+                      <h2 className='from-primary bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text text-3xl font-black text-transparent'>
+                        TEAM PLANS
+                      </h2>
+                      <p className='text-muted-foreground mt-2'>
+                        Team plans provide access to all team members when
+                        purchased by the team owner
+                      </p>
+                    </div>
+                    <div className='mx-auto grid max-w-4xl gap-8 md:grid-cols-2'>
+                      {plans
+                        .filter(plan => plan.isTeamPlan)
+                        .map(plan => (
+                          <PricingCard
+                            key={plan.id}
+                            plan={plan}
+                            currentPlan={currentTeamPlan || ''}
+                            isSubscriptionActive={isTeamSubscriptionActive}
+                            onUpgrade={planId => handleUpgrade(planId, true)}
+                            isAuthenticated={!!teamData}
+                            isConnected={isConnected}
+                            isLoading={
+                              teamLoading || Boolean(teamData && paymentLoading)
+                            }
+                            isTeamPlan={true}
+                            subscriptionExpiresAt={
+                              teamData?.subscriptionExpiresAt
+                            }
+                          />
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+        </div>
+      </div>
 
       <CryptoPaymentModal
         isOpen={paymentModal.isOpen}
@@ -1473,12 +1545,12 @@ function PricingCard({
   return (
     <div
       className={cn(
-        'relative flex h-full flex-col overflow-hidden rounded-xl border p-6 shadow-lg transition-all duration-300',
+        'group relative flex h-full flex-col overflow-hidden rounded-xl border-2 p-6 shadow-lg transition-all duration-300 hover:scale-105',
         isCurrent && isAuthenticated
-          ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100/50 opacity-90 dark:from-blue-950/20 dark:to-blue-900/20'
+          ? 'border-blue-500/40 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 hover:border-blue-500/60 hover:shadow-xl hover:shadow-blue-500/20'
           : isPopular
-            ? 'border-orange-500 bg-gradient-to-br from-orange-50 to-orange-100/50 hover:shadow-xl dark:from-orange-950/20 dark:to-orange-900/20'
-            : 'border-gray-200/60 bg-gradient-to-br from-white to-gray-50/50 hover:shadow-xl dark:border-gray-700/60 dark:from-gray-900/70 dark:to-gray-800/50'
+            ? 'border-orange-500/40 bg-gradient-to-br from-orange-500/10 to-red-500/10 hover:border-orange-500/60 hover:shadow-xl hover:shadow-orange-500/20'
+            : 'border-primary/20 from-primary/5 hover:border-primary/40 hover:shadow-primary/20 bg-gradient-to-br to-purple-600/5 hover:shadow-xl'
       )}
     >
       {/* Background decoration */}
@@ -1498,18 +1570,18 @@ function PricingCard({
             {plan.displayName}
           </h2>
           {isPopular && (
-            <span className='rounded-full bg-gradient-to-r from-orange-600 to-pink-600 px-3 py-1 text-xs font-medium text-white shadow-lg'>
-              Most Popular
+            <span className='rounded-full bg-gradient-to-r from-orange-600 to-pink-600 px-3 py-1 text-xs font-black tracking-wider text-white uppercase shadow-lg'>
+              POPULAR
             </span>
           )}
           {isCurrent && isAuthenticated && (
-            <span className='rounded-full bg-gradient-to-r from-blue-500 to-purple-500 px-3 py-1 text-xs font-medium text-white shadow-lg'>
-              Current Plan
+            <span className='rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 px-3 py-1 text-xs font-black tracking-wider text-white uppercase shadow-lg'>
+              CURRENT
             </span>
           )}
           {isTeamPlan && !isCurrent && (
-            <span className='rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 px-3 py-1 text-xs font-medium text-white shadow-lg'>
-              Team Plan
+            <span className='rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 text-xs font-black tracking-wider text-white uppercase shadow-lg'>
+              TEAM
             </span>
           )}
         </div>
@@ -1520,11 +1592,11 @@ function PricingCard({
 
       <div className='mb-6'>
         <div className='flex items-baseline gap-2'>
-          <span className='text-foreground text-4xl font-bold'>
+          <span className='from-primary bg-gradient-to-r via-purple-600 to-pink-600 bg-clip-text text-5xl font-black text-transparent'>
             ${(plan.priceUSD ?? 0).toFixed(0)}
           </span>
-          <span className='text-muted-foreground text-lg'>
-            {isTeamPlan ? '/month for entire team' : '/month'}
+          <span className='text-muted-foreground text-sm tracking-wider uppercase'>
+            {isTeamPlan ? '/month team' : '/month'}
           </span>
         </div>
         {plan.priceNative !== undefined && plan.nativeCurrencySymbol && (
@@ -1539,17 +1611,20 @@ function PricingCard({
         <div className='mt-3 space-y-2'>
           {plan.feeTierBasisPoints !== undefined &&
             plan.feeTierBasisPoints !== null && (
-              <div className='flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 dark:bg-blue-950/20'>
-                <DollarSign className='h-4 w-4 text-blue-600 dark:text-blue-400' />
-                <span className='text-sm font-medium text-blue-700 dark:text-blue-300'>
-                  {(Number(plan.feeTierBasisPoints) / 100).toFixed(1)}% trading
-                  fee
+              <div className='flex items-center gap-2 rounded-lg border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 px-3 py-2'>
+                <div className='rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 p-1'>
+                  <DollarSign className='h-3 w-3 text-white' />
+                </div>
+                <span className='text-sm font-bold tracking-wider text-blue-700 uppercase dark:text-blue-300'>
+                  {(Number(plan.feeTierBasisPoints) / 100).toFixed(1)}% FEE
                 </span>
               </div>
             )}
-          <div className='flex items-center gap-2 rounded-lg bg-purple-50 px-3 py-2 dark:bg-purple-950/20'>
-            <Users className='h-4 w-4 text-purple-600 dark:text-purple-400' />
-            <span className='text-sm font-medium text-purple-700 dark:text-purple-300'>
+          <div className='flex items-center gap-2 rounded-lg border border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-pink-500/10 px-3 py-2'>
+            <div className='rounded-full bg-gradient-to-br from-purple-500 to-pink-500 p-1'>
+              <Users className='h-3 w-3 text-white' />
+            </div>
+            <span className='text-sm font-bold tracking-wider text-purple-700 uppercase dark:text-purple-300'>
               {formatTeamMemberLimit(
                 typeof plan.maxMembers === 'string'
                   ? parseInt(plan.maxMembers)
