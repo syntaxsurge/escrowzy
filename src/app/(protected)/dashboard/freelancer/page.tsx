@@ -151,11 +151,18 @@ export default function FreelancerDashboardPage() {
   const [selectedTab, setSelectedTab] = useState('overview')
 
   // Fetch dashboard data
-  const { data: dashboardData, isLoading: dataLoading } = useSWR<DashboardData>(
+  const {
+    data: dashboardData,
+    isLoading: dataLoading,
+    error
+  } = useSWR<DashboardData>(
     user ? `/api/freelancers/${user.id}/dashboard` : null,
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? response.data : null
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to load dashboard')
+      }
+      return response.data
     },
     {
       refreshInterval: 60000 // Refresh every minute
@@ -169,6 +176,32 @@ export default function FreelancerDashboardPage() {
         <div className='text-center'>
           <Loader2 className='text-primary mx-auto mb-4 h-8 w-8 animate-spin' />
           <p className='text-muted-foreground'>Loading your dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle profile not found error
+  if (
+    error?.message?.includes('profile not found') ||
+    (!dashboardData && !dataLoading && user)
+  ) {
+    return (
+      <div className='flex min-h-[400px] items-center justify-center'>
+        <div className='text-center'>
+          <h2 className='mb-2 text-2xl font-bold'>
+            Freelancer Profile Not Found
+          </h2>
+          <p className='text-muted-foreground mb-6'>
+            You haven't set up your freelancer profile yet. Create one to access
+            your dashboard.
+          </p>
+          <Button asChild>
+            <Link href='/profile/freelancer/setup'>
+              Set Up Freelancer Profile
+              <ChevronRight className='ml-2 h-4 w-4' />
+            </Link>
+          </Button>
         </div>
       </div>
     )

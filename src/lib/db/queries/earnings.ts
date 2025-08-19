@@ -177,11 +177,11 @@ export async function getEarningsByPeriod(
 
   const earningsData = await db
     .select({
-      period: sql<string>`TO_CHAR(${earnings.createdAt}, ${dateFormat})`,
-      amount: sql<number>`COALESCE(SUM(CAST(${earnings.amount} AS DECIMAL)), 0)`,
-      count: sql<number>`COUNT(*)`,
-      fees: sql<number>`COALESCE(SUM(CAST(${earnings.platformFee} AS DECIMAL)), 0)`,
-      netAmount: sql<number>`COALESCE(SUM(CAST(${earnings.netAmount} AS DECIMAL)), 0)`
+      period: sql<string>`TO_CHAR(created_at, ${dateFormat})`,
+      amount: sql<number>`COALESCE(SUM(CAST(amount AS DECIMAL)), 0)`,
+      count: sql<number>`COUNT(*)::int`,
+      fees: sql<number>`COALESCE(SUM(CAST(platform_fee AS DECIMAL)), 0)`,
+      netAmount: sql<number>`COALESCE(SUM(CAST(net_amount AS DECIMAL)), 0)`
     })
     .from(earnings)
     .where(
@@ -190,8 +190,8 @@ export async function getEarningsByPeriod(
         between(earnings.createdAt, start, end)
       )
     )
-    .groupBy(sql`TO_CHAR(${earnings.createdAt}, ${dateFormat})`)
-    .orderBy(sql`TO_CHAR(${earnings.createdAt}, ${dateFormat})`)
+    .groupBy(sql`TO_CHAR(created_at, ${dateFormat})`)
+    .orderBy(sql`TO_CHAR(created_at, ${dateFormat})`)
 
   return earningsData.map(e => ({
     period: e.period,
@@ -370,15 +370,15 @@ export async function getEarningsStatistics(freelancerId: number) {
   const [avgProject] = await db
     .select({
       avgValue: sql<number>`AVG(project_totals.total)`,
-      totalProjects: sql<number>`COUNT(*)`
+      totalProjects: sql<number>`COUNT(*)::int`
     })
     .from(
       sql`(
-        SELECT ${jobPostings.id}, SUM(CAST(${earnings.netAmount} AS DECIMAL)) as total
-        FROM ${earnings}
-        INNER JOIN ${jobPostings} ON ${earnings.jobId} = ${jobPostings.id}
-        WHERE ${earnings.freelancerId} = ${freelancerId}
-        GROUP BY ${jobPostings.id}
+        SELECT job_id, SUM(CAST(net_amount AS DECIMAL)) as total
+        FROM earnings
+        WHERE freelancer_id = ${freelancerId}
+          AND job_id IS NOT NULL
+        GROUP BY job_id
       ) as project_totals`
     )
 
