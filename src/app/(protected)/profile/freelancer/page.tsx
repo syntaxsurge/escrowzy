@@ -325,8 +325,6 @@ export default async function FreelancerProfilePage() {
                 </CardContent>
               </Card>
             )}
-
-            {/* Placeholder for Work Experience and Education - will be available after profile setup */}
           </div>
 
           {/* Sidebar */}

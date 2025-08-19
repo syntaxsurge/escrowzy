@@ -235,11 +235,6 @@ function BasicInfoStep({
             )}
         </div>
       </div>
-
-      <div className='text-muted-foreground rounded-lg border-2 border-dashed py-8 text-center'>
-        Work experience and education sections will be available after profile
-        setup.
-      </div>
     </div>
   )
 }

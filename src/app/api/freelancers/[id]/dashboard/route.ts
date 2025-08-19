@@ -46,74 +46,10 @@ export async function GET(
     // Get freelancer profile
     const profile = await getFreelancerProfileByUserId(freelancerId)
     if (!profile) {
-      // Return mock data if profile doesn't exist yet
-      return NextResponse.json({
-        success: true,
-        data: {
-          profile: {
-            id: 0,
-            userId: freelancerId,
-            professionalTitle: null,
-            availability: 'available',
-            avgRating: 0,
-            completionRate: 0,
-            totalJobs: 0,
-            verificationStatus: 'unverified'
-          },
-          earnings: {
-            summary: {
-              totalEarnings: 0,
-              availableBalance: 0,
-              pendingEarnings: 0
-            },
-            statistics: { averageEarning: 0, highestEarning: 0, totalJobs: 0 },
-            recentEarnings: [],
-            upcomingPayments: []
-          },
-          jobs: {
-            active: [],
-            completionRate: 0,
-            milestoneStats: {
-              total: 0,
-              pending: 0,
-              inProgress: 0,
-              submitted: 0,
-              approved: 0,
-              disputed: 0
-            }
-          },
-          proposals: {
-            recent: [],
-            stats: {
-              total: 0,
-              pending: 0,
-              shortlisted: 0,
-              accepted: 0,
-              rejected: 0,
-              conversionRate: 0
-            }
-          },
-          reviews: {
-            recent: [],
-            avgRating: 0,
-            totalReviews: 0
-          },
-          performance: {
-            skillPerformance: [],
-            completionRate: 0,
-            responseTime: null,
-            uniqueClients: 0,
-            repeatClients: 0
-          },
-          quickStats: {
-            totalEarnings: 0,
-            availableBalance: 0,
-            activeJobs: 0,
-            pendingProposals: 0,
-            monthlyGrowth: 0
-          }
-        }
-      })
+      return NextResponse.json(
+        { success: false, error: 'Freelancer profile not found' },
+        { status: 404 }
+      )
     }
 
     // Get earnings summary
@@ -209,15 +145,15 @@ export async function GET(
       .limit(3)
 
     // Get skill performance (most used skills in accepted jobs)
+    // Simplified query to avoid GROUP BY issues
     const skillPerformance = await db
       .select({
         skill: sql<string>`skill_name`,
-        projectCount: sql<number>`COUNT(DISTINCT ${jobPostings.id})`,
-        earnings: sql<number>`SUM(CAST(earnings.net_amount AS DECIMAL))`
+        projectCount: sql<number>`COUNT(*)::int`
       })
       .from(
         sql`(
-          SELECT 
+          SELECT DISTINCT
             jsonb_array_elements_text(${jobPostings.skillsRequired}) as skill_name,
             ${jobPostings.id} as job_id
           FROM ${jobPostings}
@@ -225,9 +161,8 @@ export async function GET(
             AND ${jobPostings.status} = 'completed'
         ) as job_skills`
       )
-      .innerJoin(sql`earnings`, sql`earnings.job_id = job_skills.job_id`)
       .groupBy(sql`skill_name`)
-      .orderBy(desc(sql`COUNT(DISTINCT ${jobPostings.id})`))
+      .orderBy(desc(sql`COUNT(*)`))
       .limit(5)
 
     // Get completion rate
