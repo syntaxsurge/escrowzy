@@ -36,13 +36,19 @@ export const freelancerProfileSchema = z.object({
     .min(1, 'At least one language is required')
     .optional(),
   timezone: z.string().optional(),
-  portfolioUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  portfolioUrl: z
+    .union([z.string().url('Invalid URL'), z.literal(''), z.undefined()])
+    .optional(),
   linkedinUrl: z
-    .string()
-    .url('Invalid LinkedIn URL')
+    .union([
+      z.string().url('Invalid LinkedIn URL'),
+      z.literal(''),
+      z.undefined()
+    ])
+    .optional(),
+  githubUrl: z
+    .union([z.string().url('Invalid GitHub URL'), z.literal(''), z.undefined()])
     .optional()
-    .or(z.literal('')),
-  githubUrl: z.string().url('Invalid GitHub URL').optional().or(z.literal(''))
 })
 
 // Profile setup wizard schemas (for each step)
@@ -91,13 +97,19 @@ export const profileAvailabilitySchema = z.object({
 })
 
 export const profileLinksSchema = z.object({
-  portfolioUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  portfolioUrl: z
+    .union([z.string().url('Invalid URL'), z.literal(''), z.undefined()])
+    .optional(),
   linkedinUrl: z
-    .string()
-    .url('Invalid LinkedIn URL')
+    .union([
+      z.string().url('Invalid LinkedIn URL'),
+      z.literal(''),
+      z.undefined()
+    ])
+    .optional(),
+  githubUrl: z
+    .union([z.string().url('Invalid GitHub URL'), z.literal(''), z.undefined()])
     .optional()
-    .or(z.literal('')),
-  githubUrl: z.string().url('Invalid GitHub URL').optional().or(z.literal(''))
 })
 
 // Search filters schema

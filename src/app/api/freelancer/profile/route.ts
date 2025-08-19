@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       return apiResponses.badRequest('Profile already exists')
     }
 
-    // Create the profile
+    // Create the profile (clean empty strings)
     const profile = await createFreelancerProfile(auth.id, {
       professionalTitle: validatedData.professionalTitle,
       bio: validatedData.bio,
@@ -56,9 +56,16 @@ export async function POST(request: NextRequest) {
       availability: validatedData.availability,
       yearsOfExperience: validatedData.yearsOfExperience,
       timezone: validatedData.timezone,
-      portfolioUrl: validatedData.portfolioUrl,
-      linkedinUrl: validatedData.linkedinUrl,
-      githubUrl: validatedData.githubUrl,
+      portfolioUrl:
+        validatedData.portfolioUrl === ''
+          ? undefined
+          : validatedData.portfolioUrl,
+      linkedinUrl:
+        validatedData.linkedinUrl === ''
+          ? undefined
+          : validatedData.linkedinUrl,
+      githubUrl:
+        validatedData.githubUrl === '' ? undefined : validatedData.githubUrl,
       languages: validatedData.languages
     })
 
@@ -119,17 +126,17 @@ export async function PUT(request: NextRequest) {
       return apiResponses.notFound('Profile not found')
     }
 
-    // Update the profile
-    const updatedProfile = await updateFreelancerProfile(auth.id, {
+    // Update the profile (clean empty strings)
+    await updateFreelancerProfile(auth.id, {
       professionalTitle: body.professionalTitle,
       bio: body.bio,
       hourlyRate: body.hourlyRate?.toString(),
       availability: body.availability || body.availabilityStatus,
       yearsOfExperience: body.yearsOfExperience,
       timezone: body.timezone,
-      portfolioUrl: body.portfolioUrl,
-      linkedinUrl: body.linkedinUrl,
-      githubUrl: body.githubUrl,
+      portfolioUrl: body.portfolioUrl === '' ? undefined : body.portfolioUrl,
+      linkedinUrl: body.linkedinUrl === '' ? undefined : body.linkedinUrl,
+      githubUrl: body.githubUrl === '' ? undefined : body.githubUrl,
       languages: body.languages
     })
 
