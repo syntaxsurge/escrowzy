@@ -46,10 +46,74 @@ export async function GET(
     // Get freelancer profile
     const profile = await getFreelancerProfileByUserId(freelancerId)
     if (!profile) {
-      return NextResponse.json(
-        { success: false, error: 'Freelancer profile not found' },
-        { status: 404 }
-      )
+      // Return mock data if profile doesn't exist yet
+      return NextResponse.json({
+        success: true,
+        data: {
+          profile: {
+            id: 0,
+            userId: freelancerId,
+            professionalTitle: null,
+            availability: 'available',
+            avgRating: 0,
+            completionRate: 0,
+            totalJobs: 0,
+            verificationStatus: 'unverified'
+          },
+          earnings: {
+            summary: {
+              totalEarnings: 0,
+              availableBalance: 0,
+              pendingEarnings: 0
+            },
+            statistics: { averageEarning: 0, highestEarning: 0, totalJobs: 0 },
+            recentEarnings: [],
+            upcomingPayments: []
+          },
+          jobs: {
+            active: [],
+            completionRate: 0,
+            milestoneStats: {
+              total: 0,
+              pending: 0,
+              inProgress: 0,
+              submitted: 0,
+              approved: 0,
+              disputed: 0
+            }
+          },
+          proposals: {
+            recent: [],
+            stats: {
+              total: 0,
+              pending: 0,
+              shortlisted: 0,
+              accepted: 0,
+              rejected: 0,
+              conversionRate: 0
+            }
+          },
+          reviews: {
+            recent: [],
+            avgRating: 0,
+            totalReviews: 0
+          },
+          performance: {
+            skillPerformance: [],
+            completionRate: 0,
+            responseTime: null,
+            uniqueClients: 0,
+            repeatClients: 0
+          },
+          quickStats: {
+            totalEarnings: 0,
+            availableBalance: 0,
+            activeJobs: 0,
+            pendingProposals: 0,
+            monthlyGrowth: 0
+          }
+        }
+      })
     }
 
     // Get earnings summary

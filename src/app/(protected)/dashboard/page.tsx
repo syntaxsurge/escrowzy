@@ -19,7 +19,6 @@ import {
   Gamepad2,
   Coins,
   Gem,
-  Swords,
   Plus,
   ShoppingCart,
   TrendingUp,
@@ -29,7 +28,8 @@ import {
   Users,
   Sparkles,
   Rocket,
-  Medal
+  Medal,
+  Briefcase
 } from 'lucide-react'
 
 import { ActiveDiscountBanner } from '@/components/blocks/dashboard/active-discount-banner'
@@ -242,14 +242,14 @@ export default function DashboardPage() {
       glow: 'shadow-cyan-500/50'
     },
     {
-      id: 'battle-arena',
-      href: appRoutes.battles.arena,
-      icon: Swords,
-      title: 'Battle Arena',
-      subtitle: 'PvP Combat',
-      color: 'from-red-500 to-orange-500',
-      reward: '-25% fees',
-      glow: 'shadow-red-500/50'
+      id: 'freelancer-dashboard',
+      href: '/dashboard/freelancer',
+      icon: Briefcase,
+      title: 'Freelancer Hub',
+      subtitle: 'Manage gigs',
+      color: 'from-indigo-500 to-purple-500',
+      reward: 'Track jobs',
+      glow: 'shadow-indigo-500/50'
     },
     {
       id: 'browse-listings',

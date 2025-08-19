@@ -5,50 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1755075087957,
-      "tag": "0000_nervous_victor_mancha",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1755287086034,
-      "tag": "0001_boring_rumiko_fujikawa",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1755288192537,
-      "tag": "0002_hot_tarot",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1755288716380,
-      "tag": "0003_ambitious_komodo",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1755369856447,
-      "tag": "0004_amused_black_tarantula",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1755504520489,
-      "tag": "0005_lyrical_albert_cleary",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1755531262585,
-      "tag": "0006_green_dust",
+      "when": 1755546234034,
+      "tag": "0000_freezing_chat",
       "breakpoints": true
     }
   ]

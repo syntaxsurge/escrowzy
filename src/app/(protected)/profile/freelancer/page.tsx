@@ -6,9 +6,7 @@ import {
   Briefcase,
   TrendingUp,
   Award,
-  FileText,
   Edit,
-  Plus,
   Globe,
   Github,
   Linkedin,
@@ -223,11 +221,9 @@ export default async function FreelancerProfilePage() {
                       </Badge>
                     ))}
                     {profile.skills && profile.skills.length > 10 && (
-                      <Button variant='ghost' size='sm' asChild>
-                        <Link href='/profile/freelancer/skills'>
-                          +{profile.skills.length - 10} more
-                        </Link>
-                      </Button>
+                      <Badge variant='secondary'>
+                        +{profile.skills.length - 10} more
+                      </Badge>
                     )}
                   </div>
                 </div>
@@ -317,9 +313,9 @@ export default async function FreelancerProfilePage() {
                   <div className='flex items-center justify-between'>
                     <CardTitle>Portfolio</CardTitle>
                     <Button size='sm' variant='outline' asChild>
-                      <Link href='/profile/freelancer/portfolio'>
-                        <Plus className='mr-2 h-4 w-4' />
-                        Add Items
+                      <Link href='/profile/freelancer/setup'>
+                        <Edit className='mr-2 h-4 w-4' />
+                        Edit Portfolio
                       </Link>
                     </Button>
                   </div>
@@ -480,9 +476,9 @@ export default async function FreelancerProfilePage() {
                     className='w-full justify-start'
                     asChild
                   >
-                    <Link href='/profile/freelancer/skills'>
+                    <Link href='/trades/browse'>
                       <Briefcase className='mr-2 h-4 w-4' />
-                      Manage Skills
+                      Browse Jobs
                     </Link>
                   </Button>
                   <Button
@@ -490,9 +486,9 @@ export default async function FreelancerProfilePage() {
                     className='w-full justify-start'
                     asChild
                   >
-                    <Link href='/profile/freelancer/portfolio'>
-                      <FileText className='mr-2 h-4 w-4' />
-                      Manage Portfolio
+                    <Link href='/profile/freelancer/setup'>
+                      <Edit className='mr-2 h-4 w-4' />
+                      Edit Profile
                     </Link>
                   </Button>
                   <Button

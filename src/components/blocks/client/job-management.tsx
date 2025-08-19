@@ -97,7 +97,7 @@ export function ClientJobManagement() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to update job',
+        description: `Failed to update job: ${error}`,
         variant: 'destructive'
       })
     }

@@ -309,6 +309,37 @@ export async function deletePortfolioItem(
   return true // Successfully deleted if no error thrown
 }
 
+// Update portfolio items for a freelancer
+export async function updatePortfolioItems(
+  freelancerId: number,
+  items: Partial<NewPortfolioItem>[]
+): Promise<void> {
+  // Delete existing portfolio items
+  await db
+    .delete(portfolioItems)
+    .where(eq(portfolioItems.freelancerId, freelancerId))
+
+  // Insert new portfolio items
+  if (items.length > 0) {
+    await db.insert(portfolioItems).values(
+      items.map(item => ({
+        title: item.title || 'Untitled Project',
+        freelancerId,
+        description: item.description,
+        projectUrl: item.projectUrl,
+        images: item.images,
+        categoryId: item.categoryId,
+        skillsUsed: item.skillsUsed,
+        completionDate: item.completionDate,
+        clientName: item.clientName,
+        isHighlighted: item.isHighlighted,
+        viewCount: item.viewCount,
+        sortOrder: item.sortOrder
+      }))
+    )
+  }
+}
+
 // Search freelancers with filters
 export async function searchFreelancers(
   filters: FreelancerFilters

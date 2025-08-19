@@ -5,7 +5,9 @@ import { getAuth } from '@/lib/auth/auth-utils'
 import {
   getFreelancerProfileByUserId,
   createFreelancerProfile,
-  updateFreelancerProfile
+  updateFreelancerProfile,
+  updateFreelancerSkills,
+  updatePortfolioItems
 } from '@/lib/db/queries/freelancers'
 import { freelancerProfileSchema } from '@/lib/schemas/freelancer'
 
@@ -46,7 +48,7 @@ export async function POST(request: NextRequest) {
       return apiResponses.badRequest('Profile already exists')
     }
 
-    // Create the profile with skills and portfolio items
+    // Create the profile
     const profile = await createFreelancerProfile(auth.id, {
       professionalTitle: validatedData.professionalTitle,
       bio: validatedData.bio,
@@ -60,7 +62,43 @@ export async function POST(request: NextRequest) {
       languages: validatedData.languages
     })
 
-    return apiResponses.success({ profile })
+    // Save skills if provided
+    if (body.skills && Array.isArray(body.skills) && body.skills.length > 0) {
+      await updateFreelancerSkills(
+        profile.id,
+        body.skills.map((skill: any) => ({
+          skillId: skill.id || skill.skillId,
+          yearsOfExperience: skill.yearsOfExperience,
+          skillLevel: skill.skillLevel
+        }))
+      )
+    }
+
+    // Save portfolio items if provided
+    if (
+      body.portfolioItems &&
+      Array.isArray(body.portfolioItems) &&
+      body.portfolioItems.length > 0
+    ) {
+      await updatePortfolioItems(
+        profile.id,
+        body.portfolioItems.map((item: any) => ({
+          title: item.title,
+          description: item.description,
+          projectUrl: item.projectUrl,
+          images: item.images || [],
+          categoryId: item.categoryId,
+          skillsUsed: item.skillsUsed || [],
+          completionDate: item.completionDate,
+          clientName: item.clientName
+        }))
+      )
+    }
+
+    // Get the complete profile with relations
+    const completeProfile = await getFreelancerProfileByUserId(auth.id)
+
+    return apiResponses.success({ profile: completeProfile })
   } catch (error) {
     return apiResponses.handleError(error, 'Failed to create profile')
   }
@@ -95,7 +133,39 @@ export async function PUT(request: NextRequest) {
       languages: body.languages
     })
 
-    return apiResponses.success({ profile: updatedProfile })
+    // Update skills if provided
+    if (body.skills && Array.isArray(body.skills)) {
+      await updateFreelancerSkills(
+        existingProfile.id,
+        body.skills.map((skill: any) => ({
+          skillId: skill.id || skill.skillId,
+          yearsOfExperience: skill.yearsOfExperience,
+          skillLevel: skill.skillLevel
+        }))
+      )
+    }
+
+    // Update portfolio items if provided
+    if (body.portfolioItems && Array.isArray(body.portfolioItems)) {
+      await updatePortfolioItems(
+        existingProfile.id,
+        body.portfolioItems.map((item: any) => ({
+          title: item.title,
+          description: item.description,
+          projectUrl: item.projectUrl,
+          images: item.images || [],
+          categoryId: item.categoryId,
+          skillsUsed: item.skillsUsed || [],
+          completionDate: item.completionDate,
+          clientName: item.clientName
+        }))
+      )
+    }
+
+    // Get the complete profile with relations
+    const completeProfile = await getFreelancerProfileByUserId(auth.id)
+
+    return apiResponses.success({ profile: completeProfile })
   } catch (error) {
     return apiResponses.handleError(error, 'Failed to update profile')
   }

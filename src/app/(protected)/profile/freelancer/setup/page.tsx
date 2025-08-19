@@ -28,6 +28,7 @@ import {
   GamifiedStatsCards,
   type StatCard
 } from '@/components/blocks/trading/gamified-stats-cards'
+import { navigationProgress } from '@/components/providers/navigation-progress'
 import {
   Card,
   CardContent,
@@ -56,44 +57,50 @@ type ProfileData = z.infer<typeof freelancerProfileSchema> & {
   portfolioItems?: any[]
 }
 
-const wizardSteps = [
+const getWizardSteps = (isEditMode: boolean) => [
   {
     id: 'basic',
     title: 'Basic Information',
     description: 'Your professional identity',
-    icon: <User className='h-4 w-4' />
+    icon: <User className='h-4 w-4' />,
+    isValid: isEditMode ? true : undefined
   },
   {
     id: 'skills',
     title: 'Skills & Expertise',
     description: 'Your technical abilities',
-    icon: <Briefcase className='h-4 w-4' />
+    icon: <Briefcase className='h-4 w-4' />,
+    isValid: isEditMode ? true : undefined
   },
   {
     id: 'portfolio',
     title: 'Portfolio',
     description: 'Showcase your work',
     icon: <Globe className='h-4 w-4' />,
-    isOptional: true
+    isOptional: true,
+    isValid: isEditMode ? true : undefined
   },
   {
     id: 'availability',
     title: 'Availability',
     description: 'When you can work',
-    icon: <Globe className='h-4 w-4' />
+    icon: <Globe className='h-4 w-4' />,
+    isValid: isEditMode ? true : undefined
   },
   {
     id: 'links',
     title: 'Professional Links',
     description: 'Your online presence',
     icon: <Link2 className='h-4 w-4' />,
-    isOptional: true
+    isOptional: true,
+    isValid: isEditMode ? true : undefined
   },
   {
     id: 'review',
     title: 'Review',
     description: 'Complete your profile',
-    icon: <CheckCircle className='h-4 w-4' />
+    icon: <CheckCircle className='h-4 w-4' />,
+    isValid: isEditMode ? true : undefined
   }
 ]
 
@@ -635,6 +642,7 @@ export default function FreelancerProfileSetup() {
 
   const handleComplete = async () => {
     setIsSubmitting(true)
+    navigationProgress.start()
     try {
       const response = await fetch('/api/freelancer/profile', {
         method: isEditMode ? 'PUT' : 'POST',
@@ -658,6 +666,7 @@ export default function FreelancerProfileSetup() {
       toast.error(
         `Failed to ${isEditMode ? 'update' : 'create'} profile. Please try again.`
       )
+      navigationProgress.done()
     } finally {
       setIsSubmitting(false)
     }
@@ -702,7 +711,9 @@ export default function FreelancerProfileSetup() {
   // Calculate profile completion stats
   const calculateProfileStats = (): StatCard[] => {
     let completedSteps = 0
-    const totalSteps = wizardSteps.filter(s => !s.isOptional).length
+    const totalSteps = getWizardSteps(isEditMode).filter(
+      s => !s.isOptional
+    ).length
 
     if (
       profileData.professionalTitle &&
@@ -782,7 +793,7 @@ export default function FreelancerProfileSetup() {
         <GamifiedStatsCards cards={calculateProfileStats()} />
 
         <Wizard
-          steps={wizardSteps}
+          steps={getWizardSteps(isEditMode)}
           initialStep={currentStepIndex}
           onStepChange={setCurrentStepIndex}
         >
@@ -853,7 +864,7 @@ export default function FreelancerProfileSetup() {
             <WizardFooter
               onNext={() => {
                 // Validate current step before allowing next
-                const currentStep = wizardSteps[currentStepIndex]
+                const currentStep = getWizardSteps(isEditMode)[currentStepIndex]
                 if (currentStep.id === 'basic') {
                   if (
                     !profileData.professionalTitle ||
