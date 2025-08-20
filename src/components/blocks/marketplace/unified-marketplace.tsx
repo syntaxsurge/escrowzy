@@ -87,12 +87,50 @@ export function UnifiedMarketplace({
     router.push(`?${params.toString()}`)
   }
 
-  // Fetch marketplace listings
+  // Fetch marketplace listings (including jobs and services)
   const { data: listingsData, mutate: mutateListings } = useSWR(
-    apiEndpoints.listings.all,
+    category === 'service' || category === 'all'
+      ? apiEndpoints.jobs.base
+      : apiEndpoints.listings.all,
     async () => {
-      const res = await api.get(apiEndpoints.listings.all)
-      return res.success ? res.data : null
+      // For service category, fetch from jobs API (includes both jobs and services)
+      if (category === 'service' || category === 'all') {
+        const res = await api.get(
+          `${apiEndpoints.jobs.base}?status=open&limit=100`
+        )
+        if (res.success) {
+          // Transform jobs to listing format and combine with P2P/domain listings
+          const jobListings =
+            res.data?.jobs?.map((job: any) => ({
+              ...job,
+              listingCategory:
+                job.postingType === 'service' ? 'service' : 'job',
+              listingType: job.postingType === 'service' ? 'sell' : 'buy',
+              isActive: job.status === 'open',
+              amount: job.servicePrice || job.budgetMin || '0',
+              pricePerUnit: job.pricePerUnit,
+              user: job.client,
+              tokenOffered: null,
+              paymentMethods: job.paymentMethods || []
+            })) || []
+
+          // If showing all categories, also fetch P2P and domain listings
+          if (category === 'all') {
+            const p2pRes = await api.get(apiEndpoints.listings.all)
+            const p2pListings = p2pRes.success
+              ? p2pRes.data?.listings || []
+              : []
+            return { listings: [...jobListings, ...p2pListings] }
+          }
+
+          return { listings: jobListings }
+        }
+      } else {
+        // For P2P and domain categories, use existing listings API
+        const res = await api.get(apiEndpoints.listings.all)
+        return res.success ? res.data : null
+      }
+      return { listings: [] }
     },
     {
       refreshInterval: refreshIntervals.SLOW,
@@ -114,10 +152,21 @@ export function UnifiedMarketplace({
 
   // Filter listings
   const filteredListings =
-    listingsData?.listings?.filter((listing: EscrowListingWithUser) => {
+    listingsData?.listings?.filter((listing: any) => {
       // Category filter
-      if (category !== 'all' && listing.listingCategory !== category)
-        return false
+      if (category !== 'all') {
+        // Service category includes both services and jobs
+        if (category === 'service') {
+          if (
+            listing.listingCategory !== 'service' &&
+            listing.listingCategory !== 'job'
+          ) {
+            return false
+          }
+        } else if (listing.listingCategory !== category) {
+          return false
+        }
+      }
 
       // Type filter (only for P2P listings)
       if (
@@ -283,7 +332,7 @@ export function UnifiedMarketplace({
                     (l: EscrowListingWithUser) =>
                       l.listingCategory === 'service'
                   )
-                  .map((l: EscrowListingWithUser) => l.serviceCategoryId)
+                  .map((l: any) => l.categoryId || 1)
               ).size,
               subtitle: 'Service types',
               icon: <Activity className='h-5 w-5 text-white' />,

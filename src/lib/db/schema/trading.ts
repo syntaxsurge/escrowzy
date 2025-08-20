@@ -82,21 +82,12 @@ export const escrowListings = pgTable(
     paymentWindow: integer('payment_window').notNull().default(15),
     metadata: jsonb('metadata').notNull().default('{}'),
     isActive: boolean('is_active').notNull().default(true),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    jobPostingId: integer('job_posting_id'),
-    serviceTitle: varchar('service_title', { length: 200 }),
-    serviceDescription: text('service_description'),
-    serviceCategoryId: integer('service_category_id'),
-    deliveryTime: integer('delivery_time_days'),
-    revisions: integer('revisions').default(0),
-    skillsOffered: jsonb('skills_offered').default('[]')
+    createdAt: timestamp('created_at').notNull().defaultNow()
   },
   table => [
     index('idx_escrow_listings_user').on(table.userId),
     index('idx_escrow_listings_active').on(table.isActive),
     index('idx_escrow_listings_type').on(table.listingType),
-    index('idx_escrow_listings_category').on(table.listingCategory),
-    index('idx_escrow_listings_job_posting').on(table.jobPostingId),
-    index('idx_escrow_listings_service_category').on(table.serviceCategoryId)
+    index('idx_escrow_listings_category').on(table.listingCategory)
   ]
 )

@@ -18,6 +18,10 @@ export const jobPostings = pgTable(
   'job_postings',
   {
     id: serial('id').primaryKey(),
+    // Posting type to distinguish between jobs and services
+    postingType: varchar('posting_type', { length: 20 })
+      .notNull()
+      .default('job'), // job | service
     clientId: integer('client_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
@@ -29,9 +33,16 @@ export const jobPostings = pgTable(
     budgetType: varchar('budget_type', { length: 20 }).notNull(), // fixed | hourly
     budgetMin: varchar('budget_min', { length: 50 }),
     budgetMax: varchar('budget_max', { length: 50 }),
+    // Service-specific pricing fields
+    servicePrice: varchar('service_price', { length: 50 }), // Fixed price for services
+    pricePerUnit: varchar('price_per_unit', { length: 50 }), // Hourly/daily rate for services
     currency: varchar('currency', { length: 10 }).notNull().default('USD'),
     deadline: timestamp('deadline'),
-    skillsRequired: jsonb('skills_required').notNull().default('[]'), // Array of skill IDs
+    // Service-specific fields
+    deliveryTime: integer('delivery_time'), // In days for services
+    revisions: integer('revisions').default(0), // Number of revisions included
+    paymentMethods: jsonb('payment_methods').notNull().default('[]'), // Accepted payment methods
+    skillsRequired: jsonb('skills_required').notNull().default('[]'), // Array of skill IDs (also used as skillsOffered for services)
     experienceLevel: varchar('experience_level', { length: 50 })
       .notNull()
       .default('intermediate'), // entry | intermediate | expert
@@ -87,6 +98,7 @@ export const jobPostings = pgTable(
     archivedAt: timestamp('archived_at')
   },
   table => [
+    index('idx_job_postings_type').on(table.postingType),
     index('idx_job_postings_client').on(table.clientId),
     index('idx_job_postings_category').on(table.categoryId),
     index('idx_job_postings_status').on(table.status),

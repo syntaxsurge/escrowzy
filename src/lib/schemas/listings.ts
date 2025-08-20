@@ -75,35 +75,14 @@ export const createDomainListingSchema = z.object({
     .describe('Payment window in minutes')
 })
 
-// Service-specific listing schema
-export const createServiceListingSchema = z.object({
-  listingCategory: z.literal(TradeCategory.SERVICE),
-  listingType: z.literal('sell'), // Services are always offered
-  chainId: z.string().optional(),
-  serviceTitle: z.string().min(1, 'Service title is required').max(200),
-  serviceDescription: z.string().min(1, 'Service description is required'),
-  serviceCategoryId: z.number().int().positive('Category is required'),
-  amount: positiveNumberString.describe('Service price is required'),
-  pricePerUnit: optionalPositiveNumberString, // For hourly/daily rates
-  deliveryTime: z.number().int().positive('Delivery time is required'),
-  revisions: z.number().int().min(0).default(0),
-  skillsOffered: z.array(z.string()).default([]),
-  paymentMethods: z
-    .array(z.string())
-    .min(1, 'At least one payment method is required')
-    .refine(
-      methods => methods.every(isValidPaymentMethod),
-      'Invalid payment method'
-    ),
-  paymentWindow: z
-    .number()
-    .int()
-    .min(5, 'Payment window must be at least 5 minutes')
-    .max(1440, 'Payment window cannot exceed 24 hours')
-    .optional()
-    .default(30)
-    .describe('Payment window in minutes')
-})
+// Service listings are deprecated - use jobs API instead
+// Keeping minimal schema for backward compatibility only
+export const createServiceListingSchema = z
+  .object({
+    listingCategory: z.literal(TradeCategory.SERVICE),
+    listingType: z.literal('sell')
+  })
+  .refine(() => false, 'Services should be created through the jobs API')
 
 // Export individual schema types
 export type CreateP2PListingInput = z.infer<typeof createP2PListingSchema>
@@ -113,11 +92,10 @@ export type CreateServiceListingInput = z.infer<
 >
 
 // Combined create listing schema using discriminated union
-// First define the union without refinements
+// Services removed - only P2P and Domain listings supported
 const baseCreateListingSchema = z.discriminatedUnion('listingCategory', [
   createP2PListingSchema,
-  createDomainListingSchema,
-  createServiceListingSchema
+  createDomainListingSchema
 ])
 
 // Then add refinements at the top level

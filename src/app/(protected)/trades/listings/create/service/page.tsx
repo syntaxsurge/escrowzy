@@ -212,83 +212,83 @@ export default function CreateServiceListingPage() {
   const onSubmit = async (data: JobFormData) => {
     setIsSubmitting(true)
     try {
+      // Prepare data for unified API
+      const postingData = {
+        postingType: postingType,
+        title: data.title,
+        description: data.description,
+        categoryId: parseInt(data.categoryId),
+        budgetType: data.budgetType,
+        experienceLevel: data.experienceLevel,
+        skillsRequired: data.skillsRequired,
+        currency: data.currency || 'USD',
+        visibility: 'public',
+        status: 'open',
+        metadata: {
+          projectDuration: data.projectDuration,
+          milestones: milestones.length > 0 ? milestones : undefined
+        }
+      }
+
       if (postingType === 'service') {
-        // Create service listing with complete data
-        const serviceData = {
-          listingCategory: 'service',
-          listingType: 'sell', // Services are always sell listings
-          serviceTitle: data.title,
-          serviceDescription: data.description,
-          serviceCategoryId: parseInt(data.categoryId) || 1, // Use selected category or default
-          amount: (data.budget || data.budgetMin || '100').toString(),
+        // Add service-specific fields
+        Object.assign(postingData, {
+          servicePrice: data.budget || data.budgetMin || '100',
           pricePerUnit:
             data.budgetType === 'hourly'
-              ? (data.budget || data.budgetMin || '50').toString()
-              : null,
-          deliveryTime: parseInt(data.projectDuration || '7') || 7, // Default to 7 days if not specified
+              ? data.budget || data.budgetMin || '50'
+              : undefined,
+          budgetMin: data.budget || data.budgetMin || '100',
+          budgetMax: data.budget || data.budgetMax || data.budgetMin || '100',
+          deliveryTime: parseInt(data.projectDuration || '7') || 7,
           revisions: data.revisions || 0,
-          skillsOffered: data.skillsRequired || [],
-          paymentMethods: ['bank_transfer', 'paypal', 'crypto'], // Default payment methods
-          chainId: '1' // Default chain ID
-        }
-
-        const result = await api.post(apiEndpoints.listings.create, serviceData)
-
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to create service listing')
-        }
-
-        handleFormSuccess(
-          toast,
-          'Your service offer has been created successfully!'
-        )
+          paymentMethods: ['bank_transfer', 'paypal', 'crypto'],
+          skillsOffered: data.skillsRequired // Use same field name for consistency
+        })
       } else {
-        // Create job posting
-        const jobData = {
-          title: data.title,
-          description: data.description,
-          categoryId: parseInt(data.categoryId),
-          budgetType: data.budgetType,
+        // Add job-specific fields
+        Object.assign(postingData, {
           budgetMin: data.budgetMin || data.budget,
           budgetMax: data.budgetMax || data.budget,
-          currency: data.currency || 'USD',
-          deadline: data.deadline || undefined,
-          experienceLevel: data.experienceLevel,
-          skillsRequired: data.skillsRequired,
-          visibility: 'public',
-          status: 'open',
-          metadata: {
-            projectDuration: data.projectDuration,
-            milestones: milestones.length > 0 ? milestones : undefined
-          }
-        }
+          deadline: data.deadline || undefined
+        })
+      }
 
-        const result = await api.post(apiEndpoints.jobs.base, jobData)
+      // Use unified jobs API for both jobs and services
+      const result = await api.post(apiEndpoints.jobs.base, postingData)
 
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to create job posting')
-        }
-
-        // Create milestones if provided
-        if (milestones.length > 0 && result.data?.job?.id) {
-          for (const [index, milestone] of milestones.entries()) {
-            await api.post(`/api/jobs/${result.data.job.id}/milestones`, {
-              title: milestone.title,
-              description: milestone.description,
-              amount: milestone.amount,
-              dueDate: milestone.dueDate,
-              sortOrder: index
-            })
-          }
-        }
-
-        handleFormSuccess(
-          toast,
-          'Your job posting has been created successfully!'
+      if (!result.success) {
+        throw new Error(
+          result.error ||
+            `Failed to create ${postingType === 'service' ? 'service' : 'job'} posting`
         )
+      }
 
-        // Redirect to job detail page
-        router.push(appRoutes.trades.jobs.detail(result.data?.job?.id))
+      // Create milestones if provided (for both jobs and services)
+      if (milestones.length > 0 && result.data?.job?.id) {
+        for (const [index, milestone] of milestones.entries()) {
+          await api.post(`/api/jobs/${result.data.job.id}/milestones`, {
+            title: milestone.title,
+            description: milestone.description,
+            amount: milestone.amount,
+            dueDate: milestone.dueDate,
+            sortOrder: index
+          })
+        }
+      }
+
+      handleFormSuccess(
+        toast,
+        postingType === 'service'
+          ? 'Your service offer has been created successfully!'
+          : 'Your job posting has been created successfully!'
+      )
+
+      // Redirect to detail page
+      if (result.data?.job?.id) {
+        router.push(appRoutes.trades.jobs.detail(result.data.job.id))
+      } else {
+        router.push(appRoutes.trades.myListings)
       }
     } catch (error) {
       console.error('Error submitting:', error)

@@ -467,15 +467,7 @@ export default function ActiveTradesPage() {
                     isActive: true,
                     metadata: domainMetadata || metadata || null,
                     createdAt: trade.createdAt,
-                    user: listingUser,
-                    // New freelancer marketplace fields
-                    jobPostingId: null,
-                    serviceTitle: null,
-                    serviceDescription: null,
-                    serviceCategoryId: null,
-                    deliveryTime: null,
-                    revisions: null,
-                    skillsOffered: null
+                    user: listingUser
                   }
 
                   // Determine if action is required and what action
@@ -611,15 +603,7 @@ export default function ActiveTradesPage() {
                     isActive: true,
                     metadata: domainMetadata || metadata || null,
                     createdAt: trade.createdAt,
-                    user: listingUser,
-                    // New freelancer marketplace fields
-                    jobPostingId: null,
-                    serviceTitle: null,
-                    serviceDescription: null,
-                    serviceCategoryId: null,
-                    deliveryTime: null,
-                    revisions: null,
-                    skillsOffered: null
+                    user: listingUser
                   }
 
                   // For disputed trades, show dispute status

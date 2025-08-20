@@ -67,6 +67,7 @@ export interface JobPostingWithRelations {
 }
 
 export interface JobFilters {
+  postingType?: 'job' | 'service'
   search?: string
   categoryId?: number
   budgetMin?: string
@@ -208,11 +209,14 @@ export async function getJobsWithFilters(filters: JobFilters): Promise<{
 }> {
   const conditions = []
 
-  // Status filter (default to open)
+  // Posting type filter (job or service)
+  if (filters.postingType) {
+    conditions.push(eq(jobPostings.postingType, filters.postingType))
+  }
+
+  // Status filter (default to open if not specified)
   if (filters.status) {
     conditions.push(eq(jobPostings.status, filters.status))
-  } else {
-    conditions.push(eq(jobPostings.status, 'open'))
   }
 
   // Search filter

@@ -37,18 +37,32 @@ export default function MyListingsPage() {
     'all' | 'p2p' | 'domain' | 'service'
   >('all')
 
-  // Fetch user's listings
+  // Fetch user's listings (both jobs and services from jobPostings table)
   const {
     data: listingsData,
     mutate: mutateListings,
     isLoading
   } = useSWR(
-    apiEndpoints.listings.user,
+    `${apiEndpoints.jobs.base}?clientId=current`,
     async () => {
-      const res = await api.get(apiEndpoints.listings.user)
-      // The API now returns { success: true, listings: [...] }
+      const res = await api.get(
+        `${apiEndpoints.jobs.base}?clientId=current&status=all`
+      )
       if (res.success) {
-        return res.data || { listings: [] }
+        // Transform jobs data to match the expected format
+        return {
+          listings:
+            res.data?.jobs?.map((job: any) => ({
+              ...job,
+              listingCategory:
+                job.postingType === 'service' ? 'service' : 'job',
+              listingType: job.postingType === 'service' ? 'sell' : 'buy',
+              isActive: job.status === 'open',
+              amount: job.servicePrice || job.budgetMin || '0',
+              pricePerUnit: job.pricePerUnit,
+              user: job.client
+            })) || []
+        }
       }
       return { listings: [] }
     },
@@ -81,8 +95,12 @@ export default function MyListingsPage() {
 
   // Filter listings by category
   const allListings = listingsData?.listings || []
-  const filteredListings = allListings.filter((l: EscrowListingWithUser) => {
+  const filteredListings = allListings.filter((l: any) => {
     if (categoryFilter === 'all') return true
+    // Service category includes both services and jobs
+    if (categoryFilter === 'service') {
+      return l.listingCategory === 'service' || l.listingCategory === 'job'
+    }
     return l.listingCategory === categoryFilter
   })
 

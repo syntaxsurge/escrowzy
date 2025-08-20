@@ -112,16 +112,8 @@ export default function MarketplacePage() {
           )
             return false
         } else if (listing.listingCategory === 'service') {
-          // For service listings, also search in service title and description
-          const serviceTitle = listing.serviceTitle?.toLowerCase() || ''
-          const serviceDescription =
-            listing.serviceDescription?.toLowerCase() || ''
-          if (
-            !userName.includes(query) &&
-            !userEmail.includes(query) &&
-            !serviceTitle.includes(query) &&
-            !serviceDescription.includes(query)
-          )
+          // Services are now in jobPostings table, skip search for legacy service listings
+          if (!userName.includes(query) && !userEmail.includes(query))
             return false
         } else {
           if (!userName.includes(query) && !userEmail.includes(query))
@@ -243,7 +235,7 @@ export default function MarketplacePage() {
                     (l: EscrowListingWithUser) =>
                       l.listingCategory === 'service'
                   )
-                  .map((l: EscrowListingWithUser) => l.serviceCategoryId)
+                  .map((l: any) => l.categoryId || 1)
               ).size,
               subtitle: 'Service types',
               icon: <Activity className='h-5 w-5 text-white' />,
