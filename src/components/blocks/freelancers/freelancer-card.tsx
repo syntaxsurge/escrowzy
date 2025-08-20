@@ -13,7 +13,7 @@ import {
   Briefcase
 } from 'lucide-react'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
@@ -44,6 +44,15 @@ export function FreelancerCard({
 }: FreelancerCardProps) {
   const [isSaved, setIsSaved] = useState(initialSaved)
   const [isSaving, setIsSaving] = useState(false)
+
+  // Map the freelancer user object to match UserAvatar's expected structure
+  const userForAvatar = {
+    ...freelancer.user,
+    avatarPath: freelancer.user.avatarUrl
+      ? freelancer.user.avatarUrl.replace('/uploads/', '')
+      : null,
+    walletAddress: freelancer.user.walletAddress || undefined
+  }
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -101,12 +110,11 @@ export function FreelancerCard({
       >
         <CardContent className='p-4'>
           <div className='flex items-start gap-3'>
-            <Avatar className='h-10 w-10'>
-              <AvatarImage src={freelancer.user.avatarUrl || ''} />
-              <AvatarFallback>
-                {freelancer.user.name?.charAt(0)?.toUpperCase() || 'F'}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              user={userForAvatar}
+              walletAddress={userForAvatar.walletAddress}
+              size='md'
+            />
             <div className='min-w-0 flex-1'>
               <div className='flex items-center gap-2'>
                 <h4 className='truncate font-medium'>{freelancer.user.name}</h4>
@@ -140,15 +148,13 @@ export function FreelancerCard({
       <CardHeader className='pb-4'>
         <div className='flex items-start justify-between'>
           <div className='flex items-start gap-4'>
-            <Avatar
-              className='h-16 w-16 cursor-pointer'
-              onClick={handleCardClick}
-            >
-              <AvatarImage src={freelancer.user.avatarUrl || ''} />
-              <AvatarFallback>
-                {freelancer.user.name?.charAt(0)?.toUpperCase() || 'F'}
-              </AvatarFallback>
-            </Avatar>
+            <div className='cursor-pointer' onClick={handleCardClick}>
+              <UserAvatar
+                user={userForAvatar}
+                walletAddress={userForAvatar.walletAddress}
+                size='xl'
+              />
+            </div>
             <div className='space-y-1'>
               <div className='flex items-center gap-2'>
                 <h3
