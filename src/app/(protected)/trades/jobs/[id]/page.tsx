@@ -488,7 +488,9 @@ export default function JobDetailsPage() {
 
             {isOwner && (
               <TabsContent value='proposals' className='space-y-4'>
-                {bidsData && (bidsData as any).bids.length > 0 ? (
+                {bidsData &&
+                (bidsData as any).bids &&
+                (bidsData as any).bids.length > 0 ? (
                   (bidsData as any).bids.map((bid: BidWithFreelancer) => (
                     <Card key={bid.id}>
                       <CardHeader>
@@ -673,58 +675,60 @@ export default function JobDetailsPage() {
                 <div className='flex items-center gap-3'>
                   <UserAvatar user={job.client} size='md' />
                   <div>
-                    <p className='font-medium'>{job.client.name || 'Unknown Client'}</p>
-                  {clientStats && clientStats.reviewCount > 0 && (
-                    <div className='flex items-center gap-1'>
-                      <Star className='h-3 w-3 fill-yellow-500 text-yellow-500' />
-                      <span className='text-sm'>{clientStats.avgRating}</span>
-                      <span className='text-muted-foreground text-sm'>
-                        ({clientStats.reviewCount} review
-                        {clientStats.reviewCount !== 1 ? 's' : ''})
+                    <p className='font-medium'>
+                      {job.client.name || 'Unknown Client'}
+                    </p>
+                    {clientStats && clientStats.reviewCount > 0 && (
+                      <div className='flex items-center gap-1'>
+                        <Star className='h-3 w-3 fill-yellow-500 text-yellow-500' />
+                        <span className='text-sm'>{clientStats.avgRating}</span>
+                        <span className='text-muted-foreground text-sm'>
+                          ({clientStats.reviewCount} review
+                          {clientStats.reviewCount !== 1 ? 's' : ''})
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className='space-y-2 text-sm'>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-muted-foreground'>Member since</span>
+                    <span>
+                      {job.client?.createdAt
+                        ? new Date(job.client.createdAt).toLocaleDateString()
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-muted-foreground'>Jobs posted</span>
+                    <span>{clientStats?.jobsPosted || 0}</span>
+                  </div>
+                  {clientStats && clientStats.jobsPosted > 0 && (
+                    <div className='flex items-center justify-between'>
+                      <span className='text-muted-foreground'>Hire rate</span>
+                      <span>{clientStats.hireRate}%</span>
+                    </div>
+                  )}
+                  {clientStats?.location && (
+                    <div className='flex items-center justify-between'>
+                      <span className='text-muted-foreground'>Location</span>
+                      <span className='flex items-center gap-1'>
+                        <MapPin className='h-3 w-3' />
+                        {clientStats.location}
                       </span>
                     </div>
                   )}
                 </div>
-              </div>
 
-              <div className='space-y-2 text-sm'>
-                <div className='flex items-center justify-between'>
-                  <span className='text-muted-foreground'>Member since</span>
-                  <span>
-                    {job.client?.createdAt
-                      ? new Date(job.client.createdAt).toLocaleDateString()
-                      : 'N/A'}
-                  </span>
-                </div>
-                <div className='flex items-center justify-between'>
-                  <span className='text-muted-foreground'>Jobs posted</span>
-                  <span>{clientStats?.jobsPosted || 0}</span>
-                </div>
-                {clientStats && clientStats.jobsPosted > 0 && (
-                  <div className='flex items-center justify-between'>
-                    <span className='text-muted-foreground'>Hire rate</span>
-                    <span>{clientStats.hireRate}%</span>
-                  </div>
+                {!isOwner && (
+                  <Button variant='outline' className='w-full'>
+                    <MessageSquare className='mr-2 h-4 w-4' />
+                    Contact Client
+                  </Button>
                 )}
-                {clientStats?.location && (
-                  <div className='flex items-center justify-between'>
-                    <span className='text-muted-foreground'>Location</span>
-                    <span className='flex items-center gap-1'>
-                      <MapPin className='h-3 w-3' />
-                      {clientStats.location}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {!isOwner && (
-                <Button variant='outline' className='w-full'>
-                  <MessageSquare className='mr-2 h-4 w-4' />
-                  Contact Client
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
           )}
 
           {/* TODO: Implement FeaturedJobsMini component */}
