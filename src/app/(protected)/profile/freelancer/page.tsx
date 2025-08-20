@@ -56,12 +56,14 @@ export default async function FreelancerProfilePage() {
   }
 
   const stats = await getFreelancerStats(auth.id)
-  const reviews = await getFreelancerReviews(auth.id, { limit: 5 })
+  const reviewsData = await getFreelancerReviews(auth.id, { limit: 5 })
   const platformStats = await getFreelancerPlatformStats()
 
+  // Use simplified review data for now
+  const reviews = Array.isArray(reviewsData) ? reviewsData : []
   const averageRating =
     reviews.length > 0
-      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      ? reviews.reduce((sum, r: any) => sum + r.rating, 0) / reviews.length
       : 0
 
   // Calculate stats for gamified cards
@@ -422,17 +424,21 @@ export default async function FreelancerProfilePage() {
                       <Star className='h-5 w-5' />
                       Recent Reviews
                     </CardTitle>
-                    <Link
-                      href={appRoutes.profile.freelancer.reviews}
-                      className='text-muted-foreground hover:text-primary text-sm'
+                    <Button
+                      size='sm'
+                      variant='ghost'
+                      className='text-muted-foreground hover:text-primary h-auto p-0 text-sm'
+                      asChild
                     >
-                      View all
-                    </Link>
+                      <Link href={`/freelancers/${auth.id}#reviews`}>
+                        View all
+                      </Link>
+                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className='space-y-4'>
-                    {reviews.slice(0, 3).map(review => (
+                    {reviews.slice(0, 3).map((review: any) => (
                       <div key={review.id} className='space-y-2'>
                         <div className='flex items-center justify-between'>
                           <p className='text-sm font-medium'>

@@ -68,12 +68,15 @@ export default async function PublicFreelancerProfilePage({
   }
 
   const rewardsService = new RewardsService()
-  const [stats, reviews, auth, userGameData] = await Promise.all([
+  const [stats, reviewsData, auth, userGameData] = await Promise.all([
     getFreelancerStats(userId),
     getFreelancerReviews(userId, { limit: 10 }),
     getAuth(),
     rewardsService.getOrCreateGameData(userId).catch(() => null)
   ])
+
+  // Handle review data properly
+  const reviews = Array.isArray(reviewsData) ? reviewsData : []
 
   const userStats = userGameData
     ? {
