@@ -218,10 +218,12 @@ export default function JobDetailsPage() {
   const isFreelancer = user && !isOwner
 
   // Calculate job stats
-  const daysPosted = Math.ceil(
-    (new Date().getTime() - new Date(job.createdAt).getTime()) /
-      (1000 * 60 * 60 * 24)
-  )
+  const daysPosted = job?.createdAt
+    ? Math.ceil(
+        (new Date().getTime() - new Date(job.createdAt).getTime()) /
+          (1000 * 60 * 60 * 24)
+      )
+    : 0
 
   const experienceLevelConfig = {
     entry: { label: 'Entry Level', color: 'text-green-600', icon: Zap },
@@ -260,9 +262,11 @@ export default function JobDetailsPage() {
                       <span className='flex items-center gap-1'>
                         <Clock className='h-4 w-4' />
                         Posted{' '}
-                        {formatDistanceToNow(new Date(job.createdAt), {
-                          addSuffix: true
-                        })}
+                        {job.createdAt
+                          ? formatDistanceToNow(new Date(job.createdAt), {
+                              addSuffix: true
+                            })
+                          : 'Recently'}
                       </span>
                       <span className='flex items-center gap-1'>
                         <Globe className='h-4 w-4' />
@@ -330,14 +334,18 @@ export default function JobDetailsPage() {
 
                 {/* Status Badges */}
                 <div className='flex flex-wrap gap-2'>
-                  <Badge
-                    variant={job.status === 'open' ? 'default' : 'secondary'}
-                  >
-                    {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                  </Badge>
-                  <Badge variant='outline'>
-                    {job.category?.icon} {job.category?.name}
-                  </Badge>
+                  {job.status && (
+                    <Badge
+                      variant={job.status === 'open' ? 'default' : 'secondary'}
+                    >
+                      {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                    </Badge>
+                  )}
+                  {job.category && (
+                    <Badge variant='outline'>
+                      {job.category.icon} {job.category.name}
+                    </Badge>
+                  )}
                   <Badge variant='outline' className={expLevel.color}>
                     <expLevel.icon className='mr-1 h-3 w-3' />
                     {expLevel.label}
@@ -369,9 +377,13 @@ export default function JobDetailsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className='prose prose-sm max-w-none'>
-                    {job.description.split('\n').map((paragraph, index) => (
-                      <p key={index}>{paragraph}</p>
-                    ))}
+                    {job.description
+                      ? job.description
+                          .split('\n')
+                          .map((paragraph, index) => (
+                            <p key={index}>{paragraph}</p>
+                          ))
+                      : 'No description provided'}
                   </div>
                 </CardContent>
               </Card>
@@ -685,7 +697,9 @@ export default function JobDetailsPage() {
                 <div className='flex items-center justify-between'>
                   <span className='text-muted-foreground'>Member since</span>
                   <span>
-                    {new Date(job.client.createdAt).toLocaleDateString()}
+                    {job.client?.createdAt
+                      ? new Date(job.client.createdAt).toLocaleDateString()
+                      : 'N/A'}
                   </span>
                 </div>
                 <div className='flex items-center justify-between'>
