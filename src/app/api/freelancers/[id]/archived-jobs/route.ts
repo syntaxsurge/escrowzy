@@ -119,11 +119,8 @@ export async function GET(
     }
 
     return NextResponse.json({
-      success: true,
-      data: {
-        jobs: archivedJobs,
-        summary
-      }
+      jobs: archivedJobs,
+      summary
     })
   } catch (error) {
     console.error('Error fetching archived jobs:', error)
@@ -190,7 +187,6 @@ export async function POST(
       .where(eq(jobPostings.id, jobId))
 
     return NextResponse.json({
-      success: true,
       message: `Job ${action === 'complete' ? 'completed' : 'cancelled'} successfully`
     })
   } catch (error) {

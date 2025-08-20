@@ -56,10 +56,7 @@ export async function GET(
       )
     }
 
-    return NextResponse.json({
-      success: true,
-      bid
-    })
+    return NextResponse.json(bid)
   } catch (error) {
     console.error('Error fetching bid:', error)
     return NextResponse.json(
@@ -251,10 +248,7 @@ export async function PATCH(
         console.error('Failed to send notification:', notificationError)
       }
 
-      return NextResponse.json({
-        success: true,
-        bid: updatedBid
-      })
+      return NextResponse.json(updatedBid)
     } else {
       // Handle bid content update (only freelancer can update their own bid)
       const validationResult = bidUpdateSchema.safeParse(body)
@@ -307,10 +301,7 @@ export async function PATCH(
         .where(eq(jobBids.id, bidId))
         .returning()
 
-      return NextResponse.json({
-        success: true,
-        bid: updatedBid
-      })
+      return NextResponse.json(updatedBid)
     }
   } catch (error) {
     console.error('Error updating bid:', error)
@@ -395,7 +386,6 @@ export async function DELETE(
       .where(eq(jobPostings.id, jobId))
 
     return NextResponse.json({
-      success: true,
       message: 'Bid withdrawn successfully',
       bid: withdrawnBid
     })

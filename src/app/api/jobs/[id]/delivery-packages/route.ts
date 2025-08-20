@@ -65,7 +65,7 @@ export async function GET(
       .where(eq(deliveryPackages.jobId, jobId))
       .orderBy(desc(deliveryPackages.createdAt))
 
-    return NextResponse.json({ packages })
+    return NextResponse.json(packages)
   } catch (error) {
     console.error('Failed to fetch delivery packages:', error)
     return NextResponse.json(
@@ -129,14 +129,11 @@ export async function POST(
       .returning()
 
     return NextResponse.json({
-      success: true,
-      package: {
-        ...deliveryPackage,
-        deliveredBy: {
-          id: user.id,
-          name: user.name,
-          avatarUrl: user.avatarPath
-        }
+      ...deliveryPackage,
+      deliveredBy: {
+        id: user.id,
+        name: user.name,
+        avatarUrl: user.avatarPath
       }
     })
   } catch (error) {

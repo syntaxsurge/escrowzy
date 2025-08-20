@@ -264,13 +264,10 @@ export async function GET(
     }))
 
     return NextResponse.json({
-      success: true,
-      data: {
-        jobs: jobsWithProgress,
-        milestones,
-        upcomingDeadlines,
-        stats
-      }
+      jobs: jobsWithProgress,
+      milestones,
+      upcomingDeadlines,
+      stats
     })
   } catch (error) {
     console.error('Error fetching active jobs:', error)

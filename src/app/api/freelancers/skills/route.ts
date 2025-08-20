@@ -21,10 +21,7 @@ export async function GET(request: NextRequest) {
 
     const profile = await getFreelancerProfileByUserId(user.id)
 
-    return NextResponse.json({
-      success: true,
-      skills: profile?.skills || []
-    })
+    return NextResponse.json(profile?.skills || [])
   } catch (error) {
     console.error('Error fetching freelancer skills:', error)
     return NextResponse.json(
@@ -83,10 +80,7 @@ export async function POST(request: NextRequest) {
     // Fetch updated profile
     const updatedProfile = await getFreelancerProfileByUserId(user.id)
 
-    return NextResponse.json({
-      success: true,
-      skills: updatedProfile?.skills || []
-    })
+    return NextResponse.json(updatedProfile?.skills || [])
   } catch (error) {
     console.error('Error updating freelancer skills:', error)
     return NextResponse.json(

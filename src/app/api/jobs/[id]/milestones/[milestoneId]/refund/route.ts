@@ -209,7 +209,6 @@ export async function POST(
     }
 
     return NextResponse.json({
-      success: true,
       message: 'Refund request submitted successfully',
       dispute: {
         milestoneId,
@@ -436,7 +435,6 @@ export async function PUT(
     }
 
     return NextResponse.json({
-      success: true,
       message: 'Dispute resolved successfully',
       resolution: {
         action,
@@ -516,10 +514,7 @@ export async function GET(
       refundResolution: metadata.refundResolution || null
     }
 
-    return NextResponse.json({
-      success: true,
-      refund: refundInfo
-    })
+    return NextResponse.json(refundInfo)
   } catch (error) {
     console.error('Error fetching refund status:', error)
     return NextResponse.json(

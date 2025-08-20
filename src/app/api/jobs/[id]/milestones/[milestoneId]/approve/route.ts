@@ -224,7 +224,6 @@ export async function POST(
     }
 
     return NextResponse.json({
-      success: true,
       message: 'Milestone approved and payment released',
       allMilestonesCompleted: allCompleted
     })

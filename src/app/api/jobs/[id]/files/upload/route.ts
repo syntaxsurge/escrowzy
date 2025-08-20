@@ -179,7 +179,6 @@ export async function POST(
     })
 
     return NextResponse.json({
-      success: true,
       files: uploadedFiles,
       message: 'Files uploaded successfully'
     })

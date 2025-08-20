@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json({
-      success: true,
       recommendations,
       total: recommendations.length
     })

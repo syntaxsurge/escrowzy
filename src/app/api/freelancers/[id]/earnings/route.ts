@@ -54,10 +54,7 @@ export async function GET(
     switch (view) {
       case 'summary':
         const summary = await getFreelancerEarningsSummary(freelancerId)
-        return NextResponse.json({
-          success: true,
-          data: summary
-        })
+        return NextResponse.json(summary)
 
       case 'period':
         if (!period) {
@@ -72,18 +69,12 @@ export async function GET(
           start,
           end
         )
-        return NextResponse.json({
-          success: true,
-          data: periodData
-        })
+        return NextResponse.json(periodData)
 
       case 'clients':
         const limit = parseInt(searchParams.get('limit') || '10')
         const clientData = await getEarningsByClient(freelancerId, limit)
-        return NextResponse.json({
-          success: true,
-          data: clientData
-        })
+        return NextResponse.json(clientData)
 
       case 'projects':
         const status = searchParams.get('status') as
@@ -95,10 +86,7 @@ export async function GET(
           freelancerId,
           status || 'all'
         )
-        return NextResponse.json({
-          success: true,
-          data: projectData
-        })
+        return NextResponse.json(projectData)
 
       case 'milestones':
         const milestoneLimit = parseInt(searchParams.get('limit') || '20')
@@ -106,10 +94,7 @@ export async function GET(
           freelancerId,
           milestoneLimit
         )
-        return NextResponse.json({
-          success: true,
-          data: milestoneData
-        })
+        return NextResponse.json(milestoneData)
 
       case 'history':
         const historyFilters = {
@@ -130,10 +115,7 @@ export async function GET(
           freelancerId,
           historyFilters
         )
-        return NextResponse.json({
-          success: true,
-          data: historyData
-        })
+        return NextResponse.json(historyData)
 
       case 'all':
         // Return comprehensive earnings data
@@ -154,14 +136,11 @@ export async function GET(
         ])
 
         return NextResponse.json({
-          success: true,
-          data: {
-            summary: allSummary,
-            periodData: allPeriodData,
-            topClients: allClientData,
-            projects: allProjectData.slice(0, 10),
-            recentMilestones: allMilestoneData
-          }
+          summary: allSummary,
+          periodData: allPeriodData,
+          topClients: allClientData,
+          projects: allProjectData.slice(0, 10),
+          recentMilestones: allMilestoneData
         })
 
       default:

@@ -13,10 +13,7 @@ export async function GET(request: NextRequest) {
       .where(eq(jobCategories.isActive, true))
       .orderBy(jobCategories.sortOrder)
 
-    return NextResponse.json({
-      success: true,
-      categories
-    })
+    return NextResponse.json(categories)
   } catch (error) {
     console.error('Failed to fetch job categories:', error)
     return NextResponse.json(

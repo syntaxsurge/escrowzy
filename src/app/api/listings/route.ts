@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 import { apiResponses } from '@/lib/api/server-utils'
 import { getListingsQuerySchema } from '@/lib/schemas/listings'
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     const hasNextPage = page < totalPages
     const hasPreviousPage = page > 1
 
-    return apiResponses.success({
+    return NextResponse.json({
       listings: result.listings,
       pagination: {
         page,

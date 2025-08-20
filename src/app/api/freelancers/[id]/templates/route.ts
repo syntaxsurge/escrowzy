@@ -74,11 +74,8 @@ export async function GET(
     }
 
     return NextResponse.json({
-      success: true,
-      data: {
-        templates,
-        stats
-      }
+      templates,
+      stats
     })
   } catch (error) {
     console.error('Error fetching templates:', error)
@@ -167,8 +164,7 @@ export async function POST(
       .where(eq(freelancerProfiles.userId, Number(id)))
 
     return NextResponse.json({
-      success: true,
-      data: newTemplate,
+      template: newTemplate,
       message: 'Template created successfully'
     })
   } catch (error) {
@@ -272,8 +268,7 @@ export async function PUT(
       .where(eq(freelancerProfiles.userId, Number(id)))
 
     return NextResponse.json({
-      success: true,
-      data: templates[templateIndex],
+      template: templates[templateIndex],
       message: 'Template updated successfully'
     })
   } catch (error) {
@@ -349,7 +344,6 @@ export async function DELETE(
       .where(eq(freelancerProfiles.userId, Number(id)))
 
     return NextResponse.json({
-      success: true,
       message: 'Template deleted successfully'
     })
   } catch (error) {
@@ -429,7 +423,6 @@ export async function PATCH(
       .where(eq(freelancerProfiles.userId, Number(id)))
 
     return NextResponse.json({
-      success: true,
       message: 'Template usage tracked'
     })
   } catch (error) {

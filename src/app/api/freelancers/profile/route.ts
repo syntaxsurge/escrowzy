@@ -19,10 +19,7 @@ export async function GET(request: NextRequest) {
 
     const profile = await getFreelancerProfileByUserId(user.id)
 
-    return NextResponse.json({
-      success: true,
-      profile
-    })
+    return NextResponse.json(profile)
   } catch (error) {
     console.error('Error fetching freelancer profile:', error)
     return NextResponse.json(
@@ -62,10 +59,7 @@ export async function POST(request: NextRequest) {
       validationResult.data
     )
 
-    return NextResponse.json({
-      success: true,
-      profile
-    })
+    return NextResponse.json(profile)
   } catch (error) {
     console.error('Error updating freelancer profile:', error)
     return NextResponse.json(

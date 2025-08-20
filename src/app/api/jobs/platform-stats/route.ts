@@ -6,10 +6,7 @@ export async function GET() {
   try {
     const stats = await getPlatformStats()
 
-    return NextResponse.json({
-      success: true,
-      ...stats
-    })
+    return NextResponse.json(stats)
   } catch (error) {
     console.error('Error fetching platform stats:', error)
     return NextResponse.json(

@@ -21,10 +21,7 @@ export async function GET(_request: NextRequest) {
 
     const drafts = await getJobDrafts(user.id)
 
-    return NextResponse.json({
-      success: true,
-      drafts
-    })
+    return NextResponse.json(drafts)
   } catch (error) {
     console.error('Error fetching drafts:', error)
     return NextResponse.json(
@@ -65,10 +62,7 @@ export async function POST(request: NextRequest) {
       draftId = await saveJobDraft(user.id, body)
     }
 
-    return NextResponse.json({
-      success: true,
-      draftId
-    })
+    return NextResponse.json({ draftId })
   } catch (error) {
     console.error('Error saving draft:', error)
     return NextResponse.json(

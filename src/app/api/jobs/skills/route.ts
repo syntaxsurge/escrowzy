@@ -17,10 +17,7 @@ export async function GET(request: NextRequest) {
           .where(eq(skills.categoryId, parseInt(categoryId)))
       : await db.select().from(skills)
 
-    return NextResponse.json({
-      success: true,
-      skills: skillsList
-    })
+    return NextResponse.json(skillsList)
   } catch (error) {
     console.error('Failed to fetch skills:', error)
     return NextResponse.json(

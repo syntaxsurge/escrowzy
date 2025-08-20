@@ -54,7 +54,6 @@ export async function GET(request: NextRequest) {
     const { jobs, total } = await getJobsWithFilters(filters)
 
     return NextResponse.json({
-      success: true,
       jobs,
       total,
       pagination: {
@@ -144,10 +143,7 @@ export async function POST(request: NextRequest) {
     // Create job/service posting
     const [job] = await db.insert(jobPostings).values(values).returning()
 
-    return NextResponse.json({
-      success: true,
-      data: job
-    })
+    return NextResponse.json(job)
   } catch (error) {
     console.error('Error creating job:', error)
     return NextResponse.json(

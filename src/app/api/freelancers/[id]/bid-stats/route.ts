@@ -66,16 +66,13 @@ export async function GET(
       )
 
     return NextResponse.json({
-      success: true,
-      stats: {
-        totalBids: Number(stats.totalBids) || 0,
-        activeBids: Number(stats.activeBids) || 0,
-        wonBids: Number(stats.wonBids) || 0,
-        totalEarnings: Number(earnings.totalEarnings) || 0,
-        successRate,
-        avgBidAmount: Number(stats.avgBidAmount) || 0,
-        avgDeliveryDays: Number(stats.avgDeliveryDays) || 0
-      }
+      totalBids: Number(stats.totalBids) || 0,
+      activeBids: Number(stats.activeBids) || 0,
+      wonBids: Number(stats.wonBids) || 0,
+      totalEarnings: Number(earnings.totalEarnings) || 0,
+      successRate,
+      avgBidAmount: Number(stats.avgBidAmount) || 0,
+      avgDeliveryDays: Number(stats.avgDeliveryDays) || 0
     })
   } catch (error) {
     console.error('Error fetching bid statistics:', error)

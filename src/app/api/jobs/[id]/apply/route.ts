@@ -110,10 +110,7 @@ export async function POST(
       })
       .where(eq(jobPostings.id, jobId))
 
-    return NextResponse.json({
-      success: true,
-      bid: newBid
-    })
+    return NextResponse.json(newBid)
   } catch (error) {
     console.error('Error submitting bid:', error)
     return NextResponse.json(

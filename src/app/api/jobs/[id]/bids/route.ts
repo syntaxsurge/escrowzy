@@ -54,7 +54,6 @@ export async function GET(
     } else if (!user || user.id !== job.clientId) {
       // If not logged in or not the owner, return empty
       return NextResponse.json({
-        success: true,
         bids: [],
         total: 0,
         isOwner: false
@@ -122,7 +121,6 @@ export async function GET(
     )
 
     return NextResponse.json({
-      success: true,
       bids: formattedBids,
       total: formattedBids.length,
       isOwner: user?.id === job.clientId
@@ -274,10 +272,7 @@ export async function POST(
       // Continue even if notification fails
     }
 
-    return NextResponse.json({
-      success: true,
-      bid: newBid
-    })
+    return NextResponse.json(newBid)
   } catch (error) {
     console.error('Error submitting bid:', error)
     return NextResponse.json(

@@ -133,7 +133,6 @@ export async function GET(
     }))
 
     return NextResponse.json({
-      success: true,
       messages: transformedMessages,
       hasMore: messages.length === limit
     })
@@ -253,15 +252,12 @@ export async function POST(
     }
 
     return NextResponse.json({
-      success: true,
-      message: {
-        ...message,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.avatarPath
-        }
+      ...message,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.avatarPath
       }
     })
   } catch (error) {
@@ -329,10 +325,7 @@ export async function PUT(
       })
     }
 
-    return NextResponse.json({
-      success: true,
-      message: systemMessage
-    })
+    return NextResponse.json(systemMessage)
   } catch (error) {
     console.error('Error adding system message:', error)
     return NextResponse.json(

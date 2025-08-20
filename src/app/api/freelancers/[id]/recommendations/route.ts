@@ -405,20 +405,16 @@ export async function GET(
     }
 
     return NextResponse.json({
-      success: true,
-      data: {
-        recommendations,
-        growthScore,
-        insights,
-        summary: {
-          totalRecommendations: recommendations.length,
-          highPriority: recommendations.filter(r => r.priority === 'high')
-            .length,
-          mediumPriority: recommendations.filter(r => r.priority === 'medium')
-            .length,
-          lowPriority: recommendations.filter(r => r.priority === 'low').length,
-          potentialEarningsIncrease: Math.round(insights.overallGrowthPotential)
-        }
+      recommendations,
+      growthScore,
+      insights,
+      summary: {
+        totalRecommendations: recommendations.length,
+        highPriority: recommendations.filter(r => r.priority === 'high').length,
+        mediumPriority: recommendations.filter(r => r.priority === 'medium')
+          .length,
+        lowPriority: recommendations.filter(r => r.priority === 'low').length,
+        potentialEarningsIncrease: Math.round(insights.overallGrowthPotential)
       }
     })
   } catch (error) {

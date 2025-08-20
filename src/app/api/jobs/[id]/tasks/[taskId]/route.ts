@@ -87,7 +87,6 @@ export async function PATCH(
       .returning()
 
     return NextResponse.json({
-      success: true,
       task: updatedTask,
       message: 'Task updated successfully'
     })
@@ -152,7 +151,6 @@ export async function DELETE(
     await db.delete(jobTasks).where(eq(jobTasks.id, taskId))
 
     return NextResponse.json({
-      success: true,
       message: 'Task deleted successfully'
     })
   } catch (error) {

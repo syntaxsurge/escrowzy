@@ -59,7 +59,6 @@ export async function PATCH(
       )
 
     return NextResponse.json({
-      success: true,
       message: 'Session updated successfully'
     })
   } catch (error) {

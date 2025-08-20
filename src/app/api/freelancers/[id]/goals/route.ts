@@ -173,11 +173,8 @@ export async function GET(
     }
 
     return NextResponse.json({
-      success: true,
-      data: {
-        goals: updatedGoals,
-        stats
-      }
+      goals: updatedGoals,
+      stats
     })
   } catch (error) {
     console.error('Error fetching goals:', error)
@@ -268,10 +265,7 @@ export async function POST(
       })
       .where(eq(freelancerProfiles.userId, freelancerId))
 
-    return NextResponse.json({
-      success: true,
-      data: newGoal
-    })
+    return NextResponse.json(newGoal)
   } catch (error) {
     console.error('Error creating goal:', error)
     return NextResponse.json(
@@ -358,10 +352,7 @@ export async function PATCH(
       })
       .where(eq(freelancerProfiles.userId, freelancerId))
 
-    return NextResponse.json({
-      success: true,
-      data: goals[goalIndex]
-    })
+    return NextResponse.json(goals[goalIndex])
   } catch (error) {
     console.error('Error updating goal:', error)
     return NextResponse.json(
@@ -444,7 +435,6 @@ export async function DELETE(
       .where(eq(freelancerProfiles.userId, freelancerId))
 
     return NextResponse.json({
-      success: true,
       message: 'Goal deleted successfully'
     })
   } catch (error) {

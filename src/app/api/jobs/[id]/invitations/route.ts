@@ -88,10 +88,7 @@ export async function GET(
       .where(eq(jobInvitations.jobId, jobId))
       .orderBy(desc(jobInvitations.createdAt))
 
-    return NextResponse.json({
-      success: true,
-      invitations
-    })
+    return NextResponse.json(invitations)
   } catch (error) {
     console.error('Error fetching job invitations:', error)
     return NextResponse.json(
@@ -239,7 +236,6 @@ export async function POST(
     }
 
     return NextResponse.json({
-      success: true,
       invitations: createdInvitations,
       invited: newFreelancerIds.length,
       alreadyInvited: existingFreelancerIds.length

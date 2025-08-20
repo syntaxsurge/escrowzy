@@ -78,7 +78,6 @@ export async function PATCH(
       .returning()
 
     return NextResponse.json({
-      success: true,
       package: updatedPackage,
       message: 'Delivery package accepted successfully'
     })

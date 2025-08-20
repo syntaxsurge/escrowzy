@@ -121,7 +121,6 @@ export async function POST(
     }
 
     return NextResponse.json({
-      success: true,
       milestone: updatedMilestone,
       message: 'Milestone submitted successfully for client review'
     })

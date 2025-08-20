@@ -84,10 +84,7 @@ export async function GET(
       )
       .orderBy(messages.createdAt)
 
-    return NextResponse.json({
-      success: true,
-      messages: bidMessages
-    })
+    return NextResponse.json(bidMessages)
   } catch (error) {
     console.error('Error fetching bid messages:', error)
     return NextResponse.json(
@@ -216,10 +213,7 @@ export async function POST(
       console.log('New offer received:', metadata)
     }
 
-    return NextResponse.json({
-      success: true,
-      message: messageWithSender
-    })
+    return NextResponse.json(messageWithSender)
   } catch (error) {
     console.error('Error sending bid message:', error)
     return NextResponse.json(

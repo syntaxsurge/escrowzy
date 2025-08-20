@@ -36,10 +36,7 @@ export async function GET(
       .where(eq(milestoneRevisions.milestoneId, milestoneId))
       .orderBy(desc(milestoneRevisions.createdAt))
 
-    return NextResponse.json({
-      success: true,
-      revisions
-    })
+    return NextResponse.json(revisions)
   } catch (error) {
     console.error('Error fetching revisions:', error)
     return NextResponse.json(
@@ -162,7 +159,6 @@ export async function POST(
     }
 
     return NextResponse.json({
-      success: true,
       message: 'Revision requested successfully'
     })
   } catch (error) {
@@ -261,10 +257,7 @@ export async function PATCH(
       .where(eq(milestoneRevisions.id, revisionId))
       .returning()
 
-    return NextResponse.json({
-      success: true,
-      revision: updatedRevision
-    })
+    return NextResponse.json(updatedRevision)
   } catch (error) {
     console.error('Error updating revision:', error)
     return NextResponse.json(

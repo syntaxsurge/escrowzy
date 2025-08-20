@@ -41,7 +41,6 @@ export async function GET(
       .orderBy(desc(jobMilestones.sortOrder))
 
     return NextResponse.json({
-      success: true,
       milestones
     })
   } catch (error) {
@@ -128,10 +127,7 @@ export async function POST(
       })
       .returning()
 
-    return NextResponse.json({
-      success: true,
-      milestone
-    })
+    return NextResponse.json(milestone)
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -225,7 +221,6 @@ export async function PATCH(
       .orderBy(desc(jobMilestones.sortOrder))
 
     return NextResponse.json({
-      success: true,
       milestones: updatedMilestones
     })
   } catch (error) {

@@ -48,10 +48,7 @@ export async function GET(
       )
     }
 
-    return NextResponse.json({
-      success: true,
-      milestone
-    })
+    return NextResponse.json(milestone)
   } catch (error) {
     console.error('Error fetching milestone:', error)
     return NextResponse.json(
@@ -208,10 +205,7 @@ export async function PATCH(
       .where(eq(jobMilestones.id, milestoneId))
       .returning()
 
-    return NextResponse.json({
-      success: true,
-      milestone: updatedMilestone
-    })
+    return NextResponse.json(updatedMilestone)
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -305,7 +299,6 @@ export async function DELETE(
     await db.delete(jobMilestones).where(eq(jobMilestones.id, milestoneId))
 
     return NextResponse.json({
-      success: true,
       message: 'Milestone deleted successfully'
     })
   } catch (error) {

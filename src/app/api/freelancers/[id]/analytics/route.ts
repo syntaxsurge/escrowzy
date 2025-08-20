@@ -332,22 +332,19 @@ export async function GET(
       .where(eq(freelancerReviews.freelancerId, profile.id))
 
     return NextResponse.json({
-      success: true,
-      data: {
-        skillPerformance,
-        clientAnalytics,
-        proposalFunnel: proposalFunnel[0] || {},
-        performanceTrends,
-        milestonePerformance: milestonePerformance[0] || {},
-        categoryPerformance,
-        responseTimeAnalysis: responseTimeAnalysis[0] || {},
-        competitionAnalysis,
-        reviewAnalysis: reviewAnalysis[0] || {},
-        period: {
-          days: daysAgo,
-          startDate,
-          endDate: new Date()
-        }
+      skillPerformance,
+      clientAnalytics,
+      proposalFunnel: proposalFunnel[0] || {},
+      performanceTrends,
+      milestonePerformance: milestonePerformance[0] || {},
+      categoryPerformance,
+      responseTimeAnalysis: responseTimeAnalysis[0] || {},
+      competitionAnalysis,
+      reviewAnalysis: reviewAnalysis[0] || {},
+      period: {
+        days: daysAgo,
+        startDate,
+        endDate: new Date()
       }
     })
   } catch (error) {

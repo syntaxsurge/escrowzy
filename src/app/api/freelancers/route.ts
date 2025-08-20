@@ -51,7 +51,6 @@ export async function GET(request: NextRequest) {
     const result = await searchFreelancers(validationResult.data)
 
     return NextResponse.json({
-      success: true,
       freelancers: result.freelancers,
       total: result.total
     })

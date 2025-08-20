@@ -24,10 +24,7 @@ export async function GET(request: NextRequest) {
     const profile = await getFreelancerProfileByUserId(user.id)
 
     if (!profile) {
-      return NextResponse.json({
-        success: true,
-        portfolio: []
-      })
+      return NextResponse.json([])
     }
 
     const items = await db
@@ -36,10 +33,7 @@ export async function GET(request: NextRequest) {
       .where(eq(portfolioItems.freelancerId, profile.id))
       .orderBy(portfolioItems.sortOrder, portfolioItems.createdAt)
 
-    return NextResponse.json({
-      success: true,
-      portfolio: items
-    })
+    return NextResponse.json(items)
   } catch (error) {
     console.error('Error fetching portfolio:', error)
     return NextResponse.json(
@@ -99,10 +93,7 @@ export async function POST(request: NextRequest) {
       completionDate: validationResult.data.completionDate || null
     })
 
-    return NextResponse.json({
-      success: true,
-      portfolio: item
-    })
+    return NextResponse.json(item)
   } catch (error) {
     console.error('Error creating portfolio item:', error)
     return NextResponse.json(

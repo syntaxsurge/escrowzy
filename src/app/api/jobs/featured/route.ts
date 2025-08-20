@@ -10,10 +10,7 @@ export async function GET(request: NextRequest) {
 
     const jobs = await getFeaturedJobs(limit)
 
-    return NextResponse.json({
-      success: true,
-      jobs
-    })
+    return NextResponse.json(jobs)
   } catch (error) {
     console.error('Error fetching featured jobs:', error)
     return NextResponse.json(

@@ -22,7 +22,6 @@ export async function GET(
     ])
 
     return NextResponse.json({
-      success: true,
       ...stats,
       location: location || 'Not specified'
     })

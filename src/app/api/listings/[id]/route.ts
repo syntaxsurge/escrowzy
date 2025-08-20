@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 import { apiResponses } from '@/lib/api/server-utils'
 import { getSession } from '@/lib/auth/session'
@@ -46,7 +46,7 @@ export async function PUT(
       )
     }
 
-    return apiResponses.success({
+    return NextResponse.json({
       listing: updatedListing,
       message: 'Listing updated successfully'
     })
@@ -83,8 +83,7 @@ export async function DELETE(
       )
     }
 
-    return apiResponses.success({
-      success: true,
+    return NextResponse.json({
       message: 'Listing deactivated successfully'
     })
   } catch (error) {
