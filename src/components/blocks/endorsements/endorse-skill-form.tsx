@@ -15,6 +15,7 @@ import {
 import { StarRating } from '@/components/ui/star-rating'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api/http-client'
 
 interface EndorseSkillFormProps {
   userId: number
@@ -53,23 +54,23 @@ export function EndorseSkillForm({
 
     setIsSubmitting(true)
     try {
-      const response = await fetch('/api/endorsements', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const result = await api.post(
+        '/api/endorsements',
+        {
           endorsedUserId: userId,
           skillId: parseInt(selectedSkill),
           rating,
           relationship: relationship || undefined,
           projectContext: projectContext || undefined,
           jobId
-        })
-      })
+        },
+        {
+          shouldShowErrorToast: false
+        }
+      )
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit endorsement')
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to submit endorsement')
       }
 
       toast({

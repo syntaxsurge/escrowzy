@@ -33,6 +33,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib'
+import { api } from '@/lib/api/http-client'
 
 interface FaqCategory {
   id: number
@@ -123,9 +124,10 @@ export function FaqSystem({
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/faq/categories')
-      const data = await response.json()
-      setCategories(data)
+      const response = await api.get('/api/faq/categories')
+      if (response.success) {
+        setCategories(response.data)
+      }
     } catch (error) {
       console.error('Failed to fetch FAQ categories:', error)
     }
@@ -134,9 +136,10 @@ export function FaqSystem({
   const fetchFaqsByCategory = async (slug: string) => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/faq/category/${slug}`)
-      const data = await response.json()
-      setFaqs(data)
+      const response = await api.get(`/api/faq/category/${slug}`)
+      if (response.success) {
+        setFaqs(response.data)
+      }
     } catch (error) {
       console.error('Failed to fetch FAQs:', error)
     } finally {
@@ -146,9 +149,10 @@ export function FaqSystem({
 
   const fetchPopularFaqs = async () => {
     try {
-      const response = await fetch('/api/faq/popular')
-      const data = await response.json()
-      setPopularFaqs(data)
+      const response = await api.get('/api/faq/popular')
+      if (response.success) {
+        setPopularFaqs(response.data)
+      }
     } catch (error) {
       console.error('Failed to fetch popular FAQs:', error)
     }
@@ -156,9 +160,10 @@ export function FaqSystem({
 
   const fetchHighlightedFaqs = async () => {
     try {
-      const response = await fetch('/api/faq/highlighted')
-      const data = await response.json()
-      setHighlightedFaqs(data)
+      const response = await api.get('/api/faq/highlighted')
+      if (response.success) {
+        setHighlightedFaqs(response.data)
+      }
     } catch (error) {
       console.error('Failed to fetch highlighted FAQs:', error)
     }
@@ -166,11 +171,12 @@ export function FaqSystem({
 
   const searchFaqs = async (query: string) => {
     try {
-      const response = await fetch(
+      const response = await api.get(
         `/api/faq/search?q=${encodeURIComponent(query)}`
       )
-      const data = await response.json()
-      setSearchResults(data)
+      if (response.success) {
+        setSearchResults(response.data)
+      }
     } catch (error) {
       console.error('Failed to search FAQs:', error)
     }
@@ -178,13 +184,9 @@ export function FaqSystem({
 
   const handleVote = async (faqId: number, isHelpful: boolean) => {
     try {
-      const response = await fetch('/api/faq/vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ faqId, isHelpful })
-      })
+      const response = await api.post('/api/faq/vote', { faqId, isHelpful })
 
-      if (response.ok) {
+      if (response.success) {
         toast({
           title: 'Thank you for your feedback!',
           description: 'Your vote has been recorded.'
@@ -223,17 +225,13 @@ export function FaqSystem({
     if (!feedbackDialog) return
 
     try {
-      const response = await fetch('/api/faq/vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          faqId: feedbackDialog.faqId,
-          isHelpful: feedbackDialog.isHelpful,
-          feedback: feedbackText
-        })
+      const response = await api.post('/api/faq/vote', {
+        faqId: feedbackDialog.faqId,
+        isHelpful: feedbackDialog.isHelpful,
+        feedback: feedbackText
       })
 
-      if (response.ok) {
+      if (response.success) {
         toast({
           title: 'Feedback submitted',
           description: 'Thank you for helping us improve our FAQ.'

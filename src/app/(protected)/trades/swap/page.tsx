@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
 import { useUnifiedChainInfo } from '@/context'
+import { api } from '@/lib/api/http-client'
 import { isChainSupportedByOKX } from '@/lib/config/chain-mappings'
 import { formatCurrency } from '@/lib/utils/string'
 import { buildApiUrl } from '@/lib/utils/url'
@@ -58,9 +59,9 @@ export default function SwapPage() {
   const { data: marketStats, error: marketError } = useSWR(
     chainId ? buildApiUrl(apiEndpoints.swap.marketStats, { chainId }) : null,
     async (url: string) => {
-      const res = await fetch(url)
-      if (!res.ok) throw new Error('Failed to fetch market stats')
-      return res.json()
+      const result = await api.get(url, { shouldShowErrorToast: false })
+      if (!result.success) throw new Error('Failed to fetch market stats')
+      return result.data
     },
     {
       refreshInterval: autoRefresh ? 30000 : 0, // Refresh every 30 seconds
@@ -72,9 +73,9 @@ export default function SwapPage() {
   const { data: gasData } = useSWR(
     chainId ? buildApiUrl(apiEndpoints.swap.gasPrice, { chainId }) : null,
     async (url: string) => {
-      const res = await fetch(url)
-      if (!res.ok) throw new Error('Failed to fetch gas prices')
-      return res.json()
+      const result = await api.get(url, { shouldShowErrorToast: false })
+      if (!result.success) throw new Error('Failed to fetch gas prices')
+      return result.data
     },
     {
       refreshInterval: autoRefresh ? 15000 : 0, // Refresh every 15 seconds
@@ -86,9 +87,9 @@ export default function SwapPage() {
   const { data: trendingPairs } = useSWR(
     chainId ? buildApiUrl(apiEndpoints.swap.trendingPairs, { chainId }) : null,
     async (url: string) => {
-      const res = await fetch(url)
-      if (!res.ok) throw new Error('Failed to fetch trending pairs')
-      return res.json()
+      const result = await api.get(url, { shouldShowErrorToast: false })
+      if (!result.success) throw new Error('Failed to fetch trending pairs')
+      return result.data
     },
     {
       refreshInterval: 60000, // Refresh every minute
@@ -101,16 +102,18 @@ export default function SwapPage() {
     chainId ? apiEndpoints.swap.liquidityByChain(chainId) : null,
     async () => {
       try {
-        const res = await fetch(apiEndpoints.swap.liquidity, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chainId })
-        })
-        if (!res.ok) {
+        const result = await api.post(
+          apiEndpoints.swap.liquidity,
+          { chainId },
+          {
+            shouldShowErrorToast: false
+          }
+        )
+        if (!result.success) {
           console.error('Failed to fetch liquidity sources')
           return []
         }
-        const data = await res.json()
+        const data = result.data
         return Array.isArray(data.liquiditySources) ? data.liquiditySources : []
       } catch (error) {
         console.error('Error fetching liquidity sources:', error)

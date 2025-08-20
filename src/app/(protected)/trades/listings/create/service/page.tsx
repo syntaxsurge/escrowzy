@@ -51,6 +51,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
 import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api/http-client'
 import { handleFormSuccess } from '@/lib/utils/form'
 
 // Job posting schema
@@ -123,17 +124,17 @@ export default function CreateServiceListingPage() {
     const fetchData = async () => {
       try {
         // Fetch categories
-        const categoriesResponse = await fetch('/api/jobs/categories')
-        const categoriesData = await categoriesResponse.json()
-        if (categoriesData.success) {
-          setJobCategories(categoriesData.categories)
+        const categoriesResponse = await api.get(apiEndpoints.jobs.categories)
+        if (categoriesResponse.success) {
+          setJobCategories(categoriesResponse.data?.categories || [])
         }
 
         // Fetch all skills initially
-        const skillsResponse = await fetch('/api/jobs/skills')
-        const skillsData = await skillsResponse.json()
-        if (skillsData.success) {
-          setAvailableSkills(skillsData.skills.map((s: any) => s.name))
+        const skillsResponse = await api.get(apiEndpoints.skills)
+        if (skillsResponse.success) {
+          setAvailableSkills(
+            skillsResponse.data?.skills?.map((s: any) => s.name) || []
+          )
         }
       } catch (error) {
         console.error('Failed to fetch categories/skills:', error)
@@ -151,12 +152,13 @@ export default function CreateServiceListingPage() {
     if (categoryId) {
       const fetchCategorySkills = async () => {
         try {
-          const response = await fetch(
-            `/api/jobs/skills?categoryId=${categoryId}`
+          const response = await api.get(
+            `${apiEndpoints.skills}?categoryId=${categoryId}`
           )
-          const data = await response.json()
-          if (data.success) {
-            setAvailableSkills(data.skills.map((s: any) => s.name))
+          if (response.success) {
+            setAvailableSkills(
+              response.data?.skills?.map((s: any) => s.name) || []
+            )
           }
         } catch (error) {
           console.error('Failed to fetch category skills:', error)
@@ -230,15 +232,7 @@ export default function CreateServiceListingPage() {
           chainId: '1' // Default chain ID
         }
 
-        const response = await fetch(apiEndpoints.listings.create, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(serviceData)
-        })
-
-        const result = await response.json()
+        const result = await api.post(apiEndpoints.listings.create, serviceData)
 
         if (!result.success) {
           throw new Error(result.error || 'Failed to create service listing')
@@ -269,35 +263,21 @@ export default function CreateServiceListingPage() {
           }
         }
 
-        const response = await fetch('/api/jobs', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(jobData)
-        })
-
-        const result = await response.json()
+        const result = await api.post(apiEndpoints.jobs.base, jobData)
 
         if (!result.success) {
           throw new Error(result.error || 'Failed to create job posting')
         }
 
         // Create milestones if provided
-        if (milestones.length > 0 && result.job?.id) {
+        if (milestones.length > 0 && result.data?.job?.id) {
           for (const [index, milestone] of milestones.entries()) {
-            await fetch(`/api/jobs/${result.job.id}/milestones`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                title: milestone.title,
-                description: milestone.description,
-                amount: milestone.amount,
-                dueDate: milestone.dueDate,
-                sortOrder: index
-              })
+            await api.post(`/api/jobs/${result.data.job.id}/milestones`, {
+              title: milestone.title,
+              description: milestone.description,
+              amount: milestone.amount,
+              dueDate: milestone.dueDate,
+              sortOrder: index
             })
           }
         }
@@ -308,7 +288,7 @@ export default function CreateServiceListingPage() {
         )
 
         // Redirect to job detail page
-        router.push(appRoutes.trades.jobs.detail(result.job.id))
+        router.push(appRoutes.trades.jobs.detail(result.data?.job?.id))
       }
     } catch (error) {
       console.error('Error submitting:', error)

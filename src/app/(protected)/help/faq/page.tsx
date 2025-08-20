@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { apiEndpoints } from '@/config/api-endpoints'
+import { api } from '@/lib/api/http-client'
 
 interface FaqCategory {
   id: number
@@ -85,9 +87,10 @@ export default function FAQPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/faq/categories')
-      const data = await response.json()
-      setCategories(data)
+      const response = await api.get(apiEndpoints.faq.categories)
+      if (response.success) {
+        setCategories(response.data)
+      }
     } catch (error) {
       console.error('Failed to fetch categories:', error)
     }
@@ -95,9 +98,10 @@ export default function FAQPage() {
 
   const fetchFaqItems = async () => {
     try {
-      const response = await fetch('/api/faq/highlighted')
-      const data = await response.json()
-      setFaqItems(data)
+      const response = await api.get(apiEndpoints.faq.highlighted)
+      if (response.success) {
+        setFaqItems(response.data)
+      }
     } catch (error) {
       console.error('Failed to fetch FAQ items:', error)
     }
@@ -105,9 +109,10 @@ export default function FAQPage() {
 
   const fetchCategoryFaqs = async (slug: string) => {
     try {
-      const response = await fetch(`/api/faq/category/${slug}`)
-      const data = await response.json()
-      setFaqItems(data)
+      const response = await api.get(`${apiEndpoints.faq.categories}/${slug}`)
+      if (response.success) {
+        setFaqItems(response.data)
+      }
     } catch (error) {
       console.error('Failed to fetch category FAQs:', error)
     }
@@ -115,11 +120,12 @@ export default function FAQPage() {
 
   const searchFaqs = async () => {
     try {
-      const response = await fetch(
-        `/api/faq/search?q=${encodeURIComponent(searchQuery)}`
+      const response = await api.get(
+        `${apiEndpoints.faq.search}?q=${encodeURIComponent(searchQuery)}`
       )
-      const data = await response.json()
-      setSearchResults(data)
+      if (response.success) {
+        setSearchResults(response.data)
+      }
     } catch (error) {
       console.error('Failed to search FAQs:', error)
     }
@@ -132,13 +138,12 @@ export default function FAQPage() {
     }
 
     try {
-      const response = await fetch('/api/faq/vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ faqId, isHelpful })
+      const response = await api.post(apiEndpoints.faq.vote, {
+        faqId,
+        isHelpful
       })
 
-      if (response.ok) {
+      if (response.success) {
         setVotedItems(prev => new Set(prev).add(faqId))
 
         if (!isHelpful) {
@@ -174,14 +179,10 @@ export default function FAQPage() {
     if (!feedbackModal.faqId) return
 
     try {
-      await fetch('/api/faq/vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          faqId: feedbackModal.faqId,
-          isHelpful: false,
-          feedback: feedbackText
-        })
+      const response = await api.post(apiEndpoints.faq.vote, {
+        faqId: feedbackModal.faqId,
+        isHelpful: false,
+        feedback: feedbackText
       })
 
       toast.success('Thank you for your detailed feedback!')

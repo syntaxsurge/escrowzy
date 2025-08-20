@@ -27,6 +27,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { apiEndpoints } from '@/config/api-endpoints'
+import { api } from '@/lib/api/http-client'
 
 interface Tutorial {
   id: number
@@ -68,9 +70,12 @@ export default function TutorialsPage() {
 
   const fetchTutorials = async () => {
     try {
-      const response = await fetch('/api/tutorials')
-      const data = await response.json()
-      setTutorials(data)
+      const response = await api.get(apiEndpoints.tutorials.base)
+      if (response.success) {
+        setTutorials(response.data)
+      } else {
+        toast.error('Failed to load tutorials')
+      }
     } catch (error) {
       console.error('Failed to fetch tutorials:', error)
       toast.error('Failed to load tutorials')
@@ -81,11 +86,10 @@ export default function TutorialsPage() {
 
   const fetchUserProgress = async () => {
     try {
-      const response = await fetch('/api/tutorials/progress')
-      if (response.ok) {
-        const data = await response.json()
+      const response = await api.get(apiEndpoints.tutorials.progress)
+      if (response.success) {
         const progressMap = new Map()
-        data.forEach((p: TutorialProgress) => {
+        response.data.forEach((p: TutorialProgress) => {
           progressMap.set(p.tutorialId, p)
         })
         setUserProgress(progressMap)
@@ -114,24 +118,23 @@ export default function TutorialsPage() {
 
   const completeTutorial = async (tutorialId: number) => {
     try {
-      const response = await fetch('/api/tutorials/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tutorialId })
+      const response = await api.post(apiEndpoints.tutorials.complete, {
+        tutorialId
       })
 
-      if (response.ok) {
-        const data = await response.json()
+      if (response.success) {
         toast.success(
-          `Tutorial completed! +${data.progress.xpEarned} XP earned!`
+          `Tutorial completed! +${response.data.progress.xpEarned} XP earned!`
         )
 
         // Update local progress
         setUserProgress(prev => {
           const newMap = new Map(prev)
-          newMap.set(tutorialId, data.progress)
+          newMap.set(tutorialId, response.data.progress)
           return newMap
         })
+      } else {
+        toast.error('Failed to mark tutorial as complete')
       }
     } catch (error) {
       console.error('Failed to complete tutorial:', error)

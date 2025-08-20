@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { api } from '@/lib/api/http-client'
 
 import { ReviewCard } from './review-card'
 
@@ -50,17 +51,18 @@ export function ReviewList({
         order
       })
 
-      const response = await fetch(`/api/reviews/${type}?${params}`)
-      const data = await response.json()
+      const response = await api.get(`/api/reviews/${type}?${params}`)
 
-      if (page === 1) {
-        setReviews(data.reviews)
-      } else {
-        setReviews(prev => [...prev, ...data.reviews])
+      if (response.success) {
+        if (page === 1) {
+          setReviews(response.data?.reviews || [])
+        } else {
+          setReviews(prev => [...prev, ...(response.data?.reviews || [])])
+        }
+
+        setStats(response.data?.stats || null)
+        setHasMore((response.data?.reviews || []).length === 10)
       }
-
-      setStats(data.stats)
-      setHasMore(data.reviews.length === 10)
     } catch (error) {
       console.error('Error fetching reviews:', error)
     } finally {

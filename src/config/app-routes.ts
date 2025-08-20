@@ -98,6 +98,33 @@ export const appRoutes = {
     quests: '/rewards/quests'
   },
 
+  profile: {
+    freelancer: {
+      base: '/profile/freelancer',
+      setup: '/profile/freelancer/setup',
+      availability: '/profile/freelancer/availability',
+      reviews: '/profile/freelancer/reviews'
+    }
+  },
+
+  help: {
+    base: '/help',
+    gettingStarted: '/help/getting-started',
+    tutorials: '/help/tutorials',
+    faq: '/help/faq',
+    community: '/help/community',
+    apiDocs: '/help/api-docs',
+    glossary: '/help/glossary',
+    search: '/help/search'
+  },
+
+  support: '/support',
+  referrals: '/referrals',
+  partners: '/partners',
+  reviews: {
+    pending: '/reviews/pending'
+  },
+
   // Query parameter utilities
   withParams: {
     chatTab: (route: string) => `${route}?tab=chat`,

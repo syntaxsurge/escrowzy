@@ -16,6 +16,8 @@ import {
   CardTitle
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { apiEndpoints } from '@/config/api-endpoints'
+import { api } from '@/lib/api/http-client'
 
 interface PendingReview {
   jobId: number
@@ -42,9 +44,14 @@ export default function PendingReviewsPage() {
   const fetchPendingReviews = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/reviews/pending')
-      const data = await response.json()
-      setPrompts(data.prompts)
+      const result = await api.get(apiEndpoints.reviews.pending, {
+        shouldShowErrorToast: false
+      })
+      if (result.success) {
+        setPrompts(result.data.prompts)
+      } else {
+        throw new Error(result.error)
+      }
     } catch (error) {
       console.error('Error fetching pending reviews:', error)
       toast.error('Failed to load pending reviews')

@@ -21,6 +21,7 @@ import {
 import { StarRating } from '@/components/ui/star-rating'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { api } from '@/lib/api/http-client'
 import {
   freelancerReviewSchema,
   type FreelancerReviewInput
@@ -63,19 +64,14 @@ export function FreelancerReviewForm({
   const onSubmit = async (data: FreelancerReviewInput) => {
     setIsSubmitting(true)
     try {
-      const response = await fetch('/api/reviews/freelancer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+      const result = await api.post('/api/reviews/freelancer', data, {
+        shouldShowErrorToast: false,
+        successMessage: 'Review submitted successfully!'
       })
 
-      const result = await response.json()
-
-      if (!response.ok) {
+      if (!result.success) {
         throw new Error(result.error || 'Failed to submit review')
       }
-
-      toast.success('Review submitted successfully!')
 
       if (onSuccess) {
         onSuccess()

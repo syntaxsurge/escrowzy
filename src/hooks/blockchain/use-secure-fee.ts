@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 
 import { apiEndpoints } from '@/config/api-endpoints'
 import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api/http-client'
 
 interface FeeCalculationResult {
   feePercentage: number
@@ -51,35 +52,27 @@ export function useSecureFee() {
       try {
         setIsLoading(true)
 
-        const response = await fetch(apiEndpoints.trades.calculateFee, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            amount,
-            chainId,
-            userAddress
-          })
+        const response = await api.post(apiEndpoints.trades.calculateFee, {
+          amount,
+          chainId,
+          userAddress
         })
 
-        const data = await response.json()
-
-        if (!data.success) {
+        if (!response.success) {
           toast({
             title: 'Fee Calculation Error',
-            description: data.error || 'Failed to calculate fee',
+            description: response.error || 'Failed to calculate fee',
             variant: 'destructive'
           })
           return null
         }
 
         return {
-          feePercentage: data.feePercentage,
-          feeAmount: data.feeAmount,
-          netAmount: data.netAmount,
-          chainId: data.chainId,
-          userAddress: data.userAddress
+          feePercentage: response.data.feePercentage,
+          feeAmount: response.data.feeAmount,
+          netAmount: response.data.netAmount,
+          chainId: response.data.chainId,
+          userAddress: response.data.userAddress
         }
       } catch (error) {
         console.error('Error calculating fee:', error)
@@ -109,31 +102,23 @@ export function useSecureFee() {
       try {
         setIsLoading(true)
 
-        const response = await fetch(apiEndpoints.trades.validateFee, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            amount,
-            chainId,
-            clientFee,
-            userAddress
-          })
+        const response = await api.post(apiEndpoints.trades.validateFee, {
+          amount,
+          chainId,
+          clientFee,
+          userAddress
         })
 
-        const data = await response.json()
-
-        if (!data.success && !data.isValid) {
+        if (!response.success && !response.data?.isValid) {
           // Fee is invalid, return the correct fee
           return {
             isValid: false,
-            correctFee: data.correctFee,
-            providedFee: data.providedFee
+            correctFee: response.data?.correctFee,
+            providedFee: response.data?.providedFee
           }
         }
 
-        if (data.success && data.isValid) {
+        if (response.success && response.data?.isValid) {
           return {
             isValid: true
           }
@@ -163,26 +148,24 @@ export function useSecureFee() {
       try {
         setIsLoading(true)
 
-        const response = await fetch(
-          `/api/trades/calculate-fee?chainId=${chainId}`
+        const response = await api.get(
+          `${apiEndpoints.trades.calculateFee}?chainId=${chainId}`
         )
 
-        const data = await response.json()
-
-        if (!data.success) {
+        if (!response.success) {
           toast({
             title: 'Error',
-            description: data.error || 'Failed to fetch fee information',
+            description: response.error || 'Failed to fetch fee information',
             variant: 'destructive'
           })
           return null
         }
 
         const info: UserFeeInfo = {
-          userFeePercentage: data.userFeePercentage,
-          planFeeTiers: data.planFeeTiers,
-          chainId: data.chainId,
-          userAddress: data.userAddress
+          userFeePercentage: response.data.userFeePercentage,
+          planFeeTiers: response.data.planFeeTiers,
+          chainId: response.data.chainId,
+          userAddress: response.data.userAddress
         }
 
         setFeeInfo(info)

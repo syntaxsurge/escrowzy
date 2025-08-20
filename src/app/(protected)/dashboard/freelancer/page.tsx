@@ -35,6 +35,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
 import { useSession } from '@/hooks/use-session'
 import { api } from '@/lib/api/http-client'
@@ -156,7 +157,7 @@ export default function FreelancerDashboardPage() {
     isLoading: dataLoading,
     error
   } = useSWR<DashboardData>(
-    user ? `/api/freelancers/${user.id}/dashboard` : null,
+    user ? apiEndpoints.freelancers.dashboard(user.id) : null,
     async (url: string) => {
       const response = await api.get(url)
       if (!response.success) {

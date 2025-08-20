@@ -202,10 +202,9 @@ function UserMenu() {
 
           // Clear the session on the server
           try {
-            const response = await fetch(apiEndpoints.auth.wallet, {
-              method: 'DELETE'
-            })
-            if (response.ok) {
+            const { api } = await import('@/lib/api/http-client')
+            const response = await api.delete(apiEndpoints.auth.wallet)
+            if (response.success) {
               console.log('Session cleared successfully')
             }
           } catch (error) {
@@ -360,7 +359,7 @@ function UserMenu() {
                       asChild
                     >
                       <Link
-                        href='/profile/freelancer'
+                        href={appRoutes.profile.freelancer.base}
                         className='flex w-full items-center'
                         onClick={() => menuState.close()}
                       >
@@ -493,7 +492,7 @@ function PublicNavigation({
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link
-                href='/listings?category=p2p'
+                href={appRoutes.trades.listings.p2p}
                 className='flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-700 focus:bg-gradient-to-r focus:from-purple-50 focus:to-pink-50 focus:text-purple-700 dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-purple-400 dark:focus:from-gray-800 dark:focus:to-gray-700 dark:focus:text-purple-400'
               >
                 <ShoppingBag className='h-4 w-4 text-purple-600 dark:text-purple-400' />
@@ -549,7 +548,7 @@ function PublicNavigation({
             <span>Freelancers</span>
           </Link>
           <Link
-            href='/listings?category=p2p'
+            href={appRoutes.trades.listings.p2p}
             className='text-foreground hover:bg-muted active:bg-muted flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-all'
             onClick={() => setIsMobileMenuOpen(false)}
           >

@@ -23,6 +23,7 @@ import { Slider } from '@/components/ui/slider'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { BATTLE_CONFIG, BATTLE_MESSAGES } from '@/config/battle.config'
 import { cn } from '@/lib'
+import { swrFetcher } from '@/lib/api/swr'
 import type { DailyBattleLimit } from '@/types/battle'
 
 interface MatchmakingInterfaceProps {
@@ -60,13 +61,13 @@ export function MatchmakingInterface({
   // Fetch live battle stats and queue info
   const { data: _liveStats } = useSWR(
     apiEndpoints.battles.liveStats,
-    (url: string) => fetch(url).then(res => res.json()),
+    swrFetcher,
     { refreshInterval: BATTLE_CONFIG.INVITATION_REFRESH_INTERVAL }
   )
 
   const { data: queueInfo } = useSWR(
     isInQueue ? apiEndpoints.battles.queueInfo : null,
-    (url: string) => fetch(url).then(res => res.json()),
+    swrFetcher,
     { refreshInterval: BATTLE_CONFIG.QUEUE_REFRESH_INTERVAL }
   )
 

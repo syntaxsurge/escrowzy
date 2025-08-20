@@ -11,6 +11,7 @@ import {
   pusherSystemEvents
 } from '@/config/api-endpoints'
 import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api/http-client'
 import { pusherClient } from '@/lib/pusher'
 
 interface BattleRealtimeEvents {
@@ -263,10 +264,9 @@ export function useBattleStats() {
 
     const fetchStats = async () => {
       try {
-        const response = await fetch(apiEndpoints.battles.liveStats)
-        const data = await response.json()
-        if (data?.data) {
-          setStats(data.data)
+        const response = await api.get(apiEndpoints.battles.liveStats)
+        if (response.success && response.data) {
+          setStats(response.data)
         }
       } catch (error) {
         console.error('Failed to fetch battle stats:', error)

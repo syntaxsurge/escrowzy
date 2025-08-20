@@ -34,6 +34,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib'
+import { api } from '@/lib/api/http-client'
 
 interface SocialShareProps {
   url?: string
@@ -134,16 +135,12 @@ export function SocialSharing({
     if (!trackShares) return
 
     try {
-      await fetch('/api/social-shares/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          platform,
-          contentType,
-          contentId,
-          shareUrl,
-          customMessage
-        })
+      await api.post('/api/social-shares/track', {
+        platform,
+        contentType,
+        contentId,
+        shareUrl,
+        customMessage
       })
     } catch (error) {
       console.error('Failed to track share:', error)

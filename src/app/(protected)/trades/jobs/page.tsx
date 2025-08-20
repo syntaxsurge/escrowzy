@@ -31,7 +31,9 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
+import { swrFetcher } from '@/lib/api/swr'
 import { cn, formatDate } from '@/lib/utils'
 
 interface JobPosting {
@@ -61,8 +63,6 @@ interface JobPosting {
   } | null
 }
 
-const fetcher = (url: string) => fetch(url).then(res => res.json())
-
 export default function JobsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -82,14 +82,17 @@ export default function JobsPage() {
   queryParams.append('status', 'open')
 
   const { data, error, isLoading } = useSWR(
-    `/api/jobs?${queryParams.toString()}`,
-    fetcher,
+    `${apiEndpoints.jobs.list}?${queryParams.toString()}`,
+    swrFetcher,
     {
       refreshInterval: 30000 // Refresh every 30 seconds
     }
   )
 
-  const { data: categoriesData } = useSWR('/api/jobs/categories', fetcher)
+  const { data: categoriesData } = useSWR(
+    apiEndpoints.jobs.categories,
+    swrFetcher
+  )
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()

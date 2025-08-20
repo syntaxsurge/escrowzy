@@ -536,8 +536,10 @@ export async function mintAchievementNFT(
   progress: number = 100
 ): Promise<{ tokenId?: number; txHash?: string }> {
   try {
-    // Use API endpoint for database-backed achievement tracking
-    const response = await fetch('/api/achievements/mint', {
+    // Use serverFetch for server-side API calls
+    const { serverFetch } = await import('@/lib/api/server-utils')
+
+    const data = await serverFetch('/api/achievements/mint', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -548,13 +550,6 @@ export async function mintAchievementNFT(
         progress
       })
     })
-
-    if (!response.ok) {
-      console.error('Failed to mint achievement:', response.statusText)
-      return {}
-    }
-
-    const data = await response.json()
 
     return {
       tokenId: data.tokenId,

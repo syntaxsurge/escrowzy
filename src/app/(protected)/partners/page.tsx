@@ -55,6 +55,8 @@ import {
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { apiEndpoints } from '@/config/api-endpoints'
+import { api } from '@/lib/api/http-client'
 
 interface Partnership {
   id: number
@@ -107,16 +109,20 @@ export default function PartnerPortal() {
 
   const fetchPartnershipData = async () => {
     try {
-      const response = await fetch('/api/partnerships/status')
-      const data = await response.json()
+      const result = await api.get(apiEndpoints.partnerships.status, {
+        shouldShowErrorToast: false
+      })
 
-      if (data.hasPartnership) {
-        setPartnership(data.partnership)
-        setStats(data.stats)
+      if (result.success) {
+        const data = result.data
+        if (data.hasPartnership) {
+          setPartnership(data.partnership)
+          setStats(data.stats)
 
-        if (data.partnership.status === 'active') {
-          fetchCommissions()
-          generateChartData()
+          if (data.partnership.status === 'active') {
+            fetchCommissions()
+            generateChartData()
+          }
         }
       }
     } catch (error) {
@@ -126,9 +132,12 @@ export default function PartnerPortal() {
 
   const fetchCommissions = async () => {
     try {
-      const response = await fetch('/api/partnerships/commissions')
-      const data = await response.json()
-      setCommissions(data.commissions)
+      const result = await api.get(apiEndpoints.partnerships.commissions, {
+        shouldShowErrorToast: false
+      })
+      if (result.success) {
+        setCommissions(result.data.commissions)
+      }
     } catch (error) {
       console.error('Failed to fetch commissions:', error)
     }
@@ -146,18 +155,19 @@ export default function PartnerPortal() {
 
   const submitApplication = async () => {
     try {
-      const response = await fetch('/api/partnerships/apply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(applicationForm)
-      })
+      const result = await api.post(
+        apiEndpoints.partnerships.apply,
+        applicationForm,
+        {
+          shouldShowErrorToast: false,
+          successMessage: 'Partnership application submitted successfully!'
+        }
+      )
 
-      if (response.ok) {
-        toast.success('Partnership application submitted successfully!')
+      if (result.success) {
         fetchPartnershipData() // Refresh data
       } else {
-        const error = await response.json()
-        toast.error(error.error || 'Failed to submit application')
+        toast.error(result.error || 'Failed to submit application')
       }
     } catch (error) {
       console.error('Failed to submit application:', error)

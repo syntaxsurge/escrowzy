@@ -41,8 +41,10 @@ import {
   TableRow
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
 import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api/http-client'
 import { cn, formatDate } from '@/lib/utils'
 
 interface JobPosting {
@@ -60,7 +62,11 @@ interface JobPosting {
   completedAt: string | null
 }
 
-const fetcher = (url: string) => fetch(url).then(res => res.json())
+const fetcher = async (url: string) => {
+  const response = await api.get(url, { shouldShowErrorToast: false })
+  if (!response.success) throw new Error(response.error)
+  return response.data
+}
 
 export function ClientJobManagement() {
   const router = useRouter()
@@ -69,7 +75,7 @@ export function ClientJobManagement() {
 
   // Fetch client's jobs
   const { data, error, isLoading, mutate } = useSWR(
-    `/api/jobs?clientId=me&status=${activeTab === 'active' ? 'open' : activeTab}`,
+    `${apiEndpoints.jobs.base}?clientId=me&status=${activeTab === 'active' ? 'open' : activeTab}`,
     fetcher,
     {
       refreshInterval: 30000
@@ -77,29 +83,17 @@ export function ClientJobManagement() {
   )
 
   const handleJobAction = async (jobId: number, action: string) => {
-    try {
-      const response = await fetch(`/api/jobs/${jobId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: action })
-      })
+    const response = await api.patch(
+      apiEndpoints.jobs.byId(jobId),
+      { status: action },
+      {
+        successMessage: `Job ${action} successfully`,
+        errorMessage: 'Failed to update job'
+      }
+    )
 
-      if (!response.ok) throw new Error('Failed to update job')
-
-      toast({
-        title: 'Success',
-        description: `Job ${action} successfully`
-      })
-
+    if (response.success) {
       mutate()
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: `Failed to update job: ${error}`,
-        variant: 'destructive'
-      })
     }
   }
 

@@ -23,6 +23,9 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { apiEndpoints } from '@/config/api-endpoints'
+import { appRoutes } from '@/config/app-routes'
+import { api } from '@/lib/api/http-client'
 
 export default function HelpCenterPage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -36,14 +39,18 @@ export default function HelpCenterPage() {
   const fetchHelpContent = async () => {
     try {
       // Fetch popular FAQ items
-      const faqResponse = await fetch('/api/faq/popular?limit=6')
-      const faqs = await faqResponse.json()
-      setPopularArticles(faqs)
+      const faqResponse = await api.get(`${apiEndpoints.faq.popular}?limit=6`)
+      if (faqResponse.success) {
+        setPopularArticles(faqResponse.data)
+      }
 
       // Fetch video tutorials
-      const tutorialResponse = await fetch('/api/tutorials?type=video')
-      const tutorials = await tutorialResponse.json()
-      setVideoTutorials(tutorials.slice(0, 4))
+      const tutorialResponse = await api.get(
+        `${apiEndpoints.tutorials.base}?type=video`
+      )
+      if (tutorialResponse.success) {
+        setVideoTutorials(tutorialResponse.data.slice(0, 4))
+      }
     } catch (error) {
       console.error('Failed to fetch help content:', error)
     }
@@ -52,7 +59,7 @@ export default function HelpCenterPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      window.location.href = `/help/search?q=${encodeURIComponent(searchQuery)}`
+      window.location.href = `${appRoutes.help.search}?q=${encodeURIComponent(searchQuery)}`
     }
   }
 
@@ -61,28 +68,28 @@ export default function HelpCenterPage() {
       icon: BookOpen,
       title: 'Getting Started',
       description: 'Learn the basics of using Escrowzy',
-      href: '/help/getting-started',
+      href: appRoutes.help.gettingStarted,
       color: 'text-blue-500'
     },
     {
       icon: Video,
       title: 'Video Tutorials',
       description: 'Watch step-by-step video guides',
-      href: '/help/tutorials',
+      href: appRoutes.help.tutorials,
       color: 'text-purple-500'
     },
     {
       icon: HelpCircle,
       title: 'FAQ',
       description: 'Find answers to common questions',
-      href: '/help/faq',
+      href: appRoutes.help.faq,
       color: 'text-green-500'
     },
     {
       icon: Users,
       title: 'Community',
       description: 'Connect with other users',
-      href: '/help/community',
+      href: appRoutes.help.community,
       color: 'text-orange-500'
     },
     {
@@ -261,16 +268,16 @@ export default function HelpCenterPage() {
         <CardContent>
           <div className='flex flex-wrap gap-4'>
             <Button variant='outline' asChild>
-              <Link href='/support'>Contact Support</Link>
+              <Link href={appRoutes.support}>Contact Support</Link>
             </Button>
             <Button variant='outline' asChild>
-              <Link href='/help/community'>Community Forum</Link>
+              <Link href={appRoutes.help.community}>Community Forum</Link>
             </Button>
             <Button variant='outline' asChild>
-              <Link href='/help/api-docs'>API Documentation</Link>
+              <Link href={appRoutes.help.apiDocs}>API Documentation</Link>
             </Button>
             <Button variant='outline' asChild>
-              <Link href='/help/glossary'>Glossary</Link>
+              <Link href={appRoutes.help.glossary}>Glossary</Link>
             </Button>
           </div>
         </CardContent>

@@ -22,7 +22,9 @@ import {
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api/http-client'
 
 import { ReputationBadge } from './reputation-badge'
 
@@ -65,14 +67,15 @@ export function ReputationCard({
 
   async function fetchReputation() {
     try {
-      const response = await fetch(
-        `/api/reputation?userId=${userId}&isFreelancer=${isFreelancer}`
+      const response = await api.get(
+        `${apiEndpoints.reputation}?userId=${userId}&isFreelancer=${isFreelancer}`
       )
 
-      if (!response.ok) throw new Error('Failed to fetch reputation')
-
-      const data = await response.json()
-      setReputation(data.data)
+      if (response.success) {
+        setReputation(response.data)
+      } else {
+        throw new Error(response.error || 'Failed to fetch reputation')
+      }
     } catch (error) {
       console.error('Error fetching reputation:', error)
       toast({
@@ -88,23 +91,21 @@ export function ReputationCard({
   async function handleSync() {
     setSyncing(true)
     try {
-      const response = await fetch('/api/reputation/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
+      const response = await api.post(`${apiEndpoints.reputation}/sync`, {
+        userId
       })
 
-      if (!response.ok) throw new Error('Failed to sync reputation')
+      if (response.success) {
+        // Refresh reputation data
+        await fetchReputation()
 
-      const data = await response.json()
-
-      // Refresh reputation data
-      await fetchReputation()
-
-      toast({
-        title: 'Success',
-        description: `Reputation synced successfully. ${data.data.nftsMinted.length} NFTs minted, ${data.data.achievementsAwarded.length} achievements awarded.`
-      })
+        toast({
+          title: 'Success',
+          description: `Reputation synced successfully. ${response.data?.nftsMinted?.length || 0} NFTs minted, ${response.data?.achievementsAwarded?.length || 0} achievements awarded.`
+        })
+      } else {
+        throw new Error(response.error || 'Failed to sync reputation')
+      }
     } catch (error) {
       console.error('Error syncing reputation:', error)
       toast({

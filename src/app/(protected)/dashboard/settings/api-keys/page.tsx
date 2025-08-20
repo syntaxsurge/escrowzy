@@ -54,6 +54,7 @@ import {
 import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
 import { useDialogState } from '@/hooks/use-dialog-state'
+import { api } from '@/lib/api/http-client'
 import { swrFetcher } from '@/lib/api/swr'
 
 interface ApiKey {
@@ -96,21 +97,16 @@ function ApiKeysList() {
 
     setDeletingKeyId(keyToDelete.id)
     try {
-      const response = await fetch(
-        apiEndpoints.settings.apiKeys.byId(keyToDelete.id.toString()),
-        {
-          method: 'DELETE',
-          credentials: 'include'
-        }
+      const response = await api.delete(
+        apiEndpoints.settings.apiKeys.byId(keyToDelete.id.toString())
       )
 
-      if (response.ok) {
+      if (response.success) {
         showSuccessToast('API key revoked successfully')
         mutate(apiEndpoints.settings.apiKeys.base)
         deleteDialog.close()
       } else {
-        const data = await response.json()
-        showErrorToast(data.error || 'Failed to revoke API key')
+        showErrorToast(response.error || 'Failed to revoke API key')
       }
     } catch {
       showErrorToast('Failed to revoke API key')
@@ -301,24 +297,17 @@ function CreateApiKeyDialog() {
 
     setIsCreating(true)
     try {
-      const response = await fetch(apiEndpoints.settings.apiKeys.base, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: keyName,
-          expiresIn: parseInt(expiresIn)
-        })
+      const response = await api.post(apiEndpoints.settings.apiKeys.base, {
+        name: keyName,
+        expiresIn: parseInt(expiresIn)
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        setCreatedKey(data.key)
+      if (response.success) {
+        setCreatedKey(response.data.key)
         showSuccessToast('API key created successfully')
         mutate(apiEndpoints.settings.apiKeys.base)
       } else {
-        const data = await response.json()
-        showErrorToast(data.error || 'Failed to create API key')
+        showErrorToast(response.error || 'Failed to create API key')
       }
     } catch {
       showErrorToast('Failed to create API key')

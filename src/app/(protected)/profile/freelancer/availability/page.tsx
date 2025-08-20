@@ -36,7 +36,9 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { useSession } from '@/hooks/use-session'
+import { api } from '@/lib/api/http-client'
 
 interface TimeSlot {
   day: string
@@ -101,9 +103,12 @@ export default function AvailabilityManagementPage() {
       if (!session) return
 
       try {
-        const response = await fetch('/api/freelancer/availability')
-        if (!response.ok) {
-          if (response.status === 404) {
+        const result = await api.get(apiEndpoints.freelancer.availability, {
+          shouldShowErrorToast: false
+        })
+
+        if (!result.success) {
+          if (result.status === 404) {
             // Initialize default availability
             const defaultSlots = daysOfWeek.map(day => ({
               day,
@@ -118,7 +123,7 @@ export default function AvailabilityManagementPage() {
           throw new Error('Failed to fetch availability')
         }
 
-        const data = await response.json()
+        const data = result.data
         setAvailabilityStatus(data.availabilityStatus || 'available')
         setTimezone(data.timezone || 'UTC')
         setWeeklyAvailability(data.weeklyAvailability || [])
@@ -184,10 +189,9 @@ export default function AvailabilityManagementPage() {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const response = await fetch('/api/freelancer/availability', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const result = await api.put(
+        apiEndpoints.freelancer.availability,
+        {
           availabilityStatus,
           timezone,
           weeklyAvailability,
@@ -196,14 +200,17 @@ export default function AvailabilityManagementPage() {
           responseTime,
           vacationMode,
           vacationEndDate
-        })
-      })
+        },
+        {
+          shouldShowErrorToast: false,
+          successMessage: 'Availability settings updated successfully'
+        }
+      )
 
-      if (!response.ok) {
-        throw new Error('Failed to update availability')
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update availability')
       }
 
-      toast.success('Availability settings updated successfully')
       setHasChanges(false)
     } catch (error) {
       console.error('Error updating availability:', error)

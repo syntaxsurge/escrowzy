@@ -37,6 +37,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { blockchainConfig } from '@/config/blockchain-config.generated'
 import { cn } from '@/lib'
+import { api } from '@/lib/api/http-client'
 
 interface PlatformContract {
   id: number
@@ -69,12 +70,9 @@ export function BlockchainConfigManager() {
 
   const fetchData = async () => {
     try {
-      const response = await fetch(apiEndpoints.admin.blockchainConfig.base, {
-        credentials: 'include'
-      })
-      if (!response.ok) throw new Error('Failed to fetch data')
-      const result = await response.json()
-      setData(result)
+      const response = await api.get(apiEndpoints.admin.blockchainConfig.base)
+      if (!response.success) throw new Error('Failed to fetch data')
+      setData(response.data)
       setEditingContracts({})
     } catch (error) {
       toast.error('Failed to load blockchain configuration')
@@ -87,17 +85,16 @@ export function BlockchainConfigManager() {
   const handleSync = async () => {
     setSyncing(true)
     try {
-      const response = await fetch(apiEndpoints.admin.blockchainConfig.sync, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ config: blockchainConfig })
-      })
+      const response = await api.post(
+        apiEndpoints.admin.blockchainConfig.sync,
+        {
+          config: blockchainConfig
+        }
+      )
 
-      if (!response.ok) throw new Error('Failed to sync configuration')
+      if (!response.success) throw new Error('Failed to sync configuration')
 
-      const result = await response.json()
-      toast.success(`Synced ${result.synced} contract configurations`)
+      toast.success(`Synced ${response.data.synced} contract configurations`)
       await fetchData()
     } catch (error) {
       toast.error('Failed to sync blockchain configuration')
@@ -128,20 +125,15 @@ export function BlockchainConfigManager() {
 
     setSavingContract(contractId)
     try {
-      const response = await fetch(
+      const response = await api.put(
         apiEndpoints.admin.blockchainConfig.contractById(contractId.toString()),
         {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            contractAddress: contract.contractAddress,
-            isActive: contract.isActive
-          })
+          contractAddress: contract.contractAddress,
+          isActive: contract.isActive
         }
       )
 
-      if (!response.ok) throw new Error('Failed to update contract')
+      if (!response.success) throw new Error('Failed to update contract')
 
       toast.success('Contract updated successfully')
       await fetchData()

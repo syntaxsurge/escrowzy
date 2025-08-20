@@ -5,6 +5,7 @@ import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 
 import { apiEndpoints } from '@/config/api-endpoints'
+import { api } from '@/lib/api/http-client'
 
 interface SwapQuote {
   fromToken: string
@@ -48,38 +49,25 @@ export function useSwap() {
       setIsLoadingQuote(true)
 
       try {
-        const response = await fetch(apiEndpoints.swap.quote, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            fromToken,
-            toToken,
-            fromAmount,
-            chainId,
-            slippage
-          })
+        const response = await api.post(apiEndpoints.swap.quote, {
+          fromToken,
+          toToken,
+          fromAmount,
+          chainId,
+          slippage
         })
 
-        if (!response.ok) {
-          throw new Error('Failed to get quote')
-        }
-
-        const data = await response.json()
-
-        // Check if we have an error response
-        if (!response.ok || data.error) {
-          throw new Error(data.error || data.details || 'Failed to get quote')
+        if (!response.success) {
+          throw new Error(response.error || 'Failed to get quote')
         }
 
         // Set the quote with all the real data
         const quoteData: SwapQuote = {
-          ...data,
+          ...response.data,
           priceImpact:
-            typeof data.priceImpact === 'number'
-              ? data.priceImpact
-              : parseFloat(data.priceImpact || '0')
+            typeof response.data.priceImpact === 'number'
+              ? response.data.priceImpact
+              : parseFloat(response.data.priceImpact || '0')
         }
 
         console.log('Setting quote in hook:', quoteData)
@@ -116,22 +104,16 @@ export function useSwap() {
       chainId: number
     ): Promise<TokenPrice | null> => {
       try {
-        const response = await fetch(apiEndpoints.swap.price, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            tokenAddress,
-            chainId
-          })
+        const response = await api.post(apiEndpoints.swap.price, {
+          tokenAddress,
+          chainId
         })
 
-        if (!response.ok) {
+        if (!response.success) {
           throw new Error('Failed to get price')
         }
 
-        return await response.json()
+        return response.data
       } catch (error) {
         console.error('Price error:', error)
         return null
@@ -150,36 +132,28 @@ export function useSwap() {
       setIsExecutingSwap(true)
 
       try {
-        const response = await fetch(apiEndpoints.swap.execute, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            ...quote,
-            userAddress,
-            chainId
-          })
+        const response = await api.post(apiEndpoints.swap.execute, {
+          ...quote,
+          userAddress,
+          chainId
         })
 
-        if (!response.ok) {
+        if (!response.success) {
           throw new Error('Failed to execute swap')
         }
 
-        const data = await response.json()
-
-        if (data.success && data.tx) {
+        if (response.success && response.data?.tx) {
           // Return the transaction data for wallet execution
           toast.info('Please confirm the transaction in your wallet')
           return {
             success: true,
-            tx: data.tx,
-            routerAddress: data.routerAddress,
-            message: data.message || 'Transaction ready for execution'
+            tx: response.data.tx,
+            routerAddress: response.data.routerAddress,
+            message: response.data.message || 'Transaction ready for execution'
           }
         } else {
           throw new Error(
-            data.error || data.details || 'Failed to prepare swap'
+            response.error || response.data?.details || 'Failed to prepare swap'
           )
         }
       } catch (error) {

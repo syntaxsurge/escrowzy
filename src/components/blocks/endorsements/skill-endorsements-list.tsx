@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { api } from '@/lib/api/http-client'
 import type {
   EndorsementWithDetails,
   SkillEndorsementStats
@@ -39,10 +40,12 @@ export function SkillEndorsementsList({
 
   const fetchEndorsements = async () => {
     try {
-      const response = await fetch(`/api/endorsements?userId=${userId}`)
-      const data = await response.json()
+      const result = await api.get(`/api/endorsements?userId=${userId}`, {
+        shouldShowErrorToast: false
+      })
 
-      if (response.ok) {
+      if (result.success) {
+        const data = result.data
         setEndorsements(data.endorsements || [])
         setStats(data.stats || [])
       }

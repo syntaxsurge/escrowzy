@@ -678,18 +678,15 @@ export default function BattleArenaPage() {
     if (currentBattleData?.battleId) {
       try {
         // Start the battle rounds via job queue
-        const response = await fetch(apiEndpoints.battles.start, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ battleId: currentBattleData.battleId })
+        const response = await api.post(apiEndpoints.battles.start, {
+          battleId: currentBattleData.battleId
         })
 
-        if (response.ok) {
+        if (response.success) {
           setBattleState('battling')
         } else {
           // Log the error details for debugging
-          const errorData = await response.json().catch(() => ({}))
-          console.error('Failed to start battle:', errorData)
+          console.error('Failed to start battle:', response.error)
           // Don't reset to idle, transition to battling anyway since battle might already be ongoing
           setBattleState('battling')
         }

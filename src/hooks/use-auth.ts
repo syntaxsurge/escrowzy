@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 
+import { api } from '@/lib/api/http-client'
+
 interface User {
   id: number
   walletAddress: string
@@ -17,10 +19,9 @@ export function useAuth() {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const response = await fetch('/api/user')
-        if (response.ok) {
-          const data = await response.json()
-          setUser(data.user)
+        const response = await api.get('/api/user')
+        if (response.success) {
+          setUser(response.data?.user || null)
         }
       } catch (error) {
         console.error('Error fetching user:', error)

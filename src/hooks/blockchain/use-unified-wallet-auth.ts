@@ -208,7 +208,7 @@ export function useUnifiedWalletAuth() {
           })
 
           // Clear the mismatched session
-          await fetch(apiEndpoints.auth.wallet, { method: 'DELETE' })
+          await api.delete(apiEndpoints.auth.wallet)
 
           // Clear user data
           await mutate(apiEndpoints.user.profile, { user: null }, false)

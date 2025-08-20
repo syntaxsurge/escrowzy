@@ -248,6 +248,58 @@ export const apiEndpoints = {
       dispute: (id: string) => `/api/v1/escrow/${id}/dispute`
     }
   },
+  freelancers: {
+    base: '/api/freelancers',
+    byId: (id: string | number) => `/api/freelancers/${id}`,
+    dashboard: (id: string | number) => `/api/freelancers/${id}/dashboard`,
+    bids: (id: string | number) => `/api/freelancers/${id}/bids`,
+    templates: (id: string | number) => `/api/freelancers/${id}/templates`,
+    analytics: (id: string | number) => `/api/freelancers/${id}/analytics`,
+    profile: '/api/freelancers/profile',
+    skills: '/api/freelancers/skills',
+    portfolio: '/api/freelancers/portfolio'
+  },
+  freelancer: {
+    profile: '/api/freelancer/profile',
+    skills: '/api/freelancer/skills',
+    portfolio: '/api/freelancer/portfolio',
+    availability: '/api/freelancer/availability',
+    profileDraft: '/api/freelancer/profile/draft'
+  },
+  skills: '/api/skills',
+  referrals: {
+    stats: '/api/referrals/stats',
+    generate: '/api/referrals/generate'
+  },
+  bidTemplates: '/api/bid-templates',
+  endorsements: '/api/endorsements',
+  reputation: '/api/reputation',
+  faq: {
+    popular: '/api/faq/popular',
+    categories: '/api/faq/categories',
+    highlighted: '/api/faq/highlighted',
+    vote: '/api/faq/vote',
+    search: '/api/faq/search'
+  },
+  tutorials: {
+    base: '/api/tutorials',
+    progress: '/api/tutorials/progress',
+    complete: '/api/tutorials/complete'
+  },
+  partnerships: {
+    status: '/api/partnerships/status',
+    commissions: '/api/partnerships/commissions',
+    apply: '/api/partnerships/apply'
+  },
+  reviews: {
+    pending: '/api/reviews/pending',
+    freelancer: '/api/reviews/freelancer',
+    client: '/api/reviews/client'
+  },
+  milestones: {
+    autoRelease: '/api/cron/milestone-auto-release'
+  },
+  scheduledTasks: '/api/admin/scheduled-tasks',
   external: {
     coingecko: {
       baseUrl: 'https://api.coingecko.com/api/v3',

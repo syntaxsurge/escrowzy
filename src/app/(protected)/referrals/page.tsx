@@ -37,6 +37,8 @@ import {
   TableRow
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { apiEndpoints } from '@/config/api-endpoints'
+import { api } from '@/lib/api/http-client'
 
 interface ReferralStats {
   totalReferrals: number
@@ -97,16 +99,21 @@ export default function ReferralDashboard() {
   const fetchReferralData = async () => {
     try {
       // Fetch stats
-      const statsResponse = await fetch('/api/referrals/stats')
-      const statsData = await statsResponse.json()
-      setStats(statsData)
+      const statsResult = await api.get(apiEndpoints.referrals.stats, {
+        shouldShowErrorToast: false
+      })
+      if (statsResult.success) {
+        setStats(statsResult.data)
+      }
 
       // Fetch leaderboard
-      const leaderboardResponse = await fetch(
-        '/api/referrals/stats?type=leaderboard'
+      const leaderboardResult = await api.get(
+        '/api/referrals/stats?type=leaderboard',
+        { shouldShowErrorToast: false }
       )
-      const leaderboardData = await leaderboardResponse.json()
-      setLeaderboard(leaderboardData)
+      if (leaderboardResult.success) {
+        setLeaderboard(leaderboardResult.data)
+      }
 
       // Mock referral links and referrals for now
       setReferralLinks([
@@ -155,21 +162,24 @@ export default function ReferralDashboard() {
 
   const generateReferralLink = async () => {
     try {
-      const response = await fetch('/api/referrals/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const result = await api.post(
+        apiEndpoints.referrals.generate,
+        {
           campaignSource: newLinkSource || undefined,
           customSlug: customSlug || undefined
-        })
-      })
+        },
+        {
+          shouldShowErrorToast: false,
+          successMessage: 'Referral link generated successfully!'
+        }
+      )
 
-      if (response.ok) {
-        const data = await response.json()
-        toast.success('Referral link generated successfully!')
-        setReferralLinks(prev => [...prev, data.link])
+      if (result.success) {
+        setReferralLinks(prev => [...prev, result.data.link])
         setNewLinkSource('')
         setCustomSlug('')
+      } else {
+        throw new Error(result.error)
       }
     } catch (error) {
       console.error('Failed to generate referral link:', error)

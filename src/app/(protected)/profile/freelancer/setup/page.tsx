@@ -48,7 +48,10 @@ import {
   WizardStep,
   useWizard
 } from '@/components/ui/wizard'
+import { apiEndpoints } from '@/config/api-endpoints'
+import { appRoutes } from '@/config/app-routes'
 import { useSession } from '@/hooks/use-session'
+import { api } from '@/lib/api/http-client'
 import { freelancerProfileSchema } from '@/lib/schemas/freelancer'
 import { cn } from '@/lib/utils'
 
@@ -252,11 +255,11 @@ function SkillsStep({
 
   useEffect(() => {
     // Fetch available skills
-    fetch('/api/skills')
-      .then(res => res.json())
+    api
+      .get(apiEndpoints.skills)
       .then(result => {
         if (result.success) {
-          setSkills(result.skills || [])
+          setSkills(result.data?.skills || [])
         }
       })
       .catch(err => {
@@ -598,9 +601,9 @@ export default function FreelancerProfileSetup() {
       if (!session) return
 
       try {
-        const response = await fetch('/api/freelancer/profile')
-        if (response.ok) {
-          const data = await response.json()
+        const response = await api.get(apiEndpoints.freelancer.profile)
+        if (response.success && response.data) {
+          const data = response.data
           if (data.profile) {
             setProfileData({
               professionalTitle: data.profile.professionalTitle,
@@ -639,20 +642,21 @@ export default function FreelancerProfileSetup() {
     setIsSubmitting(true)
     navigationProgress.start()
     try {
-      const response = await fetch('/api/freelancer/profile', {
-        method: isEditMode ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profileData)
-      })
+      const response = isEditMode
+        ? await api.put(apiEndpoints.freelancer.profile, profileData)
+        : await api.post(apiEndpoints.freelancer.profile, profileData)
 
-      if (!response.ok) {
-        throw new Error(`Failed to ${isEditMode ? 'update' : 'create'} profile`)
+      if (!response.success) {
+        throw new Error(
+          response.error ||
+            `Failed to ${isEditMode ? 'update' : 'create'} profile`
+        )
       }
 
       toast.success(
         `Freelancer profile ${isEditMode ? 'updated' : 'created'} successfully!`
       )
-      router.push('/profile/freelancer')
+      router.push(appRoutes.profile.freelancer.base)
     } catch (error) {
       console.error(
         `Error ${isEditMode ? 'updating' : 'creating'} profile:`,
@@ -672,14 +676,13 @@ export default function FreelancerProfileSetup() {
   const saveDraft = async () => {
     setIsSavingDraft(true)
     try {
-      const response = await fetch('/api/freelancer/profile/draft', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profileData)
-      })
+      const response = await api.post(
+        apiEndpoints.freelancer.profileDraft,
+        profileData
+      )
 
-      if (!response.ok) {
-        throw new Error('Failed to save draft')
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to save draft')
       }
 
       toast.success('Draft saved successfully')

@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { apiEndpoints } from '@/config/api-endpoints'
+import { api } from '@/lib/api/http-client'
 import { cn } from '@/lib/utils'
 
 import { ReputationBadge } from './reputation-badge'
@@ -52,21 +54,21 @@ export function ReputationLeaderboard({
   async function fetchTopUsers() {
     try {
       // Fetch top freelancers
-      const freelancerResponse = await fetch(
-        `/api/reputation?top=${limit}&isFreelancer=true`
+      const freelancerResult = await api.get(
+        `${apiEndpoints.reputation}?top=${limit}&isFreelancer=true`,
+        { shouldShowErrorToast: false }
       )
-      if (freelancerResponse.ok) {
-        const freelancerData = await freelancerResponse.json()
-        setFreelancers(freelancerData.data)
+      if (freelancerResult.success) {
+        setFreelancers(freelancerResult.data.data || freelancerResult.data)
       }
 
       // Fetch top clients
-      const clientResponse = await fetch(
-        `/api/reputation?top=${limit}&isFreelancer=false`
+      const clientResult = await api.get(
+        `${apiEndpoints.reputation}?top=${limit}&isFreelancer=false`,
+        { shouldShowErrorToast: false }
       )
-      if (clientResponse.ok) {
-        const clientData = await clientResponse.json()
-        setClients(clientData.data)
+      if (clientResult.success) {
+        setClients(clientResult.data.data || clientResult.data)
       }
     } catch (error) {
       console.error('Error fetching leaderboard:', error)

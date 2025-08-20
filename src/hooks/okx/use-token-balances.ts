@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 
 import { apiEndpoints } from '@/config/api-endpoints'
 import { useUnifiedWalletInfo, useUnifiedChainInfo } from '@/context/blockchain'
+import { api } from '@/lib/api/http-client'
 import type { OKXBalanceInfo, OKXTokenInfo } from '@/types/okx-dex'
 
 export function useTokenBalances() {
@@ -22,18 +23,13 @@ export function useTokenBalances() {
 
     setIsLoadingBalances(true)
     try {
-      const response = await fetch(apiEndpoints.swap.balances, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          walletAddress: address,
-          chainId
-        })
+      const response = await api.post(apiEndpoints.swap.balances, {
+        walletAddress: address,
+        chainId
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        setBalances(data.balances || [])
+      if (response.success) {
+        setBalances(response.data?.balances || [])
       }
     } catch (error) {
       console.error('Failed to fetch balances:', error)
@@ -49,33 +45,31 @@ export function useTokenBalances() {
     setIsLoadingTokens(true)
     try {
       // First try to get all tokens
-      const allTokensResponse = await fetch(apiEndpoints.swap.allTokens, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chainId })
+      const allTokensResponse = await api.post(apiEndpoints.swap.allTokens, {
+        chainId
       })
 
       let tokens: OKXTokenInfo[] = []
 
-      if (allTokensResponse.ok) {
-        const allData = await allTokensResponse.json()
+      if (allTokensResponse.success) {
         // Ensure tokens is an array
-        tokens = Array.isArray(allData.tokens) ? allData.tokens : []
+        tokens = Array.isArray(allTokensResponse.data?.tokens)
+          ? allTokensResponse.data.tokens
+          : []
         console.log(`Fetched ${tokens.length} total tokens from all-tokens API`)
       }
 
       // If all tokens failed or returned empty, try popular tokens
       if (tokens.length === 0) {
-        const popularResponse = await fetch(apiEndpoints.swap.tokens, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chainId })
+        const popularResponse = await api.post(apiEndpoints.swap.tokens, {
+          chainId
         })
 
-        if (popularResponse.ok) {
-          const popularData = await popularResponse.json()
+        if (popularResponse.success) {
           // Ensure tokens is an array
-          tokens = Array.isArray(popularData.tokens) ? popularData.tokens : []
+          tokens = Array.isArray(popularResponse.data?.tokens)
+            ? popularResponse.data.tokens
+            : []
           console.log(`Fetched ${tokens.length} popular tokens as fallback`)
         }
       }
@@ -105,15 +99,13 @@ export function useTokenBalances() {
       if (!chainId || !query) return []
 
       try {
-        const response = await fetch(apiEndpoints.swap.tokens, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chainId, query })
+        const response = await api.post(apiEndpoints.swap.tokens, {
+          chainId,
+          query
         })
 
-        if (response.ok) {
-          const data = await response.json()
-          return data.tokens || []
+        if (response.success) {
+          return response.data?.tokens || []
         }
       } catch (error) {
         console.error('Failed to search tokens:', error)

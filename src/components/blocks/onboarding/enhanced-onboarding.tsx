@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api/http-client'
 import { cn } from '@/lib/utils'
 
 interface OnboardingStep {
@@ -77,18 +78,13 @@ export function EnhancedOnboarding({
 
   const completeStep = async (stepKey: string) => {
     try {
-      const response = await fetch('/api/onboarding/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stepKey })
-      })
-      const data = await response.json()
+      const response = await api.post('/api/onboarding/complete', { stepKey })
 
-      if (response.ok) {
+      if (response.success) {
         updateStepStatus(currentStepIndex, 'completed')
         toast({
           title: 'Step Completed!',
-          description: `You earned ${data.xpReward} XP!`
+          description: `You earned ${response.data?.xpReward} XP!`
         })
       }
     } catch (error) {
@@ -98,13 +94,9 @@ export function EnhancedOnboarding({
 
   const skipStep = async (stepKey: string) => {
     try {
-      const response = await fetch('/api/onboarding/skip', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stepKey })
-      })
+      const response = await api.post('/api/onboarding/skip', { stepKey })
 
-      if (response.ok) {
+      if (response.success) {
         updateStepStatus(currentStepIndex, 'skipped')
       }
     } catch (error) {
@@ -119,23 +111,26 @@ export function EnhancedOnboarding({
 
   const fetchOnboardingProgress = async () => {
     try {
-      const response = await fetch(
+      const response = await api.get(
         `/api/onboarding/progress?category=${category}`
       )
-      const data = await response.json()
-      setProgress(data)
 
-      // Find first incomplete step
-      const firstIncomplete = data.steps.findIndex(
-        (s: any) => !s.progress?.completedAt && !s.progress?.skippedAt
-      )
-      if (firstIncomplete !== -1) {
-        setCurrentStepIndex(firstIncomplete)
-      }
+      if (response.success) {
+        const data = response.data
+        setProgress(data)
 
-      // Check if should show onboarding
-      if (!data.isComplete && data.completedSteps < 3) {
-        setIsOpen(true)
+        // Find first incomplete step
+        const firstIncomplete = data.steps.findIndex(
+          (s: any) => !s.progress?.completedAt && !s.progress?.skippedAt
+        )
+        if (firstIncomplete !== -1) {
+          setCurrentStepIndex(firstIncomplete)
+        }
+
+        // Check if should show onboarding
+        if (!data.isComplete && data.completedSteps < 3) {
+          setIsOpen(true)
+        }
       }
     } catch (error) {
       console.error('Failed to fetch onboarding progress:', error)
@@ -436,9 +431,10 @@ export function OnboardingProgressWidget() {
 
   const fetchProgress = async () => {
     try {
-      const response = await fetch('/api/onboarding/progress')
-      const data = await response.json()
-      setProgress(data)
+      const response = await api.get('/api/onboarding/progress')
+      if (response.success) {
+        setProgress(response.data)
+      }
     } catch (error) {
       console.error('Failed to fetch onboarding progress:', error)
     }

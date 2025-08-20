@@ -44,6 +44,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api/http-client'
 
 interface Review {
   id: number
@@ -101,13 +102,19 @@ export function AdminReviewModeration() {
     setLoading(true)
     try {
       if (activeTab === 'reviews') {
-        const response = await fetch('/api/admin/reviews')
-        const data = await response.json()
-        setReviews(data.reviews || [])
+        const result = await api.get('/api/admin/reviews', {
+          shouldShowErrorToast: false
+        })
+        if (result.success) {
+          setReviews(result.data.reviews || [])
+        }
       } else {
-        const response = await fetch('/api/reviews/disputes?type=pending')
-        const data = await response.json()
-        setDisputes(data.disputes || [])
+        const result = await api.get('/api/reviews/disputes?type=pending', {
+          shouldShowErrorToast: false
+        })
+        if (result.success) {
+          setDisputes(result.data.disputes || [])
+        }
       }
     } catch (error) {
       console.error('Error fetching data:', error)
@@ -127,19 +134,21 @@ export function AdminReviewModeration() {
     action: 'hide' | 'show' | 'delete'
   ) => {
     try {
-      const response = await fetch('/api/admin/reviews/moderate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const result = await api.post(
+        '/api/admin/reviews/moderate',
+        {
           reviewId,
           reviewType,
           action,
           moderationNote
-        })
-      })
+        },
+        {
+          shouldShowErrorToast: false
+        }
+      )
 
-      if (!response.ok) {
-        throw new Error('Failed to moderate review')
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to moderate review')
       }
 
       toast({
@@ -166,19 +175,21 @@ export function AdminReviewModeration() {
     actionTaken: string
   ) => {
     try {
-      const response = await fetch('/api/admin/disputes/resolve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const result = await api.post(
+        '/api/admin/disputes/resolve',
+        {
           disputeId,
           resolution,
           adminNote: moderationNote,
           actionTaken
-        })
-      })
+        },
+        {
+          shouldShowErrorToast: false
+        }
+      )
 
-      if (!response.ok) {
-        throw new Error('Failed to resolve dispute')
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to resolve dispute')
       }
 
       toast({

@@ -14,6 +14,7 @@ import {
 } from '@/config/api-endpoints'
 import { refreshIntervals } from '@/config/app-routes'
 import { cn } from '@/lib'
+import { api } from '@/lib/api/http-client'
 import { pusherClient } from '@/lib/pusher'
 
 interface LiveStat {
@@ -44,7 +45,10 @@ export function LiveStatsDisplay({
   // Fetch initial stats and setup polling
   const { data: liveStats } = useSWR(
     apiEndpoints.battles.liveStats,
-    (url: string) => fetch(url).then(res => res.json()),
+    async (url: string) => {
+      const result = await api.get(url, { shouldShowErrorToast: false })
+      return result.success ? result.data : null
+    },
     {
       refreshInterval: refreshIntervals.MEDIUM,
       revalidateOnFocus: true
@@ -87,53 +91,63 @@ export function LiveStatsDisplay({
 
     const channel = pusherClient.subscribe(pusherChannels.battleStats)
 
-    channel.bind(pusherEvents.battle.statsUpdated, () => {
+    channel.bind(pusherEvents.battle.statsUpdated, async () => {
       // Trigger a refetch when stats are updated
-      fetch(apiEndpoints.battles.liveStats)
-        .then(res => res.json())
-        .then(data => {
-          if (data?.data) {
-            const newStats = {
-              warriorsOnline: data.data.warriorsOnline || 0,
-              activeBattles: data.data.activeBattles || 0,
-              inQueue: data.data.inQueue || 0
-            }
-
-            const changedStats = new Set<string>()
-            if (newStats.warriorsOnline !== stats.warriorsOnline) {
-              changedStats.add('warriors')
-            }
-            if (newStats.activeBattles !== stats.activeBattles) {
-              changedStats.add('battles')
-            }
-            if (newStats.inQueue !== stats.inQueue) {
-              changedStats.add('queue')
-            }
-
-            setPulseStats(changedStats)
-            setStats(newStats)
-
-            setTimeout(() => setPulseStats(new Set()), 1000)
-          }
+      try {
+        const result = await api.get(apiEndpoints.battles.liveStats, {
+          shouldShowErrorToast: false
         })
+
+        if (result.success && result.data?.data) {
+          const data = result.data
+          const newStats = {
+            warriorsOnline: data.data.warriorsOnline || 0,
+            activeBattles: data.data.activeBattles || 0,
+            inQueue: data.data.inQueue || 0
+          }
+
+          const changedStats = new Set<string>()
+          if (newStats.warriorsOnline !== stats.warriorsOnline) {
+            changedStats.add('warriors')
+          }
+          if (newStats.activeBattles !== stats.activeBattles) {
+            changedStats.add('battles')
+          }
+          if (newStats.inQueue !== stats.inQueue) {
+            changedStats.add('queue')
+          }
+
+          setPulseStats(changedStats)
+          setStats(newStats)
+
+          setTimeout(() => setPulseStats(new Set()), 1000)
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error)
+      }
     })
 
     // Queue updates
     const queueChannel = pusherClient.subscribe(pusherChannels.battleQueue)
-    queueChannel.bind(pusherEvents.battle.queueUpdated, () => {
+    queueChannel.bind(pusherEvents.battle.queueUpdated, async () => {
       // Trigger immediate refetch for queue updates
-      fetch(apiEndpoints.battles.liveStats)
-        .then(res => res.json())
-        .then(data => {
-          if (data?.data) {
-            setStats(prev => ({
-              ...prev,
-              inQueue: data.data.inQueue || 0
-            }))
-            setPulseStats(new Set(['queue']))
-            setTimeout(() => setPulseStats(new Set()), 1000)
-          }
+      try {
+        const result = await api.get(apiEndpoints.battles.liveStats, {
+          shouldShowErrorToast: false
         })
+
+        if (result.success && result.data?.data) {
+          const data = result.data
+          setStats(prev => ({
+            ...prev,
+            inQueue: data.data.inQueue || 0
+          }))
+          setPulseStats(new Set(['queue']))
+          setTimeout(() => setPulseStats(new Set()), 1000)
+        }
+      } catch (error) {
+        console.error('Error fetching queue stats:', error)
+      }
     })
 
     return () => {
