@@ -29,7 +29,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      job
+      data: job
     })
   } catch (error) {
     console.error('Error fetching job:', error)

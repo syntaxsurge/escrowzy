@@ -76,7 +76,7 @@ export default function JobWorkspacePage() {
     apiEndpoints.jobs.byId(jobId),
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? (response as any).job : null
+      return response.success ? response.data : null
     }
   )
 

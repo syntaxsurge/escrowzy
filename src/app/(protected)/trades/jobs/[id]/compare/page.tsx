@@ -71,7 +71,7 @@ export default function CompareFreelancersPage() {
     `/api/jobs/${jobId}`,
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? (response as any).job : null
+      return response.success ? response.data : null
     }
   )
 
