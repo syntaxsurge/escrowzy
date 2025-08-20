@@ -30,13 +30,13 @@ export default function RootLayout({
   return (
     <html lang='en' className={manrope.className} suppressHydrationWarning>
       <body className='bg-background text-foreground flex min-h-[100dvh] flex-col'>
-        <DatabaseHealthCheck>
-          <Providers>
+        <Providers>
+          <DatabaseHealthCheck>
             <SWRConfig value={swrConfig}>
               <div className='flex-1'>{children}</div>
             </SWRConfig>
-          </Providers>
-        </DatabaseHealthCheck>
+          </DatabaseHealthCheck>
+        </Providers>
       </body>
     </html>
   )

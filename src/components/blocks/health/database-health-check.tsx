@@ -23,7 +23,7 @@ export function DatabaseHealthCheck({
     try {
       const response = await api.get(apiEndpoints.health.db)
 
-      if (!response.success || response.data?.status !== 'healthy') {
+      if (!response || response.status !== 'healthy') {
         throw new Error('Database is unhealthy')
       }
 
