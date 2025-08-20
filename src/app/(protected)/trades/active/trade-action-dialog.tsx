@@ -404,28 +404,23 @@ export function TradeActionDialog({
                 trade.seller?.walletAddress || trade.sellerId
 
               // Convert USD amount to native currency via API
-              const conversionResponse = await fetch(
+              const conversionResponse = await api.post(
                 apiEndpoints.trades.convertPrice,
                 {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    usdAmount: trade.amount,
-                    chainId: trade.chainId
-                  })
+                  usdAmount: trade.amount,
+                  chainId: trade.chainId
                 }
               )
 
-              if (!conversionResponse.ok) {
+              if (!conversionResponse.success) {
                 throw new Error('Failed to convert USD to native currency')
               }
 
-              const conversionResult = await conversionResponse.json()
-              const convertedNativeAmount = conversionResult.data.nativeAmount
+              const convertedNativeAmount = conversionResponse.data.nativeAmount
 
               // Store the conversion info for display in the dialog
               setNativeAmount(convertedNativeAmount)
-              setNativePrice(conversionResult.data.nativePrice)
+              setNativePrice(conversionResponse.data.nativePrice)
 
               // Get native currency symbol
               import('@/lib/blockchain').then(({ getNativeCurrencySymbol }) => {

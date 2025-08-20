@@ -64,6 +64,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
 import { useSession } from '@/hooks/use-session'
 import { api } from '@/lib/api/http-client'
@@ -101,7 +102,7 @@ export default function JobProposalsPage() {
 
   // Fetch job details
   const { data: job, isLoading: jobLoading } = useSWR<JobPostingWithRelations>(
-    `/api/jobs/${jobId}`,
+    apiEndpoints.jobs.byId(jobId),
     async (url: string) => {
       const response = await api.get(url)
       return response.success ? (response as any).job : null
@@ -114,7 +115,7 @@ export default function JobProposalsPage() {
     isLoading: bidsLoading,
     mutate: mutateBids
   } = useSWR<BidWithRelations[]>(
-    `/api/jobs/${jobId}/bids`,
+    apiEndpoints.jobs.bids(jobId),
     async (url: string) => {
       const response = await api.get(url)
       return response.success ? (response as any).bids : []
@@ -187,15 +188,18 @@ export default function JobProposalsPage() {
     action: 'shortlist' | 'accept' | 'reject'
   ) => {
     try {
-      const response = await api.patch(`/api/jobs/${jobId}/bids/${bidId}`, {
-        status:
-          action === 'shortlist'
-            ? 'shortlisted'
-            : action === 'accept'
-              ? 'accepted'
-              : 'rejected',
-        reason: action === 'reject' ? rejectReason : undefined
-      })
+      const response = await api.patch(
+        apiEndpoints.jobs.bidById(jobId, bidId),
+        {
+          status:
+            action === 'shortlist'
+              ? 'shortlisted'
+              : action === 'accept'
+                ? 'accepted'
+                : 'rejected',
+          reason: action === 'reject' ? rejectReason : undefined
+        }
+      )
 
       if (response.success) {
         toast.success(`Bid ${action}ed successfully`)
@@ -220,7 +224,7 @@ export default function JobProposalsPage() {
 
     try {
       const promises = selectedBids.map(bidId =>
-        api.patch(`/api/jobs/${jobId}/bids/${bidId}`, {
+        api.patch(apiEndpoints.jobs.bidById(jobId, bidId), {
           status: action === 'shortlist' ? 'shortlisted' : 'rejected'
         })
       )
@@ -464,7 +468,9 @@ export default function JobProposalsPage() {
                           <div className='flex-1 space-y-2'>
                             <div className='flex items-center gap-2'>
                               <Link
-                                href={`/freelancers/${bid.freelancerId}`}
+                                href={
+                                  appRoutes.freelancers + `/${bid.freelancerId}`
+                                }
                                 className='font-medium hover:underline'
                               >
                                 {bid.freelancer?.name || 'Unknown Freelancer'}

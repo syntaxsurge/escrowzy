@@ -22,6 +22,7 @@ import { StarRating } from '@/components/ui/star-rating'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { apiEndpoints } from '@/config/api-endpoints'
+import { appRoutes } from '@/config/app-routes'
 import { api } from '@/lib/api/http-client'
 import {
   clientReviewSchema,
@@ -76,7 +77,7 @@ export function ClientReviewForm({
       if (onSuccess) {
         onSuccess()
       } else {
-        router.push(`/users/${clientId}`)
+        router.push(appRoutes.users.byId(clientId))
       }
     } catch (error) {
       toast.error(

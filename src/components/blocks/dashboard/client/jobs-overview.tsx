@@ -35,6 +35,7 @@ import {
   TableRow
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { appRoutes } from '@/config/app-routes'
 
 interface PostedJob {
   id: number
@@ -110,7 +111,7 @@ export function JobsOverview({
                     Posted Jobs
                   </span>
                   <Button size='sm' asChild>
-                    <Link href='/trades/listings/create/service'>
+                    <Link href={appRoutes.trades.jobs.create}>
                       Post New Job
                     </Link>
                   </Button>
@@ -286,7 +287,7 @@ export function JobsOverview({
             Jobs Overview
           </span>
           <Button size='sm' variant='outline' asChild>
-            <Link href='/dashboard/client/jobs'>View All</Link>
+            <Link href={appRoutes.dashboard.client.jobs}>View All</Link>
           </Button>
         </CardTitle>
       </CardHeader>

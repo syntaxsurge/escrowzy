@@ -35,6 +35,7 @@ import {
   CardTitle
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { appRoutes } from '@/config/app-routes'
 import { getAuth } from '@/lib/auth/auth-utils'
 import {
   getFreelancerProfile,
@@ -46,12 +47,12 @@ import { getFreelancerPlatformStats } from '@/lib/db/queries/user-stats'
 export default async function FreelancerProfilePage() {
   const auth = await getAuth()
   if (!auth) {
-    redirect('/login')
+    redirect(appRoutes.login)
   }
 
   const profile = await getFreelancerProfile(auth.id)
   if (!profile) {
-    redirect('/profile/freelancer/setup')
+    redirect(appRoutes.profile.freelancer.setup)
   }
 
   const stats = await getFreelancerStats(auth.id)
@@ -129,7 +130,7 @@ export default async function FreelancerProfilePage() {
                 asChild
                 className='border-0 bg-gradient-to-r from-blue-600 to-cyan-700 font-bold text-white shadow-lg transition-all hover:scale-105 hover:from-blue-700 hover:to-cyan-800 hover:shadow-xl'
               >
-                <Link href='/profile/freelancer/setup'>
+                <Link href={appRoutes.profile.freelancer.setup}>
                   <Edit className='mr-2 h-4 w-4' />
                   Edit Profile
                 </Link>
@@ -313,7 +314,7 @@ export default async function FreelancerProfilePage() {
                   <div className='flex items-center justify-between'>
                     <CardTitle>Portfolio</CardTitle>
                     <Button size='sm' variant='outline' asChild>
-                      <Link href='/profile/freelancer/setup'>
+                      <Link href={appRoutes.profile.freelancer.setup}>
                         <Edit className='mr-2 h-4 w-4' />
                         Edit Portfolio
                       </Link>
@@ -422,7 +423,7 @@ export default async function FreelancerProfilePage() {
                       Recent Reviews
                     </CardTitle>
                     <Link
-                      href='/profile/freelancer/reviews'
+                      href={appRoutes.profile.freelancer.reviews}
                       className='text-muted-foreground hover:text-primary text-sm'
                     >
                       View all
@@ -474,7 +475,7 @@ export default async function FreelancerProfilePage() {
                     className='w-full justify-start'
                     asChild
                   >
-                    <Link href='/trades/browse'>
+                    <Link href={appRoutes.trades.jobs.base}>
                       <Briefcase className='mr-2 h-4 w-4' />
                       Browse Jobs
                     </Link>
@@ -484,7 +485,7 @@ export default async function FreelancerProfilePage() {
                     className='w-full justify-start'
                     asChild
                   >
-                    <Link href='/profile/freelancer/setup'>
+                    <Link href={appRoutes.profile.freelancer.setup}>
                       <Edit className='mr-2 h-4 w-4' />
                       Edit Profile
                     </Link>
@@ -494,7 +495,7 @@ export default async function FreelancerProfilePage() {
                     className='w-full justify-start'
                     asChild
                   >
-                    <Link href='/dashboard/freelancer'>
+                    <Link href={appRoutes.dashboard.freelancer}>
                       <TrendingUp className='mr-2 h-4 w-4' />
                       View Dashboard
                     </Link>

@@ -24,7 +24,11 @@ import {
   Target,
   Coins,
   CreditCard,
-  Briefcase
+  Briefcase,
+  FileText,
+  TrendingUp,
+  Clock,
+  DollarSign
 } from 'lucide-react'
 
 import { AutoBreadcrumb } from '@/components/layout/auto-breadcrumb'
@@ -144,18 +148,76 @@ export function DashboardLayoutClient({
           isNew: false
         },
         {
-          href: '/profile/freelancer',
-          icon: Briefcase,
+          href: appRoutes.dashboard.settings.subscription,
+          icon: CreditCard,
+          label: 'Subscription',
+          description: 'Manage Plan',
+          xp: null,
+          isNew: false
+        }
+      ]
+    },
+    {
+      id: 'freelancer',
+      title: 'Freelancer Hub',
+      icon: Briefcase,
+      color: 'from-purple-500 to-violet-500',
+      glow: 'shadow-violet-500/50',
+      accentColor: 'bg-violet-500',
+      items: [
+        {
+          href: appRoutes.profile.freelancer.base,
+          icon: UserCircle,
           label: 'Freelancer Profile',
           description: 'Your Professional Profile',
           xp: null,
           isNew: false
         },
         {
-          href: appRoutes.dashboard.settings.subscription,
-          icon: CreditCard,
-          label: 'Subscription',
-          description: 'Manage Plan',
+          href: appRoutes.dashboard.freelancer,
+          icon: LayoutDashboard,
+          label: 'Freelancer Dashboard',
+          description: 'Manage Your Work',
+          xp: null,
+          isNew: false
+        },
+        {
+          href: appRoutes.dashboard.freelancerBids,
+          icon: FileText,
+          label: 'My Bids',
+          description: 'Track Your Proposals',
+          xp: null,
+          isNew: false
+        },
+        {
+          href: appRoutes.profile.freelancer.availability,
+          icon: Clock,
+          label: 'Availability',
+          description: 'Set Your Schedule',
+          xp: null,
+          isNew: false
+        },
+        {
+          href: appRoutes.profile.freelancer.portfolio,
+          icon: Grid3x3,
+          label: 'Portfolio',
+          description: 'Showcase Your Work',
+          xp: null,
+          isNew: false
+        },
+        {
+          href: appRoutes.profile.freelancer.analytics,
+          icon: TrendingUp,
+          label: 'Analytics',
+          description: 'Track Performance',
+          xp: null,
+          isNew: false
+        },
+        {
+          href: appRoutes.profile.freelancer.earnings,
+          icon: DollarSign,
+          label: 'Earnings',
+          description: 'View Your Income',
           xp: null,
           isNew: false
         }

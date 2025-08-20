@@ -32,6 +32,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { useSession } from '@/hooks/use-session'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
@@ -78,7 +79,7 @@ export default function InvoicesPage() {
 
   // Fetch invoices
   const { data, isLoading, mutate } = useSWR(
-    user ? `/api/client/${user.id}/invoices` : null,
+    user ? apiEndpoints.client.invoices(user.id) : null,
     async (url: string) => {
       const params = new URLSearchParams()
       if (dateRange.from)
@@ -104,10 +105,13 @@ export default function InvoicesPage() {
   const handleDownloadInvoice = async (invoiceId: string) => {
     setDownloadingId(invoiceId)
     try {
-      const response = await api.post(`/api/client/${user?.id}/invoices`, {
-        action: 'download',
-        invoiceId
-      })
+      const response = await api.post(
+        apiEndpoints.client.invoices(user?.id || ''),
+        {
+          action: 'download',
+          invoiceId
+        }
+      )
 
       if (response.success) {
         // Download the invoice
@@ -134,10 +138,13 @@ export default function InvoicesPage() {
 
   const handleMarkPaid = async (invoiceId: string) => {
     try {
-      const response = await api.post(`/api/client/${user?.id}/invoices`, {
-        action: 'markPaid',
-        invoiceId
-      })
+      const response = await api.post(
+        apiEndpoints.client.invoices(user?.id || ''),
+        {
+          action: 'markPaid',
+          invoiceId
+        }
+      )
 
       if (response.success) {
         toast({

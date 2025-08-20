@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
 import { Search, ThumbsUp, ThumbsDown, ChevronRight } from 'lucide-react'
@@ -23,6 +24,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { apiEndpoints } from '@/config/api-endpoints'
+import { appRoutes } from '@/config/app-routes'
 import { api } from '@/lib/api/http-client'
 
 interface FaqCategory {
@@ -381,10 +383,10 @@ export default function FAQPage() {
               </p>
             </div>
             <Button asChild>
-              <a href='/support'>
+              <Link href={appRoutes.support}>
                 Contact Support
                 <ChevronRight className='ml-1 h-4 w-4' />
-              </a>
+              </Link>
             </Button>
           </div>
         </CardContent>

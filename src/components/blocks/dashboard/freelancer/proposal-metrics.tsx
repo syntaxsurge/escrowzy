@@ -17,6 +17,7 @@ import { Doughnut } from 'react-chartjs-2'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { appRoutes } from '@/config/app-routes'
 import { cn } from '@/lib/utils'
 
 // Register Chart.js components
@@ -204,7 +205,7 @@ export function ProposalMetrics({
           </div>
 
           <Button variant='outline' className='w-full' asChild>
-            <Link href='/dashboard/freelancer/bids'>
+            <Link href={appRoutes.dashboard.freelancerBids}>
               View All Proposals
               <ArrowRight className='ml-2 h-4 w-4' />
             </Link>

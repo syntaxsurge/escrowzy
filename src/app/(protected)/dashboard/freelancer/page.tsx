@@ -200,7 +200,7 @@ export default function FreelancerDashboardPage() {
             your dashboard.
           </p>
           <Button asChild>
-            <Link href='/profile/freelancer/setup'>
+            <Link href={appRoutes.profile.freelancer.setup}>
               Set Up Freelancer Profile
               <ChevronRight className='ml-2 h-4 w-4' />
             </Link>
@@ -556,13 +556,13 @@ export default function FreelancerDashboardPage() {
                 </Link>
               </Button>
               <Button variant='outline' asChild>
-                <Link href='/dashboard/freelancer/bids'>
+                <Link href={appRoutes.dashboard.freelancerBids}>
                   My Proposals
                   <ChevronRight className='ml-2 h-4 w-4' />
                 </Link>
               </Button>
               <Button variant='outline' asChild>
-                <Link href='/profile/freelancer'>
+                <Link href={appRoutes.profile.freelancer.base}>
                   Edit Profile
                   <ChevronRight className='ml-2 h-4 w-4' />
                 </Link>

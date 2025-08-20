@@ -32,6 +32,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
 import { useSession } from '@/hooks/use-session'
 import { api } from '@/lib/api/http-client'
@@ -170,7 +171,7 @@ export default function ClientDashboardPage() {
   // Fetch dashboard data
   const { data: dashboardData, isLoading: dataLoading } =
     useSWR<ClientDashboardData>(
-      user ? `/api/client/${user.id}/dashboard` : null,
+      user ? apiEndpoints.client.dashboard(user.id) : null,
       async (url: string) => {
         const response = await api.get(url)
         return response.success ? response.data : null
@@ -556,7 +557,7 @@ export default function ClientDashboardPage() {
           <CardContent>
             <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
               <Button variant='outline' asChild>
-                <Link href='/trades/listings/create/service'>
+                <Link href={appRoutes.trades.jobs.create}>
                   <Plus className='mr-2 h-4 w-4' />
                   Post New Job
                 </Link>
@@ -568,7 +569,7 @@ export default function ClientDashboardPage() {
                 </Link>
               </Button>
               <Button variant='outline' asChild>
-                <Link href='/dashboard/client/invoices'>
+                <Link href={appRoutes.dashboard.client.invoices}>
                   <Wallet className='mr-2 h-4 w-4' />
                   Invoices
                 </Link>

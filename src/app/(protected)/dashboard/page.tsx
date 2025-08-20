@@ -243,7 +243,7 @@ export default function DashboardPage() {
     },
     {
       id: 'freelancer-dashboard',
-      href: '/dashboard/freelancer',
+      href: appRoutes.dashboard.freelancer,
       icon: Briefcase,
       title: 'Freelancer Hub',
       subtitle: 'Manage gigs',

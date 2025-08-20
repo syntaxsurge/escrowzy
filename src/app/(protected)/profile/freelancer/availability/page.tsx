@@ -238,7 +238,7 @@ export default function AvailabilityManagementPage() {
       <div className='mb-8'>
         <div className='mb-4 flex items-center gap-4'>
           <Button variant='ghost' size='icon' asChild>
-            <Link href='/profile/freelancer'>
+            <Link href={appRoutes.profile.freelancer.base}>
               <ArrowLeft className='h-4 w-4' />
             </Link>
           </Button>

@@ -204,15 +204,11 @@ function AccountInformation() {
   const handleAvatarDelete = async () => {
     setIsDeletingAvatar(true)
     try {
-      const response = await fetch(
-        `${apiEndpoints.uploads.base}?type=AVATARS`,
-        {
-          method: 'DELETE',
-          credentials: 'include'
-        }
+      const response = await api.delete(
+        `${apiEndpoints.uploads.base}?type=AVATARS`
       )
 
-      if (response.ok) {
+      if (response.success) {
         showSuccessToast('Avatar removed successfully!')
         mutate(apiEndpoints.user.profile)
       } else {

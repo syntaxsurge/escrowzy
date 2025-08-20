@@ -29,6 +29,14 @@ export const appRoutes = {
     activity: '/dashboard/activity',
     notifications: '/dashboard/notifications',
     invitations: '/dashboard/invitations',
+    freelancer: '/dashboard/freelancer',
+    freelancerBids: '/dashboard/freelancer/bids',
+    client: {
+      base: '/dashboard/client',
+      invoices: '/dashboard/client/invoices',
+      jobs: '/dashboard/client/jobs',
+      milestones: '/dashboard/client/milestones'
+    },
 
     settings: {
       base: '/dashboard/settings',
@@ -103,8 +111,15 @@ export const appRoutes = {
       base: '/profile/freelancer',
       setup: '/profile/freelancer/setup',
       availability: '/profile/freelancer/availability',
-      reviews: '/profile/freelancer/reviews'
+      reviews: '/profile/freelancer/reviews',
+      portfolio: '/profile/freelancer/portfolio',
+      analytics: '/profile/freelancer/analytics',
+      earnings: '/profile/freelancer/earnings'
     }
+  },
+
+  users: {
+    byId: (id: string | number) => `/users/${id}`
   },
 
   help: {

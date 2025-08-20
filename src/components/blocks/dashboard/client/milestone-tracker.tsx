@@ -34,6 +34,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip'
+import { appRoutes } from '@/config/app-routes'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 
@@ -284,7 +285,7 @@ export function MilestoneTracker({
             Milestones
           </span>
           <Button size='sm' variant='outline' asChild>
-            <Link href='/dashboard/client/milestones'>View All</Link>
+            <Link href={appRoutes.dashboard.client.milestones}>View All</Link>
           </Button>
         </CardTitle>
       </CardHeader>

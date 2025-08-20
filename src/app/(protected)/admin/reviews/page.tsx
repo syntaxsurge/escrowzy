@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { AdminReviewModeration } from '@/components/blocks/admin/review-moderation'
+import { appRoutes } from '@/config/app-routes'
 import { getUser } from '@/services/user'
 
 export default async function AdminReviewsPage() {
@@ -8,7 +9,7 @@ export default async function AdminReviewsPage() {
 
   // Check if user is admin
   if (!user || user.role !== 'admin') {
-    redirect('/dashboard')
+    redirect(appRoutes.dashboard.base)
   }
 
   return (

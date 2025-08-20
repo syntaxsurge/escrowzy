@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { appRoutes } from '@/config/app-routes'
 import { api } from '@/lib/api/http-client'
 import { cn } from '@/lib/utils'
 
@@ -375,7 +376,9 @@ export function JobArchives({ freelancerId }: JobArchivesProps) {
                             size='sm'
                             onClick={e => {
                               e.stopPropagation()
-                              window.location.href = `/jobs/${job.jobId}/workspace`
+                              window.location.href =
+                                appRoutes.trades.jobs.detail(job.jobId) +
+                                '/workspace'
                             }}
                           >
                             View Details

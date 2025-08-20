@@ -25,8 +25,23 @@ export function matchesAnyRoute(
  * Get the active section based on pathname using app routes config
  */
 export function getActiveSection(pathname: string): string | null {
-  // Command Center - Dashboard routes
-  if (isRouteActive(pathname, appRoutes.dashboard.base)) {
+  // Freelancer Hub - Freelancer specific routes
+  if (
+    matchesAnyRoute(pathname, [
+      appRoutes.profile.freelancer.base,
+      appRoutes.dashboard.freelancer,
+      appRoutes.dashboard.freelancerBids
+    ])
+  ) {
+    return 'freelancer'
+  }
+
+  // Command Center - Dashboard routes (excluding freelancer routes)
+  if (
+    isRouteActive(pathname, appRoutes.dashboard.base) &&
+    !isRouteActive(pathname, appRoutes.dashboard.freelancer) &&
+    !isRouteActive(pathname, appRoutes.dashboard.freelancerBids)
+  ) {
     return 'command'
   }
 

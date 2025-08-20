@@ -209,7 +209,10 @@ export const apiEndpoints = {
     platformStats: '/api/jobs/platform-stats',
     search: '/api/jobs/search',
     save: (id: string | number) => `/api/jobs/${id}/save`,
-    apply: (id: string | number) => `/api/jobs/${id}/apply`
+    apply: (id: string | number) => `/api/jobs/${id}/apply`,
+    bids: (id: string | number) => `/api/jobs/${id}/bids`,
+    bidById: (jobId: string | number, bidId: string | number) =>
+      `/api/jobs/${jobId}/bids/${bidId}`
   },
   swap: {
     chains: '/api/swap/chains',
@@ -258,6 +261,10 @@ export const apiEndpoints = {
     profile: '/api/freelancers/profile',
     skills: '/api/freelancers/skills',
     portfolio: '/api/freelancers/portfolio'
+  },
+  client: {
+    dashboard: (id: string | number) => `/api/client/${id}/dashboard`,
+    invoices: (id: string | number) => `/api/client/${id}/invoices`
   },
   freelancer: {
     profile: '/api/freelancer/profile',
