@@ -24,10 +24,7 @@ export async function POST(request: Request) {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Update session activity to track online users
@@ -46,7 +43,6 @@ export async function POST(request: Request) {
       const limit = await getDailyBattleLimit(session.user.id)
       return NextResponse.json(
         {
-          success: false,
           error: 'Daily battle limit reached',
           data: {
             battlesUsed: limit.battlesUsed,
@@ -66,7 +62,7 @@ export async function POST(request: Request) {
     const gameData = await rewardsService.getOrCreateGameData(session.user.id)
     if (!gameData) {
       return NextResponse.json(
-        { success: false, error: 'User game data not found' },
+        { error: 'User game data not found' },
         { status: 404 }
       )
     }
@@ -121,7 +117,6 @@ export async function POST(request: Request) {
     if (error instanceof ZodError) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Invalid request data',
           details: error.errors
         },
@@ -131,7 +126,7 @@ export async function POST(request: Request) {
 
     console.error('Error in POST /api/battles/find-match:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
@@ -142,10 +137,7 @@ export async function DELETE() {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Remove user from queue
@@ -155,7 +147,7 @@ export async function DELETE() {
   } catch (error) {
     console.error('Error in DELETE /api/battles/find-match:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

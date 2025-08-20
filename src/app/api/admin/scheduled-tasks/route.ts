@@ -12,10 +12,7 @@ export async function GET(request: NextRequest) {
     const user = await getUser()
 
     if (!user || user.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Fetch all scheduled tasks
@@ -90,7 +87,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Failed to fetch scheduled tasks:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch scheduled tasks' },
+      { error: 'Failed to fetch scheduled tasks' },
       { status: 500 }
     )
   }
@@ -102,10 +99,7 @@ export async function POST(request: NextRequest) {
     const user = await getUser()
 
     if (!user || user.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -113,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     if (!taskId) {
       return NextResponse.json(
-        { success: false, error: 'Task ID is required' },
+        { error: 'Task ID is required' },
         { status: 400 }
       )
     }
@@ -126,10 +120,7 @@ export async function POST(request: NextRequest) {
       .limit(1)
 
     if (!task.length) {
-      return NextResponse.json(
-        { success: false, error: 'Task not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
 
     const taskData = task[0]
@@ -229,7 +220,6 @@ export async function POST(request: NextRequest) {
     console.error('Failed to run scheduled task:', error)
     return NextResponse.json(
       {
-        success: false,
         error: 'Failed to run scheduled task',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
@@ -244,10 +234,7 @@ export async function PATCH(request: NextRequest) {
     const user = await getUser()
 
     if (!user || user.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -255,7 +242,7 @@ export async function PATCH(request: NextRequest) {
 
     if (!taskId || isActive === undefined) {
       return NextResponse.json(
-        { success: false, error: 'Task ID and isActive status are required' },
+        { error: 'Task ID and isActive status are required' },
         { status: 400 }
       )
     }
@@ -269,13 +256,12 @@ export async function PATCH(request: NextRequest) {
       .where(eq(scheduledTasks.id, parseInt(taskId)))
 
     return NextResponse.json({
-      success: true,
       message: `Task ${isActive ? 'enabled' : 'disabled'} successfully`
     })
   } catch (error) {
     console.error('Failed to update scheduled task:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to update scheduled task' },
+      { error: 'Failed to update scheduled task' },
       { status: 500 }
     )
   }

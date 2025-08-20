@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
     if (!okxDexClient.isChainSupported(chainIdStr)) {
       // Return empty liquidity sources for unsupported chains
       return NextResponse.json({
-        success: true,
         liquiditySources: [],
         message: 'Chain not supported by OKX DEX'
       })
@@ -27,7 +26,6 @@ export async function POST(request: NextRequest) {
     const response = await okxDexClient.getLiquiditySources(chainIdStr)
 
     return NextResponse.json({
-      success: true,
       liquiditySources: response.liquiditySources || []
     })
   } catch (error) {
@@ -35,7 +33,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        success: false,
         error: 'Failed to fetch liquidity sources',
         liquiditySources: []
       },

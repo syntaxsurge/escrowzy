@@ -28,7 +28,6 @@ export async function POST(request: NextRequest) {
       )
 
       return apiResponses.success({
-        success: true,
         payment: {
           status: 'confirmed',
           ...verification

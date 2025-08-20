@@ -18,10 +18,7 @@ export async function GET(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -47,13 +44,12 @@ export async function GET(request: NextRequest) {
       .orderBy(desc(taxDocuments.year), desc(taxDocuments.createdAt))
 
     return NextResponse.json({
-      success: true,
       documents
     })
   } catch (error) {
     console.error('Error fetching tax documents:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch tax documents' },
+      { error: 'Failed to fetch tax documents' },
       { status: 500 }
     )
   }
@@ -65,10 +61,7 @@ export async function POST(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -89,7 +82,6 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       return NextResponse.json({
-        success: true,
         document: existing,
         message: 'Document already exists'
       })
@@ -208,7 +200,6 @@ export async function POST(request: NextRequest) {
       .returning()
 
     return NextResponse.json({
-      success: true,
       document,
       summary: {
         year: validatedData.year,
@@ -219,14 +210,14 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       )
     }
 
     console.error('Error generating tax document:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to generate tax document' },
+      { error: 'Failed to generate tax document' },
       { status: 500 }
     )
   }
@@ -272,10 +263,7 @@ export async function PUT(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const currentYear = new Date().getFullYear()
@@ -335,7 +323,6 @@ export async function PUT(request: NextRequest) {
     const estimatedTax = (totalYtd * estimatedTaxRate).toFixed(2)
 
     return NextResponse.json({
-      success: true,
       summary: {
         year: currentYear,
         ytdEarnings: totalYtd.toFixed(2),
@@ -349,7 +336,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching tax summary:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch tax summary' },
+      { error: 'Failed to fetch tax summary' },
       { status: 500 }
     )
   }

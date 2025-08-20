@@ -17,19 +17,13 @@ export async function GET(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
 
     if (isNaN(jobId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid job ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid job ID' }, { status: 400 })
     }
 
     // Check if user owns the job
@@ -40,16 +34,12 @@ export async function GET(
       .limit(1)
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.clientId !== user.id) {
       return NextResponse.json(
         {
-          success: false,
           error: 'You can only view matching freelancers for your own jobs'
         },
         { status: 403 }
@@ -75,7 +65,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching matching freelancers:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch matching freelancers' },
+      { error: 'Failed to fetch matching freelancers' },
       { status: 500 }
     )
   }

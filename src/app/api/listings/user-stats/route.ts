@@ -11,10 +11,7 @@ export async function GET() {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const userId = session.user.id
@@ -89,7 +86,6 @@ export async function GET() {
     const { totalViews, conversionRate, avgResponseTime } = analytics
 
     return NextResponse.json({
-      success: true,
       data: {
         activeListings: activeCount?.count || 0,
         totalListings: totalCount?.count || 0,
@@ -107,7 +103,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error in GET /api/listings/user-stats:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

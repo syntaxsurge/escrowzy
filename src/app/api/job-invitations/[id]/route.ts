@@ -17,17 +17,14 @@ export async function GET(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const invitationId = parseInt(id)
 
     if (isNaN(invitationId)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid invitation ID' },
+        { error: 'Invalid invitation ID' },
         { status: 400 }
       )
     }
@@ -59,7 +56,7 @@ export async function GET(
 
     if (!invitation) {
       return NextResponse.json(
-        { success: false, error: 'Invitation not found' },
+        { error: 'Invitation not found' },
         { status: 404 }
       )
     }
@@ -70,19 +67,18 @@ export async function GET(
       invitation.job?.clientId !== user.id
     ) {
       return NextResponse.json(
-        { success: false, error: 'You do not have access to this invitation' },
+        { error: 'You do not have access to this invitation' },
         { status: 403 }
       )
     }
 
     return NextResponse.json({
-      success: true,
       invitation
     })
   } catch (error) {
     console.error('Error fetching invitation:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch invitation' },
+      { error: 'Failed to fetch invitation' },
       { status: 500 }
     )
   }
@@ -98,17 +94,14 @@ export async function PATCH(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const invitationId = parseInt(id)
 
     if (isNaN(invitationId)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid invitation ID' },
+        { error: 'Invalid invitation ID' },
         { status: 400 }
       )
     }
@@ -119,7 +112,6 @@ export async function PATCH(
     if (!status || !['accepted', 'declined'].includes(status)) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Invalid status. Must be "accepted" or "declined"'
         },
         { status: 400 }
@@ -135,7 +127,7 @@ export async function PATCH(
 
     if (!invitation) {
       return NextResponse.json(
-        { success: false, error: 'Invitation not found' },
+        { error: 'Invitation not found' },
         { status: 404 }
       )
     }
@@ -144,7 +136,6 @@ export async function PATCH(
     if (invitation.freelancerId !== user.id) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Only the invited freelancer can respond to this invitation'
         },
         { status: 403 }
@@ -155,7 +146,6 @@ export async function PATCH(
     if (invitation.status !== 'pending') {
       return NextResponse.json(
         {
-          success: false,
           error: 'This invitation has already been responded to'
         },
         { status: 400 }
@@ -200,7 +190,6 @@ export async function PATCH(
     }
 
     return NextResponse.json({
-      success: true,
       invitation: updatedInvitation,
       message:
         status === 'accepted'
@@ -210,7 +199,7 @@ export async function PATCH(
   } catch (error) {
     console.error('Error updating invitation:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to update invitation' },
+      { error: 'Failed to update invitation' },
       { status: 500 }
     )
   }
@@ -226,17 +215,14 @@ export async function DELETE(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const invitationId = parseInt(id)
 
     if (isNaN(invitationId)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid invitation ID' },
+        { error: 'Invalid invitation ID' },
         { status: 400 }
       )
     }
@@ -250,7 +236,7 @@ export async function DELETE(
 
     if (!invitation) {
       return NextResponse.json(
-        { success: false, error: 'Invitation not found' },
+        { error: 'Invitation not found' },
         { status: 404 }
       )
     }
@@ -259,7 +245,6 @@ export async function DELETE(
     if (invitation.invitedBy !== user.id) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Only the client who sent the invitation can cancel it'
         },
         { status: 403 }
@@ -270,7 +255,6 @@ export async function DELETE(
     if (invitation.status !== 'pending') {
       return NextResponse.json(
         {
-          success: false,
           error: 'Cannot cancel an invitation that has been responded to'
         },
         { status: 400 }
@@ -296,13 +280,12 @@ export async function DELETE(
     }
 
     return NextResponse.json({
-      success: true,
       message: 'Invitation cancelled successfully'
     })
   } catch (error) {
     console.error('Error cancelling invitation:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to cancel invitation' },
+      { error: 'Failed to cancel invitation' },
       { status: 500 }
     )
   }

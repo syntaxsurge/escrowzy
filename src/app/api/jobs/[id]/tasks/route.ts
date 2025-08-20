@@ -14,10 +14,7 @@ export async function GET(
     const { id } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
@@ -28,17 +25,11 @@ export async function GET(
     })
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.clientId !== user.id && job.freelancerId !== user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     // Get tasks with related data
@@ -76,7 +67,7 @@ export async function GET(
   } catch (error) {
     console.error('Failed to fetch tasks:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch tasks' },
+      { error: 'Failed to fetch tasks' },
       { status: 500 }
     )
   }
@@ -90,10 +81,7 @@ export async function POST(
     const { id } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
@@ -105,17 +93,11 @@ export async function POST(
     })
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.clientId !== user.id && job.freelancerId !== user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     // Create task
@@ -140,7 +122,7 @@ export async function POST(
   } catch (error) {
     console.error('Failed to create task:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create task' },
+      { error: 'Failed to create task' },
       { status: 500 }
     )
   }

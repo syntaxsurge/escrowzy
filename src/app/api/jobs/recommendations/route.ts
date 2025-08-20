@@ -9,10 +9,7 @@ export async function GET(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -34,7 +31,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching job recommendations:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch recommendations' },
+      { error: 'Failed to fetch recommendations' },
       { status: 500 }
     )
   }

@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
     if (!marketData) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Unable to fetch price data',
           price: 0,
           change24h: 0,
@@ -45,7 +44,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        success: false,
         error: 'Failed to fetch price',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

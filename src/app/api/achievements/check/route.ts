@@ -61,14 +61,12 @@ export async function POST() {
 
     if (newAchievements.length > 0) {
       return NextResponse.json({
-        success: true,
         message: `Congratulations! You earned ${newAchievements.length} new achievement(s)!`,
         achievements: newAchievements
       })
     }
 
     return NextResponse.json({
-      success: true,
       message: 'No new achievements earned',
       achievements: []
     })

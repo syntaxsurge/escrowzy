@@ -12,10 +12,7 @@ export async function GET(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -35,13 +32,12 @@ export async function GET(request: NextRequest) {
       .orderBy(desc(savedSearches.createdAt))
 
     return NextResponse.json({
-      success: true,
       searches
     })
   } catch (error) {
     console.error('Error fetching saved searches:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch saved searches' },
+      { error: 'Failed to fetch saved searches' },
       { status: 500 }
     )
   }
@@ -53,10 +49,7 @@ export async function POST(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -72,7 +65,7 @@ export async function POST(request: NextRequest) {
     // Validate input
     if (!name) {
       return NextResponse.json(
-        { success: false, error: 'Search name is required' },
+        { error: 'Search name is required' },
         { status: 400 }
       )
     }
@@ -89,7 +82,6 @@ export async function POST(request: NextRequest) {
     if (existing.length > 0) {
       return NextResponse.json(
         {
-          success: false,
           error: 'A saved search with this name already exists'
         },
         { status: 400 }
@@ -111,13 +103,12 @@ export async function POST(request: NextRequest) {
       .returning()
 
     return NextResponse.json({
-      success: true,
       search: newSearch
     })
   } catch (error) {
     console.error('Error creating saved search:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create saved search' },
+      { error: 'Failed to create saved search' },
       { status: 500 }
     )
   }
@@ -129,10 +120,7 @@ export async function PATCH(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -140,7 +128,7 @@ export async function PATCH(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { success: false, error: 'Search ID is required' },
+        { error: 'Search ID is required' },
         { status: 400 }
       )
     }
@@ -154,7 +142,7 @@ export async function PATCH(request: NextRequest) {
 
     if (!search) {
       return NextResponse.json(
-        { success: false, error: 'Saved search not found' },
+        { error: 'Saved search not found' },
         { status: 404 }
       )
     }
@@ -170,13 +158,12 @@ export async function PATCH(request: NextRequest) {
       .returning()
 
     return NextResponse.json({
-      success: true,
       search: updatedSearch
     })
   } catch (error) {
     console.error('Error updating saved search:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to update saved search' },
+      { error: 'Failed to update saved search' },
       { status: 500 }
     )
   }
@@ -188,10 +175,7 @@ export async function DELETE(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -199,7 +183,7 @@ export async function DELETE(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { success: false, error: 'Search ID is required' },
+        { error: 'Search ID is required' },
         { status: 400 }
       )
     }
@@ -218,7 +202,7 @@ export async function DELETE(request: NextRequest) {
 
     if (!search) {
       return NextResponse.json(
-        { success: false, error: 'Saved search not found' },
+        { error: 'Saved search not found' },
         { status: 404 }
       )
     }
@@ -227,13 +211,12 @@ export async function DELETE(request: NextRequest) {
     await db.delete(savedSearches).where(eq(savedSearches.id, parseInt(id)))
 
     return NextResponse.json({
-      success: true,
       message: 'Saved search deleted successfully'
     })
   } catch (error) {
     console.error('Error deleting saved search:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to delete saved search' },
+      { error: 'Failed to delete saved search' },
       { status: 500 }
     )
   }

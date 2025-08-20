@@ -15,20 +15,14 @@ export async function GET(
     const { id } = params
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const userId = parseInt(id)
 
     // Check if user is requesting their own stats
     if (session.user.id !== userId) {
-      return NextResponse.json(
-        { success: false, error: 'Forbidden' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     // Get user trading stats
@@ -41,7 +35,6 @@ export async function GET(
     // If no stats exist yet, return default values
     if (!stats) {
       return NextResponse.json({
-        success: true,
         data: {
           id: 0,
           userId,
@@ -58,13 +51,12 @@ export async function GET(
     }
 
     return NextResponse.json({
-      success: true,
       data: stats
     })
   } catch (error) {
     console.error('Error in GET /api/users/[id]/trading-stats:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

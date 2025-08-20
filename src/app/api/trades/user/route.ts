@@ -12,10 +12,7 @@ export async function GET(request: Request) {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Parse query parameters
@@ -100,7 +97,6 @@ export async function GET(request: Request) {
     if (error instanceof ZodError) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Invalid parameters',
           details: error.errors
         },
@@ -110,7 +106,7 @@ export async function GET(request: Request) {
 
     console.error('Error in GET /api/trades/user:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

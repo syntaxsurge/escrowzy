@@ -7,14 +7,12 @@ export async function GET() {
     const stats = await getBattleStats()
 
     return NextResponse.json({
-      success: true,
       data: stats
     })
   } catch (error: any) {
     console.error('Error fetching live battle stats:', error)
     return NextResponse.json(
       {
-        success: false,
         error: 'Failed to fetch live battle statistics'
       },
       { status: 500 }

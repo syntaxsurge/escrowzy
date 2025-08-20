@@ -35,7 +35,6 @@ export const POST = withAdmin(async ({ request }) => {
     )
 
     return NextResponse.json({
-      success: true,
       updated: results.length
     })
   } catch (error) {

@@ -10,10 +10,7 @@ export async function POST(request: Request) {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -40,7 +37,6 @@ export async function POST(request: Request) {
     if (error instanceof ZodError) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Invalid input',
           details: error.errors
         },
@@ -50,7 +46,7 @@ export async function POST(request: Request) {
 
     console.error('Error in POST /api/trades/create:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

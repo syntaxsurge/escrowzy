@@ -19,10 +19,7 @@ export async function GET(
     const bidId = parseInt(bidIdParam)
 
     if (isNaN(jobId) || isNaN(bidId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
     }
 
     const user = await getUser()
@@ -35,10 +32,7 @@ export async function GET(
       .limit(1)
 
     if (!bid) {
-      return NextResponse.json(
-        { success: false, error: 'Bid not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Bid not found' }, { status: 404 })
     }
 
     // Get job to check ownership
@@ -50,19 +44,13 @@ export async function GET(
 
     // Only job owner or bid owner can view the bid details
     if (!user || (user.id !== job.clientId && user.id !== bid.freelancerId)) {
-      return NextResponse.json(
-        { success: false, error: 'Forbidden' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     return NextResponse.json(bid)
   } catch (error) {
     console.error('Error fetching bid:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch bid' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch bid' }, { status: 500 })
   }
 }
 
@@ -75,10 +63,7 @@ export async function PATCH(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id, bidId: bidIdParam } = await params
@@ -86,10 +71,7 @@ export async function PATCH(
     const bidId = parseInt(bidIdParam)
 
     if (isNaN(jobId) || isNaN(bidId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
     }
 
     const body = await request.json()
@@ -103,7 +85,6 @@ export async function PATCH(
       if (!validationResult.success) {
         return NextResponse.json(
           {
-            success: false,
             error: 'Validation failed',
             details: validationResult.error.errors
           },
@@ -119,10 +100,7 @@ export async function PATCH(
         .limit(1)
 
       if (!bid) {
-        return NextResponse.json(
-          { success: false, error: 'Bid not found' },
-          { status: 404 }
-        )
+        return NextResponse.json({ error: 'Bid not found' }, { status: 404 })
       }
 
       const [job] = await db
@@ -141,7 +119,7 @@ export async function PATCH(
         canUpdate = user.id === bid.freelancerId
         if (bid.status !== 'pending') {
           return NextResponse.json(
-            { success: false, error: 'Can only withdraw pending bids' },
+            { error: 'Can only withdraw pending bids' },
             { status: 400 }
           )
         }
@@ -157,7 +135,7 @@ export async function PATCH(
         // Check if job is still open
         if (job.status !== 'open') {
           return NextResponse.json(
-            { success: false, error: 'Job is no longer accepting bids' },
+            { error: 'Job is no longer accepting bids' },
             { status: 400 }
           )
         }
@@ -209,10 +187,7 @@ export async function PATCH(
       }
 
       if (!canUpdate) {
-        return NextResponse.json(
-          { success: false, error: 'Forbidden' },
-          { status: 403 }
-        )
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
 
       // Update the bid
@@ -255,7 +230,6 @@ export async function PATCH(
       if (!validationResult.success) {
         return NextResponse.json(
           {
-            success: false,
             error: 'Validation failed',
             details: validationResult.error.errors
           },
@@ -278,7 +252,7 @@ export async function PATCH(
 
       if (!bid) {
         return NextResponse.json(
-          { success: false, error: 'Bid not found or unauthorized' },
+          { error: 'Bid not found or unauthorized' },
           { status: 404 }
         )
       }
@@ -286,7 +260,7 @@ export async function PATCH(
       // Can only update pending bids
       if (bid.status !== 'pending') {
         return NextResponse.json(
-          { success: false, error: 'Can only update pending bids' },
+          { error: 'Can only update pending bids' },
           { status: 400 }
         )
       }
@@ -305,10 +279,7 @@ export async function PATCH(
     }
   } catch (error) {
     console.error('Error updating bid:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to update bid' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to update bid' }, { status: 500 })
   }
 }
 
@@ -321,10 +292,7 @@ export async function DELETE(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id, bidId: bidIdParam } = await params
@@ -332,10 +300,7 @@ export async function DELETE(
     const bidId = parseInt(bidIdParam)
 
     if (isNaN(jobId) || isNaN(bidId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
     }
 
     // Check if user owns this bid
@@ -353,7 +318,7 @@ export async function DELETE(
 
     if (!bid) {
       return NextResponse.json(
-        { success: false, error: 'Bid not found or unauthorized' },
+        { error: 'Bid not found or unauthorized' },
         { status: 404 }
       )
     }
@@ -361,7 +326,7 @@ export async function DELETE(
     // Can only withdraw pending bids
     if (bid.status !== 'pending') {
       return NextResponse.json(
-        { success: false, error: 'Can only withdraw pending bids' },
+        { error: 'Can only withdraw pending bids' },
         { status: 400 }
       )
     }
@@ -392,7 +357,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Error withdrawing bid:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to withdraw bid' },
+      { error: 'Failed to withdraw bid' },
       { status: 500 }
     )
   }

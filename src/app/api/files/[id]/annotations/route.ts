@@ -21,10 +21,7 @@ export async function GET(
     })
 
     if (!fileVersion) {
-      return NextResponse.json(
-        { success: false, error: 'File not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'File not found' }, { status: 404 })
     }
 
     // Get annotations with user info
@@ -74,7 +71,7 @@ export async function GET(
   } catch (error) {
     console.error('Failed to fetch annotations:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch annotations' },
+      { error: 'Failed to fetch annotations' },
       { status: 500 }
     )
   }
@@ -96,15 +93,12 @@ export async function POST(
     })
 
     if (!fileVersion) {
-      return NextResponse.json(
-        { success: false, error: 'File not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'File not found' }, { status: 404 })
     }
 
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required' },
+        { error: 'Authentication required' },
         { status: 401 }
       )
     }
@@ -125,7 +119,6 @@ export async function POST(
       .returning()
 
     return NextResponse.json({
-      success: true,
       annotation: {
         ...annotation,
         user: {
@@ -138,7 +131,7 @@ export async function POST(
   } catch (error) {
     console.error('Failed to create annotation:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create annotation' },
+      { error: 'Failed to create annotation' },
       { status: 500 }
     )
   }

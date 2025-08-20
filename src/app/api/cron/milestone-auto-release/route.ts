@@ -12,10 +12,7 @@ export async function POST(request: NextRequest) {
     // Verify cron API key for security
     const apiKey = request.headers.get('x-api-key')
     if (apiKey !== process.env.CRON_API_KEY) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Find milestones that should be auto-released
@@ -158,7 +155,6 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
       autoReleased: releasedCount,
       overdueNotifications: expiredMilestones.length,
       errors: errors.length > 0 ? errors : undefined,
@@ -167,7 +163,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error in milestone auto-release cron:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to process auto-releases' },
+      { error: 'Failed to process auto-releases' },
       { status: 500 }
     )
   }
@@ -178,10 +174,7 @@ export async function GET(request: NextRequest) {
   try {
     const apiKey = request.headers.get('x-api-key')
     if (apiKey !== process.env.CRON_API_KEY) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const gracePeriodHours = 72
@@ -214,7 +207,6 @@ export async function GET(request: NextRequest) {
       )
 
     return NextResponse.json({
-      success: true,
       pendingAutoRelease: pendingAutoRelease.length,
       overdueMilestones: overdueMilestones.length,
       nextRunTime: new Date(Date.now() + 60 * 60 * 1000).toISOString() // Next hour
@@ -222,7 +214,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error checking auto-release status:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to check status' },
+      { error: 'Failed to check status' },
       { status: 500 }
     )
   }

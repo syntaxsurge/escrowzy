@@ -39,7 +39,6 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
       message: `Referral ${action} tracked successfully`
     })
   } catch (error) {

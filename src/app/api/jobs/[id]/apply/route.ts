@@ -14,19 +14,13 @@ export async function POST(
     const { id } = await params
     const jobId = parseInt(id)
     if (isNaN(jobId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid job ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid job ID' }, { status: 400 })
     }
 
     // Get current user
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Parse form data
@@ -44,7 +38,7 @@ export async function POST(
     // Validate required fields
     if (!bidAmount || !deliveryTimeDays || !proposalText) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { error: 'Missing required fields' },
         { status: 400 }
       )
     }
@@ -55,15 +49,12 @@ export async function POST(
     })
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.status !== 'open') {
       return NextResponse.json(
-        { success: false, error: 'Job is not accepting applications' },
+        { error: 'Job is not accepting applications' },
         { status: 400 }
       )
     }
@@ -75,7 +66,7 @@ export async function POST(
 
     if (existingBid) {
       return NextResponse.json(
-        { success: false, error: 'You have already applied to this job' },
+        { error: 'You have already applied to this job' },
         { status: 400 }
       )
     }
@@ -113,9 +104,6 @@ export async function POST(
     return NextResponse.json(newBid)
   } catch (error) {
     console.error('Error submitting bid:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to submit bid' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to submit bid' }, { status: 500 })
   }
 }

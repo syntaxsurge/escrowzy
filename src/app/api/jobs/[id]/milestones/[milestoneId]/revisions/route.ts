@@ -25,7 +25,7 @@ export async function GET(
 
     if (isNaN(milestoneId)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid milestone ID' },
+        { error: 'Invalid milestone ID' },
         { status: 400 }
       )
     }
@@ -40,7 +40,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching revisions:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch revisions' },
+      { error: 'Failed to fetch revisions' },
       { status: 500 }
     )
   }
@@ -55,20 +55,14 @@ export async function POST(
     const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
     const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
     }
 
     // Get the milestone and job
@@ -86,7 +80,7 @@ export async function POST(
 
     if (!milestone) {
       return NextResponse.json(
-        { success: false, error: 'Milestone not found' },
+        { error: 'Milestone not found' },
         { status: 404 }
       )
     }
@@ -94,7 +88,7 @@ export async function POST(
     // Check if user is the client for this job
     if (milestone.job.clientId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'Only the client can request revisions' },
+        { error: 'Only the client can request revisions' },
         { status: 403 }
       )
     }
@@ -103,7 +97,6 @@ export async function POST(
     if (milestone.milestone.status !== 'submitted') {
       return NextResponse.json(
         {
-          success: false,
           error: 'Can only request revision for submitted milestones'
         },
         { status: 400 }
@@ -164,14 +157,14 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       )
     }
 
     console.error('Error requesting revision:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to request revision' },
+      { error: 'Failed to request revision' },
       { status: 500 }
     )
   }
@@ -186,10 +179,7 @@ export async function PATCH(
     const { milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -197,7 +187,7 @@ export async function PATCH(
 
     if (!revisionId || !status) {
       return NextResponse.json(
-        { success: false, error: 'Revision ID and status are required' },
+        { error: 'Revision ID and status are required' },
         { status: 400 }
       )
     }
@@ -210,10 +200,7 @@ export async function PATCH(
       .limit(1)
 
     if (!revision) {
-      return NextResponse.json(
-        { success: false, error: 'Revision not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Revision not found' }, { status: 404 })
     }
 
     // Get the milestone and job to check permissions
@@ -230,7 +217,7 @@ export async function PATCH(
 
     if (!milestone) {
       return NextResponse.json(
-        { success: false, error: 'Milestone not found' },
+        { error: 'Milestone not found' },
         { status: 404 }
       )
     }
@@ -239,7 +226,6 @@ export async function PATCH(
     if (milestone.job.freelancerId !== user.id) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Only the freelancer can respond to revision requests'
         },
         { status: 403 }
@@ -261,7 +247,7 @@ export async function PATCH(
   } catch (error) {
     console.error('Error updating revision:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to update revision' },
+      { error: 'Failed to update revision' },
       { status: 500 }
     )
   }

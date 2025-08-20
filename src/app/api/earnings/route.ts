@@ -12,10 +12,7 @@ export async function GET(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -78,7 +75,6 @@ export async function GET(request: NextRequest) {
       .where(eq(earnings.freelancerId, user.id))
 
     return NextResponse.json({
-      success: true,
       earnings: userEarnings,
       totals: {
         totalEarned: totals?.totalEarned || '0',
@@ -95,7 +91,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching earnings:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch earnings' },
+      { error: 'Failed to fetch earnings' },
       { status: 500 }
     )
   }
@@ -107,10 +103,7 @@ export async function POST(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -194,7 +187,6 @@ export async function POST(request: NextRequest) {
       .limit(12)
 
     return NextResponse.json({
-      success: true,
       stats: {
         earningsByDate,
         earningsByJob,
@@ -205,7 +197,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching earnings stats:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch earnings statistics' },
+      { error: 'Failed to fetch earnings statistics' },
       { status: 500 }
     )
   }

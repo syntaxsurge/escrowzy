@@ -17,20 +17,14 @@ export async function GET(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
     const bidId = parseInt(bidIdParam)
 
     if (isNaN(jobId) || isNaN(bidId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
     }
 
     // Verify user has access to this bid
@@ -41,10 +35,7 @@ export async function GET(
       .limit(1)
 
     if (!bid) {
-      return NextResponse.json(
-        { success: false, error: 'Bid not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Bid not found' }, { status: 404 })
     }
 
     const [job] = await db
@@ -55,10 +46,7 @@ export async function GET(
 
     // Check if user is either the client or the freelancer
     if (user.id !== job.clientId && user.id !== bid.freelancerId) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     // Fetch messages for this bid negotiation
@@ -88,7 +76,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching bid messages:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch messages' },
+      { error: 'Failed to fetch messages' },
       { status: 500 }
     )
   }
@@ -104,20 +92,14 @@ export async function POST(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
     const bidId = parseInt(bidIdParam)
 
     if (isNaN(jobId) || isNaN(bidId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
     }
 
     const body = await request.json()
@@ -131,10 +113,7 @@ export async function POST(
       .limit(1)
 
     if (!bid) {
-      return NextResponse.json(
-        { success: false, error: 'Bid not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Bid not found' }, { status: 404 })
     }
 
     const [job] = await db
@@ -145,10 +124,7 @@ export async function POST(
 
     // Check if user is either the client or the freelancer
     if (user.id !== job.clientId && user.id !== bid.freelancerId) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     // Create the message
@@ -217,7 +193,7 @@ export async function POST(
   } catch (error) {
     console.error('Error sending bid message:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to send message' },
+      { error: 'Failed to send message' },
       { status: 500 }
     )
   }

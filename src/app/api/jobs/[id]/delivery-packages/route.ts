@@ -15,10 +15,7 @@ export async function GET(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
@@ -29,17 +26,11 @@ export async function GET(
     })
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.clientId !== user.id && job.freelancerId !== user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     // Get delivery packages
@@ -69,7 +60,7 @@ export async function GET(
   } catch (error) {
     console.error('Failed to fetch delivery packages:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch packages' },
+      { error: 'Failed to fetch packages' },
       { status: 500 }
     )
   }
@@ -84,10 +75,7 @@ export async function POST(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
@@ -99,15 +87,12 @@ export async function POST(
     })
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.freelancerId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'Only freelancer can create packages' },
+        { error: 'Only freelancer can create packages' },
         { status: 403 }
       )
     }
@@ -139,7 +124,7 @@ export async function POST(
   } catch (error) {
     console.error('Failed to create delivery package:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create package' },
+      { error: 'Failed to create package' },
       { status: 500 }
     )
   }

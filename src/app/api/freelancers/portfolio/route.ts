@@ -15,10 +15,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const profile = await getFreelancerProfileByUserId(user.id)
@@ -37,7 +34,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching portfolio:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch portfolio' },
+      { error: 'Failed to fetch portfolio' },
       { status: 500 }
     )
   }
@@ -47,10 +44,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -60,7 +54,6 @@ export async function POST(request: NextRequest) {
     if (!validationResult.success) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Validation failed',
           errors: validationResult.error.errors
         },
@@ -81,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     if (!profile) {
       return NextResponse.json(
-        { success: false, error: 'Failed to create profile' },
+        { error: 'Failed to create profile' },
         { status: 500 }
       )
     }
@@ -97,7 +90,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating portfolio item:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create portfolio item' },
+      { error: 'Failed to create portfolio item' },
       { status: 500 }
     )
   }

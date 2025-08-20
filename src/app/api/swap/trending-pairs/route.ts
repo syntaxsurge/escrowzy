@@ -33,7 +33,6 @@ export async function GET(request: NextRequest) {
     const trendingPairs = await getTrendingPairs(chainIndex)
 
     return NextResponse.json({
-      success: true,
       chainId,
       pairs: trendingPairs,
       lastUpdated: new Date().toISOString()
@@ -43,7 +42,6 @@ export async function GET(request: NextRequest) {
 
     // Return empty array on error instead of mock data
     return NextResponse.json({
-      success: false,
       chainId: request.nextUrl.searchParams.get('chainId') || '1',
       pairs: [],
       lastUpdated: new Date().toISOString(),

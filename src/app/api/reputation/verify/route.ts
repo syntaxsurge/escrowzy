@@ -46,7 +46,6 @@ export async function GET(request: NextRequest) {
     const result = await reputationSyncService.verifyReputationIntegrity(userId)
 
     return NextResponse.json({
-      success: true,
       data: {
         userId,
         isValid: result.isValid,

@@ -250,7 +250,6 @@ export async function POST(request: NextRequest) {
     const stats = await Promise.all(statsPromises)
 
     return NextResponse.json({
-      success: true,
       data: stats
     })
   } catch (error) {

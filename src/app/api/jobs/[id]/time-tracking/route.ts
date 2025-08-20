@@ -14,10 +14,7 @@ export async function GET(
     const { id } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
@@ -28,17 +25,11 @@ export async function GET(
     })
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.clientId !== user.id && job.freelancerId !== user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     // Get time entries for the last 30 days
@@ -72,7 +63,7 @@ export async function GET(
   } catch (error) {
     console.error('Failed to fetch time entries:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch time entries' },
+      { error: 'Failed to fetch time entries' },
       { status: 500 }
     )
   }
@@ -86,10 +77,7 @@ export async function POST(
     const { id } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
@@ -101,15 +89,12 @@ export async function POST(
     })
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.freelancerId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'Only freelancer can track time' },
+        { error: 'Only freelancer can track time' },
         { status: 403 }
       )
     }
@@ -143,7 +128,7 @@ export async function POST(
   } catch (error) {
     console.error('Failed to create time entry:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create time entry' },
+      { error: 'Failed to create time entry' },
       { status: 500 }
     )
   }

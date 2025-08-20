@@ -35,7 +35,6 @@ export async function POST(_request: NextRequest) {
     const result = await reputationSyncService.applyReputationDecay()
 
     return NextResponse.json({
-      success: true,
       data: {
         affectedUsers: result.affectedUsers,
         totalDecayApplied: result.totalDecayApplied,

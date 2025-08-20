@@ -124,7 +124,6 @@ export const GET = withAuth(
       }
 
       return NextResponse.json({
-        success: true,
         data: {
           invoices,
           summary
@@ -134,7 +133,6 @@ export const GET = withAuth(
       console.error('Failed to fetch invoices:', error)
       return NextResponse.json(
         {
-          success: false,
           error: 'Failed to fetch invoice data'
         },
         { status: 500 }
@@ -188,7 +186,7 @@ export const POST = withAuth(
 
         if (!invoiceDetails.length) {
           return NextResponse.json(
-            { success: false, error: 'Invoice not found' },
+            { error: 'Invoice not found' },
             { status: 404 }
           )
         }
@@ -197,7 +195,6 @@ export const POST = withAuth(
         const downloadUrl = `/api/invoices/${invoiceId}/download`
 
         return NextResponse.json({
-          success: true,
           data: { downloadUrl }
         })
       }
@@ -217,20 +214,15 @@ export const POST = withAuth(
           .where(eq(jobMilestones.id, milestoneId))
 
         return NextResponse.json({
-          success: true,
           message: 'Invoice marked as paid'
         })
       }
 
-      return NextResponse.json(
-        { success: false, error: 'Invalid action' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     } catch (error) {
       console.error('Failed to process invoice action:', error)
       return NextResponse.json(
         {
-          success: false,
           error: 'Failed to process invoice'
         },
         { status: 500 }

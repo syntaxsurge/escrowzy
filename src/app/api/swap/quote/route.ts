@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
     if (isNaN(amountValue) || amountValue <= 0) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Invalid amount',
           details: 'Amount must be a positive number'
         },
@@ -81,7 +80,6 @@ export async function POST(request: NextRequest) {
     if (!quoteResponse) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Unable to fetch quote. Please try again later.',
           message: 'No liquidity available for this trade'
         },
@@ -154,7 +152,6 @@ export async function POST(request: NextRequest) {
       if (error.message.includes('No quote available')) {
         return NextResponse.json(
           {
-            success: false,
             error: 'No liquidity available for this pair',
             details: 'Try a different token pair or smaller amount'
           },
@@ -164,7 +161,6 @@ export async function POST(request: NextRequest) {
       if (error.message.includes('rate limit')) {
         return NextResponse.json(
           {
-            success: false,
             error: 'Rate limit exceeded',
             details: 'Please try again in a few seconds'
           },
@@ -175,7 +171,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        success: false,
         error: 'Failed to fetch quote',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

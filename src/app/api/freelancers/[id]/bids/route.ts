@@ -13,7 +13,7 @@ export async function GET(
     const freelancerId = parseInt(id)
     if (isNaN(freelancerId)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid freelancer ID' },
+        { error: 'Invalid freelancer ID' },
         { status: 400 }
       )
     }
@@ -21,10 +21,7 @@ export async function GET(
     // Check if user is authorized to view these bids
     const user = await getUser()
     if (!user || user.id !== freelancerId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get query parameters
@@ -68,9 +65,6 @@ export async function GET(
     })
   } catch (error) {
     console.error('Error fetching freelancer bids:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch bids' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch bids' }, { status: 500 })
   }
 }

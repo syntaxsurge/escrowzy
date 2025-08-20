@@ -43,7 +43,6 @@ export async function POST(
     }
 
     return NextResponse.json({
-      success: true,
       message: result.message
     })
   } catch (error) {

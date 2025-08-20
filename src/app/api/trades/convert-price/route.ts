@@ -49,7 +49,6 @@ export async function POST(request: NextRequest) {
     const formattedAmount = nativeAmount.toFixed(displayDecimals)
 
     return NextResponse.json({
-      success: true,
       data: {
         nativeAmount: formattedAmount,
         nativePrice: priceResult.price,

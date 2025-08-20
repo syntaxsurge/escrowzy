@@ -7,10 +7,7 @@ export async function GET() {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     let activeDiscount = null
@@ -24,7 +21,6 @@ export async function GET() {
 
     if (!activeDiscount) {
       return NextResponse.json({
-        success: true,
         data: {
           hasDiscount: false,
           message: 'No active battle discount'
@@ -41,7 +37,6 @@ export async function GET() {
     )
 
     return NextResponse.json({
-      success: true,
       data: {
         hasDiscount: true,
         discount: activeDiscount,
@@ -55,7 +50,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error in GET /api/battles/active-discount:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

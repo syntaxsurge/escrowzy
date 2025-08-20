@@ -14,10 +14,7 @@ export async function GET(request: Request) {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Parse query parameters
@@ -47,7 +44,6 @@ export async function GET(request: Request) {
     const dailyLimit = await getDailyBattleLimit(session.user.id)
 
     return NextResponse.json({
-      success: true,
       data: {
         history,
         stats,
@@ -64,7 +60,6 @@ export async function GET(request: Request) {
     if (error instanceof ZodError) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Invalid query parameters',
           details: error.errors
         },
@@ -74,7 +69,7 @@ export async function GET(request: Request) {
 
     console.error('Error in GET /api/battles/history:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

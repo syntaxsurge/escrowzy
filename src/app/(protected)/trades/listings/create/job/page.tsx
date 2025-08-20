@@ -313,7 +313,7 @@ export default function CreateJobServicePage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {categoriesData?.categories?.map((cat: any) => (
+                            {categoriesData?.map((cat: any) => (
                               <SelectItem
                                 key={cat.id}
                                 value={cat.id.toString()}

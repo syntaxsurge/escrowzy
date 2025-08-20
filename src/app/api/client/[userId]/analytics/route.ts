@@ -300,14 +300,12 @@ export const GET = withAuth(
       }
 
       return NextResponse.json({
-        success: true,
         data: analytics
       })
     } catch (error) {
       console.error('Failed to fetch client analytics:', error)
       return NextResponse.json(
         {
-          success: false,
           error: 'Failed to fetch analytics data'
         },
         { status: 500 }

@@ -7,10 +7,7 @@ export async function POST(request: Request) {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -19,7 +16,6 @@ export async function POST(request: Request) {
     if (!amount || !chainId || clientFee === undefined) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Missing required fields: amount, chainId, and clientFee'
         },
         { status: 400 }
@@ -30,7 +26,7 @@ export async function POST(request: Request) {
     const address = userAddress || session.user.walletAddress
     if (!address) {
       return NextResponse.json(
-        { success: false, error: 'No wallet address available' },
+        { error: 'No wallet address available' },
         { status: 400 }
       )
     }
@@ -39,7 +35,7 @@ export async function POST(request: Request) {
     const escrowService = new EscrowCoreService(chainId)
     if (!escrowService.contractAddress) {
       return NextResponse.json(
-        { success: false, error: 'Service not available for this chain' },
+        { error: 'Service not available for this chain' },
         { status: 400 }
       )
     }
@@ -56,7 +52,6 @@ export async function POST(request: Request) {
       const correctFee = await escrowService.calculateUserFee(address, amount)
 
       return NextResponse.json({
-        success: false,
         isValid: false,
         error: 'Invalid fee amount',
         correctFee: {
@@ -69,7 +64,6 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      success: true,
       isValid: true,
       message: 'Fee validation successful'
     })
@@ -81,7 +75,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        success: false,
         error: errorMessage,
         details:
           'Unable to validate fee against blockchain. Please ensure contracts are deployed.'

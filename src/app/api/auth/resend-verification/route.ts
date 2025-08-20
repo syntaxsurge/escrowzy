@@ -102,7 +102,6 @@ export async function POST() {
     }
 
     return NextResponse.json({
-      success: true,
       message: 'Verification email sent successfully'
     })
   } catch (error) {

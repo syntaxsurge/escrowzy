@@ -48,7 +48,6 @@ export async function GET(request: NextRequest) {
       )
 
       return NextResponse.json({
-        success: true,
         data: topUsers
       })
     }
@@ -70,7 +69,6 @@ export async function GET(request: NextRequest) {
 
     if (!reputation) {
       return NextResponse.json({
-        success: true,
         data: {
           userId,
           totalReviews: 0,
@@ -85,7 +83,6 @@ export async function GET(request: NextRequest) {
     const nfts = await getUserReputationNFTs(userId)
 
     return NextResponse.json({
-      success: true,
       data: {
         ...reputation,
         nfts: nfts.map(nft => ({
@@ -137,7 +134,6 @@ export async function POST(request: NextRequest) {
     const result = await reputationSyncService.syncUserReputation(userId)
 
     return NextResponse.json({
-      success: true,
       data: {
         freelancerReputation: result.freelancerReputation,
         clientReputation: result.clientReputation,

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching featured jobs:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch featured jobs' },
+      { error: 'Failed to fetch featured jobs' },
       { status: 500 }
     )
   }

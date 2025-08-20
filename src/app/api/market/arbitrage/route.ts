@@ -114,7 +114,6 @@ export async function GET(request: NextRequest) {
     opportunities.sort((a, b) => b.potentialProfit - a.potentialProfit)
 
     return NextResponse.json({
-      success: true,
       data: opportunities.slice(0, 20),
       count: opportunities.length,
       parameters: {

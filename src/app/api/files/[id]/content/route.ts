@@ -27,10 +27,7 @@ export async function GET(
     })
 
     if (!fileVersion) {
-      return NextResponse.json(
-        { success: false, error: 'File not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'File not found' }, { status: 404 })
     }
 
     // Verify access through job
@@ -39,10 +36,7 @@ export async function GET(
     })
 
     if (!job || (job.clientId !== user?.id && job.freelancerId !== user?.id)) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     // Determine content type and whether to read file
@@ -79,7 +73,6 @@ export async function GET(
       fileVersion.mimeType.includes('pdf')
     ) {
       return NextResponse.json({
-        success: true,
         type: 'url',
         url: fileVersion.path,
         mimeType: fileVersion.mimeType
@@ -100,7 +93,6 @@ export async function GET(
           : content
 
         return NextResponse.json({
-          success: true,
           type: 'text',
           content: previewContent,
           truncated,
@@ -111,7 +103,6 @@ export async function GET(
         console.error('Failed to read file:', error)
         return NextResponse.json(
           {
-            success: false,
             error: 'File content not available'
           },
           { status: 404 }
@@ -121,7 +112,6 @@ export async function GET(
 
     // For other file types, return download URL
     return NextResponse.json({
-      success: true,
       type: 'download',
       url: fileVersion.path,
       mimeType: fileVersion.mimeType
@@ -129,7 +119,7 @@ export async function GET(
   } catch (error) {
     console.error('Failed to get file content:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to get file content' },
+      { error: 'Failed to get file content' },
       { status: 500 }
     )
   }

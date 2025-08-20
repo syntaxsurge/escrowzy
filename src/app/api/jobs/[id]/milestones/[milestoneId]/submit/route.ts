@@ -32,20 +32,14 @@ export async function POST(
     const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
     const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
     }
 
     // Get the milestone and job
@@ -63,7 +57,7 @@ export async function POST(
 
     if (!milestone) {
       return NextResponse.json(
-        { success: false, error: 'Milestone not found' },
+        { error: 'Milestone not found' },
         { status: 404 }
       )
     }
@@ -72,7 +66,6 @@ export async function POST(
     if (milestone.job.freelancerId !== user.id) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Only the assigned freelancer can submit milestones'
         },
         { status: 403 }
@@ -82,7 +75,7 @@ export async function POST(
     // Check if milestone is in the correct status
     if (milestone.milestone.status !== 'in_progress') {
       return NextResponse.json(
-        { success: false, error: 'Milestone must be in progress to submit' },
+        { error: 'Milestone must be in progress to submit' },
         { status: 400 }
       )
     }
@@ -127,14 +120,14 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       )
     }
 
     console.error('Error submitting milestone:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to submit milestone' },
+      { error: 'Failed to submit milestone' },
       { status: 500 }
     )
   }

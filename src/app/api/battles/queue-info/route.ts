@@ -10,10 +10,7 @@ export async function GET() {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get user's queue entry
@@ -35,13 +32,11 @@ export async function GET() {
 
     if (!queueEntry) {
       return NextResponse.json({
-        success: true,
         data: null
       })
     }
 
     return NextResponse.json({
-      success: true,
       data: {
         queuePosition: queueEntry.queuePosition || 1,
         estimatedWaitTime: queueEntry.estimatedWaitTime || 10,
@@ -51,7 +46,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error in GET /api/battles/queue-info:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

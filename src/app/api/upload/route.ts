@@ -10,10 +10,7 @@ export async function POST(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const formData = await request.formData()
@@ -21,16 +18,13 @@ export async function POST(request: NextRequest) {
     const folder = (formData.get('folder') as string) || 'uploads'
 
     if (!file) {
-      return NextResponse.json(
-        { success: false, error: 'No file provided' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
     // Check file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
-        { success: false, error: 'File size must be less than 10MB' },
+        { error: 'File size must be less than 10MB' },
         { status: 400 }
       )
     }
@@ -50,7 +44,6 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
       url,
       filename: file.name,
       size: file.size,
@@ -59,7 +52,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Upload error:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to upload file' },
+      { error: 'Failed to upload file' },
       { status: 500 }
     )
   }

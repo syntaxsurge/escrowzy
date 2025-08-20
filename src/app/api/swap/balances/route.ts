@@ -20,7 +20,6 @@ export async function POST(request: NextRequest) {
     if (!okxDexClient.isChainSupported(chainIdStr)) {
       // Return empty balances for unsupported chains
       return NextResponse.json({
-        success: true,
         balances: [],
         message: 'Chain not supported by OKX DEX'
       })
@@ -73,14 +72,12 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json({
-        success: true,
         balances: transformedBalances
       })
     } catch (error) {
       console.log('Failed to fetch from OKX, returning empty balances:', error)
       // Return empty array if OKX fails (user might not have balances)
       return NextResponse.json({
-        success: true,
         balances: []
       })
     }
@@ -89,7 +86,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        success: false,
         error: 'Failed to fetch balances',
         balances: []
       },

@@ -29,7 +29,6 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
       message: result.message,
       disputeId: result.disputeId
     })

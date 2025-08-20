@@ -38,20 +38,14 @@ export async function POST(
     const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
     const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
     }
 
     // Get the milestone and job
@@ -69,7 +63,7 @@ export async function POST(
 
     if (!milestone) {
       return NextResponse.json(
-        { success: false, error: 'Milestone not found' },
+        { error: 'Milestone not found' },
         { status: 404 }
       )
     }
@@ -77,7 +71,7 @@ export async function POST(
     // Only client can request refund
     if (milestone.job.clientId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'Only the client can request a refund' },
+        { error: 'Only the client can request a refund' },
         { status: 403 }
       )
     }
@@ -86,7 +80,6 @@ export async function POST(
     if (!['submitted', 'approved'].includes(milestone.milestone.status)) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Can only request refund for submitted or approved milestones'
         },
         { status: 400 }
@@ -221,14 +214,14 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       )
     }
 
     console.error('Error requesting refund:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to request refund' },
+      { error: 'Failed to request refund' },
       { status: 500 }
     )
   }
@@ -243,30 +236,21 @@ export async function PUT(
     const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
     const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
     }
 
     const body = await request.json()
     const { action, amount, note } = body
 
     if (!['approve', 'reject', 'partial'].includes(action)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid action' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
 
     // Get the milestone
@@ -284,7 +268,7 @@ export async function PUT(
 
     if (!milestone) {
       return NextResponse.json(
-        { success: false, error: 'Milestone not found' },
+        { error: 'Milestone not found' },
         { status: 404 }
       )
     }
@@ -292,7 +276,7 @@ export async function PUT(
     // Check if milestone is disputed
     if (milestone.milestone.status !== 'disputed') {
       return NextResponse.json(
-        { success: false, error: 'Milestone is not in dispute' },
+        { error: 'Milestone is not in dispute' },
         { status: 400 }
       )
     }
@@ -304,7 +288,7 @@ export async function PUT(
 
     if (!isClient && !isFreelancer && !isAdmin) {
       return NextResponse.json(
-        { success: false, error: 'Not authorized to resolve this dispute' },
+        { error: 'Not authorized to resolve this dispute' },
         { status: 403 }
       )
     }
@@ -333,7 +317,7 @@ export async function PUT(
       // Partial refund
       if (!amount) {
         return NextResponse.json(
-          { success: false, error: 'Amount required for partial refund' },
+          { error: 'Amount required for partial refund' },
           { status: 400 }
         )
       }
@@ -445,7 +429,7 @@ export async function PUT(
   } catch (error) {
     console.error('Error processing refund:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to process refund' },
+      { error: 'Failed to process refund' },
       { status: 500 }
     )
   }
@@ -460,20 +444,14 @@ export async function GET(
     const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
     const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
     }
 
     // Get the milestone with refund information
@@ -488,7 +466,7 @@ export async function GET(
 
     if (!milestone) {
       return NextResponse.json(
-        { success: false, error: 'Milestone not found' },
+        { error: 'Milestone not found' },
         { status: 404 }
       )
     }
@@ -499,7 +477,7 @@ export async function GET(
 
     if (!isClient && !isFreelancer) {
       return NextResponse.json(
-        { success: false, error: 'Not authorized to view this milestone' },
+        { error: 'Not authorized to view this milestone' },
         { status: 403 }
       )
     }
@@ -518,7 +496,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching refund status:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch refund status' },
+      { error: 'Failed to fetch refund status' },
       { status: 500 }
     )
   }

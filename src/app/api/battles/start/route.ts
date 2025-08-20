@@ -14,10 +14,7 @@ export async function POST(request: Request) {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { battleId } = await request.json()
@@ -30,10 +27,7 @@ export async function POST(request: Request) {
       .limit(1)
 
     if (!battle) {
-      return NextResponse.json(
-        { success: false, error: 'Battle not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Battle not found' }, { status: 404 })
     }
 
     // Check if user is a participant
@@ -43,7 +37,7 @@ export async function POST(request: Request) {
 
     if (!isParticipant) {
       return NextResponse.json(
-        { success: false, error: 'Not a participant in this battle' },
+        { error: 'Not a participant in this battle' },
         { status: 403 }
       )
     }
@@ -51,7 +45,7 @@ export async function POST(request: Request) {
     // Check if battle is in preparing state or already ongoing
     if (battle.status === 'completed' || battle.status === 'cancelled') {
       return NextResponse.json(
-        { success: false, error: 'Battle already completed or cancelled' },
+        { error: 'Battle already completed or cancelled' },
         { status: 400 }
       )
     }
@@ -59,7 +53,6 @@ export async function POST(request: Request) {
     // If battle is already ongoing, just return success
     if (battle.status === 'ongoing') {
       return NextResponse.json({
-        success: true,
         data: {
           battleId,
           status: 'ongoing',
@@ -130,7 +123,6 @@ export async function POST(request: Request) {
     )
 
     return NextResponse.json({
-      success: true,
       data: {
         battleId,
         status: 'ongoing',
@@ -140,7 +132,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error starting battle:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

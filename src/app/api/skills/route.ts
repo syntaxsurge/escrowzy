@@ -7,13 +7,12 @@ export async function GET(request: NextRequest) {
     const skills = await getAllSkills()
 
     return NextResponse.json({
-      success: true,
       skills
     })
   } catch (error) {
     console.error('Error fetching skills:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch skills' },
+      { error: 'Failed to fetch skills' },
       { status: 500 }
     )
   }

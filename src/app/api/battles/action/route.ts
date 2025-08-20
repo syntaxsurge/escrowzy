@@ -8,10 +8,7 @@ export async function POST(request: Request) {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -19,7 +16,7 @@ export async function POST(request: Request) {
 
     if (!battleId || !action) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { error: 'Missing required fields' },
         { status: 400 }
       )
     }
@@ -41,13 +38,12 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      success: true,
       data: { action, value }
     })
   } catch (error) {
     console.error('Error in POST /api/battles/action:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

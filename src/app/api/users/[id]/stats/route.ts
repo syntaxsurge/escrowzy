@@ -10,10 +10,7 @@ export async function GET(
     const { id } = await params
     const userId = parseInt(id)
     if (isNaN(userId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid user ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 })
     }
 
     const [stats, location] = await Promise.all([
@@ -28,7 +25,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching user stats:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch user stats' },
+      { error: 'Failed to fetch user stats' },
       { status: 500 }
     )
   }

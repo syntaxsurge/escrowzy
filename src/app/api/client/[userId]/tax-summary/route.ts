@@ -183,14 +183,12 @@ export const GET = withAuth(
       }
 
       return NextResponse.json({
-        success: true,
         data: taxSummary
       })
     } catch (error) {
       console.error('Failed to generate tax summary:', error)
       return NextResponse.json(
         {
-          success: false,
           error: 'Failed to generate tax summary'
         },
         { status: 500 }
@@ -218,7 +216,6 @@ export const POST = withAuth(
         const downloadUrl = `/api/client/${clientId}/tax-documents/1099-${taxYear}.pdf`
 
         return NextResponse.json({
-          success: true,
           data: { downloadUrl }
         })
       }
@@ -229,7 +226,6 @@ export const POST = withAuth(
         const downloadUrl = `/api/client/${clientId}/tax-documents/summary-${taxYear}.pdf`
 
         return NextResponse.json({
-          success: true,
           data: { downloadUrl }
         })
       }
@@ -240,20 +236,15 @@ export const POST = withAuth(
         const downloadUrl = `/api/client/${clientId}/tax-documents/transactions-${taxYear}.csv`
 
         return NextResponse.json({
-          success: true,
           data: { downloadUrl }
         })
       }
 
-      return NextResponse.json(
-        { success: false, error: 'Invalid format' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid format' }, { status: 400 })
     } catch (error) {
       console.error('Failed to generate tax documents:', error)
       return NextResponse.json(
         {
-          success: false,
           error: 'Failed to generate tax documents'
         },
         { status: 500 }

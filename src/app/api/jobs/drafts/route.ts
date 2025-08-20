@@ -13,10 +13,7 @@ export async function GET(_request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const drafts = await getJobDrafts(user.id)
@@ -25,7 +22,7 @@ export async function GET(_request: NextRequest) {
   } catch (error) {
     console.error('Error fetching drafts:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch drafts' },
+      { error: 'Failed to fetch drafts' },
       { status: 500 }
     )
   }
@@ -37,10 +34,7 @@ export async function POST(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -52,7 +46,7 @@ export async function POST(request: NextRequest) {
       const updated = await updateJobDraft(body.id, user.id, body)
       if (!updated) {
         return NextResponse.json(
-          { success: false, error: 'Draft not found or unauthorized' },
+          { error: 'Draft not found or unauthorized' },
           { status: 404 }
         )
       }
@@ -65,9 +59,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ draftId })
   } catch (error) {
     console.error('Error saving draft:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to save draft' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to save draft' }, { status: 500 })
   }
 }

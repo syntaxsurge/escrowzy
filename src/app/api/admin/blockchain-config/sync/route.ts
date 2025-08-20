@@ -91,7 +91,6 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      success: true,
       synced: syncedCount,
       message: `Successfully synced ${syncedCount} contract configurations`
     })

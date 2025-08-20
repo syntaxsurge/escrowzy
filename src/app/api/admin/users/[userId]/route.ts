@@ -136,7 +136,7 @@ export const DELETE = withAdmin(
 
       await deleteUserByAdmin(userId)
 
-      return apiResponses.success({ success: true })
+      return apiResponses.success({ message: 'User deleted successfully' })
     } catch (error) {
       return apiResponses.handleError(error, 'Failed to delete user')
     }

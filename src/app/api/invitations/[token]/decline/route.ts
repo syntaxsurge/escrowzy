@@ -24,7 +24,6 @@ export async function POST(
     }
 
     return apiResponses.success({
-      success: true,
       message: 'Invitation declined successfully'
     })
   } catch (error) {

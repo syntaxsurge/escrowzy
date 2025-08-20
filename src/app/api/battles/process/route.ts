@@ -13,10 +13,7 @@ export async function POST(request: Request) {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -26,14 +23,14 @@ export async function POST(request: Request) {
 
     if (!battleId || !action) {
       return NextResponse.json(
-        { success: false, error: 'Missing battleId or action' },
+        { error: 'Missing battleId or action' },
         { status: 400 }
       )
     }
 
     if (!['attack', 'defend'].includes(action)) {
       return NextResponse.json(
-        { success: false, error: BATTLE_MESSAGES.INVALID_ACTION },
+        { error: BATTLE_MESSAGES.INVALID_ACTION },
         { status: 400 }
       )
     }
@@ -47,7 +44,7 @@ export async function POST(request: Request) {
 
     if (!battle || battle.status !== 'ongoing') {
       return NextResponse.json(
-        { success: false, error: BATTLE_MESSAGES.BATTLE_NOT_FOUND },
+        { error: BATTLE_MESSAGES.BATTLE_NOT_FOUND },
         { status: 404 }
       )
     }
@@ -58,7 +55,7 @@ export async function POST(request: Request) {
 
     if (!isPlayer1 && !isPlayer2) {
       return NextResponse.json(
-        { success: false, error: BATTLE_MESSAGES.NOT_PARTICIPANT },
+        { error: BATTLE_MESSAGES.NOT_PARTICIPANT },
         { status: 403 }
       )
     }
@@ -246,13 +243,12 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json({
-      success: true,
       data: responseData
     })
   } catch (error) {
     console.error('Error processing battle action:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

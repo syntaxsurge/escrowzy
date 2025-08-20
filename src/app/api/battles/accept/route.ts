@@ -15,10 +15,7 @@ export async function POST(request: Request) {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -26,7 +23,7 @@ export async function POST(request: Request) {
 
     if (!invitationId) {
       return NextResponse.json(
-        { success: false, error: 'Invitation ID required' },
+        { error: 'Invitation ID required' },
         { status: 400 }
       )
     }
@@ -40,7 +37,7 @@ export async function POST(request: Request) {
 
     if (!invitation) {
       return NextResponse.json(
-        { success: false, error: 'Invitation not found' },
+        { error: 'Invitation not found' },
         { status: 404 }
       )
     }
@@ -53,7 +50,7 @@ export async function POST(request: Request) {
 
     if (!battleResult) {
       return NextResponse.json(
-        { success: false, error: 'Invalid or expired invitation' },
+        { error: 'Invalid or expired invitation' },
         { status: 400 }
       )
     }
@@ -139,13 +136,12 @@ export async function POST(request: Request) {
     await broadcastBattleStats()
 
     return NextResponse.json({
-      success: true,
       data: broadcastData
     })
   } catch (error) {
     console.error('Error in POST /api/battles/accept:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

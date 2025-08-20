@@ -15,10 +15,7 @@ export async function POST(request: Request) {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Check if user can battle today
@@ -27,7 +24,6 @@ export async function POST(request: Request) {
       const limit = await getDailyBattleLimit(session.user.id)
       return NextResponse.json(
         {
-          success: false,
           error: 'Daily battle limit reached',
           data: {
             battlesUsed: limit.battlesUsed,
@@ -46,7 +42,7 @@ export async function POST(request: Request) {
     // Prevent battling yourself
     if (validatedData.player2Id === session.user.id) {
       return NextResponse.json(
-        { success: false, error: 'Cannot battle yourself' },
+        { error: 'Cannot battle yourself' },
         { status: 400 }
       )
     }
@@ -61,7 +57,6 @@ export async function POST(request: Request) {
     const isWinner = battleResult.winnerId === session.user.id
 
     return NextResponse.json({
-      success: true,
       data: {
         result: battleResult,
         isWinner,
@@ -74,7 +69,6 @@ export async function POST(request: Request) {
     if (error instanceof ZodError) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Invalid request data',
           details: error.errors
         },
@@ -84,7 +78,7 @@ export async function POST(request: Request) {
 
     console.error('Error in POST /api/battles/create:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

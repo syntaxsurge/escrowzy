@@ -43,10 +43,7 @@ export async function GET(
     const { id } = await params
     const session = await verifySession()
     if (!session || Number(id) !== session.user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const freelancerId = Number(id)
@@ -60,10 +57,7 @@ export async function GET(
       .limit(1)
 
     if (!profile) {
-      return NextResponse.json(
-        { success: false, error: 'Profile not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
     // Get freelancer stats
@@ -420,7 +414,7 @@ export async function GET(
   } catch (error) {
     console.error('Error generating recommendations:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to generate recommendations' },
+      { error: 'Failed to generate recommendations' },
       { status: 500 }
     )
   }

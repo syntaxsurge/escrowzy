@@ -13,10 +13,7 @@ export async function GET(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -63,14 +60,13 @@ export async function GET(request: NextRequest) {
       )
 
     return NextResponse.json({
-      success: true,
       alerts,
       unreadCount
     })
   } catch (error) {
     console.error('Error fetching job alerts:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch job alerts' },
+      { error: 'Failed to fetch job alerts' },
       { status: 500 }
     )
   }
@@ -82,10 +78,7 @@ export async function POST(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -93,10 +86,7 @@ export async function POST(request: NextRequest) {
 
     // Validate input
     if (!jobId) {
-      return NextResponse.json(
-        { success: false, error: 'Job ID is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Job ID is required' }, { status: 400 })
     }
 
     // Check if alert already exists
@@ -114,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     if (existing.length > 0) {
       return NextResponse.json(
-        { success: false, error: 'Alert already exists for this job' },
+        { error: 'Alert already exists for this job' },
         { status: 400 }
       )
     }
@@ -154,13 +144,12 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
       alert: newAlert
     })
   } catch (error) {
     console.error('Error creating job alert:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create job alert' },
+      { error: 'Failed to create job alert' },
       { status: 500 }
     )
   }
@@ -172,10 +161,7 @@ export async function PATCH(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -183,7 +169,7 @@ export async function PATCH(request: NextRequest) {
 
     if (!id || !status) {
       return NextResponse.json(
-        { success: false, error: 'Alert ID and status are required' },
+        { error: 'Alert ID and status are required' },
         { status: 400 }
       )
     }
@@ -196,10 +182,7 @@ export async function PATCH(request: NextRequest) {
       .limit(1)
 
     if (!alert) {
-      return NextResponse.json(
-        { success: false, error: 'Alert not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Alert not found' }, { status: 404 })
     }
 
     // Update the alert
@@ -218,13 +201,12 @@ export async function PATCH(request: NextRequest) {
       .returning()
 
     return NextResponse.json({
-      success: true,
       alert: updatedAlert
     })
   } catch (error) {
     console.error('Error updating job alert:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to update job alert' },
+      { error: 'Failed to update job alert' },
       { status: 500 }
     )
   }
@@ -236,10 +218,7 @@ export async function DELETE(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -256,14 +235,13 @@ export async function DELETE(request: NextRequest) {
         )
 
       return NextResponse.json({
-        success: true,
         message: 'All alerts dismissed'
       })
     }
 
     if (!id) {
       return NextResponse.json(
-        { success: false, error: 'Alert ID is required' },
+        { error: 'Alert ID is required' },
         { status: 400 }
       )
     }
@@ -276,23 +254,19 @@ export async function DELETE(request: NextRequest) {
       .limit(1)
 
     if (!alert) {
-      return NextResponse.json(
-        { success: false, error: 'Alert not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Alert not found' }, { status: 404 })
     }
 
     // Delete the alert
     await db.delete(jobAlerts).where(eq(jobAlerts.id, parseInt(id)))
 
     return NextResponse.json({
-      success: true,
       message: 'Alert deleted successfully'
     })
   } catch (error) {
     console.error('Error deleting job alert:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to delete job alert' },
+      { error: 'Failed to delete job alert' },
       { status: 500 }
     )
   }

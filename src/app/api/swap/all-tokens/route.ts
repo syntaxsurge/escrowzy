@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
     )
 
     return NextResponse.json({
-      success: true,
       tokens
     })
   } catch (error) {
@@ -26,7 +25,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        success: false,
         error: 'Failed to fetch all tokens',
         tokens: []
       },

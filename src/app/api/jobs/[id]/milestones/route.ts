@@ -27,10 +27,7 @@ export async function GET(
     const jobId = parseInt(id)
 
     if (isNaN(jobId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid job ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid job ID' }, { status: 400 })
     }
 
     // Get milestones for the job
@@ -46,7 +43,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching milestones:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch milestones' },
+      { error: 'Failed to fetch milestones' },
       { status: 500 }
     )
   }
@@ -61,18 +58,12 @@ export async function POST(
     const { id } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
     if (isNaN(jobId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid job ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid job ID' }, { status: 400 })
     }
 
     // Check if user is the client for this job
@@ -83,15 +74,12 @@ export async function POST(
       .limit(1)
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.clientId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'Only the client can create milestones' },
+        { error: 'Only the client can create milestones' },
         { status: 403 }
       )
     }
@@ -131,14 +119,14 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       )
     }
 
     console.error('Error creating milestone:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create milestone' },
+      { error: 'Failed to create milestone' },
       { status: 500 }
     )
   }
@@ -153,18 +141,12 @@ export async function PATCH(
     const { id } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
     if (isNaN(jobId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid job ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid job ID' }, { status: 400 })
     }
 
     // Check if user is the client for this job
@@ -175,15 +157,12 @@ export async function PATCH(
       .limit(1)
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.clientId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'Only the client can update milestones' },
+        { error: 'Only the client can update milestones' },
         { status: 403 }
       )
     }
@@ -193,7 +172,7 @@ export async function PATCH(
 
     if (!Array.isArray(milestonesToUpdate)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid request format' },
+        { error: 'Invalid request format' },
         { status: 400 }
       )
     }
@@ -226,7 +205,7 @@ export async function PATCH(
   } catch (error) {
     console.error('Error updating milestones:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to update milestones' },
+      { error: 'Failed to update milestones' },
       { status: 500 }
     )
   }

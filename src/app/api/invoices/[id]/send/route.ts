@@ -17,18 +17,12 @@ export async function POST(
     const { id } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const invoiceId = parseInt(id)
     if (isNaN(invoiceId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid invoice ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid invoice ID' }, { status: 400 })
     }
 
     // Get invoice details
@@ -39,16 +33,13 @@ export async function POST(
       .limit(1)
 
     if (!invoice) {
-      return NextResponse.json(
-        { success: false, error: 'Invoice not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
     }
 
     // Only freelancer can send their invoice
     if (invoice.freelancerId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'Only invoice owner can send' },
+        { error: 'Only invoice owner can send' },
         { status: 403 }
       )
     }
@@ -56,7 +47,7 @@ export async function POST(
     // Can't send if already paid
     if (invoice.status === 'paid') {
       return NextResponse.json(
-        { success: false, error: 'Invoice is already paid' },
+        { error: 'Invoice is already paid' },
         { status: 400 }
       )
     }
@@ -70,7 +61,7 @@ export async function POST(
 
     if (!client || !client.email) {
       return NextResponse.json(
-        { success: false, error: 'Client email not found' },
+        { error: 'Client email not found' },
         { status: 400 }
       )
     }
@@ -134,13 +125,12 @@ export async function POST(
     }
 
     return NextResponse.json({
-      success: true,
       message: 'Invoice sent successfully'
     })
   } catch (error) {
     console.error('Error sending invoice:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to send invoice' },
+      { error: 'Failed to send invoice' },
       { status: 500 }
     )
   }

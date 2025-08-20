@@ -31,7 +31,6 @@ export async function GET(request: NextRequest) {
     const nativeSymbol = getNativeTokenSymbol(chainId)
 
     return NextResponse.json({
-      success: true,
       stats: {
         // Network Stats
         nativeTokenPrice: nativeTokenPrice.price || 0,
@@ -57,7 +56,6 @@ export async function GET(request: NextRequest) {
 
     // Return default values on error
     return NextResponse.json({
-      success: false,
       stats: {
         nativeTokenPrice: 0,
         nativeTokenSymbol: 'ETH',

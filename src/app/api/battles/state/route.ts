@@ -11,10 +11,7 @@ export async function GET(request: Request) {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -39,7 +36,6 @@ export async function GET(request: Request) {
 
       if (!currentBattle) {
         return NextResponse.json({
-          success: true,
           data: null
         })
       }
@@ -68,7 +64,6 @@ export async function GET(request: Request) {
       ])
 
       return NextResponse.json({
-        success: true,
         data: {
           battle: currentBattle,
           state: battleState,
@@ -90,10 +85,7 @@ export async function GET(request: Request) {
       .limit(1)
 
     if (!battle) {
-      return NextResponse.json(
-        { success: false, error: 'Battle not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Battle not found' }, { status: 404 })
     }
 
     if (
@@ -101,7 +93,7 @@ export async function GET(request: Request) {
       battle.player2Id !== session.user.id
     ) {
       return NextResponse.json(
-        { success: false, error: 'Not authorized to view this battle' },
+        { error: 'Not authorized to view this battle' },
         { status: 403 }
       )
     }
@@ -122,7 +114,6 @@ export async function GET(request: Request) {
     ])
 
     return NextResponse.json({
-      success: true,
       data: {
         battle,
         state: battleState,
@@ -134,7 +125,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Error in GET /api/battles/state:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

@@ -25,7 +25,7 @@ export async function POST() {
     // Clear the session cookie
     await clearSession()
 
-    return apiResponses.success({ success: true })
+    return apiResponses.success({ message: 'Signed out successfully' })
   } catch (error) {
     return apiResponses.handleError(error, 'Failed to sign out')
   }

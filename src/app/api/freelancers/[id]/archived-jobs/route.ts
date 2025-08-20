@@ -16,10 +16,7 @@ export async function GET(
     const { id } = await params
     const session = await verifySession()
     if (!session || Number(id) !== session.user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const freelancerId = Number(id)
@@ -125,7 +122,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching archived jobs:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch archived jobs' },
+      { error: 'Failed to fetch archived jobs' },
       { status: 500 }
     )
   }
@@ -140,19 +137,13 @@ export async function POST(
     const { id } = await params
     const session = await verifySession()
     if (!session || Number(id) !== session.user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { jobId, action } = await request.json()
 
     if (!jobId || !['complete', 'cancel'].includes(action)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid request' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     }
 
     // Verify the freelancer has an accepted bid for this job
@@ -169,10 +160,7 @@ export async function POST(
       .limit(1)
 
     if (!bid.length) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     // Update job status
@@ -192,7 +180,7 @@ export async function POST(
   } catch (error) {
     console.error('Error archiving job:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to archive job' },
+      { error: 'Failed to archive job' },
       { status: 500 }
     )
   }

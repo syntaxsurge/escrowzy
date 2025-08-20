@@ -52,7 +52,6 @@ export async function GET(request: NextRequest) {
     if (!chainId) {
       return NextResponse.json(
         {
-          success: false,
           error: 'chainId parameter is required'
         },
         { status: 400 }
@@ -65,7 +64,6 @@ export async function GET(request: NextRequest) {
     if (!gasPrice) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Failed to fetch gas price from OKX API'
         },
         { status: 503 }
@@ -73,7 +71,6 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
       chainId,
       gasPrice,
       lastUpdated: new Date().toISOString()
@@ -83,7 +80,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       {
-        success: false,
         error: error instanceof Error ? error.message : 'Internal server error'
       },
       { status: 500 }

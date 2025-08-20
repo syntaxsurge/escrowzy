@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
     const stats = await reputationSyncService.getReputationStats()
 
     return NextResponse.json({
-      success: true,
       data: stats
     })
   } catch (error) {

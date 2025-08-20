@@ -42,7 +42,6 @@ export async function POST(
     // Users can have both individual and team subscriptions independently
 
     return apiResponses.success({
-      success: true,
       message: 'Successfully downgraded to free plan'
     })
   } catch (error) {

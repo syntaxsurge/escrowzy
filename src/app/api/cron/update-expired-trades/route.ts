@@ -33,7 +33,6 @@ export async function GET(request: Request) {
 
     if (expiredTrades.length === 0) {
       return NextResponse.json({
-        success: true,
         message: 'No expired trades found',
         count: 0
       })
@@ -95,7 +94,6 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
-      success: true,
       message: `Cancelled ${expiredTrades.length} expired trades`,
       count: expiredTrades.length,
       tradeIds
@@ -104,7 +102,6 @@ export async function GET(request: Request) {
     console.error('Error updating expired trades:', error)
     return NextResponse.json(
       {
-        success: false,
         error: 'Failed to update expired trades'
       },
       { status: 500 }

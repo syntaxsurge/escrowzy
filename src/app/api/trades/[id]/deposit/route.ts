@@ -19,18 +19,12 @@ export async function POST(
     const { id } = params
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const tradeId = parseInt(id)
     if (isNaN(tradeId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid trade ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid trade ID' }, { status: 400 })
     }
 
     const body = await request.json()
@@ -55,7 +49,6 @@ export async function POST(
     if (error instanceof ZodError) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Invalid input',
           details: error.errors
         },
@@ -65,7 +58,7 @@ export async function POST(
 
     console.error('Error in POST /api/trades/[id]/deposit:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

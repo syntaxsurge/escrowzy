@@ -43,7 +43,7 @@ export const DELETE = withAdmin(async ({ request }) => {
 
     const deletedCount = await deleteActivityLogs(ids)
 
-    return apiResponses.success({ success: true, deletedCount })
+    return apiResponses.success({ deletedCount })
   } catch (error) {
     return apiResponses.handleError(error, 'Failed to delete activity logs')
   }

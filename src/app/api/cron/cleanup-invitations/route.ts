@@ -54,7 +54,6 @@ export async function GET(request: NextRequest) {
       .returning({ id: battleInvitations.id })
 
     return apiResponses.success({
-      success: true,
       team: {
         deletedExpired: expiredTeamResult.length,
         deletedDeclined: declinedTeamResult.length

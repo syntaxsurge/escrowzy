@@ -21,17 +21,14 @@ export async function POST(request: Request) {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Check if user can battle today
     const canBattle = await canBattleToday(session.user.id)
     if (!canBattle) {
       return NextResponse.json(
-        { success: false, error: 'Daily battle limit reached' },
+        { error: 'Daily battle limit reached' },
         { status: 429 }
       )
     }
@@ -40,10 +37,7 @@ export async function POST(request: Request) {
     const { toUserId } = body
 
     if (!toUserId || toUserId === session.user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid opponent' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid opponent' }, { status: 400 })
     }
 
     // Get session ID from cookies
@@ -60,7 +54,6 @@ export async function POST(request: Request) {
     if (hasRejection) {
       return NextResponse.json(
         {
-          success: false,
           error: 'This opponent has declined battles for this session'
         },
         { status: 400 }
@@ -75,7 +68,7 @@ export async function POST(request: Request) {
 
     if (!fromUserData || !toUserData) {
       return NextResponse.json(
-        { success: false, error: 'Failed to get user data' },
+        { error: 'Failed to get user data' },
         { status: 500 }
       )
     }
@@ -146,7 +139,6 @@ export async function POST(request: Request) {
     await broadcastBattleStats()
 
     return NextResponse.json({
-      success: true,
       data: {
         invitationId,
         opponent: {
@@ -159,7 +151,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error in POST /api/battles/invite:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

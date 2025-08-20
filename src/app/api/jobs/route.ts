@@ -64,10 +64,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error fetching jobs:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch jobs' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch jobs' }, { status: 500 })
   }
 }
 
@@ -77,10 +74,7 @@ export async function POST(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -88,7 +82,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!body.title || !body.description || !body.categoryId) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { error: 'Missing required fields' },
         { status: 400 }
       )
     }
@@ -146,9 +140,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(job)
   } catch (error) {
     console.error('Error creating job:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to create job' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create job' }, { status: 500 })
   }
 }

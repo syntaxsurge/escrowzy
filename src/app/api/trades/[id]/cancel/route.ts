@@ -13,18 +13,12 @@ export async function POST(
     const { id } = params
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const tradeId = parseInt(id)
     if (isNaN(tradeId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid trade ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid trade ID' }, { status: 400 })
     }
 
     const body = await request.json()
@@ -48,7 +42,6 @@ export async function POST(
     console.error('Error cancelling trade:', error)
     return NextResponse.json(
       {
-        success: false,
         error: error instanceof Error ? error.message : 'Failed to cancel trade'
       },
       { status: 500 }

@@ -228,7 +228,6 @@ export const GET = withAuth(
         }
 
         return NextResponse.json({
-          success: true,
           data: pipeline
         })
       }
@@ -247,7 +246,6 @@ export const GET = withAuth(
 
       if (!activeJob.length) {
         return NextResponse.json({
-          success: true,
           data: { recommendations: [] }
         })
       }
@@ -296,14 +294,12 @@ export const GET = withAuth(
       )
 
       return NextResponse.json({
-        success: true,
         data: { recommendations }
       })
     } catch (error) {
       console.error('Failed to fetch talent data:', error)
       return NextResponse.json(
         {
-          success: false,
           error: 'Failed to fetch talent data'
         },
         { status: 500 }
@@ -343,7 +339,6 @@ export const POST = withAuth(
             .returning()
 
           return NextResponse.json({
-            success: true,
             data: created
           })
         }
@@ -360,22 +355,17 @@ export const POST = withAuth(
             .where(eq(jobBids.id, bidId))
 
           return NextResponse.json({
-            success: true,
             message: 'Candidate shortlisted'
           })
         }
 
         default:
-          return NextResponse.json(
-            { success: false, error: 'Invalid action' },
-            { status: 400 }
-          )
+          return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
       }
     } catch (error) {
       console.error('Failed to process talent action:', error)
       return NextResponse.json(
         {
-          success: false,
           error: 'Failed to process action'
         },
         { status: 500 }

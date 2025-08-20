@@ -15,10 +15,7 @@ export async function PATCH(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
@@ -31,15 +28,12 @@ export async function PATCH(
     })
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.clientId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'Only client can accept packages' },
+        { error: 'Only client can accept packages' },
         { status: 403 }
       )
     }
@@ -50,15 +44,12 @@ export async function PATCH(
     })
 
     if (!deliveryPackage || deliveryPackage.jobId !== jobId) {
-      return NextResponse.json(
-        { success: false, error: 'Package not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Package not found' }, { status: 404 })
     }
 
     if (deliveryPackage.status !== 'delivered') {
       return NextResponse.json(
-        { success: false, error: 'Package already processed' },
+        { error: 'Package already processed' },
         { status: 400 }
       )
     }
@@ -84,7 +75,7 @@ export async function PATCH(
   } catch (error) {
     console.error('Failed to accept package:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to accept package' },
+      { error: 'Failed to accept package' },
       { status: 500 }
     )
   }

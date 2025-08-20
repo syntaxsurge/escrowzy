@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
     if (!okxDexClient.isChainSupported(chainIdStr)) {
       // Return empty token list for unsupported chains
       return NextResponse.json({
-        success: true,
         tokens: [],
         message: 'Chain not supported by OKX DEX'
       })
@@ -46,7 +45,6 @@ export async function POST(request: NextRequest) {
     )
 
     return NextResponse.json({
-      success: true,
       tokens: validTokens,
       totalCount: validTokens.length
     })
@@ -55,7 +53,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        success: false,
         error: 'Failed to fetch tokens',
         tokens: [],
         details: error instanceof Error ? error.message : 'Unknown error'

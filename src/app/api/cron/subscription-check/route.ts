@@ -20,7 +20,6 @@ export async function GET(request: NextRequest) {
     const result = await processExpiredSubscriptions()
 
     return apiResponses.success({
-      success: true,
       processed: result.processed,
       timestamp: new Date().toISOString()
     })

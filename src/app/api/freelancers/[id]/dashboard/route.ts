@@ -29,7 +29,7 @@ export async function GET(
 
     if (isNaN(freelancerId)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid freelancer ID' },
+        { error: 'Invalid freelancer ID' },
         { status: 400 }
       )
     }
@@ -37,17 +37,14 @@ export async function GET(
     // Check if user is authorized
     const user = await getUser()
     if (!user || user.id !== freelancerId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get freelancer profile
     const profile = await getFreelancerProfileByUserId(freelancerId)
     if (!profile) {
       return NextResponse.json(
-        { success: false, error: 'Freelancer profile not found' },
+        { error: 'Freelancer profile not found' },
         { status: 404 }
       )
     }
@@ -219,7 +216,7 @@ export async function GET(
         ) as client_jobs`
       )
 
-    // Return the data directly - apiClient will wrap it in { success: true, data: ... }
+    // Return the data directly - apiClient will wrap it in {  data: ... }
     return NextResponse.json({
       profile: {
         id: profile.id,
@@ -283,7 +280,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching freelancer dashboard data:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch dashboard data' },
+      { error: 'Failed to fetch dashboard data' },
       { status: 500 }
     )
   }

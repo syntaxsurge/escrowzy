@@ -65,7 +65,6 @@ export async function POST(request: NextRequest) {
     if (!swapResponse || !swapResponse.success) {
       return NextResponse.json(
         {
-          success: false,
           error:
             swapResponse?.error ||
             'Unable to execute swap. Please try again later.',
@@ -80,7 +79,6 @@ export async function POST(request: NextRequest) {
     if (!txData) {
       return NextResponse.json(
         {
-          success: false,
           error: 'No transaction data available',
           message: 'Unable to build transaction'
         },
@@ -114,7 +112,6 @@ export async function POST(request: NextRequest) {
 
     // Return transaction data for the frontend to execute
     return NextResponse.json({
-      success: true,
       tx: formattedTx,
       fromToken: validatedData.fromToken,
       toToken: validatedData.toToken,
@@ -134,7 +131,6 @@ export async function POST(request: NextRequest) {
       if (error.message.includes('No swap data')) {
         return NextResponse.json(
           {
-            success: false,
             error: 'Unable to prepare swap transaction',
             details: 'Liquidity or price has changed. Please refresh quote.'
           },
@@ -144,7 +140,6 @@ export async function POST(request: NextRequest) {
       if (error.message.includes('rate limit')) {
         return NextResponse.json(
           {
-            success: false,
             error: 'Rate limit exceeded',
             details: 'Please try again in a few seconds'
           },
@@ -155,7 +150,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        success: false,
         error: 'Failed to execute swap',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

@@ -36,20 +36,14 @@ export async function GET(
     const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
     const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
     }
 
     // Get the milestone and job to verify access
@@ -67,7 +61,7 @@ export async function GET(
 
     if (!milestone) {
       return NextResponse.json(
-        { success: false, error: 'Milestone not found' },
+        { error: 'Milestone not found' },
         { status: 404 }
       )
     }
@@ -77,10 +71,7 @@ export async function GET(
     const isFreelancer = milestone.job.freelancerId === user.id
 
     if (!isClient && !isFreelancer) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     // Get pagination params
@@ -139,7 +130,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching milestone chat:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch messages' },
+      { error: 'Failed to fetch messages' },
       { status: 500 }
     )
   }
@@ -154,20 +145,14 @@ export async function POST(
     const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
     const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
     }
 
     // Get the milestone and job to verify access
@@ -185,7 +170,7 @@ export async function POST(
 
     if (!milestone) {
       return NextResponse.json(
-        { success: false, error: 'Milestone not found' },
+        { error: 'Milestone not found' },
         { status: 404 }
       )
     }
@@ -195,10 +180,7 @@ export async function POST(
     const isFreelancer = milestone.job.freelancerId === user.id
 
     if (!isClient && !isFreelancer) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     // Parse and validate request body
@@ -263,14 +245,14 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       )
     }
 
     console.error('Error sending milestone message:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to send message' },
+      { error: 'Failed to send message' },
       { status: 500 }
     )
   }
@@ -287,7 +269,7 @@ export async function PUT(
 
     if (isNaN(milestoneId)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid milestone ID' },
+        { error: 'Invalid milestone ID' },
         { status: 400 }
       )
     }
@@ -297,7 +279,7 @@ export async function PUT(
 
     if (!message || !type) {
       return NextResponse.json(
-        { success: false, error: 'Message and type are required' },
+        { error: 'Message and type are required' },
         { status: 400 }
       )
     }
@@ -329,7 +311,7 @@ export async function PUT(
   } catch (error) {
     console.error('Error adding system message:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to add system message' },
+      { error: 'Failed to add system message' },
       { status: 500 }
     )
   }

@@ -21,10 +21,7 @@ export async function GET(
     const { id } = await params
     const jobId = parseInt(id)
     if (isNaN(jobId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid job ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid job ID' }, { status: 400 })
     }
 
     // Get current user
@@ -36,10 +33,7 @@ export async function GET(
     })
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     // Build query conditions based on user role
@@ -127,10 +121,7 @@ export async function GET(
     })
   } catch (error) {
     console.error('Error fetching job bids:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch bids' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch bids' }, { status: 500 })
   }
 }
 
@@ -144,18 +135,12 @@ export async function POST(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
     if (isNaN(jobId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid job ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid job ID' }, { status: 400 })
     }
 
     const body = await request.json()
@@ -165,7 +150,6 @@ export async function POST(
     if (!validationResult.success) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Validation failed',
           details: validationResult.error.errors
         },
@@ -182,7 +166,7 @@ export async function POST(
 
     if (!job) {
       return NextResponse.json(
-        { success: false, error: 'Job not found or not accepting bids' },
+        { error: 'Job not found or not accepting bids' },
         { status: 404 }
       )
     }
@@ -190,7 +174,7 @@ export async function POST(
     // Check if user is the job owner
     if (job.clientId === user.id) {
       return NextResponse.json(
-        { success: false, error: 'Cannot bid on your own job' },
+        { error: 'Cannot bid on your own job' },
         { status: 400 }
       )
     }
@@ -205,7 +189,6 @@ export async function POST(
     if (existingBid) {
       return NextResponse.json(
         {
-          success: false,
           error: 'You have already submitted a bid for this job'
         },
         { status: 400 }
@@ -222,7 +205,6 @@ export async function POST(
     if (!profile) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Please complete your freelancer profile before bidding'
         },
         { status: 400 }
@@ -275,9 +257,6 @@ export async function POST(
     return NextResponse.json(newBid)
   } catch (error) {
     console.error('Error submitting bid:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to submit bid' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to submit bid' }, { status: 500 })
   }
 }

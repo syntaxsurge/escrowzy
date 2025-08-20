@@ -40,7 +40,6 @@ export async function POST(request: NextRequest) {
     const stats = await rewardsService.getUserStats(user.id)
 
     return NextResponse.json({
-      success: true,
       data: {
         claimed: true,
         xpEarned: 100, // You might want to get this from the achievement config

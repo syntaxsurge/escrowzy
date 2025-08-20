@@ -31,7 +31,7 @@ export async function GET(
 
     if (isNaN(freelancerId)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid freelancer ID' },
+        { error: 'Invalid freelancer ID' },
         { status: 400 }
       )
     }
@@ -39,10 +39,7 @@ export async function GET(
     // Check if user is authorized
     const user = await getUser()
     if (!user || user.id !== freelancerId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get freelancer profile
@@ -54,7 +51,7 @@ export async function GET(
 
     if (!profile) {
       return NextResponse.json(
-        { success: false, error: 'Freelancer profile not found' },
+        { error: 'Freelancer profile not found' },
         { status: 404 }
       )
     }
@@ -179,7 +176,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching goals:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch goals' },
+      { error: 'Failed to fetch goals' },
       { status: 500 }
     )
   }
@@ -196,7 +193,7 @@ export async function POST(
 
     if (isNaN(freelancerId)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid freelancer ID' },
+        { error: 'Invalid freelancer ID' },
         { status: 400 }
       )
     }
@@ -204,10 +201,7 @@ export async function POST(
     // Check if user is authorized
     const user = await getUser()
     if (!user || user.id !== freelancerId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -216,7 +210,7 @@ export async function POST(
     // Validate input
     if (!title || !type || !target || !deadline) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { error: 'Missing required fields' },
         { status: 400 }
       )
     }
@@ -230,7 +224,7 @@ export async function POST(
 
     if (!profile) {
       return NextResponse.json(
-        { success: false, error: 'Freelancer profile not found' },
+        { error: 'Freelancer profile not found' },
         { status: 404 }
       )
     }
@@ -269,7 +263,7 @@ export async function POST(
   } catch (error) {
     console.error('Error creating goal:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create goal' },
+      { error: 'Failed to create goal' },
       { status: 500 }
     )
   }
@@ -286,7 +280,7 @@ export async function PATCH(
 
     if (isNaN(freelancerId)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid freelancer ID' },
+        { error: 'Invalid freelancer ID' },
         { status: 400 }
       )
     }
@@ -294,10 +288,7 @@ export async function PATCH(
     // Check if user is authorized
     const user = await getUser()
     if (!user || user.id !== freelancerId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -305,7 +296,7 @@ export async function PATCH(
 
     if (!goalId) {
       return NextResponse.json(
-        { success: false, error: 'Goal ID is required' },
+        { error: 'Goal ID is required' },
         { status: 400 }
       )
     }
@@ -319,7 +310,7 @@ export async function PATCH(
 
     if (!profile) {
       return NextResponse.json(
-        { success: false, error: 'Freelancer profile not found' },
+        { error: 'Freelancer profile not found' },
         { status: 404 }
       )
     }
@@ -331,10 +322,7 @@ export async function PATCH(
     // Find and update goal
     const goalIndex = goals.findIndex((g: Goal) => g.id === goalId)
     if (goalIndex === -1) {
-      return NextResponse.json(
-        { success: false, error: 'Goal not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Goal not found' }, { status: 404 })
     }
 
     goals[goalIndex] = {
@@ -356,7 +344,7 @@ export async function PATCH(
   } catch (error) {
     console.error('Error updating goal:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to update goal' },
+      { error: 'Failed to update goal' },
       { status: 500 }
     )
   }
@@ -373,7 +361,7 @@ export async function DELETE(
 
     if (isNaN(freelancerId)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid freelancer ID' },
+        { error: 'Invalid freelancer ID' },
         { status: 400 }
       )
     }
@@ -381,10 +369,7 @@ export async function DELETE(
     // Check if user is authorized
     const user = await getUser()
     if (!user || user.id !== freelancerId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const searchParams = request.nextUrl.searchParams
@@ -392,7 +377,7 @@ export async function DELETE(
 
     if (!goalId) {
       return NextResponse.json(
-        { success: false, error: 'Goal ID is required' },
+        { error: 'Goal ID is required' },
         { status: 400 }
       )
     }
@@ -406,7 +391,7 @@ export async function DELETE(
 
     if (!profile) {
       return NextResponse.json(
-        { success: false, error: 'Freelancer profile not found' },
+        { error: 'Freelancer profile not found' },
         { status: 404 }
       )
     }
@@ -419,10 +404,7 @@ export async function DELETE(
     const updatedGoals = goals.filter((g: Goal) => g.id !== goalId)
 
     if (goals.length === updatedGoals.length) {
-      return NextResponse.json(
-        { success: false, error: 'Goal not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Goal not found' }, { status: 404 })
     }
 
     // Save updated goals to metadata field
@@ -440,7 +422,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Error deleting goal:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to delete goal' },
+      { error: 'Failed to delete goal' },
       { status: 500 }
     )
   }

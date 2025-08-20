@@ -16,10 +16,7 @@ export async function POST(
     const { id } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
@@ -82,7 +79,7 @@ export async function POST(
   } catch (error) {
     console.error('Failed to leave workspace:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to leave workspace' },
+      { error: 'Failed to leave workspace' },
       { status: 500 }
     )
   }

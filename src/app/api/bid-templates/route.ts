@@ -13,10 +13,7 @@ export async function GET(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const templates = await db
@@ -35,7 +32,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching bid templates:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch templates' },
+      { error: 'Failed to fetch templates' },
       { status: 500 }
     )
   }
@@ -47,10 +44,7 @@ export async function POST(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -60,7 +54,6 @@ export async function POST(request: NextRequest) {
     if (!validationResult.success) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Validation failed',
           details: validationResult.error.errors
         },
@@ -89,13 +82,12 @@ export async function POST(request: NextRequest) {
       .returning()
 
     return NextResponse.json({
-      success: true,
       template
     })
   } catch (error) {
     console.error('Error creating bid template:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create template' },
+      { error: 'Failed to create template' },
       { status: 500 }
     )
   }
@@ -107,10 +99,7 @@ export async function PATCH(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -118,7 +107,7 @@ export async function PATCH(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { success: false, error: 'Template ID is required' },
+        { error: 'Template ID is required' },
         { status: 400 }
       )
     }
@@ -133,10 +122,7 @@ export async function PATCH(request: NextRequest) {
       .limit(1)
 
     if (!existingTemplate) {
-      return NextResponse.json(
-        { success: false, error: 'Template not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
     // If setting as default, unset other defaults
@@ -163,13 +149,12 @@ export async function PATCH(request: NextRequest) {
       .returning()
 
     return NextResponse.json({
-      success: true,
       template: updatedTemplate
     })
   } catch (error) {
     console.error('Error updating bid template:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to update template' },
+      { error: 'Failed to update template' },
       { status: 500 }
     )
   }
@@ -181,10 +166,7 @@ export async function DELETE(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const searchParams = request.nextUrl.searchParams
@@ -192,7 +174,7 @@ export async function DELETE(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { success: false, error: 'Template ID is required' },
+        { error: 'Template ID is required' },
         { status: 400 }
       )
     }
@@ -210,23 +192,19 @@ export async function DELETE(request: NextRequest) {
       .limit(1)
 
     if (!existingTemplate) {
-      return NextResponse.json(
-        { success: false, error: 'Template not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
     // Delete the template
     await db.delete(bidTemplates).where(eq(bidTemplates.id, parseInt(id)))
 
     return NextResponse.json({
-      success: true,
       message: 'Template deleted successfully'
     })
   } catch (error) {
     console.error('Error deleting bid template:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to delete template' },
+      { error: 'Failed to delete template' },
       { status: 500 }
     )
   }

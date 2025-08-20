@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Failed to fetch skills:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch skills' },
+      { error: 'Failed to fetch skills' },
       { status: 500 }
     )
   }

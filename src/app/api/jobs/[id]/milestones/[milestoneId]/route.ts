@@ -30,7 +30,7 @@ export async function GET(
 
     if (isNaN(milestoneId)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid milestone ID' },
+        { error: 'Invalid milestone ID' },
         { status: 400 }
       )
     }
@@ -43,7 +43,7 @@ export async function GET(
 
     if (!milestone) {
       return NextResponse.json(
-        { success: false, error: 'Milestone not found' },
+        { error: 'Milestone not found' },
         { status: 404 }
       )
     }
@@ -52,7 +52,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching milestone:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch milestone' },
+      { error: 'Failed to fetch milestone' },
       { status: 500 }
     )
   }
@@ -67,20 +67,14 @@ export async function PATCH(
     const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
     const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
     }
 
     // Get the milestone and job
@@ -98,7 +92,7 @@ export async function PATCH(
 
     if (!milestone) {
       return NextResponse.json(
-        { success: false, error: 'Milestone not found' },
+        { error: 'Milestone not found' },
         { status: 404 }
       )
     }
@@ -119,7 +113,7 @@ export async function PATCH(
       // Validation for status transitions
       if (newStatus === 'in_progress' && currentStatus !== 'pending') {
         return NextResponse.json(
-          { success: false, error: 'Can only start pending milestones' },
+          { error: 'Can only start pending milestones' },
           { status: 400 }
         )
       }
@@ -127,13 +121,13 @@ export async function PATCH(
       if (newStatus === 'submitted') {
         if (!isFreelancer) {
           return NextResponse.json(
-            { success: false, error: 'Only freelancer can submit milestones' },
+            { error: 'Only freelancer can submit milestones' },
             { status: 403 }
           )
         }
         if (currentStatus !== 'in_progress') {
           return NextResponse.json(
-            { success: false, error: 'Can only submit in-progress milestones' },
+            { error: 'Can only submit in-progress milestones' },
             { status: 400 }
           )
         }
@@ -142,13 +136,13 @@ export async function PATCH(
       if (newStatus === 'approved') {
         if (!isClient) {
           return NextResponse.json(
-            { success: false, error: 'Only client can approve milestones' },
+            { error: 'Only client can approve milestones' },
             { status: 403 }
           )
         }
         if (currentStatus !== 'submitted') {
           return NextResponse.json(
-            { success: false, error: 'Can only approve submitted milestones' },
+            { error: 'Can only approve submitted milestones' },
             { status: 400 }
           )
         }
@@ -157,7 +151,7 @@ export async function PATCH(
       if (newStatus === 'disputed') {
         if (!isClient && !isFreelancer) {
           return NextResponse.json(
-            { success: false, error: 'Only parties can dispute milestones' },
+            { error: 'Only parties can dispute milestones' },
             { status: 403 }
           )
         }
@@ -167,7 +161,7 @@ export async function PATCH(
     // For other updates, only client can modify (unless it's submission-related)
     if (!validatedData.status && !validatedData.submissionUrl && !isClient) {
       return NextResponse.json(
-        { success: false, error: 'Only client can update milestone details' },
+        { error: 'Only client can update milestone details' },
         { status: 403 }
       )
     }
@@ -209,14 +203,14 @@ export async function PATCH(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       )
     }
 
     console.error('Error updating milestone:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to update milestone' },
+      { error: 'Failed to update milestone' },
       { status: 500 }
     )
   }
@@ -231,20 +225,14 @@ export async function DELETE(
     const { id, milestoneId: milestoneIdParam } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
     const milestoneId = parseInt(milestoneIdParam)
 
     if (isNaN(jobId) || isNaN(milestoneId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
     }
 
     // Check if user is the client for this job
@@ -255,15 +243,12 @@ export async function DELETE(
       .limit(1)
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.clientId !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'Only the client can delete milestones' },
+        { error: 'Only the client can delete milestones' },
         { status: 403 }
       )
     }
@@ -279,7 +264,7 @@ export async function DELETE(
 
     if (!milestone) {
       return NextResponse.json(
-        { success: false, error: 'Milestone not found' },
+        { error: 'Milestone not found' },
         { status: 404 }
       )
     }
@@ -288,7 +273,6 @@ export async function DELETE(
     if (milestone.status !== 'pending') {
       return NextResponse.json(
         {
-          success: false,
           error: 'Cannot delete milestone that is already in progress'
         },
         { status: 400 }
@@ -304,7 +288,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Error deleting milestone:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to delete milestone' },
+      { error: 'Failed to delete milestone' },
       { status: 500 }
     )
   }

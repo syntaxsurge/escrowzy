@@ -34,7 +34,6 @@ export async function GET(request: NextRequest) {
       const price = await okxDexClient.getOKXMarketPrice(chainId, tokenToPrice)
 
       return NextResponse.json({
-        success: true,
         data: {
           chainId,
           tokenAddress: tokenToPrice,
@@ -84,7 +83,6 @@ export async function POST(request: NextRequest) {
     )
 
     return NextResponse.json({
-      success: true,
       data: prices
     })
   } catch (error) {

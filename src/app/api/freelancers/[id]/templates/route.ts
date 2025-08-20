@@ -33,10 +33,7 @@ export async function GET(
     const { id } = await params
     const session = await verifySession()
     if (!session || Number(id) !== session.user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get freelancer profile
@@ -47,10 +44,7 @@ export async function GET(
       .limit(1)
 
     if (!profile.length) {
-      return NextResponse.json(
-        { success: false, error: 'Profile not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
     // Get templates from metadata field
@@ -80,7 +74,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching templates:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch templates' },
+      { error: 'Failed to fetch templates' },
       { status: 500 }
     )
   }
@@ -94,10 +88,7 @@ export async function POST(
     const { id } = await params
     const session = await verifySession()
     if (!session || Number(id) !== session.user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -113,7 +104,7 @@ export async function POST(
 
     if (!name || !category || !content || !deliveryTimeDays) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { error: 'Missing required fields' },
         { status: 400 }
       )
     }
@@ -126,10 +117,7 @@ export async function POST(
       .limit(1)
 
     if (!profile.length) {
-      return NextResponse.json(
-        { success: false, error: 'Profile not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
     // Get templates from metadata field
@@ -170,7 +158,7 @@ export async function POST(
   } catch (error) {
     console.error('Error creating template:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create template' },
+      { error: 'Failed to create template' },
       { status: 500 }
     )
   }
@@ -184,10 +172,7 @@ export async function PUT(
     const { id } = await params
     const session = await verifySession()
     if (!session || Number(id) !== session.user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -204,7 +189,7 @@ export async function PUT(
 
     if (!templateId) {
       return NextResponse.json(
-        { success: false, error: 'Template ID is required' },
+        { error: 'Template ID is required' },
         { status: 400 }
       )
     }
@@ -217,10 +202,7 @@ export async function PUT(
       .limit(1)
 
     if (!profile.length) {
-      return NextResponse.json(
-        { success: false, error: 'Profile not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
     // Get templates from metadata field
@@ -233,10 +215,7 @@ export async function PUT(
     )
 
     if (templateIndex === -1) {
-      return NextResponse.json(
-        { success: false, error: 'Template not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
     templates[templateIndex] = {
@@ -274,7 +253,7 @@ export async function PUT(
   } catch (error) {
     console.error('Error updating template:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to update template' },
+      { error: 'Failed to update template' },
       { status: 500 }
     )
   }
@@ -288,10 +267,7 @@ export async function DELETE(
     const { id } = await params
     const session = await verifySession()
     if (!session || Number(id) !== session.user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -299,7 +275,7 @@ export async function DELETE(
 
     if (!templateId) {
       return NextResponse.json(
-        { success: false, error: 'Template ID is required' },
+        { error: 'Template ID is required' },
         { status: 400 }
       )
     }
@@ -312,10 +288,7 @@ export async function DELETE(
       .limit(1)
 
     if (!profile.length) {
-      return NextResponse.json(
-        { success: false, error: 'Profile not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
     // Get templates from metadata field
@@ -328,10 +301,7 @@ export async function DELETE(
     )
 
     if (filteredTemplates.length === templates.length) {
-      return NextResponse.json(
-        { success: false, error: 'Template not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
     // Save updated templates to metadata field
@@ -349,7 +319,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Error deleting template:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to delete template' },
+      { error: 'Failed to delete template' },
       { status: 500 }
     )
   }
@@ -364,17 +334,14 @@ export async function PATCH(
     const { id } = await params
     const session = await verifySession()
     if (!session || Number(id) !== session.user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { templateId } = await request.json()
 
     if (!templateId) {
       return NextResponse.json(
-        { success: false, error: 'Template ID is required' },
+        { error: 'Template ID is required' },
         { status: 400 }
       )
     }
@@ -387,10 +354,7 @@ export async function PATCH(
       .limit(1)
 
     if (!profile.length) {
-      return NextResponse.json(
-        { success: false, error: 'Profile not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
     // Get templates from metadata field
@@ -403,10 +367,7 @@ export async function PATCH(
     )
 
     if (templateIndex === -1) {
-      return NextResponse.json(
-        { success: false, error: 'Template not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
     templates[templateIndex].usageCount =
@@ -428,7 +389,7 @@ export async function PATCH(
   } catch (error) {
     console.error('Error tracking template usage:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to track template usage' },
+      { error: 'Failed to track template usage' },
       { status: 500 }
     )
   }

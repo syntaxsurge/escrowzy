@@ -10,26 +10,20 @@ export async function GET(
     const { id } = await params
     const profileId = parseInt(id)
     if (isNaN(profileId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid profile ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid profile ID' }, { status: 400 })
     }
 
     const profile = await getFreelancerProfileById(profileId)
 
     if (!profile) {
-      return NextResponse.json(
-        { success: false, error: 'Profile not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
     return NextResponse.json(profile)
   } catch (error) {
     console.error('Error fetching freelancer profile:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch profile' },
+      { error: 'Failed to fetch profile' },
       { status: 500 }
     )
   }

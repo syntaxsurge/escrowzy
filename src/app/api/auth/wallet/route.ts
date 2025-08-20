@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
       return apiResponses.error('Failed to establish session', 500)
     }
 
-    return apiResponses.success({ success: true, user })
+    return apiResponses.success({ user })
   } catch (error) {
     return apiResponses.handleError(error, 'Authentication failed')
   }
@@ -257,7 +257,7 @@ export async function DELETE(_request: NextRequest) {
     // Clear session cookie
     await clearSession()
 
-    return apiResponses.success({ success: true })
+    return apiResponses.success({ message: 'Session cleared successfully' })
   } catch (error) {
     return apiResponses.handleError(error, 'Failed to clear session')
   }

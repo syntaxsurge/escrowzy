@@ -21,7 +21,7 @@ export async function GET(
 
     if (isNaN(freelancerId)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid freelancer ID' },
+        { error: 'Invalid freelancer ID' },
         { status: 400 }
       )
     }
@@ -29,10 +29,7 @@ export async function GET(
     // Check if user is authorized
     const user = await getUser()
     if (!user || user.id !== freelancerId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get query parameters
@@ -59,7 +56,7 @@ export async function GET(
       case 'period':
         if (!period) {
           return NextResponse.json(
-            { success: false, error: 'Period parameter is required' },
+            { error: 'Period parameter is required' },
             { status: 400 }
           )
         }
@@ -145,14 +142,14 @@ export async function GET(
 
       default:
         return NextResponse.json(
-          { success: false, error: 'Invalid view parameter' },
+          { error: 'Invalid view parameter' },
           { status: 400 }
         )
     }
   } catch (error) {
     console.error('Error fetching earnings data:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch earnings data' },
+      { error: 'Failed to fetch earnings data' },
       { status: 500 }
     )
   }

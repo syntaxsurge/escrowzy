@@ -49,7 +49,6 @@ export async function PUT(
     }
 
     return NextResponse.json({
-      success: true,
       contract: result[0]
     })
   } catch (error) {

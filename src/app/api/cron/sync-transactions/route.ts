@@ -39,7 +39,6 @@ export async function GET(request: NextRequest) {
     }
 
     return apiResponses.success({
-      success: true,
       synced: totalSynced,
       transactions: syncedTransactions.map(tx => ({
         transactionHash: tx?.transactionHash,

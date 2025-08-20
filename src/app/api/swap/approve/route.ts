@@ -34,7 +34,6 @@ export async function POST(request: NextRequest) {
     if (!approveData) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Failed to generate approve transaction'
         },
         { status: 400 }
@@ -42,7 +41,6 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
       approveData
     })
   } catch (error) {
@@ -50,7 +48,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        success: false,
         error: 'Failed to generate approve transaction'
       },
       { status: 500 }

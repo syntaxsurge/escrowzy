@@ -40,7 +40,6 @@ export async function GET(request: NextRequest) {
     if (!validationResult.success) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Invalid filters',
           errors: validationResult.error.errors
         },
@@ -57,7 +56,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error searching freelancers:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to search freelancers' },
+      { error: 'Failed to search freelancers' },
       { status: 500 }
     )
   }

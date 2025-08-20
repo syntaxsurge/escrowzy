@@ -22,19 +22,13 @@ export async function GET(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
 
     if (isNaN(jobId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid job ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid job ID' }, { status: 400 })
     }
 
     // Check if user owns the job
@@ -45,16 +39,12 @@ export async function GET(
       .limit(1)
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.clientId !== user.id) {
       return NextResponse.json(
         {
-          success: false,
           error: 'You can only view invitations for your own jobs'
         },
         { status: 403 }
@@ -92,7 +82,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching job invitations:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch invitations' },
+      { error: 'Failed to fetch invitations' },
       { status: 500 }
     )
   }
@@ -108,19 +98,13 @@ export async function POST(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
 
     if (isNaN(jobId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid job ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid job ID' }, { status: 400 })
     }
 
     const body = await request.json()
@@ -132,7 +116,7 @@ export async function POST(
       freelancerIds.length === 0
     ) {
       return NextResponse.json(
-        { success: false, error: 'At least one freelancer must be selected' },
+        { error: 'At least one freelancer must be selected' },
         { status: 400 }
       )
     }
@@ -145,16 +129,12 @@ export async function POST(
       .limit(1)
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.clientId !== user.id) {
       return NextResponse.json(
         {
-          success: false,
           error: 'You can only send invitations for your own jobs'
         },
         { status: 403 }
@@ -182,7 +162,6 @@ export async function POST(
     if (newFreelancerIds.length === 0) {
       return NextResponse.json(
         {
-          success: false,
           error: 'All selected freelancers have already been invited'
         },
         { status: 400 }
@@ -243,7 +222,7 @@ export async function POST(
   } catch (error) {
     console.error('Error sending job invitations:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to send invitations' },
+      { error: 'Failed to send invitations' },
       { status: 500 }
     )
   }

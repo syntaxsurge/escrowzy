@@ -12,27 +12,18 @@ export async function GET(
     const jobId = parseInt(id)
 
     if (isNaN(jobId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid job ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid job ID' }, { status: 400 })
     }
 
     const job = await getJobById(jobId)
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     return NextResponse.json(job)
   } catch (error) {
     console.error('Error fetching job:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch job' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch job' }, { status: 500 })
   }
 }

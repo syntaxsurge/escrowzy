@@ -53,7 +53,6 @@ export const POST = withAdmin(
       })
 
       return apiResponses.success({
-        success: true,
         added: newMembers.length
       })
     } catch (error) {

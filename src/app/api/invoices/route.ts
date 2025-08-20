@@ -31,10 +31,7 @@ export async function GET(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -92,14 +89,13 @@ export async function GET(request: NextRequest) {
       .offset(offset)
 
     return NextResponse.json({
-      success: true,
       invoices: userInvoices,
       hasMore: userInvoices.length === limit
     })
   } catch (error) {
     console.error('Error fetching invoices:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch invoices' },
+      { error: 'Failed to fetch invoices' },
       { status: 500 }
     )
   }
@@ -111,10 +107,7 @@ export async function POST(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -128,17 +121,13 @@ export async function POST(request: NextRequest) {
       .limit(1)
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     // Only freelancer can create invoices
     if (job.freelancerId !== user.id) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Only the assigned freelancer can create invoices'
         },
         { status: 403 }
@@ -174,20 +163,19 @@ export async function POST(request: NextRequest) {
       .returning()
 
     return NextResponse.json({
-      success: true,
       invoice
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       )
     }
 
     console.error('Error creating invoice:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create invoice' },
+      { error: 'Failed to create invoice' },
       { status: 500 }
     )
   }

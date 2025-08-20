@@ -61,7 +61,9 @@ export const DELETE = withAuth(
       // Remove the team member
       await removeTeamMember(memberId, userTeam.teamId, user.id)
 
-      return apiResponses.success({ success: true })
+      return apiResponses.success({
+        message: 'Team member removed successfully'
+      })
     } catch (error) {
       if (error instanceof Error) {
         if (error.message.includes('owner')) {

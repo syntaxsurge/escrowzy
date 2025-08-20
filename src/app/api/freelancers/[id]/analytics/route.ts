@@ -26,7 +26,7 @@ export async function GET(
 
     if (isNaN(freelancerId)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid freelancer ID' },
+        { error: 'Invalid freelancer ID' },
         { status: 400 }
       )
     }
@@ -34,10 +34,7 @@ export async function GET(
     // Check if user is authorized
     const user = await getUser()
     if (!user || user.id !== freelancerId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get time range from query params
@@ -56,7 +53,7 @@ export async function GET(
 
     if (!profile) {
       return NextResponse.json(
-        { success: false, error: 'Freelancer profile not found' },
+        { error: 'Freelancer profile not found' },
         { status: 404 }
       )
     }
@@ -350,7 +347,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching analytics data:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch analytics data' },
+      { error: 'Failed to fetch analytics data' },
       { status: 500 }
     )
   }

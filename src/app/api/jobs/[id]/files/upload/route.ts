@@ -23,10 +23,7 @@ export async function POST(
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     const jobId = parseInt(id)
 
@@ -36,17 +33,11 @@ export async function POST(
     })
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.clientId !== user.id && job.freelancerId !== user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     const formData = await request.formData()
@@ -54,10 +45,7 @@ export async function POST(
     const description = formData.get('description') as string
 
     if (!files || files.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'No files provided' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'No files provided' }, { status: 400 })
     }
 
     const uploadedFiles = []
@@ -185,7 +173,7 @@ export async function POST(
   } catch (error) {
     console.error('Failed to upload files:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to upload files' },
+      { error: 'Failed to upload files' },
       { status: 500 }
     )
   }

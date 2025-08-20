@@ -11,10 +11,7 @@ export async function GET() {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get queue statistics
@@ -28,7 +25,6 @@ export async function GET() {
       .limit(20)
 
     return NextResponse.json({
-      success: true,
       data: {
         stats,
         recentJobs: recentJobs.map(job => ({
@@ -50,7 +46,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error in GET /api/queue/stats:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

@@ -62,7 +62,7 @@ export default function CreateListingPage() {
       color: 'from-purple-500 to-pink-600',
       bgGradient: 'from-purple-500/10 to-pink-500/10',
       features: ['Secure transfer', 'Escrow protection', 'Manual verification'],
-      badge: 'New',
+      badge: 'Hot',
       available: true
     },
     {
@@ -78,7 +78,7 @@ export default function CreateListingPage() {
         'Offer services',
         'Milestone payments'
       ],
-      badge: 'Create',
+      badge: 'Professional',
       available: true
     },
     {
@@ -177,11 +177,14 @@ export default function CreateListingPage() {
                     className={cn(
                       'font-bold',
                       option.available &&
-                        option.badge === 'New' &&
-                        'bg-gradient-to-r from-purple-500 to-pink-500 text-white',
+                        option.badge === 'Hot' &&
+                        'bg-gradient-to-r from-orange-500 to-red-500 text-white',
                       option.available &&
                         option.badge === 'Popular' &&
-                        'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
+                        'bg-gradient-to-r from-blue-500 to-cyan-500 text-white',
+                      option.available &&
+                        option.badge === 'Professional' &&
+                        'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
                     )}
                   >
                     {option.badge}

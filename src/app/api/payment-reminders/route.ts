@@ -29,10 +29,7 @@ export async function GET(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -58,13 +55,12 @@ export async function GET(request: NextRequest) {
       .orderBy(desc(paymentReminders.createdAt))
 
     return NextResponse.json({
-      success: true,
       reminders
     })
   } catch (error) {
     console.error('Error fetching payment reminders:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch payment reminders' },
+      { error: 'Failed to fetch payment reminders' },
       { status: 500 }
     )
   }
@@ -76,10 +72,7 @@ export async function POST(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -98,16 +91,13 @@ export async function POST(request: NextRequest) {
 
       if (!invoice) {
         return NextResponse.json(
-          { success: false, error: 'Invoice not found' },
+          { error: 'Invoice not found' },
           { status: 404 }
         )
       }
 
       if (invoice.freelancerId !== user.id) {
-        return NextResponse.json(
-          { success: false, error: 'Access denied' },
-          { status: 403 }
-        )
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 })
       }
 
       clientId = invoice.clientId
@@ -128,7 +118,7 @@ export async function POST(request: NextRequest) {
 
       if (!milestone) {
         return NextResponse.json(
-          { success: false, error: 'Milestone not found' },
+          { error: 'Milestone not found' },
           { status: 404 }
         )
       }
@@ -141,10 +131,7 @@ export async function POST(request: NextRequest) {
         .limit(1)
 
       if (milestone.clientId !== user.id && job?.freelancerId !== user.id) {
-        return NextResponse.json(
-          { success: false, error: 'Access denied' },
-          { status: 403 }
-        )
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 })
       }
 
       clientId = milestone.clientId
@@ -152,10 +139,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!clientId) {
-      return NextResponse.json(
-        { success: false, error: 'Client not found' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Client not found' }, { status: 400 })
     }
 
     // Create reminder
@@ -235,21 +219,20 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
       reminder,
       message: 'Payment reminder created successfully'
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       )
     }
 
     console.error('Error creating payment reminder:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create payment reminder' },
+      { error: 'Failed to create payment reminder' },
       { status: 500 }
     )
   }
@@ -262,10 +245,7 @@ export async function PUT(request: NextRequest) {
     // Check for API key or admin authentication
     const apiKey = request.headers.get('x-api-key')
     if (apiKey !== process.env.CRON_API_KEY) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Find overdue invoices
@@ -348,14 +328,13 @@ export async function PUT(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
       remindersSent,
       message: `Sent ${remindersSent} overdue payment reminders`
     })
   } catch (error) {
     console.error('Error sending auto reminders:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to send auto reminders' },
+      { error: 'Failed to send auto reminders' },
       { status: 500 }
     )
   }

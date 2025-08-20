@@ -14,10 +14,7 @@ export async function GET(
     const { id } = await params
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const jobId = parseInt(id)
@@ -30,17 +27,11 @@ export async function GET(
       .limit(1)
 
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
     if (job.clientId !== user.id && job.freelancerId !== user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     // Get client info
@@ -146,7 +137,7 @@ export async function GET(
   } catch (error) {
     console.error('Failed to fetch activity:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch activity' },
+      { error: 'Failed to fetch activity' },
       { status: 500 }
     )
   }

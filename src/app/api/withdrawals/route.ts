@@ -30,10 +30,7 @@ export async function GET(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -73,7 +70,6 @@ export async function GET(request: NextRequest) {
       .where(eq(withdrawals.freelancerId, user.id))
 
     return NextResponse.json({
-      success: true,
       withdrawals: userWithdrawals,
       totals: {
         totalWithdrawn: totals?.totalWithdrawn || '0',
@@ -85,7 +81,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching withdrawals:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch withdrawals' },
+      { error: 'Failed to fetch withdrawals' },
       { status: 500 }
     )
   }
@@ -97,10 +93,7 @@ export async function POST(request: NextRequest) {
     const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -130,7 +123,6 @@ export async function POST(request: NextRequest) {
     if (requestedAmount > availableBalance) {
       return NextResponse.json(
         {
-          success: false,
           error: 'Insufficient balance',
           availableBalance: availableBalance.toString()
         },
@@ -143,7 +135,6 @@ export async function POST(request: NextRequest) {
     if (requestedAmount < minAmount) {
       return NextResponse.json(
         {
-          success: false,
           error: `Minimum withdrawal amount is ${minAmount} ETH`
         },
         { status: 400 }
@@ -188,21 +179,20 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
       withdrawal,
       message: 'Withdrawal request submitted successfully'
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       )
     }
 
     console.error('Error creating withdrawal:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create withdrawal request' },
+      { error: 'Failed to create withdrawal request' },
       { status: 500 }
     )
   }

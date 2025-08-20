@@ -116,7 +116,6 @@ export async function POST(
     )
 
     return apiResponses.success({
-      success: true,
       message: 'Successfully downgraded team plan to free'
     })
   } catch (error) {
