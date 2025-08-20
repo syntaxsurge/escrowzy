@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      job
+      data: job
     })
   } catch (error) {
     console.error('Error creating job:', error)

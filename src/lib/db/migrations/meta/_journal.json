@@ -8,6 +8,13 @@
       "when": 1755546234034,
       "tag": "0000_freezing_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1755696736060,
+      "tag": "0001_spicy_molten_man",
+      "breakpoints": true
     }
   ]
 }

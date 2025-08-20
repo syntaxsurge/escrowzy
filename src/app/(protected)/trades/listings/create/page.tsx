@@ -67,14 +67,18 @@ export default function CreateListingPage() {
     },
     {
       id: 'service',
-      title: 'Services',
-      description: 'Offer freelance or professional services',
+      title: 'Jobs & Services',
+      description: 'Post job opportunities or offer professional services',
       icon: Briefcase,
-      href: `${appRoutes.trades.listings.create}/service`,
+      href: `${appRoutes.trades.listings.create}/job`,
       color: 'from-green-500 to-emerald-600',
       bgGradient: 'from-green-500/10 to-emerald-500/10',
-      features: ['Milestone payments', 'Dispute resolution', 'Rating system'],
-      badge: 'New',
+      features: [
+        'Post job opportunities',
+        'Offer services',
+        'Milestone payments'
+      ],
+      badge: 'Create',
       available: true
     },
     {

@@ -68,17 +68,20 @@ export default function JobsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [search, setSearch] = useState(searchParams.get('search') || '')
-  const [category, setCategory] = useState(searchParams.get('category') || '')
+  const [category, setCategory] = useState(
+    searchParams.get('category') || 'all'
+  )
   const [experienceLevel, setExperienceLevel] = useState(
-    searchParams.get('experience') || ''
+    searchParams.get('experience') || 'all'
   )
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'newest')
 
   // Build query string
   const queryParams = new URLSearchParams()
   if (search) queryParams.append('search', search)
-  if (category) queryParams.append('categoryId', category)
-  if (experienceLevel) queryParams.append('experienceLevel', experienceLevel)
+  if (category && category !== 'all') queryParams.append('categoryId', category)
+  if (experienceLevel && experienceLevel !== 'all')
+    queryParams.append('experienceLevel', experienceLevel)
   queryParams.append('sortBy', sortBy)
   queryParams.append('status', 'open')
 
@@ -99,8 +102,9 @@ export default function JobsPage() {
     e.preventDefault()
     const params = new URLSearchParams()
     if (search) params.append('search', search)
-    if (category) params.append('category', category)
-    if (experienceLevel) params.append('experience', experienceLevel)
+    if (category && category !== 'all') params.append('category', category)
+    if (experienceLevel && experienceLevel !== 'all')
+      params.append('experience', experienceLevel)
     if (sortBy !== 'newest') params.append('sort', sortBy)
     router.push(`${appRoutes.trades.jobs.base}?${params.toString()}`)
   }
@@ -141,7 +145,9 @@ export default function JobsPage() {
         icon={<Briefcase className='h-8 w-8 text-white' />}
         actions={
           <Button
-            onClick={() => router.push(appRoutes.trades.jobs.create)}
+            onClick={() =>
+              router.push(`${appRoutes.trades.listings.create}/job`)
+            }
             className='bg-gradient-to-r from-green-600 to-emerald-700 text-white hover:from-green-700 hover:to-emerald-800'
           >
             <Zap className='mr-2 h-4 w-4' />
@@ -232,7 +238,7 @@ export default function JobsPage() {
                   <SelectValue placeholder='All Categories' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value=''>All Categories</SelectItem>
+                  <SelectItem value='all'>All Categories</SelectItem>
                   {categoriesData?.categories?.map((cat: any) => (
                     <SelectItem key={cat.id} value={cat.id.toString()}>
                       <span className='flex items-center gap-2'>
@@ -252,7 +258,7 @@ export default function JobsPage() {
                   <SelectValue placeholder='Experience Level' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value=''>All Levels</SelectItem>
+                  <SelectItem value='all'>All Levels</SelectItem>
                   <SelectItem value='entry'>Entry Level</SelectItem>
                   <SelectItem value='intermediate'>Intermediate</SelectItem>
                   <SelectItem value='expert'>Expert</SelectItem>

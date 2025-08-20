@@ -57,6 +57,7 @@ import {
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { appRoutes } from '@/config/app-routes'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 
@@ -314,7 +315,7 @@ export function VendorManagement({
                     <TableRow key={freelancer.id}>
                       <TableCell>
                         <Link
-                          href={`/profile/${freelancer.id}`}
+                          href={appRoutes.users.byId(freelancer.id)}
                           className='flex items-center gap-2 hover:underline'
                         >
                           <Avatar className='h-8 w-8'>
@@ -374,12 +375,14 @@ export function VendorManagement({
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
-                              <Link href={`/profile/${freelancer.id}`}>
+                              <Link href={appRoutes.users.byId(freelancer.id)}>
                                 View Profile
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <Link href={`/messages?user=${freelancer.id}`}>
+                              <Link
+                                href={`${appRoutes.chat.base}?user=${freelancer.id}`}
+                              >
                                 <MessageSquare className='mr-2 h-4 w-4' />
                                 Send Message
                               </Link>
@@ -405,9 +408,9 @@ export function VendorManagement({
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
                               <Link
-                                href={`/trades/listings/create/service?invite=${freelancer.id}`}
+                                href={`${appRoutes.trades.jobs.base}?invite=${freelancer.id}`}
                               >
-                                Invite to New Job
+                                Browse Jobs Together
                               </Link>
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -501,7 +504,7 @@ export function VendorManagement({
 
                         <div className='mt-4 flex gap-2'>
                           <Button size='sm' className='flex-1' asChild>
-                            <Link href={`/profile/${performer.id}`}>
+                            <Link href={appRoutes.users.byId(performer.id)}>
                               View Profile
                             </Link>
                           </Button>

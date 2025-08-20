@@ -15,7 +15,7 @@ export const appRoutes = {
   jobs: '/listings?category=service',
   listings: '/listings',
   domains: '/listings?category=domain',
-  services: '/listings?category=service',
+  services: '/trades/jobs',
 
   chat: {
     base: '/chat',
@@ -78,12 +78,12 @@ export const appRoutes = {
       withTab: (tab: string) => `/trades/listings?tab=${tab}`,
       p2p: '/trades/listings?category=p2p',
       domain: '/trades/listings?category=domain',
-      service: '/trades/listings?category=service'
+      service: '/trades/jobs'
     },
     jobs: {
-      base: '/trades/listings?category=service',
+      base: '/trades/jobs',
       detail: (id: string | number) => `/trades/jobs/${id}`,
-      create: '/trades/listings/create/service',
+      create: '/trades/listings/create/job',
       saved: '/trades/jobs/saved',
       drafts: '/trades/jobs/drafts'
     }
