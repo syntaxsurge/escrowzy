@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { Trophy, Medal, Award, Crown, TrendingUp } from 'lucide-react'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import {
   Card,
   CardContent,
@@ -142,14 +142,11 @@ export function ReputationLeaderboard({
               {/* User Info */}
               <div className='min-w-0 flex-1'>
                 <div className='flex items-center gap-2'>
-                  <Avatar className='h-8 w-8'>
-                    <AvatarImage
-                      src={`https://avatar.vercel.sh/${user.walletAddress}`}
-                    />
-                    <AvatarFallback>
-                      {user.userName?.slice(0, 2).toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    user={{ name: user.userName }}
+                    walletAddress={user.walletAddress}
+                    size='sm'
+                  />
                   <div className='min-w-0'>
                     <p className='truncate font-medium'>
                       {user.userName || `User ${user.userId}`}

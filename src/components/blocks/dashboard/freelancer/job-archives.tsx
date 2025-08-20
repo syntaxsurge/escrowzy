@@ -17,7 +17,7 @@ import {
 import { toast } from 'sonner'
 import useSWR from 'swr'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -280,12 +280,13 @@ export function JobArchives({ freelancerId }: JobArchivesProps) {
                     >
                       <div className='flex items-center justify-between'>
                         <div className='flex items-center gap-3'>
-                          <Avatar className='h-10 w-10'>
-                            <AvatarImage src={job.clientAvatar} />
-                            <AvatarFallback>
-                              {job.clientName?.charAt(0) || '?'}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar
+                            user={{
+                              name: job.clientName,
+                              avatarPath: job.clientAvatar
+                            }}
+                            size='md'
+                          />
                           <div>
                             <p className='font-medium'>{job.title}</p>
                             <p className='text-muted-foreground text-sm'>

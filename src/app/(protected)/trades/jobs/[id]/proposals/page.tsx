@@ -28,7 +28,7 @@ import { toast } from 'sonner'
 import useSWR from 'swr'
 
 // import { BidNegotiationChat } from '@/components/blocks/jobs/bid-negotiation-chat'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -456,14 +456,13 @@ export default function JobProposalsPage() {
                             className='mt-1'
                           />
 
-                          <Avatar>
-                            <AvatarImage
-                              src={bid.freelancer?.avatarUrl || ''}
-                            />
-                            <AvatarFallback>
-                              {bid.freelancer?.name?.charAt(0) || 'F'}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar
+                            user={{
+                              name: bid.freelancer?.name,
+                              avatarPath: bid.freelancer?.avatarUrl
+                            }}
+                            size='md'
+                          />
 
                           <div className='flex-1 space-y-2'>
                             <div className='flex items-center gap-2'>

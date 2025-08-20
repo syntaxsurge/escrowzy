@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 import { CheckCircle, MessageSquare, Plus, Reply } from 'lucide-react'
 import useSWR from 'swr'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -230,14 +230,13 @@ export function FileAnnotations({
                       {/* Header */}
                       <div className='flex items-start justify-between'>
                         <div className='flex items-center gap-2'>
-                          <Avatar className='h-8 w-8'>
-                            <AvatarImage
-                              src={annotation.user.avatarUrl || undefined}
-                            />
-                            <AvatarFallback>
-                              {annotation.user.name.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar
+                            user={{
+                              name: annotation.user.name,
+                              avatarPath: annotation.user.avatarUrl
+                            }}
+                            size='sm'
+                          />
                           <div>
                             <p className='text-sm font-medium'>
                               {annotation.user.name}
@@ -334,14 +333,13 @@ export function FileAnnotations({
                           {annotation.replies.map(reply => (
                             <div key={reply.id} className='space-y-1'>
                               <div className='flex items-center gap-2'>
-                                <Avatar className='h-6 w-6'>
-                                  <AvatarImage
-                                    src={reply.user.avatarUrl || undefined}
-                                  />
-                                  <AvatarFallback className='text-xs'>
-                                    {reply.user.name.charAt(0).toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
+                                <UserAvatar
+                                  user={{
+                                    name: reply.user.name,
+                                    avatarPath: reply.user.avatarUrl
+                                  }}
+                                  size='xs'
+                                />
                                 <span className='text-xs font-medium'>
                                   {reply.user.name}
                                 </span>
@@ -377,14 +375,13 @@ export function FileAnnotations({
                         <div className='space-y-2'>
                           <div className='flex items-center justify-between'>
                             <div className='flex items-center gap-2'>
-                              <Avatar className='h-6 w-6'>
-                                <AvatarImage
-                                  src={annotation.user.avatarUrl || undefined}
-                                />
-                                <AvatarFallback className='text-xs'>
-                                  {annotation.user.name.charAt(0).toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
+                              <UserAvatar
+                                user={{
+                                  name: annotation.user.name,
+                                  avatarPath: annotation.user.avatarUrl
+                                }}
+                                size='xs'
+                              />
                               <span className='text-xs font-medium'>
                                 {annotation.user.name}
                               </span>

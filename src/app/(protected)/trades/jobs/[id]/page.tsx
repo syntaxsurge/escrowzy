@@ -26,8 +26,7 @@ import {
 } from 'lucide-react'
 import useSWR from 'swr'
 
-// import { FeaturedJobsMini } from '@/components/blocks/jobs'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -495,14 +494,13 @@ export default function JobDetailsPage() {
                       <CardHeader>
                         <div className='flex items-start justify-between'>
                           <div className='flex items-center gap-3'>
-                            <Avatar>
-                              <AvatarImage
-                                src={bid.freelancer.avatarUrl || ''}
-                              />
-                              <AvatarFallback>
-                                {bid.freelancer.name.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
+                            <UserAvatar
+                              user={{
+                                name: bid.freelancer.name,
+                                avatarPath: bid.freelancer.avatarUrl
+                              }}
+                              size='md'
+                            />
                             <div>
                               <p className='font-semibold'>
                                 {bid.freelancer.name}
@@ -672,12 +670,7 @@ export default function JobDetailsPage() {
             </CardHeader>
             <CardContent className='space-y-4'>
               <div className='flex items-center gap-3'>
-                <Avatar>
-                  <AvatarImage src={(job.client as any).avatarPath || ''} />
-                  <AvatarFallback>
-                    {job.client.name?.charAt(0)?.toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar user={job.client} size='md' />
                 <div>
                   <p className='font-medium'>{job.client.name}</p>
                   {clientStats && clientStats.reviewCount > 0 && (

@@ -17,7 +17,7 @@ import {
   Users
 } from 'lucide-react'
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -318,11 +318,10 @@ export function VendorManagement({
                           href={appRoutes.users.byId(freelancer.id)}
                           className='flex items-center gap-2 hover:underline'
                         >
-                          <Avatar className='h-8 w-8'>
-                            <AvatarFallback>
-                              {freelancer.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar
+                            user={{ name: freelancer.name, id: freelancer.id }}
+                            size='sm'
+                          />
                           <div>
                             <p className='font-medium'>{freelancer.name}</p>
                             {favorites.includes(freelancer.id) && (
@@ -430,11 +429,10 @@ export function VendorManagement({
                       <CardContent className='p-4'>
                         <div className='flex items-start justify-between'>
                           <div className='flex items-start gap-3'>
-                            <Avatar className='h-12 w-12'>
-                              <AvatarFallback>
-                                {performer.name.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
+                            <UserAvatar
+                              user={{ name: performer.name, id: performer.id }}
+                              size='lg'
+                            />
                             <div>
                               <h4 className='font-medium'>{performer.name}</h4>
                               <p className='text-muted-foreground text-sm'>

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import useSWR from 'swr'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -199,14 +199,13 @@ export function WorkspaceActivity({ jobId, job }: WorkspaceActivityProps) {
                             </p>
                           )}
                           <div className='text-muted-foreground flex items-center gap-2 text-xs'>
-                            <Avatar className='h-5 w-5'>
-                              <AvatarImage
-                                src={activity.user.avatarUrl || undefined}
-                              />
-                              <AvatarFallback className='text-xs'>
-                                {activity.user.name.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
+                            <UserAvatar
+                              user={{
+                                name: activity.user.name,
+                                avatarPath: activity.user.avatarUrl
+                              }}
+                              size='xs'
+                            />
                             <span>{activity.user.name}</span>
                             <span>•</span>
                             <span>

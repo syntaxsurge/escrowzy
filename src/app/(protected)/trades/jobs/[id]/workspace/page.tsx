@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import useSWR from 'swr'
 
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { FileManager } from '@/components/blocks/workspace/file-manager'
 import { JobCalendar } from '@/components/blocks/workspace/job-calendar'
 import { TaskBoard } from '@/components/blocks/workspace/task-board'
@@ -23,7 +24,6 @@ import { TimeTracker } from '@/components/blocks/workspace/time-tracker'
 import { WorkspaceActivity } from '@/components/blocks/workspace/workspace-activity'
 import { WorkspaceChat } from '@/components/blocks/workspace/workspace-chat'
 import { WorkspaceOverview } from '@/components/blocks/workspace/workspace-overview'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -220,12 +220,15 @@ export default function JobWorkspacePage() {
               <TooltipProvider key={session.id}>
                 <Tooltip>
                   <TooltipTrigger>
-                    <Avatar className='h-8 w-8 border-2 border-green-500'>
-                      <AvatarImage src={session.user.avatarUrl || undefined} />
-                      <AvatarFallback>
-                        {session.user.name?.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className='rounded-full border-2 border-green-500'>
+                      <UserAvatar
+                        user={{
+                          name: session.user.name,
+                          avatarPath: session.user.avatarUrl
+                        }}
+                        size='sm'
+                      />
+                    </div>
                   </TooltipTrigger>
                   <TooltipContent>
                     <div className='text-xs'>

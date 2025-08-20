@@ -19,7 +19,7 @@ import {
   DollarSign
 } from 'lucide-react'
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -338,11 +338,10 @@ export function TeamCollaboration({
                     <TableRow key={member.id}>
                       <TableCell>
                         <div className='flex items-center gap-2'>
-                          <Avatar className='h-8 w-8'>
-                            <AvatarFallback>
-                              {member.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar
+                            user={{ name: member.name, id: member.id }}
+                            size='sm'
+                          />
                           <div>
                             <p className='font-medium'>{member.name}</p>
                             <p className='text-muted-foreground text-xs'>
@@ -430,11 +429,10 @@ export function TeamCollaboration({
                           className='flex items-center justify-between rounded-lg border p-3'
                         >
                           <div className='flex items-center gap-3'>
-                            <Avatar className='h-10 w-10'>
-                              <AvatarFallback>
-                                {member.name.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
+                            <UserAvatar
+                              user={{ name: member.name, id: member.id }}
+                              size='md'
+                            />
                             <div>
                               <p className='font-medium'>{member.name}</p>
                               <p className='text-muted-foreground text-sm'>

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import useSWR from 'swr'
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -407,11 +407,10 @@ export function HiringPipeline({
                           href={`/profile/${app.freelancerId}`}
                           className='flex items-center gap-2 hover:underline'
                         >
-                          <Avatar className='h-8 w-8'>
-                            <AvatarFallback>
-                              {app.freelancerName.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar
+                            user={{ name: app.freelancerName }}
+                            size='sm'
+                          />
                           {app.freelancerName}
                         </Link>
                       </TableCell>
@@ -489,11 +488,10 @@ export function HiringPipeline({
                     <Card key={app.id}>
                       <CardContent className='flex items-center justify-between p-4'>
                         <div className='flex items-center gap-4'>
-                          <Avatar className='h-12 w-12'>
-                            <AvatarFallback>
-                              {app.freelancerName.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar
+                            user={{ name: app.freelancerName }}
+                            size='lg'
+                          />
                           <div>
                             <h4 className='font-medium'>
                               {app.freelancerName}

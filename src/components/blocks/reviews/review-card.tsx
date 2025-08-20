@@ -1,7 +1,7 @@
 import { formatDistanceToNow } from 'date-fns'
 import { MessageSquare } from 'lucide-react'
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -46,17 +46,6 @@ export function ReviewCard({
   onRespond,
   className
 }: ReviewCardProps) {
-  const getInitials = (name: string | null, address: string) => {
-    if (name) {
-      return name
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .toUpperCase()
-    }
-    return address.slice(0, 2).toUpperCase()
-  }
-
   const detailedRatings =
     type === 'freelancer'
       ? [
@@ -76,13 +65,11 @@ export function ReviewCard({
         <div className='space-y-4'>
           <div className='flex items-start justify-between'>
             <div className='flex items-start gap-3'>
-              <Avatar className='h-10 w-10'>
-                <AvatarFallback>
-                  {reviewer
-                    ? getInitials(reviewer.name, reviewer.walletAddress)
-                    : 'UN'}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar
+                user={{ name: reviewer?.name }}
+                walletAddress={reviewer?.walletAddress}
+                size='md'
+              />
               <div>
                 <div className='flex items-center gap-2'>
                   <p className='font-medium'>{reviewer?.name || 'Anonymous'}</p>

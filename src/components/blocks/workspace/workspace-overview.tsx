@@ -13,7 +13,7 @@ import {
   Users
 } from 'lucide-react'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -182,12 +182,7 @@ export function WorkspaceOverview({
             {/* Client */}
             <div className='flex items-center justify-between'>
               <div className='flex items-center gap-3'>
-                <Avatar>
-                  <AvatarImage src={job.client?.avatarPath || undefined} />
-                  <AvatarFallback>
-                    {job.client?.name?.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar user={job.client} size='md' />
                 <div>
                   <p className='text-sm font-medium'>{job.client?.name}</p>
                   <p className='text-muted-foreground text-xs'>Client</p>
@@ -200,14 +195,7 @@ export function WorkspaceOverview({
             {job.freelancer && (
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
-                  <Avatar>
-                    <AvatarImage
-                      src={job.freelancer?.avatarPath || undefined}
-                    />
-                    <AvatarFallback>
-                      {job.freelancer?.name?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar user={job.freelancer} size='md' />
                   <div>
                     <p className='text-sm font-medium'>
                       {job.freelancer?.name}

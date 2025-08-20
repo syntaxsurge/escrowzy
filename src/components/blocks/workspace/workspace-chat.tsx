@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 import { Paperclip, Send, Users } from 'lucide-react'
 import useSWR from 'swr'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -124,12 +124,13 @@ export function WorkspaceChat({ jobId, job, currentUser }: WorkspaceChatProps) {
                     isCurrentUser && 'flex-row-reverse'
                   )}
                 >
-                  <Avatar className='h-8 w-8'>
-                    <AvatarImage src={msg.sender.avatarUrl || undefined} />
-                    <AvatarFallback>
-                      {msg.sender.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    user={{
+                      name: msg.sender.name,
+                      avatarPath: msg.sender.avatarUrl
+                    }}
+                    size='sm'
+                  />
                   <div
                     className={cn(
                       'flex flex-col gap-1',

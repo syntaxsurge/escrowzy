@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 
-import { Shield, Star, CheckCircle, User } from 'lucide-react'
+import { Shield, Star, CheckCircle } from 'lucide-react'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -57,15 +57,13 @@ export function SkillEndorsementCard({
       <CardHeader className='pb-3'>
         <div className='flex items-start justify-between'>
           <div className='flex items-center gap-3'>
-            <Avatar className='h-10 w-10'>
-              <AvatarImage
-                src={endorsement.endorser.avatarPath || undefined}
-                alt={endorsement.endorser.name || 'User'}
-              />
-              <AvatarFallback>
-                <User className='h-5 w-5' />
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              user={{
+                name: endorsement.endorser.name || 'Anonymous',
+                avatarPath: endorsement.endorser.avatarPath
+              }}
+              size='md'
+            />
             <div>
               <p className='text-sm font-medium'>
                 {endorsement.endorser.name || 'Anonymous'}

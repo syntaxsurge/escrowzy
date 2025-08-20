@@ -8,7 +8,7 @@ import { Calendar, Clock, Flag, MoreVertical, Plus } from 'lucide-react'
 // For now, we'll use a simpler implementation without drag and drop
 import useSWR from 'swr'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -437,14 +437,13 @@ export function TaskBoard({
                           )}
                         </div>
                         {task.assignedTo && (
-                          <Avatar className='h-6 w-6'>
-                            <AvatarImage
-                              src={task.assignedTo.avatarUrl || undefined}
-                            />
-                            <AvatarFallback className='text-xs'>
-                              {task.assignedTo.name.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar
+                            user={{
+                              name: task.assignedTo.name,
+                              avatarPath: task.assignedTo.avatarUrl
+                            }}
+                            size='xs'
+                          />
                         )}
                       </div>
                     </div>

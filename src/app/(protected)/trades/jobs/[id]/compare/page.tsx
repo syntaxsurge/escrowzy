@@ -17,7 +17,7 @@ import {
 import { toast } from 'sonner'
 import useSWR from 'swr'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -205,12 +205,13 @@ export default function CompareFreelancersPage() {
                   </div>
                 )}
                 <div className='flex items-center gap-3'>
-                  <Avatar>
-                    <AvatarImage src={bid.freelancer?.avatarUrl || ''} />
-                    <AvatarFallback>
-                      {bid.freelancer?.name?.charAt(0) || 'F'}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    user={{
+                      name: bid.freelancer?.name,
+                      avatarPath: bid.freelancer?.avatarUrl
+                    }}
+                    size='md'
+                  />
                   <div className='flex-1'>
                     <p className='font-medium'>
                       {bid.freelancer?.name || 'Unknown'}
@@ -281,14 +282,13 @@ export default function CompareFreelancersPage() {
                     {selectedBidsData.map(bid => (
                       <TableHead key={bid.id} className='text-center'>
                         <div className='flex flex-col items-center gap-2'>
-                          <Avatar>
-                            <AvatarImage
-                              src={bid.freelancer?.avatarUrl || ''}
-                            />
-                            <AvatarFallback>
-                              {bid.freelancer?.name?.charAt(0) || 'F'}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar
+                            user={{
+                              name: bid.freelancer?.name,
+                              avatarPath: bid.freelancer?.avatarUrl
+                            }}
+                            size='md'
+                          />
                           <span className='font-medium'>
                             {bid.freelancer?.name || 'Unknown'}
                           </span>
