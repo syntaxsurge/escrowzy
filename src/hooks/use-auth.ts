@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
+import { apiEndpoints } from '@/config/api-endpoints'
 import { api } from '@/lib/api/http-client'
 
 interface User {
@@ -19,7 +20,7 @@ export function useAuth() {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const response = await api.get('/api/user')
+        const response = await api.get(apiEndpoints.user.profile)
         if (response.success) {
           setUser(response.data?.user || null)
         }

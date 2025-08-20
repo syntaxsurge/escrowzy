@@ -30,6 +30,7 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 import { cn } from '@/lib/utils'
@@ -78,7 +79,9 @@ export function EnhancedOnboarding({
 
   const completeStep = async (stepKey: string) => {
     try {
-      const response = await api.post('/api/onboarding/complete', { stepKey })
+      const response = await api.post(apiEndpoints.onboarding.complete, {
+        stepKey
+      })
 
       if (response.success) {
         updateStepStatus(currentStepIndex, 'completed')
@@ -94,7 +97,7 @@ export function EnhancedOnboarding({
 
   const skipStep = async (stepKey: string) => {
     try {
-      const response = await api.post('/api/onboarding/skip', { stepKey })
+      const response = await api.post(apiEndpoints.onboarding.skip, { stepKey })
 
       if (response.success) {
         updateStepStatus(currentStepIndex, 'skipped')
@@ -431,7 +434,7 @@ export function OnboardingProgressWidget() {
 
   const fetchProgress = async () => {
     try {
-      const response = await api.get('/api/onboarding/progress')
+      const response = await api.get(apiEndpoints.onboarding.progress)
       if (response.success) {
         setProgress(response.data)
       }

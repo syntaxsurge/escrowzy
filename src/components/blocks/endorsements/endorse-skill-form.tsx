@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select'
 import { StarRating } from '@/components/ui/star-rating'
 import { Textarea } from '@/components/ui/textarea'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 
@@ -55,7 +56,7 @@ export function EndorseSkillForm({
     setIsSubmitting(true)
     try {
       const result = await api.post(
-        '/api/endorsements',
+        apiEndpoints.endorsements,
         {
           endorsedUserId: userId,
           skillId: parseInt(selectedSkill),

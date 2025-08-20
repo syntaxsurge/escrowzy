@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib'
 import { api } from '@/lib/api/http-client'
@@ -135,7 +136,7 @@ export function SocialSharing({
     if (!trackShares) return
 
     try {
-      await api.post('/api/social-shares/track', {
+      await api.post(apiEndpoints.socialShares.track, {
         platform,
         contentType,
         contentId,

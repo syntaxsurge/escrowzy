@@ -28,6 +28,7 @@ import {
   TableRow
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { api } from '@/lib/api/http-client'
 
 interface ScheduledTask {
@@ -48,7 +49,7 @@ export default function ScheduledTasksPage() {
 
   // Fetch task statuses
   const { data: tasks, mutate: mutateTasks } = useSWR<ScheduledTask[]>(
-    '/api/admin/scheduled-tasks',
+    apiEndpoints.scheduledTasks,
     async (url: string) => {
       const response = await api.get(url)
       return response.data || []
@@ -60,7 +61,7 @@ export default function ScheduledTasksPage() {
 
   // Check milestone auto-release status
   const { data: autoReleaseStatus } = useSWR(
-    '/api/cron/milestone-auto-release',
+    apiEndpoints.milestones.autoRelease,
     async (url: string) => {
       const response = await api.get(url, {
         headers: {
@@ -75,7 +76,7 @@ export default function ScheduledTasksPage() {
     setIsRunning({ ...isRunning, [taskId]: true })
 
     try {
-      const response = await api.post('/api/admin/scheduled-tasks', { taskId })
+      const response = await api.post(apiEndpoints.scheduledTasks, { taskId })
 
       if (response.success) {
         toast.success(`Task ${taskId} completed successfully`)

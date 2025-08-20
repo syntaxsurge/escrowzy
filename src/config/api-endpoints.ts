@@ -31,6 +31,7 @@ export const apiEndpoints = {
   },
   teams: {
     base: '/api/teams',
+    invite: '/api/teams/invite',
     downgrade: (id: string) => `/api/teams/${id}/downgrade-free`,
     downgradeTeamPlan: (id: string) => `/api/teams/${id}/downgrade-team-plan`,
     paymentHistory: (id: string) => `/api/teams/${id}/payment-history`
@@ -276,7 +277,6 @@ export const apiEndpoints = {
     profile: '/api/freelancer/profile',
     skills: '/api/freelancer/skills',
     portfolio: '/api/freelancer/portfolio',
-    availability: '/api/freelancer/availability',
     profileDraft: '/api/freelancer/profile/draft'
   },
   skills: '/api/skills',
@@ -314,6 +314,14 @@ export const apiEndpoints = {
     autoRelease: '/api/cron/milestone-auto-release'
   },
   scheduledTasks: '/api/admin/scheduled-tasks',
+  onboarding: {
+    complete: '/api/onboarding/complete',
+    skip: '/api/onboarding/skip',
+    progress: '/api/onboarding/progress'
+  },
+  socialShares: {
+    track: '/api/social-shares/track'
+  },
   external: {
     coingecko: {
       baseUrl: 'https://api.coingecko.com/api/v3',

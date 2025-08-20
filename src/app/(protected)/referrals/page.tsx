@@ -108,7 +108,7 @@ export default function ReferralDashboard() {
 
       // Fetch leaderboard
       const leaderboardResult = await api.get(
-        '/api/referrals/stats?type=leaderboard',
+        `${apiEndpoints.referrals.stats}?type=leaderboard`,
         { shouldShowErrorToast: false }
       )
       if (leaderboardResult.success) {

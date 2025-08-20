@@ -31,6 +31,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib'
 import { api } from '@/lib/api/http-client'
@@ -124,7 +125,7 @@ export function FaqSystem({
 
   const fetchCategories = async () => {
     try {
-      const response = await api.get('/api/faq/categories')
+      const response = await api.get(apiEndpoints.faq.categories)
       if (response.success) {
         setCategories(response.data)
       }
@@ -149,7 +150,7 @@ export function FaqSystem({
 
   const fetchPopularFaqs = async () => {
     try {
-      const response = await api.get('/api/faq/popular')
+      const response = await api.get(apiEndpoints.faq.popular)
       if (response.success) {
         setPopularFaqs(response.data)
       }
@@ -160,7 +161,7 @@ export function FaqSystem({
 
   const fetchHighlightedFaqs = async () => {
     try {
-      const response = await api.get('/api/faq/highlighted')
+      const response = await api.get(apiEndpoints.faq.highlighted)
       if (response.success) {
         setHighlightedFaqs(response.data)
       }
@@ -184,7 +185,10 @@ export function FaqSystem({
 
   const handleVote = async (faqId: number, isHelpful: boolean) => {
     try {
-      const response = await api.post('/api/faq/vote', { faqId, isHelpful })
+      const response = await api.post(apiEndpoints.faq.vote, {
+        faqId,
+        isHelpful
+      })
 
       if (response.success) {
         toast({
@@ -225,7 +229,7 @@ export function FaqSystem({
     if (!feedbackDialog) return
 
     try {
-      const response = await api.post('/api/faq/vote', {
+      const response = await api.post(apiEndpoints.faq.vote, {
         faqId: feedbackDialog.faqId,
         isHelpful: feedbackDialog.isHelpful,
         feedback: feedbackText

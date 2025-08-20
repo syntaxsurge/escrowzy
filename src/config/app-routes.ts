@@ -110,11 +110,7 @@ export const appRoutes = {
     freelancer: {
       base: '/profile/freelancer',
       setup: '/profile/freelancer/setup',
-      availability: '/profile/freelancer/availability',
-      reviews: '/profile/freelancer/reviews',
-      portfolio: '/profile/freelancer/portfolio',
-      analytics: '/profile/freelancer/analytics',
-      earnings: '/profile/freelancer/earnings'
+      reviews: '/profile/freelancer/reviews'
     }
   },
 

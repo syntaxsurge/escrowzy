@@ -25,10 +25,7 @@ import {
   Coins,
   CreditCard,
   Briefcase,
-  FileText,
-  TrendingUp,
-  Clock,
-  DollarSign
+  FileText
 } from 'lucide-react'
 
 import { AutoBreadcrumb } from '@/components/layout/auto-breadcrumb'
@@ -186,38 +183,6 @@ export function DashboardLayoutClient({
           icon: FileText,
           label: 'My Bids',
           description: 'Track Your Proposals',
-          xp: null,
-          isNew: false
-        },
-        {
-          href: appRoutes.profile.freelancer.availability,
-          icon: Clock,
-          label: 'Availability',
-          description: 'Set Your Schedule',
-          xp: null,
-          isNew: false
-        },
-        {
-          href: appRoutes.profile.freelancer.portfolio,
-          icon: Grid3x3,
-          label: 'Portfolio',
-          description: 'Showcase Your Work',
-          xp: null,
-          isNew: false
-        },
-        {
-          href: appRoutes.profile.freelancer.analytics,
-          icon: TrendingUp,
-          label: 'Analytics',
-          description: 'Track Performance',
-          xp: null,
-          isNew: false
-        },
-        {
-          href: appRoutes.profile.freelancer.earnings,
-          icon: DollarSign,
-          label: 'Earnings',
-          description: 'View Your Income',
           xp: null,
           isNew: false
         }

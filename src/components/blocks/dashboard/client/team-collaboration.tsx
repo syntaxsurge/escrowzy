@@ -50,6 +50,7 @@ import {
   TableRow
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 
@@ -104,7 +105,7 @@ export function TeamCollaboration({
 
     setIsProcessing(true)
     try {
-      const response = await api.post('/api/teams/invite', {
+      const response = await api.post(apiEndpoints.teams.invite, {
         email: inviteEmail,
         role: inviteRole,
         clientId
