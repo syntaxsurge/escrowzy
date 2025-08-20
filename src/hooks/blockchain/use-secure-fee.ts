@@ -58,21 +58,12 @@ export function useSecureFee() {
           userAddress
         })
 
-        if (!response.success) {
-          toast({
-            title: 'Fee Calculation Error',
-            description: response.error || 'Failed to calculate fee',
-            variant: 'destructive'
-          })
-          return null
-        }
-
         return {
-          feePercentage: response.data.feePercentage,
-          feeAmount: response.data.feeAmount,
-          netAmount: response.data.netAmount,
-          chainId: response.data.chainId,
-          userAddress: response.data.userAddress
+          feePercentage: response.feePercentage,
+          feeAmount: response.feeAmount,
+          netAmount: response.netAmount,
+          chainId: response.chainId,
+          userAddress: response.userAddress
         }
       } catch (error) {
         console.error('Error calculating fee:', error)
@@ -109,16 +100,16 @@ export function useSecureFee() {
           userAddress
         })
 
-        if (!response.success && !response.data?.isValid) {
+        if (!response.isValid) {
           // Fee is invalid, return the correct fee
           return {
             isValid: false,
-            correctFee: response.data?.correctFee,
-            providedFee: response.data?.providedFee
+            correctFee: response.correctFee,
+            providedFee: response.providedFee
           }
         }
 
-        if (response.success && response.data?.isValid) {
+        if (response.isValid) {
           return {
             isValid: true
           }
@@ -152,20 +143,11 @@ export function useSecureFee() {
           `${apiEndpoints.trades.calculateFee}?chainId=${chainId}`
         )
 
-        if (!response.success) {
-          toast({
-            title: 'Error',
-            description: response.error || 'Failed to fetch fee information',
-            variant: 'destructive'
-          })
-          return null
-        }
-
         const info: UserFeeInfo = {
-          userFeePercentage: response.data.userFeePercentage,
-          planFeeTiers: response.data.planFeeTiers,
-          chainId: response.data.chainId,
-          userAddress: response.data.userAddress
+          userFeePercentage: response.userFeePercentage,
+          planFeeTiers: response.planFeeTiers,
+          chainId: response.chainId,
+          userAddress: response.userAddress
         }
 
         setFeeInfo(info)

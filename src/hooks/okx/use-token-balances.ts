@@ -28,9 +28,7 @@ export function useTokenBalances() {
         chainId
       })
 
-      if (response.success) {
-        setBalances(response.data?.balances || [])
-      }
+      setBalances(response?.balances || [])
     } catch (error) {
       console.error('Failed to fetch balances:', error)
     } finally {
@@ -51,13 +49,11 @@ export function useTokenBalances() {
 
       let tokens: OKXTokenInfo[] = []
 
-      if (allTokensResponse.success) {
-        // Ensure tokens is an array
-        tokens = Array.isArray(allTokensResponse.data?.tokens)
-          ? allTokensResponse.data.tokens
-          : []
-        console.log(`Fetched ${tokens.length} total tokens from all-tokens API`)
-      }
+      // Ensure tokens is an array
+      tokens = Array.isArray(allTokensResponse?.tokens)
+        ? allTokensResponse.tokens
+        : []
+      console.log(`Fetched ${tokens.length} total tokens from all-tokens API`)
 
       // If all tokens failed or returned empty, try popular tokens
       if (tokens.length === 0) {
@@ -65,13 +61,11 @@ export function useTokenBalances() {
           chainId
         })
 
-        if (popularResponse.success) {
-          // Ensure tokens is an array
-          tokens = Array.isArray(popularResponse.data?.tokens)
-            ? popularResponse.data.tokens
-            : []
-          console.log(`Fetched ${tokens.length} popular tokens as fallback`)
-        }
+        // Ensure tokens is an array
+        tokens = Array.isArray(popularResponse?.tokens)
+          ? popularResponse.tokens
+          : []
+        console.log(`Fetched ${tokens.length} popular tokens as fallback`)
       }
 
       // Ensure tokens is an array before using array methods
@@ -104,9 +98,7 @@ export function useTokenBalances() {
           query
         })
 
-        if (response.success) {
-          return response.data?.tokens || []
-        }
+        return response?.tokens || []
       } catch (error) {
         console.error('Failed to search tokens:', error)
       }

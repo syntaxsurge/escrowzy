@@ -204,9 +204,7 @@ function UserMenu() {
           try {
             const { api } = await import('@/lib/api/http-client')
             const response = await api.delete(apiEndpoints.auth.wallet)
-            if (response.success) {
-              console.log('Session cleared successfully')
-            }
+            console.log('Session cleared successfully')
           } catch (error) {
             console.error('Failed to clear session:', error)
           }

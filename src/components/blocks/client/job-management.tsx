@@ -65,8 +65,7 @@ interface JobPosting {
 
 const fetcher = async (url: string) => {
   const response = await api.get(url, { shouldShowErrorToast: false })
-  if (!response.success) throw new Error(response.error)
-  return response.data
+  return response
 }
 
 export function ClientJobManagement() {
@@ -93,9 +92,7 @@ export function ClientJobManagement() {
       }
     )
 
-    if (response.success) {
-      mutate()
-    }
+    mutate()
   }
 
   const getStatusBadge = (status: string) => {

@@ -1,14 +1,12 @@
-import type { escrowListings, trades, users } from '@/lib/db/schema'
+import type { escrowListings, users } from '@/lib/db/schema'
+import type { Trade, NewTrade } from '@/lib/db/schema/types'
 
 export { TradeCategory, ListingType } from './trade'
+export type { Trade, NewTrade }
 
 // Base listing type from database
 export type EscrowListing = typeof escrowListings.$inferSelect
 export type NewEscrowListing = typeof escrowListings.$inferInsert
-
-// Trade type from database
-export type Trade = typeof trades.$inferSelect
-export type NewTrade = typeof trades.$inferInsert
 
 // Domain-specific metadata
 export interface DomainMetadata {

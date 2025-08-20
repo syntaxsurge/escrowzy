@@ -48,17 +48,7 @@ import { cn } from '@/lib'
 import { api } from '@/lib/api/http-client'
 import { swrConfig, swrFetcher } from '@/lib/api/swr'
 import { formatDate } from '@/lib/utils/string'
-
-// Notification type
-interface Notification {
-  id: string
-  title: string
-  message: string
-  timestamp: Date
-  read: boolean
-  actionUrl?: string
-  notificationType?: string
-}
+import type { Notification } from '@/types/notification'
 
 const notificationIcons: Record<string, any> = {
   // Team notifications
@@ -433,7 +423,10 @@ export function NotificationDropdown() {
                       <div className='text-muted-foreground/60 mt-2 flex items-center gap-1 text-xs'>
                         <Clock className='h-3 w-3' />
                         <span>
-                          {formatDate(notification.timestamp, 'relative')}
+                          {formatDate(
+                            notification.timestamp || new Date(),
+                            'relative'
+                          )}
                         </span>
                       </div>
                     </div>

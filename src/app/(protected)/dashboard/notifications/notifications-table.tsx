@@ -10,16 +10,7 @@ import {
   createBadgeColumnConfig,
   type ColumnConfig
 } from '@/lib/table/table-columns-config'
-
-interface Notification {
-  id: string
-  title: string
-  message: string
-  timestamp: string
-  read: boolean
-  actionUrl: string | null
-  teamName: string | null
-}
+import type { Notification } from '@/types/notification'
 
 interface NotificationsTableProps {
   data: Notification[]

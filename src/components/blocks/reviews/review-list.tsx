@@ -54,16 +54,14 @@ export function ReviewList({
 
       const response = await api.get(`${apiEndpoints.reviews[type]}?${params}`)
 
-      if (response.success) {
-        if (page === 1) {
-          setReviews(response.data?.reviews || [])
-        } else {
-          setReviews(prev => [...prev, ...(response.data?.reviews || [])])
-        }
-
-        setStats(response.data?.stats || null)
-        setHasMore((response.data?.reviews || []).length === 10)
+      if (page === 1) {
+        setReviews(response?.reviews || [])
+      } else {
+        setReviews(prev => [...prev, ...(response?.reviews || [])])
       }
+
+      setStats(response?.stats || null)
+      setHasMore((response?.reviews || []).length === 10)
     } catch (error) {
       console.error('Error fetching reviews:', error)
     } finally {

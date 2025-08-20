@@ -112,7 +112,7 @@ export function HiringPipeline({
     `/api/client/${clientId}/talent?action=pipeline`,
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? response.data : null
+      return response
     }
   )
 
@@ -124,13 +124,11 @@ export function HiringPipeline({
         data: { bidId }
       })
 
-      if (response.success) {
-        toast({
-          title: 'Success',
-          description: 'Candidate shortlisted successfully'
-        })
-        window.location.reload()
-      }
+      toast({
+        title: 'Success',
+        description: 'Candidate shortlisted successfully'
+      })
+      window.location.reload()
     } catch (error) {
       toast({
         title: 'Error',
@@ -163,16 +161,14 @@ export function HiringPipeline({
         }
       })
 
-      if (response.success) {
-        toast({
-          title: 'Success',
-          description: `Invitations sent to ${selectedApplications.length} freelancers`
-        })
-        setBulkInviteOpen(false)
-        setSelectedApplications([])
-        setInviteMessage('')
-        window.location.reload()
-      }
+      toast({
+        title: 'Success',
+        description: `Invitations sent to ${selectedApplications.length} freelancers`
+      })
+      setBulkInviteOpen(false)
+      setSelectedApplications([])
+      setInviteMessage('')
+      window.location.reload()
     } catch (error) {
       toast({
         title: 'Error',

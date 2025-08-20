@@ -698,40 +698,40 @@ export function useAdminTransaction() {
       // Add chainId as query parameter
       const url = `${apiEndpoints.admin.contract.transactions}?chainId=${effectiveChainId}`
 
-      const response = await api.post(url, payload, {
-        shouldShowErrorToast: false
-      })
+      try {
+        const response = await api.post(url, payload, {
+          shouldShowErrorToast: false
+        })
 
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to prepare transaction')
+        const { transactionData } = response
+
+        // Prepare contract arguments based on the method
+        const contractArgs = prepareContractArgsFromResponse(
+          method,
+          args,
+          response,
+          effectiveChainId
+        )
+
+        // Use the SubscriptionManagerService's transaction config
+        const subscriptionService = new SubscriptionManagerService(
+          effectiveChainId
+        )
+        const config = subscriptionService.getTransactionConfig(
+          method,
+          contractArgs,
+          BigInt(transactionData.value || 0)
+        )
+
+        const txHash = await executeTransaction(config, {
+          ...options,
+          messages
+        })
+
+        return { txHash, success: true }
+      } catch (error) {
+        throw error
       }
-
-      const { transactionData } = response.data
-
-      // Prepare contract arguments based on the method
-      const contractArgs = prepareContractArgsFromResponse(
-        method,
-        args,
-        response.data,
-        effectiveChainId
-      )
-
-      // Use the SubscriptionManagerService's transaction config
-      const subscriptionService = new SubscriptionManagerService(
-        effectiveChainId
-      )
-      const config = subscriptionService.getTransactionConfig(
-        method,
-        contractArgs,
-        BigInt(transactionData.value || 0)
-      )
-
-      const txHash = await executeTransaction(config, {
-        ...options,
-        messages
-      })
-
-      return { txHash, success: true }
     } catch (error) {
       throw error
     }

@@ -76,7 +76,7 @@ export function JobArchives({ freelancerId }: JobArchivesProps) {
     `/api/freelancers/${freelancerId}/archived-jobs`,
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? response.data : { jobs: [], summary: {} }
+      return response || { jobs: [], summary: {} }
     }
   )
 

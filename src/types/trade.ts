@@ -1,4 +1,5 @@
-import type { trades, users, userTradingStats } from '@/lib/db/schema'
+import type { users, userTradingStats } from '@/lib/db/schema'
+import type { Trade, NewTrade } from '@/lib/db/schema/types'
 
 import type { TradeStatus } from './listings'
 
@@ -36,11 +37,8 @@ export const TRADE_STATUS: Record<string, string> = {
   refunded: 'Refunded'
 }
 
-/**
- * Base trade type from database
- */
-export type Trade = typeof trades.$inferSelect
-export type NewTrade = typeof trades.$inferInsert
+// Re-export the types from the centralized location for backward compatibility
+export type { Trade, NewTrade }
 
 /**
  * Extended trade type with user relations

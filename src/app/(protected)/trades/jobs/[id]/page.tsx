@@ -91,7 +91,7 @@ export default function JobDetailsPage() {
     apiEndpoints.jobs.byId(jobId),
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? response.data : null
+      return response
     }
   )
 
@@ -100,7 +100,7 @@ export default function JobDetailsPage() {
     job?.clientId === user?.id ? `${apiEndpoints.jobs.byId(jobId)}/bids` : null,
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? response : { bids: [], total: 0 }
+      return response || { bids: [], total: 0 }
     }
   )
 
@@ -109,17 +109,17 @@ export default function JobDetailsPage() {
     job?.clientId ? `/api/users/${job.clientId}/stats` : null,
     async (url: string) => {
       const response = await api.get(url)
-      return response.success ? response : null
+      return response
     }
   )
 
-  const clientStats = clientStatsResponse?.success
+  const clientStats = clientStatsResponse
     ? {
-        avgRating: (clientStatsResponse as any).avgRating,
-        reviewCount: (clientStatsResponse as any).reviewCount,
-        jobsPosted: (clientStatsResponse as any).jobsPosted,
-        hireRate: (clientStatsResponse as any).hireRate,
-        location: (clientStatsResponse as any).location
+        avgRating: clientStatsResponse.avgRating,
+        reviewCount: clientStatsResponse.reviewCount,
+        jobsPosted: clientStatsResponse.jobsPosted,
+        hireRate: clientStatsResponse.hireRate,
+        location: clientStatsResponse.location
       }
     : null
 
@@ -138,9 +138,7 @@ export default function JobDetailsPage() {
     setIsSaving(true)
     try {
       const response = await api.post(apiEndpoints.jobs.save(jobId))
-      if (response.success) {
-        mutate()
-      }
+      mutate()
     } catch (error) {
       console.error('Failed to save job:', error)
     } finally {

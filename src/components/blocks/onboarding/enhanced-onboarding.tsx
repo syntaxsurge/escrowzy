@@ -83,13 +83,11 @@ export function EnhancedOnboarding({
         stepKey
       })
 
-      if (response.success) {
-        updateStepStatus(currentStepIndex, 'completed')
-        toast({
-          title: 'Step Completed!',
-          description: `You earned ${response.data?.xpReward} XP!`
-        })
-      }
+      updateStepStatus(currentStepIndex, 'completed')
+      toast({
+        title: 'Step Completed!',
+        description: `You earned ${response?.xpReward} XP!`
+      })
     } catch (error) {
       console.error('Failed to complete step:', error)
     }
@@ -99,9 +97,7 @@ export function EnhancedOnboarding({
     try {
       const response = await api.post(apiEndpoints.onboarding.skip, { stepKey })
 
-      if (response.success) {
-        updateStepStatus(currentStepIndex, 'skipped')
-      }
+      updateStepStatus(currentStepIndex, 'skipped')
     } catch (error) {
       console.error('Failed to skip step:', error)
     }
@@ -118,22 +114,20 @@ export function EnhancedOnboarding({
         `/api/onboarding/progress?category=${category}`
       )
 
-      if (response.success) {
-        const data = response.data
-        setProgress(data)
+      const data = response
+      setProgress(data)
 
-        // Find first incomplete step
-        const firstIncomplete = data.steps.findIndex(
-          (s: any) => !s.progress?.completedAt && !s.progress?.skippedAt
-        )
-        if (firstIncomplete !== -1) {
-          setCurrentStepIndex(firstIncomplete)
-        }
+      // Find first incomplete step
+      const firstIncomplete = data.steps.findIndex(
+        (s: any) => !s.progress?.completedAt && !s.progress?.skippedAt
+      )
+      if (firstIncomplete !== -1) {
+        setCurrentStepIndex(firstIncomplete)
+      }
 
-        // Check if should show onboarding
-        if (!data.isComplete && data.completedSteps < 3) {
-          setIsOpen(true)
-        }
+      // Check if should show onboarding
+      if (!data.isComplete && data.completedSteps < 3) {
+        setIsOpen(true)
       }
     } catch (error) {
       console.error('Failed to fetch onboarding progress:', error)

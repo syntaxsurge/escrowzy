@@ -31,17 +31,7 @@ import {
 import { Progress } from '@/components/ui/progress'
 import { appRoutes } from '@/config/app-routes'
 import { cn } from '@/lib/utils/cn'
-
-interface Job {
-  id: number
-  title: string
-  status: string
-  clientName: string
-  totalMilestones: number
-  completedMilestones: number
-  nextMilestone: string | null
-  nextMilestoneDate: Date | null
-}
+import type { Job } from '@/types/job'
 
 interface MilestoneStats {
   total: number

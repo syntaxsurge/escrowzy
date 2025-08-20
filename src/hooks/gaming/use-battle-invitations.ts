@@ -30,9 +30,9 @@ export function useBattleInvitations(userId?: number) {
   >([])
 
   // Fetch invitations
-  const { data, error, mutate } = useSWR<{ data: InvitationWithUser[] }>(
+  const { data, error, mutate } = useSWR<InvitationWithUser[]>(
     userId ? apiEndpoints.battles.invitations : null,
-    (url: string) => api.get(url).then(res => res.data),
+    (url: string) => api.get(url),
     { refreshInterval: BATTLE_CONFIG.INVITATION_REFRESH_INTERVAL }
   )
 
@@ -44,17 +44,13 @@ export function useBattleInvitations(userId?: number) {
           invitationId
         })
 
-        if (response.success) {
-          // No toast - UI handles battle starting state
+        // Remove from pending list
+        setPendingInvitations(prev =>
+          prev.filter(inv => inv.id !== invitationId)
+        )
 
-          // Remove from pending list
-          setPendingInvitations(prev =>
-            prev.filter(inv => inv.id !== invitationId)
-          )
-
-          mutate()
-          return response.data
-        }
+        mutate()
+        return response
       } catch (_error: any) {
         // Don't show any toasts - let the UI handle all errors
         return null
@@ -71,15 +67,13 @@ export function useBattleInvitations(userId?: number) {
           invitationId
         })
 
-        if (response.success) {
-          // Remove from pending list
-          setPendingInvitations(prev =>
-            prev.filter(inv => inv.id !== invitationId)
-          )
+        // Remove from pending list
+        setPendingInvitations(prev =>
+          prev.filter(inv => inv.id !== invitationId)
+        )
 
-          mutate()
-          return true
-        }
+        mutate()
+        return true
       } catch (_error: any) {
         // Don't show any toasts - let the UI handle all errors
         return false
@@ -93,10 +87,7 @@ export function useBattleInvitations(userId?: number) {
     try {
       const response = await api.post(apiEndpoints.battles.invite, { toUserId })
 
-      if (response.success) {
-        // No toast - UI handles invitation sent state
-        return response.data
-      }
+      return response
     } catch (_error: any) {
       // Don't show any toasts - let the UI handle all errors
       return null
@@ -169,8 +160,8 @@ export function useBattleInvitations(userId?: number) {
 
   // Update pending invitations from SWR data
   useEffect(() => {
-    if (data?.data) {
-      setPendingInvitations(data.data)
+    if (data) {
+      setPendingInvitations(data)
     }
   }, [data])
 

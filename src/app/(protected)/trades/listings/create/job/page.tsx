@@ -166,20 +166,16 @@ export default function CreateJobServicePage() {
 
       const response = await api.post(apiEndpoints.jobs.list, submitData)
 
-      if (response.success && response.data) {
-        // Invalidate relevant caches
-        await mutate(apiEndpoints.jobs.list)
+      // Invalidate relevant caches
+      await mutate(apiEndpoints.jobs.list)
 
-        toast({
-          title: 'Success!',
-          description: `Your ${data.postingType} has been created successfully.`
-        })
+      toast({
+        title: 'Success!',
+        description: `Your ${data.postingType} has been created successfully.`
+      })
 
-        // Redirect to the created job/service
-        router.push(appRoutes.trades.jobs.detail(response.data.id))
-      } else {
-        throw new Error(response.error || 'Failed to create listing')
-      }
+      // Redirect to the created job/service
+      router.push(appRoutes.trades.jobs.detail(response.id))
     } catch (error: any) {
       toast({
         title: 'Error',

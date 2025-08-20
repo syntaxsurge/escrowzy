@@ -32,7 +32,7 @@ interface AddMemberDialogProps {
   teamName: string
 }
 
-interface User {
+interface UserOption {
   id: string
   email: string | null
   name: string | null
@@ -47,7 +47,7 @@ export function AddMemberDialog({
 }: AddMemberDialogProps) {
   const router = useRouter()
   const [search, setSearch] = useState('')
-  const [availableUsers, setAvailableUsers] = useState<User[]>([])
+  const [availableUsers, setAvailableUsers] = useState<UserOption[]>([])
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [role, setRole] = useState<'member' | 'owner'>('member')
   const { isLoading, execute: executeAdd } = useLoading()

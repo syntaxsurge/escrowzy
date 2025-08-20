@@ -1,7 +1,6 @@
-import type { battles } from '@/lib/db/schema'
+import type { Battle, NewBattle } from '@/lib/db/schema/types'
 
-export type Battle = typeof battles.$inferSelect
-export type NewBattle = typeof battles.$inferInsert
+export type { Battle, NewBattle }
 
 export interface BattleResult {
   id: number

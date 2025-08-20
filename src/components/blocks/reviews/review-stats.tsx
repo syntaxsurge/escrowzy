@@ -33,9 +33,7 @@ export function ReviewStatsComponent({ userId, type }: ReviewStatsProps) {
       })
 
       const response = await api.get(`${apiEndpoints.reviews[type]}?${params}`)
-      if (response.success) {
-        setStats(response.data?.stats || null)
-      }
+      setStats(response?.stats || null)
     } catch (error) {
       console.error('Error fetching review stats:', error)
     } finally {

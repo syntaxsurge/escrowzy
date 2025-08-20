@@ -46,8 +46,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const response = await api.get(apiEndpoints.user.profile)
 
-      if (response.success && response.data?.user) {
-        setUser(response.data.user)
+      if (response?.user) {
+        setUser(response.user)
         // Mark auth as checked
         if (typeof window !== 'undefined') {
           window.localStorage.setItem(
@@ -55,10 +55,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             Date.now().toString()
           )
         }
-      } else if (!response.success && response.status === 401) {
-        // Unauthorized - clear auth and redirect
-        clearAuth()
-        router.push(appRoutes.home)
       } else {
         clearAuth()
       }

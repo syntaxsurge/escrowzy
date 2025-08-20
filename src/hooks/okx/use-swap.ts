@@ -57,17 +57,13 @@ export function useSwap() {
           slippage
         })
 
-        if (!response.success) {
-          throw new Error(response.error || 'Failed to get quote')
-        }
-
         // Set the quote with all the real data
         const quoteData: SwapQuote = {
-          ...response.data,
+          ...response,
           priceImpact:
-            typeof response.data.priceImpact === 'number'
-              ? response.data.priceImpact
-              : parseFloat(response.data.priceImpact || '0')
+            typeof response.priceImpact === 'number'
+              ? response.priceImpact
+              : parseFloat(response.priceImpact || '0')
         }
 
         console.log('Setting quote in hook:', quoteData)
@@ -109,11 +105,7 @@ export function useSwap() {
           chainId
         })
 
-        if (!response.success) {
-          throw new Error('Failed to get price')
-        }
-
-        return response.data
+        return response
       } catch (error) {
         console.error('Price error:', error)
         return null
@@ -138,23 +130,17 @@ export function useSwap() {
           chainId
         })
 
-        if (!response.success) {
-          throw new Error('Failed to execute swap')
-        }
-
-        if (response.success && response.data?.tx) {
+        if (response?.tx) {
           // Return the transaction data for wallet execution
           toast.info('Please confirm the transaction in your wallet')
           return {
             success: true,
-            tx: response.data.tx,
-            routerAddress: response.data.routerAddress,
-            message: response.data.message || 'Transaction ready for execution'
+            tx: response.tx,
+            routerAddress: response.routerAddress,
+            message: response.message || 'Transaction ready for execution'
           }
         } else {
-          throw new Error(
-            response.error || response.data?.details || 'Failed to prepare swap'
-          )
+          throw new Error(response?.details || 'Failed to prepare swap')
         }
       } catch (error) {
         console.error('Swap execution error:', error)

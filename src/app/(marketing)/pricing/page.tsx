@@ -385,9 +385,7 @@ export default function PricingPage() {
         apiEndpoints.teams.downgrade(String(teamData.id))
       )
 
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to downgrade to free plan')
-      }
+      // Response received successfully
 
       // Refresh all data to show updated plan
       await Promise.all([
@@ -455,9 +453,7 @@ export default function PricingPage() {
         apiEndpoints.teams.downgradeTeamPlan(String(teamData.id))
       )
 
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to downgrade team plan')
-      }
+      // Response received successfully
 
       // Refresh all data to show updated plan
       await Promise.all([

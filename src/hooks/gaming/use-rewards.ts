@@ -49,24 +49,24 @@ export function useRewards(userId?: number) {
     isLoading
   } = useSWR<RewardsStats>(
     userId ? apiEndpoints.rewards.statsByUserId(userId) : null,
-    (url: string) => api.get(url).then((res: any) => res.data)
+    (url: string) => api.get(url)
   )
 
   const { data: achievements } = useSWR<
     (Achievement & { unlocked: boolean })[]
   >(
     userId ? apiEndpoints.rewards.achievementsByUserId(userId) : null,
-    (url: string) => api.get(url).then((res: any) => res.data)
+    (url: string) => api.get(url)
   )
 
   const { data: quests } = useSWR(
     userId ? apiEndpoints.rewards.questsByUserId(userId) : null,
-    (url: string) => api.get(url).then((res: any) => res.data)
+    (url: string) => api.get(url)
   )
 
   const { data: leaderboard } = useSWR(
     apiEndpoints.rewards.leaderboard,
-    (url: string) => api.get(url).then((res: any) => res.data)
+    (url: string) => api.get(url)
   )
 
   const handleDailyLogin = useCallback(async () => {
@@ -76,11 +76,10 @@ export function useRewards(userId?: number) {
       const response = await api.post(apiEndpoints.rewards.dailyLogin, {
         userId
       })
-      const data = response.data
 
-      if (data?.leveledUp) {
-        setNewLevel(data.level)
-        setXpGained(data.xpGained)
+      if (response?.leveledUp) {
+        setNewLevel(response.level)
+        setXpGained(response.xpGained)
         setShowLevelUp(true)
       }
 
@@ -89,7 +88,7 @@ export function useRewards(userId?: number) {
       mutate(apiEndpoints.rewards.achievementsByUserId(userId))
       mutate(apiEndpoints.rewards.questsByUserId(userId))
 
-      return data
+      return response
     } catch (error) {
       console.error('Failed to handle daily login:', error)
     }
@@ -105,10 +104,9 @@ export function useRewards(userId?: number) {
           amount,
           reason
         })
-        const data = response.data
 
-        if (data?.leveledUp) {
-          setNewLevel(data.level)
+        if (response?.leveledUp) {
+          setNewLevel(response.level)
           setXpGained(amount)
           setShowLevelUp(true)
         }
@@ -116,7 +114,7 @@ export function useRewards(userId?: number) {
         // Refresh stats
         mutate(apiEndpoints.rewards.statsByUserId(userId))
 
-        return data
+        return response
       } catch (error) {
         console.error('Failed to add XP:', error)
       }
@@ -138,7 +136,7 @@ export function useRewards(userId?: number) {
         // Refresh quests
         mutate(apiEndpoints.rewards.questsByUserId(userId))
 
-        return response.data
+        return response
       } catch (error) {
         console.error('Failed to update quest progress:', error)
       }
@@ -156,10 +154,10 @@ export function useRewards(userId?: number) {
           achievementId
         })
 
-        if (response.data?.unlocked && response.data?.achievement) {
+        if (response?.unlocked && response?.achievement) {
           // Show achievement notification if available
           if (showAchievement) {
-            showAchievement(response.data.achievement)
+            showAchievement(response.achievement)
           }
 
           // Refresh achievements
@@ -167,7 +165,7 @@ export function useRewards(userId?: number) {
           mutate(apiEndpoints.rewards.statsByUserId(userId))
         }
 
-        return response.data
+        return response
       } catch (error) {
         console.error('Failed to check achievement:', error)
       }

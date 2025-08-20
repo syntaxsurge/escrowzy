@@ -265,9 +265,7 @@ export function useBattleStats() {
     const fetchStats = async () => {
       try {
         const response = await api.get(apiEndpoints.battles.liveStats)
-        if (response.success && response.data) {
-          setStats(response.data)
-        }
+        setStats(response)
       } catch (error) {
         console.error('Failed to fetch battle stats:', error)
       }

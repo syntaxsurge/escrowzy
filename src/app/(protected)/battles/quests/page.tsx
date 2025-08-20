@@ -23,23 +23,7 @@ import { apiEndpoints } from '@/config/api-endpoints'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 import { formatNumber } from '@/lib/utils/string'
-
-interface Quest {
-  id: string
-  name: string
-  description: string
-  type: 'daily' | 'weekly' | 'special'
-  category: 'battle'
-  xpReward: number
-  requirements: {
-    type: string
-    target: number
-    current: number
-  }
-  isCompleted: boolean
-  isClaimable: boolean
-  expiresAt?: string
-}
+import type { Quest } from '@/types/quest'
 
 export default function BattleQuestsPage() {
   const { toast } = useToast()
@@ -105,7 +89,7 @@ export default function BattleQuestsPage() {
 
   const QuestCard = ({ quest }: { quest: Quest }) => {
     const progress =
-      quest.requirements.target > 0
+      quest.requirements && quest.requirements.target > 0
         ? (quest.requirements.current / quest.requirements.target) * 100
         : 0
 
@@ -120,7 +104,7 @@ export default function BattleQuestsPage() {
         <CardHeader className='pb-3'>
           <div className='flex items-start justify-between'>
             <div className='flex items-center gap-2'>
-              {getQuestIcon(quest.type)}
+              {getQuestIcon(quest.type || 'daily')}
               <CardTitle className='text-lg'>{quest.name}</CardTitle>
             </div>
             <div className='flex items-center gap-2'>
@@ -143,7 +127,8 @@ export default function BattleQuestsPage() {
             <div className='flex items-center justify-between text-sm'>
               <span className='text-muted-foreground'>Progress</span>
               <span className='font-medium'>
-                {quest.requirements.current} / {quest.requirements.target}
+                {quest.requirements?.current || 0} /{' '}
+                {quest.requirements?.target || 0}
               </span>
             </div>
             <Progress value={progress} className='h-2' />

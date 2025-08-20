@@ -60,16 +60,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { appRoutes } from '@/config/app-routes'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
-
-interface Freelancer {
-  id: number
-  name: string
-  title: string | null
-  activeJobs: number
-  totalPaid: number
-  avgRating: number
-  completionRate: number
-}
+import type { Freelancer } from '@/types/freelancer'
 
 interface TopPerformer {
   id: number

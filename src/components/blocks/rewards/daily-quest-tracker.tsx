@@ -19,20 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib'
-
-interface Quest {
-  id: string
-  name: string
-  description: string
-  icon: string
-  xpReward: number
-  progress: {
-    current: number
-    required: number
-  }
-  completed?: boolean
-  claimed?: boolean
-}
+import type { Quest } from '@/types/quest'
 
 interface DailyQuestTrackerProps {
   quests: Quest[]
@@ -78,7 +65,9 @@ export function DailyQuestTracker({
 
   const getProgressPercentage = (quest: Quest) => {
     return Math.min(
-      (quest.progress.current / quest.progress.required) * 100,
+      quest.progress
+        ? (quest.progress.current / quest.progress.required) * 100
+        : 0,
       100
     )
   }
@@ -195,8 +184,8 @@ export function DailyQuestTracker({
                       <div className='mt-3 space-y-1'>
                         <div className='flex items-center justify-between text-xs'>
                           <span className='text-muted-foreground'>
-                            Progress: {quest.progress.current}/
-                            {quest.progress.required}
+                            Progress: {quest.progress?.current || 0}/
+                            {quest.progress?.required || 0}
                           </span>
                           <span className='font-medium'>
                             {Math.floor(getProgressPercentage(quest))}%
@@ -258,8 +247,10 @@ export function DailyQuestTracker({
                         <div className='text-muted-foreground flex items-center gap-1'>
                           <Target className='h-4 w-4' />
                           <span>
-                            Goal: {quest.progress.required}{' '}
-                            {quest.progress.required === 1 ? 'time' : 'times'}
+                            Goal: {quest.progress?.required || 0}{' '}
+                            {(quest.progress?.required || 0) === 1
+                              ? 'time'
+                              : 'times'}
                           </span>
                         </div>
                         {quest.completed && (

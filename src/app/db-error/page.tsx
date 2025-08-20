@@ -32,7 +32,7 @@ function DatabaseErrorContent() {
       try {
         const response = await api.get(apiEndpoints.health.db)
 
-        if (response.success && response.data?.details?.status === 'healthy') {
+        if (response?.details?.status === 'healthy') {
           // Database is working, redirect to homepage
           router.push(appRoutes.home)
         } else {

@@ -35,21 +35,21 @@ export function useBattles(userId?: number) {
   const { data: activeDiscount, error: discountError } =
     useSWR<BattleDiscount | null>(
       userId ? apiEndpoints.battles.activeDiscount : null,
-      (url: string) => api.get(url).then((res: any) => res.data),
+      (url: string) => api.get(url),
       { refreshInterval: BATTLE_CONFIG.ACTIVITY_REFRESH_INTERVAL }
     )
 
   // Fetch battle history
   const { data: battleHistoryResponse, error: historyError } = useSWR<any>(
     userId ? apiEndpoints.battles.history : null,
-    (url: string) => api.get(url).then((res: any) => res.data),
+    (url: string) => api.get(url),
     { refreshInterval: BATTLE_CONFIG.HISTORY_REFRESH_INTERVAL }
   )
 
   // Fetch daily limit
   const { data: dailyLimit, error: limitError } = useSWR<DailyBattleLimit>(
     userId ? apiEndpoints.battles.dailyLimit : null,
-    (url: string) => api.get(url).then((res: any) => res.data),
+    (url: string) => api.get(url),
     { refreshInterval: refreshIntervals.VERY_SLOW } // Refresh every minute
   )
 
@@ -63,25 +63,23 @@ export function useBattles(userId?: number) {
       })
 
       // Check if response exists
-      if (!response || !response.data) {
+      if (!response) {
         console.error('Invalid response from find match API')
         return null
       }
 
-      const data: FindMatchResponse = response.data
-
       // Check if user is in queue
-      if (data?.inQueue) {
+      if (response?.inQueue) {
         setIsInQueue(true)
       }
 
-      if (!data?.opponent) {
+      if (!response?.opponent) {
         // Don't show a toast here - let the UI handle the no match case
         return null
       }
 
       setIsInQueue(false)
-      return data.opponent
+      return response.opponent
     } catch (error: any) {
       // Don't show toast here - let the UI handle the error
       console.error('Failed to find match:', error)
@@ -114,9 +112,8 @@ export function useBattles(userId?: number) {
         const response = await api.post(apiEndpoints.battles.create, {
           player2Id: opponentId
         })
-        const result: BattleResult = response.data
 
-        setBattleResult(result)
+        setBattleResult(response)
 
         // Refresh all battle data
         if (userId) {
@@ -128,7 +125,7 @@ export function useBattles(userId?: number) {
 
         // No toasts - battle result is shown in UI
 
-        return result
+        return response
       } catch (error: any) {
         // No toast - errors are handled in UI
         console.error('Failed to create battle:', error)
@@ -143,7 +140,7 @@ export function useBattles(userId?: number) {
   // Get battle stats
   const { data: battleStats } = useSWR<BattleStats>(
     userId ? apiEndpoints.battles.statsByUserId(userId) : null,
-    (url: string) => api.get(url).then((res: any) => res.data),
+    (url: string) => api.get(url),
     {
       refreshInterval: refreshIntervals.VERY_SLOW,
       fallbackData: {
@@ -174,11 +171,8 @@ export function useBattles(userId?: number) {
   }, [isInQueue, userId])
 
   // Extract the actual battle history from the response
-  // The API returns { success: true, data: { history: { battles: [...], totalBattles, ... }, ... } }
   const battleHistoryData =
-    battleHistoryResponse?.data?.history ||
-    battleHistoryResponse?.history ||
-    battleHistoryResponse
+    battleHistoryResponse?.history || battleHistoryResponse
   const battleHistory = battleHistoryData?.battles || []
 
   return {

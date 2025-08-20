@@ -4,14 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { apiEndpoints } from '@/config/api-endpoints'
 import { api } from '@/lib/api/http-client'
-
-interface User {
-  id: number
-  walletAddress: string
-  email: string | null
-  name: string | null
-  role: string
-}
+import type { User } from '@/lib/db/schema/types'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
@@ -21,9 +14,7 @@ export function useAuth() {
     async function fetchUser() {
       try {
         const response = await api.get(apiEndpoints.user.profile)
-        if (response.success) {
-          setUser(response.data?.user || null)
-        }
+        setUser(response?.user || null)
       } catch (error) {
         console.error('Error fetching user:', error)
       } finally {
