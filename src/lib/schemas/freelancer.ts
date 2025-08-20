@@ -37,17 +37,28 @@ export const freelancerProfileSchema = z.object({
     .optional(),
   timezone: z.string().optional(),
   portfolioUrl: z
-    .union([z.string().url('Invalid URL'), z.literal(''), z.undefined()])
+    .string()
+    .refine(
+      val => val === '' || !val || z.string().url().safeParse(val).success,
+      { message: 'Invalid URL' }
+    )
+    .transform(val => (val === '' ? undefined : val))
     .optional(),
   linkedinUrl: z
-    .union([
-      z.string().url('Invalid LinkedIn URL'),
-      z.literal(''),
-      z.undefined()
-    ])
+    .string()
+    .refine(
+      val => val === '' || !val || z.string().url().safeParse(val).success,
+      { message: 'Invalid LinkedIn URL' }
+    )
+    .transform(val => (val === '' ? undefined : val))
     .optional(),
   githubUrl: z
-    .union([z.string().url('Invalid GitHub URL'), z.literal(''), z.undefined()])
+    .string()
+    .refine(
+      val => val === '' || !val || z.string().url().safeParse(val).success,
+      { message: 'Invalid GitHub URL' }
+    )
+    .transform(val => (val === '' ? undefined : val))
     .optional()
 })
 
@@ -98,17 +109,28 @@ export const profileAvailabilitySchema = z.object({
 
 export const profileLinksSchema = z.object({
   portfolioUrl: z
-    .union([z.string().url('Invalid URL'), z.literal(''), z.undefined()])
+    .string()
+    .refine(
+      val => val === '' || !val || z.string().url().safeParse(val).success,
+      { message: 'Invalid URL' }
+    )
+    .transform(val => (val === '' ? undefined : val))
     .optional(),
   linkedinUrl: z
-    .union([
-      z.string().url('Invalid LinkedIn URL'),
-      z.literal(''),
-      z.undefined()
-    ])
+    .string()
+    .refine(
+      val => val === '' || !val || z.string().url().safeParse(val).success,
+      { message: 'Invalid LinkedIn URL' }
+    )
+    .transform(val => (val === '' ? undefined : val))
     .optional(),
   githubUrl: z
-    .union([z.string().url('Invalid GitHub URL'), z.literal(''), z.undefined()])
+    .string()
+    .refine(
+      val => val === '' || !val || z.string().url().safeParse(val).success,
+      { message: 'Invalid GitHub URL' }
+    )
+    .transform(val => (val === '' ? undefined : val))
     .optional()
 })
 
