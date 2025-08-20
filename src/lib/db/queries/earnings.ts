@@ -177,11 +177,11 @@ export async function getEarningsByPeriod(
 
   const earningsData = await db
     .select({
-      period: sql<string>`TO_CHAR(created_at, ${dateFormat})`,
-      amount: sql<number>`COALESCE(SUM(CAST(amount AS DECIMAL)), 0)`,
+      period: sql<string>`TO_CHAR(${earnings.createdAt}, ${dateFormat})`,
+      amount: sql<number>`COALESCE(SUM(CAST(${earnings.amount} AS DECIMAL)), 0)`,
       count: sql<number>`COUNT(*)::int`,
-      fees: sql<number>`COALESCE(SUM(CAST(platform_fee AS DECIMAL)), 0)`,
-      netAmount: sql<number>`COALESCE(SUM(CAST(net_amount AS DECIMAL)), 0)`
+      fees: sql<number>`COALESCE(SUM(CAST(${earnings.platformFee} AS DECIMAL)), 0)`,
+      netAmount: sql<number>`COALESCE(SUM(CAST(${earnings.netAmount} AS DECIMAL)), 0)`
     })
     .from(earnings)
     .where(
@@ -190,8 +190,8 @@ export async function getEarningsByPeriod(
         between(earnings.createdAt, start, end)
       )
     )
-    .groupBy(sql`TO_CHAR(created_at, ${dateFormat})`)
-    .orderBy(sql`TO_CHAR(created_at, ${dateFormat})`)
+    .groupBy(sql`TO_CHAR(${earnings.createdAt}, ${dateFormat})`)
+    .orderBy(sql`TO_CHAR(${earnings.createdAt}, ${dateFormat})`)
 
   return earningsData.map(e => ({
     period: e.period,
@@ -375,7 +375,7 @@ export async function getEarningsStatistics(freelancerId: number) {
     .from(
       sql`(
         SELECT job_id, SUM(CAST(net_amount AS DECIMAL)) as total
-        FROM earnings
+        FROM ${earnings}
         WHERE freelancer_id = ${freelancerId}
           AND job_id IS NOT NULL
         GROUP BY job_id
