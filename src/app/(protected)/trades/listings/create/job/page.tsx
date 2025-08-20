@@ -120,7 +120,11 @@ export default function CreateJobServicePage() {
 
   // Auto-select first category when categories are loaded
   React.useEffect(() => {
-    if (categoriesData && categoriesData.length > 0 && form.getValues('categoryId') === 0) {
+    if (
+      categoriesData &&
+      categoriesData.length > 0 &&
+      form.getValues('categoryId') === 0
+    ) {
       form.setValue('categoryId', categoriesData[0].id)
     }
   }, [categoriesData, form])

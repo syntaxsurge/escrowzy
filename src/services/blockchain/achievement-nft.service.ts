@@ -538,8 +538,9 @@ export async function mintAchievementNFT(
   try {
     // Use serverFetch for server-side API calls
     const { serverFetch } = await import('@/lib/api/server-utils')
+    const { apiEndpoints } = await import('@/config/api-endpoints')
 
-    const data = await serverFetch('/api/achievements/mint', {
+    const data = await serverFetch(apiEndpoints.achievements.mint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

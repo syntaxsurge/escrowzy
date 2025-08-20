@@ -21,8 +21,7 @@ export async function GET(request: Request) {
     console.error('Failed to fetch quest progress:', error)
     return NextResponse.json(
       {
-        error: 'Failed to fetch quest progress',
-        success: false
+        error: 'Failed to fetch quest progress'
       },
       { status: 500 }
     )

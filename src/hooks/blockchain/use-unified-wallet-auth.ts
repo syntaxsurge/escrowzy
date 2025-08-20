@@ -99,10 +99,7 @@ export function useUnifiedWalletAuth() {
           shouldShowErrorToast: false
         }
       )
-      if (!nonceRes.success) {
-        throw new Error('Failed to get nonce from server')
-      }
-      const { nonce } = nonceRes.data!
+      const { nonce } = nonceRes
 
       // Create SIWE message
       const message = createSiweMessage({
@@ -146,18 +143,13 @@ export function useUnifiedWalletAuth() {
         await getUserInfoFromSocialLogin()
 
       // Send to server for verification
-      const authRes = await api.post(apiEndpoints.auth.wallet, {
+      await api.post<{ user: any }>(apiEndpoints.auth.wallet, {
         message,
         signature,
         address,
         socialEmail,
         socialName
       })
-
-      if (!authRes.success) {
-        console.error('Authentication response:', authRes)
-        throw new Error(authRes.error || 'Authentication failed')
-      }
 
       // Refresh user data and team data
       await mutate(apiEndpoints.user.profile)
@@ -197,8 +189,8 @@ export function useUnifiedWalletAuth() {
         shouldShowErrorToast: false
       })
 
-      if (response.success && response.data?.user) {
-        const sessionWallet = response.data.user.walletAddress?.toLowerCase()
+      if (response?.user) {
+        const sessionWallet = response.user.walletAddress?.toLowerCase()
         const currentWallet = address.toLowerCase()
 
         if (sessionWallet !== currentWallet) {

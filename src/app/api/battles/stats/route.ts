@@ -62,8 +62,7 @@ export async function GET() {
     console.error('Failed to fetch battle stats:', error)
     return NextResponse.json(
       {
-        error: 'Failed to fetch battle stats',
-        success: false
+        error: 'Failed to fetch battle stats'
       },
       { status: 500 }
     )

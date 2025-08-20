@@ -198,6 +198,10 @@ export const apiEndpoints = {
     userRank: '/api/rewards/user-rank',
     questsByUserId: (userId: string | number) => `/api/rewards/quests/${userId}`
   },
+  achievements: {
+    mint: '/api/achievements/mint',
+    check: '/api/achievements/check'
+  },
   users: {
     tradingStats: (id: string) => `/api/users/${id}/trading-stats`
   },

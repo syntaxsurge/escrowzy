@@ -778,9 +778,9 @@ export function useTransactionSync() {
         }>
       }>(apiEndpoints.transactions.sync, {})
 
-      if (!result.success || !result.data) return
+      if (!result) return
 
-      const { updates } = result.data
+      const { updates } = result
 
       // Process any status updates
       for (const update of updates) {

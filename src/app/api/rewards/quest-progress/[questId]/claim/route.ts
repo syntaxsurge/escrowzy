@@ -28,8 +28,7 @@ export async function POST(
     if (!result.success) {
       return NextResponse.json(
         {
-          error: result.message,
-          success: false
+          error: result.message
         },
         { status: 400 }
       )
@@ -46,8 +45,7 @@ export async function POST(
     console.error('Failed to claim quest reward:', error)
     return NextResponse.json(
       {
-        error: 'Failed to claim quest reward',
-        success: false
+        error: 'Failed to claim quest reward'
       },
       { status: 500 }
     )

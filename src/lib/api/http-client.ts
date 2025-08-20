@@ -2,7 +2,6 @@ import {
   showSuccessToast,
   showErrorToast
 } from '@/components/blocks/toast-manager'
-import type { ApiResponse } from '@/types/api'
 
 /**
  * Client-side API options
@@ -26,7 +25,7 @@ interface ApiOptions extends RequestInit {
 async function apiClient<T = any>(
   url: string,
   options: ApiOptions = {}
-): Promise<ApiResponse<T>> {
+): Promise<T> {
   const {
     shouldShowErrorToast = true,
     errorMessage = 'An error occurred',
@@ -71,14 +70,14 @@ async function apiClient<T = any>(
         if (shouldShowErrorToast && response.status !== 401) {
           showErrorToast('Error', error)
         }
-        return { success: false, error, status: response.status }
+        throw new Error(error)
       }
 
       if (successMessage) {
         showSuccessToast('Success', successMessage)
       }
 
-      return { success: true, data }
+      return data
     } catch (error) {
       clearTimeout(timeoutId)
       lastError = error as Error
@@ -101,7 +100,7 @@ async function apiClient<T = any>(
   if (shouldShowErrorToast) {
     showErrorToast('Error', errorMsg)
   }
-  return { success: false, error: errorMsg }
+  throw new Error(errorMsg)
 }
 
 /**
@@ -111,7 +110,7 @@ async function apiClient<T = any>(
  * import { apiEndpoints } from '@/config/api-endpoints'
  *
  * // GET request
- * const { success, data, error } = await api.get(apiEndpoints.admin.users.base)
+ * const data = await api.get(apiEndpoints.admin.users.base)
  *
  * // POST request with data
  * const result = await api.post(apiEndpoints.admin.users.base, { name: 'John' })

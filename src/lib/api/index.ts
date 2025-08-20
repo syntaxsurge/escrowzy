@@ -1,8 +1,17 @@
-import type { PaginationParams } from '@/types/api'
-
 import { apiResponses } from './server-utils'
 
 export type SortOrder = 'asc' | 'desc'
+
+export interface PaginationParams {
+  page?: number
+  limit?: number
+  pageSize?: number // Alternative to limit
+  search?: string
+  orderBy?: string
+  sortBy?: string // Alternative to orderBy
+  orderDirection?: 'asc' | 'desc'
+  sortOrder?: 'asc' | 'desc' // Alternative to orderDirection
+}
 
 export interface StandardRouteParams extends PaginationParams {
   role?: string
