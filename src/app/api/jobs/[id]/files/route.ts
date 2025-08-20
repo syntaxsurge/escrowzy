@@ -98,7 +98,7 @@ export async function GET(
 
     const files = Array.from(filesMap.values())
 
-    return NextResponse.json({ success: true, files })
+    return NextResponse.json({ files })
   } catch (error) {
     console.error('Failed to fetch files:', error)
     return NextResponse.json(

@@ -69,7 +69,7 @@ export async function GET(
       )
       .orderBy(workspaceEvents.startTime)
 
-    return NextResponse.json({ success: true, events })
+    return NextResponse.json({ events })
   } catch (error) {
     console.error('Failed to fetch events:', error)
     return NextResponse.json(
@@ -138,7 +138,7 @@ export async function POST(
       })
       .returning()
 
-    return NextResponse.json({ success: true, event })
+    return NextResponse.json({ event })
   } catch (error) {
     console.error('Failed to create event:', error)
     return NextResponse.json(

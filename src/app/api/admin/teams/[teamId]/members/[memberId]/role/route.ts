@@ -63,7 +63,9 @@ export const PATCH = withAdmin(
         })
       })
 
-      return NextResponse.json({ success: true })
+      return NextResponse.json({
+        message: 'Team member role updated successfully'
+      })
     } catch (error) {
       console.error('Error updating team member role:', error)
       return NextResponse.json(

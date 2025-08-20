@@ -162,6 +162,7 @@ export default function FreelancerDashboardPage() {
       if (!response.success) {
         throw new Error(response.error || 'Failed to load dashboard')
       }
+      // API now returns data directly, apiClient wraps it properly
       return response.data
     },
     {
@@ -181,10 +182,11 @@ export default function FreelancerDashboardPage() {
     )
   }
 
-  // Handle profile not found error
+  // Handle profile not found error or missing profile data
   if (
     error?.message?.includes('profile not found') ||
-    (!dashboardData && !dataLoading && user)
+    (!dashboardData && !dataLoading && user) ||
+    (dashboardData && !dashboardData.profile)
   ) {
     return (
       <div className='flex min-h-[400px] items-center justify-center'>
@@ -242,7 +244,7 @@ export default function FreelancerDashboardPage() {
             {greeting}, {user.name || 'Freelancer'}!
           </h1>
           <p className='text-muted-foreground mb-4'>
-            {dashboardData.profile.professionalTitle ||
+            {dashboardData?.profile?.professionalTitle ||
               'Welcome to your dashboard'}
           </p>
 
@@ -253,9 +255,9 @@ export default function FreelancerDashboardPage() {
               className='border-green-500/50 bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-300'
             >
               <Medal className='mr-1 h-3 w-3' />
-              {dashboardData.profile.availability === 'available'
+              {dashboardData?.profile?.availability === 'available'
                 ? 'Available'
-                : dashboardData.profile.availability === 'busy'
+                : dashboardData?.profile?.availability === 'busy'
                   ? 'Busy'
                   : 'Away'}
             </Badge>
@@ -276,7 +278,7 @@ export default function FreelancerDashboardPage() {
                 {dashboardData.performance.repeatClients} repeat clients
               </Badge>
             )}
-            {dashboardData.profile.verificationStatus === 'verified' && (
+            {dashboardData?.profile?.verificationStatus === 'verified' && (
               <Badge
                 variant='outline'
                 className='border-amber-500/50 bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-300'

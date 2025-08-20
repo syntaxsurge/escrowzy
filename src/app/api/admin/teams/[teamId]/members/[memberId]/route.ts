@@ -56,7 +56,7 @@ export const DELETE = withAdmin(
         })
       })
 
-      return NextResponse.json({ success: true })
+      return NextResponse.json({ message: 'Team member removed successfully' })
     } catch (error) {
       console.error('Error removing team member:', error)
       return NextResponse.json(

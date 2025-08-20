@@ -68,7 +68,7 @@ export async function GET(
       .orderBy(messages.createdAt)
       .limit(100)
 
-    return NextResponse.json({ success: true, messages: jobMessages })
+    return NextResponse.json({ messages: jobMessages })
   } catch (error) {
     console.error('Failed to fetch messages:', error)
     return NextResponse.json(
@@ -164,7 +164,7 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ success: true, message: messageWithSender })
+    return NextResponse.json({ message: messageWithSender })
   } catch (error) {
     console.error('Failed to send message:', error)
     return NextResponse.json(

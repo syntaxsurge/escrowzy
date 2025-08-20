@@ -70,7 +70,7 @@ export async function GET(
       }
     })
 
-    return NextResponse.json({ success: true, annotations: rootAnnotations })
+    return NextResponse.json({ annotations: rootAnnotations })
   } catch (error) {
     console.error('Failed to fetch annotations:', error)
     return NextResponse.json(

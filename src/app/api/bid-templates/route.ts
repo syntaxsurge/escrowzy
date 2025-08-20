@@ -30,7 +30,6 @@ export async function GET(request: NextRequest) {
       )
 
     return NextResponse.json({
-      success: true,
       templates
     })
   } catch (error) {

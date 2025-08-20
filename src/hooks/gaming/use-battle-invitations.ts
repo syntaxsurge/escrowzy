@@ -44,7 +44,7 @@ export function useBattleInvitations(userId?: number) {
           invitationId
         })
 
-        if (response.data.success) {
+        if (response.success) {
           // No toast - UI handles battle starting state
 
           // Remove from pending list
@@ -53,7 +53,7 @@ export function useBattleInvitations(userId?: number) {
           )
 
           mutate()
-          return response.data.data
+          return response.data
         }
       } catch (_error: any) {
         // Don't show any toasts - let the UI handle all errors
@@ -71,7 +71,7 @@ export function useBattleInvitations(userId?: number) {
           invitationId
         })
 
-        if (response.data.success) {
+        if (response.success) {
           // Remove from pending list
           setPendingInvitations(prev =>
             prev.filter(inv => inv.id !== invitationId)
@@ -93,9 +93,9 @@ export function useBattleInvitations(userId?: number) {
     try {
       const response = await api.post(apiEndpoints.battles.invite, { toUserId })
 
-      if (response.data.success) {
+      if (response.success) {
         // No toast - UI handles invitation sent state
-        return response.data.data
+        return response.data
       }
     } catch (_error: any) {
       // Don't show any toasts - let the UI handle all errors

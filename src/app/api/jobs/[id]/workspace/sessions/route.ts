@@ -66,7 +66,7 @@ export async function GET(
       )
       .orderBy(desc(workspaceSessions.lastActivityAt))
 
-    return NextResponse.json({ success: true, sessions })
+    return NextResponse.json({ sessions })
   } catch (error) {
     console.error('Failed to fetch workspace sessions:', error)
     return NextResponse.json(

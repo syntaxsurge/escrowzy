@@ -142,7 +142,7 @@ export async function GET(
     // Limit to recent activities
     const recentActivities = activities.slice(0, 50)
 
-    return NextResponse.json({ success: true, activities: recentActivities })
+    return NextResponse.json({ activities: recentActivities })
   } catch (error) {
     console.error('Failed to fetch activity:', error)
     return NextResponse.json(

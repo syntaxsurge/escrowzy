@@ -40,7 +40,7 @@ export async function DELETE(
     }
 
     await revokeApiKey(keyId)
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ message: 'API key revoked successfully' })
   } catch (error: any) {
     if (error.message?.includes('not authenticated')) {
       return NextResponse.json({ error: error.message }, { status: 401 })

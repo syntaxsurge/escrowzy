@@ -65,7 +65,7 @@ export async function GET(
       .where(eq(deliveryPackages.jobId, jobId))
       .orderBy(desc(deliveryPackages.createdAt))
 
-    return NextResponse.json({ success: true, packages })
+    return NextResponse.json({ packages })
   } catch (error) {
     console.error('Failed to fetch delivery packages:', error)
     return NextResponse.json(

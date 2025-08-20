@@ -151,7 +151,7 @@ export async function DELETE() {
     // Remove user from queue
     await removeFromQueue(session.user.id)
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ message: 'Removed from queue' })
   } catch (error) {
     console.error('Error in DELETE /api/battles/find-match:', error)
     return NextResponse.json(

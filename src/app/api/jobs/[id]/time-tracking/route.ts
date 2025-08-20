@@ -68,7 +68,7 @@ export async function GET(
       )
       .orderBy(desc(timeTracking.startTime))
 
-    return NextResponse.json({ success: true, entries })
+    return NextResponse.json({ entries })
   } catch (error) {
     console.error('Failed to fetch time entries:', error)
     return NextResponse.json(
@@ -139,7 +139,7 @@ export async function POST(
       })
       .returning()
 
-    return NextResponse.json({ success: true, entry })
+    return NextResponse.json({ entry })
   } catch (error) {
     console.error('Failed to create time entry:', error)
     return NextResponse.json(

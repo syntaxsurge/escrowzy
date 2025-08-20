@@ -80,7 +80,7 @@ export async function PUT(
       }
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ message: 'Legal document updated successfully' })
   } catch (error) {
     console.error('Failed to update legal document:', error)
     return NextResponse.json(

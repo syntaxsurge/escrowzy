@@ -72,7 +72,7 @@ export async function GET(
       .where(eq(jobTasks.jobId, jobId))
       .orderBy(jobTasks.sortOrder)
 
-    return NextResponse.json({ success: true, tasks })
+    return NextResponse.json({ tasks })
   } catch (error) {
     console.error('Failed to fetch tasks:', error)
     return NextResponse.json(
@@ -136,7 +136,7 @@ export async function POST(
       })
       .returning()
 
-    return NextResponse.json({ success: true, task })
+    return NextResponse.json({ task })
   } catch (error) {
     console.error('Failed to create task:', error)
     return NextResponse.json(

@@ -65,7 +65,6 @@ export async function POST(
         .where(eq(workspaceSessions.id, existingSession.id))
 
       return NextResponse.json({
-        success: true,
         sessionId: existingSession.sessionId
       })
     }
@@ -119,7 +118,7 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ success: true, sessionId })
+    return NextResponse.json({ sessionId })
   } catch (error) {
     console.error('Failed to join workspace:', error)
     return NextResponse.json(

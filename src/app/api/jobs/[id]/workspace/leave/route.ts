@@ -78,7 +78,7 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ message: 'Left workspace successfully' })
   } catch (error) {
     console.error('Failed to leave workspace:', error)
     return NextResponse.json(

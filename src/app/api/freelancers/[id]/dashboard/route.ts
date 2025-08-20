@@ -62,14 +62,20 @@ export async function GET(
     const earningsStats = await getEarningsStatistics(freelancerId)
 
     // Get recent earnings (last 30 days)
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-    const recentEarnings = await getEarningsByPeriod(
-      freelancerId,
-      'daily',
-      thirtyDaysAgo,
-      new Date()
-    )
+    let recentEarnings: any[] = []
+    try {
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      recentEarnings = await getEarningsByPeriod(
+        freelancerId, // This is the user ID, which is correct for earnings table
+        'daily',
+        thirtyDaysAgo,
+        new Date()
+      )
+    } catch (error) {
+      console.error('Error getting recent earnings:', error)
+      recentEarnings = []
+    }
 
     // Get upcoming payments
     const upcomingPayments = await getUpcomingPayments(freelancerId)
@@ -213,67 +219,65 @@ export async function GET(
         ) as client_jobs`
       )
 
+    // Return the data directly - apiClient will wrap it in { success: true, data: ... }
     return NextResponse.json({
-      success: true,
-      data: {
-        profile: {
-          id: profile.id,
-          userId: profile.userId,
-          professionalTitle: profile.professionalTitle,
-          availability: profile.availability,
-          avgRating: profile.avgRating,
-          completionRate: profile.completionRate,
-          totalJobs: profile.totalJobs,
-          verificationStatus: profile.verificationStatus
-        },
-        earnings: {
-          summary: earningsSummary,
-          statistics: earningsStats,
-          recentEarnings,
-          upcomingPayments: upcomingPayments.slice(0, 5)
-        },
-        jobs: {
-          active: activeJobs,
-          completionRate: Math.round(completionRate),
-          milestoneStats: {
-            total: Number(milestoneStats?.total) || 0,
-            pending: Number(milestoneStats?.pending) || 0,
-            inProgress: Number(milestoneStats?.inProgress) || 0,
-            submitted: Number(milestoneStats?.submitted) || 0,
-            approved: Number(milestoneStats?.approved) || 0,
-            disputed: Number(milestoneStats?.disputed) || 0
-          }
-        },
-        proposals: {
-          recent: recentProposals,
-          stats: {
-            total: Number(proposalStats?.total) || 0,
-            pending: Number(proposalStats?.pending) || 0,
-            shortlisted: Number(proposalStats?.shortlisted) || 0,
-            accepted: Number(proposalStats?.accepted) || 0,
-            rejected: Number(proposalStats?.rejected) || 0,
-            conversionRate: Math.round(conversionRate)
-          }
-        },
-        reviews: {
-          recent: recentReviews,
-          avgRating: profile.avgRating,
-          totalReviews: profile.reviewCount
-        },
-        performance: {
-          skillPerformance,
-          completionRate: Math.round(completionRate),
-          responseTime: profile.responseTime,
-          uniqueClients: Number(clientStats?.uniqueClients) || 0,
-          repeatClients: Number(clientStats?.repeatClients) || 0
-        },
-        quickStats: {
-          totalEarnings: earningsSummary.totalEarnings,
-          availableBalance: earningsSummary.availableBalance,
-          activeJobs: activeJobs.length,
-          pendingProposals: Number(proposalStats?.pending) || 0,
-          monthlyGrowth: earningsStats.growthRate
+      profile: {
+        id: profile.id,
+        userId: profile.userId,
+        professionalTitle: profile.professionalTitle,
+        availability: profile.availability,
+        avgRating: profile.avgRating,
+        completionRate: profile.completionRate,
+        totalJobs: profile.totalJobs,
+        verificationStatus: profile.verificationStatus
+      },
+      earnings: {
+        summary: earningsSummary,
+        statistics: earningsStats,
+        recentEarnings,
+        upcomingPayments: upcomingPayments.slice(0, 5)
+      },
+      jobs: {
+        active: activeJobs,
+        completionRate: Math.round(completionRate),
+        milestoneStats: {
+          total: Number(milestoneStats?.total) || 0,
+          pending: Number(milestoneStats?.pending) || 0,
+          inProgress: Number(milestoneStats?.inProgress) || 0,
+          submitted: Number(milestoneStats?.submitted) || 0,
+          approved: Number(milestoneStats?.approved) || 0,
+          disputed: Number(milestoneStats?.disputed) || 0
         }
+      },
+      proposals: {
+        recent: recentProposals,
+        stats: {
+          total: Number(proposalStats?.total) || 0,
+          pending: Number(proposalStats?.pending) || 0,
+          shortlisted: Number(proposalStats?.shortlisted) || 0,
+          accepted: Number(proposalStats?.accepted) || 0,
+          rejected: Number(proposalStats?.rejected) || 0,
+          conversionRate: Math.round(conversionRate)
+        }
+      },
+      reviews: {
+        recent: recentReviews,
+        avgRating: profile.avgRating,
+        totalReviews: profile.reviewCount
+      },
+      performance: {
+        skillPerformance,
+        completionRate: Math.round(completionRate),
+        responseTime: profile.responseTime,
+        uniqueClients: Number(clientStats?.uniqueClients) || 0,
+        repeatClients: Number(clientStats?.repeatClients) || 0
+      },
+      quickStats: {
+        totalEarnings: earningsSummary.totalEarnings,
+        availableBalance: earningsSummary.availableBalance,
+        activeJobs: activeJobs.length,
+        pendingProposals: Number(proposalStats?.pending) || 0,
+        monthlyGrowth: earningsStats.growthRate
       }
     })
   } catch (error) {
