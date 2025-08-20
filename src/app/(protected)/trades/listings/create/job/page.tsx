@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import React, { useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -117,6 +117,13 @@ export default function CreateJobServicePage() {
       paymentMethods: ['bank_transfer', 'paypal']
     }
   })
+
+  // Auto-select first category when categories are loaded
+  React.useEffect(() => {
+    if (categoriesData && categoriesData.length > 0 && form.getValues('categoryId') === 0) {
+      form.setValue('categoryId', categoriesData[0].id)
+    }
+  }, [categoriesData, form])
 
   const handlePostingTypeChange = (type: 'job' | 'service') => {
     setPostingType(type)
