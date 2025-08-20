@@ -132,7 +132,7 @@ export default function JobDetailsPage() {
 
   const handleSave = async () => {
     if (!user) {
-      router.push('/login')
+      router.push(appRoutes.login)
       return
     }
 
@@ -151,7 +151,7 @@ export default function JobDetailsPage() {
 
   const handleApply = () => {
     if (!user) {
-      router.push('/login')
+      router.push(appRoutes.login)
       return
     }
 

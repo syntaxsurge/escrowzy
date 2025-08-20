@@ -21,6 +21,7 @@ import {
 import { StarRating } from '@/components/ui/star-rating'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { api } from '@/lib/api/http-client'
 import {
   clientReviewSchema,
@@ -63,7 +64,7 @@ export function ClientReviewForm({
   const onSubmit = async (data: ClientReviewInput) => {
     setIsSubmitting(true)
     try {
-      const result = await api.post('/api/reviews/client', data, {
+      const result = await api.post(apiEndpoints.reviews.client, data, {
         shouldShowErrorToast: false,
         successMessage: 'Review submitted successfully!'
       })

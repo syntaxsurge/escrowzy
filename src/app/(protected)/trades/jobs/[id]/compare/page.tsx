@@ -136,7 +136,7 @@ export default function CompareFreelancersPage() {
 
       if (response.success) {
         toast.success('Bid accepted successfully')
-        router.push(`/trades/jobs/${jobId}/proposals`)
+        router.push(`${appRoutes.trades.jobs.detail(jobId)}/proposals`)
       } else {
         toast.error(response.error || 'Failed to accept bid')
       }
@@ -168,7 +168,9 @@ export default function CompareFreelancersPage() {
       <div>
         <Button
           variant='ghost'
-          onClick={() => router.push(`/trades/jobs/${jobId}/proposals`)}
+          onClick={() =>
+            router.push(`${appRoutes.trades.jobs.detail(jobId)}/proposals`)
+          }
           className='mb-2'
         >
           <ArrowLeft className='mr-2 h-4 w-4' />
@@ -472,7 +474,9 @@ export default function CompareFreelancersPage() {
                             size='sm'
                             variant='outline'
                             onClick={() =>
-                              router.push(`/freelancers/${bid.freelancerId}`)
+                              router.push(
+                                `${appRoutes.freelancers}/${bid.freelancerId}`
+                              )
                             }
                           >
                             <User className='mr-2 h-3 w-3' />

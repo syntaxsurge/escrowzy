@@ -101,7 +101,7 @@ export default function JobsPage() {
     if (category) params.append('category', category)
     if (experienceLevel) params.append('experience', experienceLevel)
     if (sortBy !== 'newest') params.append('sort', sortBy)
-    router.push(`/trades/jobs?${params.toString()}`)
+    router.push(`${appRoutes.trades.jobs.base}?${params.toString()}`)
   }
 
   const formatBudget = (job: JobPosting) => {

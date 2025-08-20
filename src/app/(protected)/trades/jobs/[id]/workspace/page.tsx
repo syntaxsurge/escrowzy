@@ -203,7 +203,7 @@ export default function JobWorkspacePage() {
             <Button
               variant='ghost'
               size='sm'
-              onClick={() => router.push(`/trades/jobs/${jobId}`)}
+              onClick={() => router.push(appRoutes.trades.jobs.detail(jobId))}
               className='gap-2'
             >
               <ArrowLeft className='h-4 w-4' />

@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { apiEndpoints } from '@/config/api-endpoints'
+import { appRoutes } from '@/config/app-routes'
 import { useSession } from '@/hooks/use-session'
 import { api } from '@/lib/api/http-client'
 
@@ -94,7 +95,7 @@ export default function AvailabilityManagementPage() {
 
   useEffect(() => {
     if (!sessionLoading && !session) {
-      router.push('/login')
+      router.push(appRoutes.login)
     }
   }, [session, sessionLoading, router])
 
@@ -589,7 +590,7 @@ export default function AvailabilityManagementPage() {
       <div className='mt-6 flex items-center justify-end gap-4'>
         <Button
           variant='outline'
-          onClick={() => router.push('/profile/freelancer')}
+          onClick={() => router.push(appRoutes.profile.freelancer.base)}
         >
           Cancel
         </Button>

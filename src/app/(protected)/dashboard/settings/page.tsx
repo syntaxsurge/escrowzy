@@ -51,8 +51,10 @@ import { appRoutes } from '@/config/app-routes'
 import { useUnifiedWalletInfo } from '@/context'
 import { useWalletDisconnect } from '@/hooks/blockchain/use-wallet-disconnect'
 import { useDialogState } from '@/hooks/use-dialog-state'
+import { api } from '@/lib/api/http-client'
 import { swrFetcher } from '@/lib/api/swr'
 import type { User } from '@/lib/db/schema'
+import { UploadClient } from '@/services/upload-client'
 
 type UserWithPendingEmail = User & {
   pendingEmail?: string | null
@@ -143,25 +145,27 @@ function AccountInformation() {
   const handleResendVerification = async () => {
     setIsResending(true)
     try {
-      const response = await fetch(apiEndpoints.auth.resendVerification, {
-        method: 'POST',
-        credentials: 'include'
-      })
-      const data = await response.json()
+      const result = await api.post(
+        apiEndpoints.auth.resendVerification,
+        null,
+        {
+          shouldShowErrorToast: false
+        }
+      )
 
-      if (response.ok) {
+      if (result.success) {
         showSuccessToast('Verification email sent successfully!')
       } else {
-        if (data.error === 'This email is already verified by another user') {
+        if (result.error === 'This email is already verified by another user') {
           // Refresh user data to remove pending email from UI
           mutate(apiEndpoints.user.profile)
           showErrorToast('This email has already been verified by another user')
-        } else if (data.error === 'Email is already verified') {
+        } else if (result.error === 'Email is already verified') {
           // Refresh user data to update UI
           mutate(apiEndpoints.user.profile)
           showSuccessToast('Email is already verified')
         } else {
-          showErrorToast(data.error || 'Failed to send verification email')
+          showErrorToast(result.error || 'Failed to send verification email')
         }
       }
     } catch (_error) {
@@ -179,25 +183,16 @@ function AccountInformation() {
 
     setIsUploadingAvatar(true)
     try {
-      // Use centralized upload API
-      const formData = new FormData()
-      formData.append('files', file)
-      formData.append('uploadType', 'AVATARS')
-      formData.append('context', `user-${user?.id}`)
-
-      const response = await fetch(apiEndpoints.uploads.base, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
+      const result = await UploadClient.uploadFile(file, {
+        uploadType: 'AVATARS',
+        context: `user-${user?.id}`
       })
 
-      const data = await response.json()
-
-      if (response.ok) {
+      if (result.success) {
         showSuccessToast('Avatar uploaded successfully!')
         mutate(apiEndpoints.user.profile)
       } else {
-        showErrorToast(data.error || 'Failed to upload avatar')
+        showErrorToast(result.error || 'Failed to upload avatar')
       }
     } catch (_error) {
       showErrorToast('Failed to upload avatar')

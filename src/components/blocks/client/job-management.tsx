@@ -363,7 +363,9 @@ export function ClientJobManagement() {
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() =>
-                                      router.push(`/trades/jobs/${job.id}/edit`)
+                                      router.push(
+                                        `${appRoutes.trades.jobs.detail(job.id)}/edit`
+                                      )
                                     }
                                   >
                                     <Edit className='mr-2 h-4 w-4' />

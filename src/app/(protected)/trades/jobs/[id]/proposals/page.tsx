@@ -345,7 +345,11 @@ export default function JobProposalsPage() {
               {bids.length > 1 && (
                 <Button
                   variant='outline'
-                  onClick={() => router.push(`/trades/jobs/${jobId}/compare`)}
+                  onClick={() =>
+                    router.push(
+                      `${appRoutes.trades.jobs.detail(jobId)}/compare`
+                    )
+                  }
                 >
                   <Users className='mr-2 h-4 w-4' />
                   Compare

@@ -591,7 +591,7 @@ export default function FreelancerProfileSetup() {
 
   useEffect(() => {
     if (!sessionLoading && !session) {
-      router.push('/login')
+      router.push(appRoutes.login)
     }
   }, [session, sessionLoading, router])
 

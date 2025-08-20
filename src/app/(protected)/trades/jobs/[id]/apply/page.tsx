@@ -113,7 +113,7 @@ export default function JobApplyPage() {
 
   const onSubmit = async (values: ApplyFormValues) => {
     if (!user) {
-      router.push('/login')
+      router.push(appRoutes.login)
       return
     }
 

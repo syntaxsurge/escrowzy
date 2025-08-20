@@ -21,6 +21,8 @@ import {
 import { StarRating } from '@/components/ui/star-rating'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { apiEndpoints } from '@/config/api-endpoints'
+import { appRoutes } from '@/config/app-routes'
 import { api } from '@/lib/api/http-client'
 import {
   freelancerReviewSchema,
@@ -64,7 +66,7 @@ export function FreelancerReviewForm({
   const onSubmit = async (data: FreelancerReviewInput) => {
     setIsSubmitting(true)
     try {
-      const result = await api.post('/api/reviews/freelancer', data, {
+      const result = await api.post(apiEndpoints.reviews.freelancer, data, {
         shouldShowErrorToast: false,
         successMessage: 'Review submitted successfully!'
       })
@@ -76,7 +78,7 @@ export function FreelancerReviewForm({
       if (onSuccess) {
         onSuccess()
       } else {
-        router.push(`/freelancers/${freelancerId}`)
+        router.push(`${appRoutes.freelancers}/${freelancerId}`)
       }
     } catch (error) {
       toast.error(

@@ -2,6 +2,7 @@ import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from 'thirdweb'
 import { parseUnits, formatUnits } from 'viem'
 
 import { apiEndpoints } from '@/config/api-endpoints'
+import { api } from '@/lib/api/http-client'
 import { okxDexClient } from '@/lib/api/okx-dex-client'
 import { getNativeCurrencyDecimals } from '@/lib/blockchain'
 
@@ -295,25 +296,24 @@ async function getPrice(
       })
       return priceResult?.price || null
     } else {
-      // Client-side: use fetch API
-      const response = await fetch(apiEndpoints.prices, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+      // Client-side: use api utility
+      const response = await api.post(
+        apiEndpoints.prices,
+        {
           symbol,
           coingeckoId: coingeckoId || symbol.toLowerCase()
-        })
-      })
+        },
+        {
+          shouldShowErrorToast: false
+        }
+      )
 
-      if (!response.ok) {
-        console.error('Failed to fetch price:', response.statusText)
+      if (!response.success) {
+        console.error('Failed to fetch price:', response.error)
         return null
       }
 
-      const data = await response.json()
-      return data.price || null
+      return response.data?.price || null
     }
   } catch (error) {
     console.error('Error fetching price:', error)
