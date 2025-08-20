@@ -664,15 +664,16 @@ export default function JobDetailsPage() {
           </Card>
 
           {/* Client Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>About the Client</CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              <div className='flex items-center gap-3'>
-                <UserAvatar user={job.client} size='md' />
-                <div>
-                  <p className='font-medium'>{job.client.name}</p>
+          {job.client && (
+            <Card>
+              <CardHeader>
+                <CardTitle>About the Client</CardTitle>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                <div className='flex items-center gap-3'>
+                  <UserAvatar user={job.client} size='md' />
+                  <div>
+                    <p className='font-medium'>{job.client.name || 'Unknown Client'}</p>
                   {clientStats && clientStats.reviewCount > 0 && (
                     <div className='flex items-center gap-1'>
                       <Star className='h-3 w-3 fill-yellow-500 text-yellow-500' />
@@ -724,6 +725,7 @@ export default function JobDetailsPage() {
               )}
             </CardContent>
           </Card>
+          )}
 
           {/* TODO: Implement FeaturedJobsMini component */}
           {/* <FeaturedJobsMini className='lg:sticky lg:top-4' /> */}
