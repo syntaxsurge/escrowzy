@@ -168,7 +168,7 @@ export function DashboardLayoutClient({
         {
           href: appRoutes.profile.freelancer.base,
           icon: UserCircle,
-          label: 'Freelancer Profile',
+          label: 'Profile',
           description: 'Your Professional Profile',
           xp: null,
           isNew: false
@@ -176,7 +176,7 @@ export function DashboardLayoutClient({
         {
           href: appRoutes.dashboard.freelancer,
           icon: LayoutDashboard,
-          label: 'Freelancer Dashboard',
+          label: 'Dashboard',
           description: 'Manage Your Work',
           xp: null,
           isNew: false

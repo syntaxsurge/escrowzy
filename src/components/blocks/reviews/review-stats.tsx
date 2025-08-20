@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { RatingBreakdown } from '@/components/ui/rating-breakdown'
 import { RatingDisplay } from '@/components/ui/rating-display'
 import { Skeleton } from '@/components/ui/skeleton'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { api } from '@/lib/api/http-client'
 import type { ReviewStats } from '@/lib/schemas/reviews'
 
@@ -31,7 +32,7 @@ export function ReviewStatsComponent({ userId, type }: ReviewStatsProps) {
         [type === 'freelancer' ? 'freelancerId' : 'clientId']: userId.toString()
       })
 
-      const response = await api.get(`/api/reviews/${type}?${params}`)
+      const response = await api.get(`${apiEndpoints.reviews[type]}?${params}`)
       if (response.success) {
         setStats(response.data?.stats || null)
       }

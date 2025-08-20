@@ -43,6 +43,7 @@ import {
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 
@@ -102,16 +103,19 @@ export function AdminReviewModeration() {
     setLoading(true)
     try {
       if (activeTab === 'reviews') {
-        const result = await api.get('/api/admin/reviews', {
+        const result = await api.get(apiEndpoints.admin.reviews.base, {
           shouldShowErrorToast: false
         })
         if (result.success) {
           setReviews(result.data.reviews || [])
         }
       } else {
-        const result = await api.get('/api/reviews/disputes?type=pending', {
-          shouldShowErrorToast: false
-        })
+        const result = await api.get(
+          `${apiEndpoints.reviews.disputes}?type=pending`,
+          {
+            shouldShowErrorToast: false
+          }
+        )
         if (result.success) {
           setDisputes(result.data.disputes || [])
         }
@@ -135,7 +139,7 @@ export function AdminReviewModeration() {
   ) => {
     try {
       const result = await api.post(
-        '/api/admin/reviews/moderate',
+        apiEndpoints.admin.reviews.moderate,
         {
           reviewId,
           reviewType,
@@ -176,7 +180,7 @@ export function AdminReviewModeration() {
   ) => {
     try {
       const result = await api.post(
-        '/api/admin/disputes/resolve',
+        apiEndpoints.admin.disputes.resolveGeneral,
         {
           disputeId,
           resolution,

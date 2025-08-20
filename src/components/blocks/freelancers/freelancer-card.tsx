@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { api } from '@/lib/api/http-client'
 import type { FreelancerProfileWithRelations } from '@/lib/db/queries/freelancers'
 
@@ -57,7 +58,9 @@ export function FreelancerCard({
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const response = await api.post(`/api/freelancers/${freelancer.id}/save`)
+      const response = await api.post(
+        apiEndpoints.freelancers.save(freelancer.id)
+      )
       if (response.success) {
         const newSavedState = (response as any).saved
         setIsSaved(newSavedState)

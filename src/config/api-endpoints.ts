@@ -89,7 +89,12 @@ export const apiEndpoints = {
     },
     disputes: {
       base: '/api/admin/disputes',
-      resolve: (id: string | number) => `/api/admin/disputes/${id}/resolve`
+      resolve: (id: string | number) => `/api/admin/disputes/${id}/resolve`,
+      resolveGeneral: '/api/admin/disputes/resolve'
+    },
+    reviews: {
+      base: '/api/admin/reviews',
+      moderate: '/api/admin/reviews/moderate'
     }
   },
   payments: {
@@ -260,7 +265,8 @@ export const apiEndpoints = {
     analytics: (id: string | number) => `/api/freelancers/${id}/analytics`,
     profile: '/api/freelancers/profile',
     skills: '/api/freelancers/skills',
-    portfolio: '/api/freelancers/portfolio'
+    portfolio: '/api/freelancers/portfolio',
+    save: (id: string | number) => `/api/freelancers/${id}/save`
   },
   client: {
     dashboard: (id: string | number) => `/api/client/${id}/dashboard`,
@@ -301,7 +307,8 @@ export const apiEndpoints = {
   reviews: {
     pending: '/api/reviews/pending',
     freelancer: '/api/reviews/freelancer',
-    client: '/api/reviews/client'
+    client: '/api/reviews/client',
+    disputes: '/api/reviews/disputes'
   },
   milestones: {
     autoRelease: '/api/cron/milestone-auto-release'

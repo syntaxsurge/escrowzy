@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { apiEndpoints } from '@/config/api-endpoints'
 import { api } from '@/lib/api/http-client'
 
 import { ReviewCard } from './review-card'
@@ -51,7 +52,7 @@ export function ReviewList({
         order
       })
 
-      const response = await api.get(`/api/reviews/${type}?${params}`)
+      const response = await api.get(`${apiEndpoints.reviews[type]}?${params}`)
 
       if (response.success) {
         if (page === 1) {
