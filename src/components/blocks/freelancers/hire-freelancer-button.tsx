@@ -8,7 +8,7 @@ import { Briefcase } from 'lucide-react'
 import { AuthRequiredModal } from '@/components/blocks/freelancers/auth-required-modal'
 import { Button } from '@/components/ui/button'
 import { appRoutes } from '@/config/app-routes'
-import { useUnifiedWalletInfo } from '@/context'
+import { useUnifiedWalletInfo } from '@/context/blockchain'
 
 interface HireFreelancerButtonProps {
   freelancerId: string

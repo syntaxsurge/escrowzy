@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 
-import { getServerSession } from '@/lib/auth'
+import { getServerSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
 import { getFreelancerStats } from '@/lib/db/queries/freelancers'
 import {

@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { appRoutes } from '@/config/app-routes'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend)

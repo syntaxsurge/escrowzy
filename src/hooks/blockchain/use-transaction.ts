@@ -25,7 +25,7 @@ import {
   useBlockchain,
   useUnifiedWalletInfo,
   useUnifiedChainInfo
-} from '@/context'
+} from '@/context/blockchain'
 import { api } from '@/lib/api/http-client'
 import {
   DEFAULT_CHAIN_ID,

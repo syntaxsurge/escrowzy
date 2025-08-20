@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { eq } from 'drizzle-orm'
 
-import { getServerSession } from '@/lib/auth'
+import { getServerSession } from '@/lib/auth/session'
 import { db } from '@/lib/db/drizzle'
 import {
   createReviewDispute,

@@ -49,7 +49,7 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { api } from '@/lib/api/http-client'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 
 interface JobTemplatesProps {
   freelancerId: number

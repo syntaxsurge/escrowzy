@@ -1,5 +1,5 @@
 import { Progress } from '@/components/ui/progress'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 
 interface RatingBreakdownProps {
   ratingBreakdown: {

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 
-import { useBlockchain } from '@/context'
+import { useBlockchain } from '@/context/blockchain'
 import { useToast } from '@/hooks/use-toast'
 import { getEscrowCoreAddress } from '@/lib/blockchain'
 import { calculateEscrowAmounts } from '@/lib/utils/token-helpers'

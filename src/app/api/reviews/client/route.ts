@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { getServerSession } from '@/lib/auth'
+import { getServerSession } from '@/lib/auth/session'
 import { getClientReviews } from '@/lib/db/queries/reviews'
 import { clientReviewSchema, reviewFilterSchema } from '@/lib/schemas/reviews'
 import { submitClientReview } from '@/services/reviews'

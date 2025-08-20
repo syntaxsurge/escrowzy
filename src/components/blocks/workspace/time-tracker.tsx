@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { api } from '@/lib/api/http-client'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 
 interface TimeEntry {
   id: number

@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/select'
 import { api } from '@/lib/api/http-client'
 import type { JobPostingWithRelations } from '@/lib/db/queries/jobs'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 
 interface ActivityItem {
   id: string

@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from 'react'
 
-import { useBlockchain, useNetwork } from '@/context'
+import { useBlockchain } from '@/context/blockchain'
+import { useNetwork } from '@/context/network'
 
 export function useAutoSwitchChain() {
   const { chainId, switchChain, isConnected } = useBlockchain()

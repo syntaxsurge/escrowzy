@@ -45,7 +45,8 @@ import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
-import { cn, formatDate } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
+import { formatDate } from '@/lib/utils/string'
 
 interface JobPosting {
   id: number

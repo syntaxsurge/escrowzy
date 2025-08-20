@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { z } from 'zod'
 
-import { getServerSession } from '@/lib/auth'
+import { getServerSession } from '@/lib/auth/session'
 import {
   createSkillEndorsement,
   getUserSkillEndorsements,

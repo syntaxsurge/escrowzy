@@ -11,7 +11,7 @@ import {
   WalletSectionHeader
 } from '@/components/blocks/wallet-controls'
 import { isWalletProvider, WalletProviders } from '@/config/wallet-provider'
-import { useUnifiedWalletInfo } from '@/context'
+import { useUnifiedWalletInfo } from '@/context/blockchain'
 import { useWalletDisconnect } from '@/hooks/blockchain/use-wallet-disconnect'
 
 // Lazy load provider-specific components

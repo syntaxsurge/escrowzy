@@ -57,7 +57,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { useUnifiedWalletInfo, useUnifiedChainInfo } from '@/context'
+import { useUnifiedWalletInfo, useUnifiedChainInfo } from '@/context/blockchain'
 import { useAdminTransaction } from '@/hooks/blockchain/use-transaction'
 import { useLoading } from '@/hooks/use-loading'
 import { cn } from '@/lib'

@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { api } from '@/lib/api/http-client'
 import type { JobPostingWithRelations } from '@/lib/db/queries/jobs'
 import { pusherClient } from '@/lib/pusher-client'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 
 interface Message {
   id: number

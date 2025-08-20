@@ -61,7 +61,7 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { apiEndpoints } from '@/config/api-endpoints'
-import { useUnifiedWalletInfo, useUnifiedChainInfo } from '@/context'
+import { useUnifiedWalletInfo, useUnifiedChainInfo } from '@/context/blockchain'
 import {
   useAdminTransaction,
   useTransaction

@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/select'
 import { appRoutes } from '@/config/app-routes'
 import { api } from '@/lib/api/http-client'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 
 interface JobArchivesProps {
   freelancerId: number

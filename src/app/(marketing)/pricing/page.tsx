@@ -49,11 +49,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
-import {
-  useUnifiedWalletInfo,
-  useUnifiedChainInfo,
-  useNetwork
-} from '@/context'
+import { useUnifiedWalletInfo, useUnifiedChainInfo } from '@/context/blockchain'
+import { useNetwork } from '@/context/network'
 import { useDialogState } from '@/hooks/use-dialog-state'
 import { useLoading } from '@/hooks/use-loading'
 import { cn } from '@/lib'

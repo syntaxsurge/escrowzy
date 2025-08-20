@@ -45,7 +45,7 @@ import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
 import { api } from '@/lib/api/http-client'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 
 import { FileAnnotations } from './file-annotations'
 import { FilePreview } from './file-preview'

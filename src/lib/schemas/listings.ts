@@ -75,21 +75,9 @@ export const createDomainListingSchema = z.object({
     .describe('Payment window in minutes')
 })
 
-// Service listings are deprecated - use jobs API instead
-// Keeping minimal schema for backward compatibility only
-export const createServiceListingSchema = z
-  .object({
-    listingCategory: z.literal(TradeCategory.SERVICE),
-    listingType: z.literal('sell')
-  })
-  .refine(() => false, 'Services should be created through the jobs API')
-
 // Export individual schema types
 export type CreateP2PListingInput = z.infer<typeof createP2PListingSchema>
 export type CreateDomainListingInput = z.infer<typeof createDomainListingSchema>
-export type CreateServiceListingInput = z.infer<
-  typeof createServiceListingSchema
->
 
 // Combined create listing schema using discriminated union
 // Services removed - only P2P and Domain listings supported

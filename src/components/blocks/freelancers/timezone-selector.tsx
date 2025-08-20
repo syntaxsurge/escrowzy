@@ -18,7 +18,7 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 import { getTimezonesGrouped } from '@/lib/utils/localization'
 
 interface TimezoneSelectorProps {

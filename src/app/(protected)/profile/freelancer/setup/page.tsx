@@ -53,7 +53,7 @@ import { appRoutes } from '@/config/app-routes'
 import { useSession } from '@/hooks/use-session'
 import { api } from '@/lib/api/http-client'
 import { freelancerProfileSchema } from '@/lib/schemas/freelancer'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 
 type ProfileData = z.infer<typeof freelancerProfileSchema> & {
   skills?: any[]

@@ -34,7 +34,7 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip'
 import { api } from '@/lib/api/http-client'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 
 interface GrowthRecommendationsProps {
   freelancerId: number

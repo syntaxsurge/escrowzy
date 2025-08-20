@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import type { JobPostingWithRelations } from '@/lib/db/queries/jobs'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 
 interface WorkspaceOverviewProps {
   job: JobPostingWithRelations

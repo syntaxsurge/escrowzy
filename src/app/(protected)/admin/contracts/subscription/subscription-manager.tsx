@@ -36,7 +36,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { apiEndpoints } from '@/config/api-endpoints'
-import { useUnifiedWalletInfo, useUnifiedChainInfo } from '@/context'
+import { useUnifiedWalletInfo, useUnifiedChainInfo } from '@/context/blockchain'
 import { useAdminTransaction } from '@/hooks/blockchain/use-transaction'
 import { useDialogState } from '@/hooks/use-dialog-state'
 import { useLoading } from '@/hooks/use-loading'

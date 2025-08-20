@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { useNetwork } from '@/context'
+import { useNetwork } from '@/context/network'
 import { useDialogState } from '@/hooks/use-dialog-state'
 import { cn } from '@/lib'
 import {

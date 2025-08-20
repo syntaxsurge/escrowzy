@@ -10,7 +10,7 @@ import { AuthRequiredModal } from '@/components/blocks/freelancers/auth-required
 import { Button } from '@/components/ui/button'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
-import { useUnifiedWalletInfo } from '@/context'
+import { useUnifiedWalletInfo } from '@/context/blockchain'
 import { swrConfig, swrFetcher } from '@/lib/api/swr'
 
 interface SendMessageButtonProps {

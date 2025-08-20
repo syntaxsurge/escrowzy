@@ -14,7 +14,7 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 
 interface WizardStep {
   id: string

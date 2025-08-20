@@ -34,7 +34,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
 import { swrFetcher } from '@/lib/api/swr'
-import { cn, formatDate } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
+import { formatDate } from '@/lib/utils/string'
 
 interface JobPosting {
   id: number

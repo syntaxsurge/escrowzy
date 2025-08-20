@@ -16,7 +16,7 @@ export async function GET() {
     // Get total users on platform
     const [totalUsersResult] = await db.select({ count: count() }).from(users)
 
-    // Get active listings (all types: P2P, domain, service)
+    // Get active listings (P2P and domain only)
     const [activeListingsResult] = await db
       .select({
         count: count(),
@@ -25,9 +25,6 @@ export async function GET() {
         ),
         domain: count(
           sql`CASE WHEN ${escrowListings.listingCategory} = 'domain' THEN 1 END`
-        ),
-        service: count(
-          sql`CASE WHEN ${escrowListings.listingCategory} = 'service' THEN 1 END`
         )
       })
       .from(escrowListings)
@@ -87,8 +84,7 @@ export async function GET() {
       activeListings: activeListingsResult?.count || 0,
       listingBreakdown: {
         p2p: activeListingsResult?.p2p || 0,
-        domain: activeListingsResult?.domain || 0,
-        service: activeListingsResult?.service || 0
+        domain: activeListingsResult?.domain || 0
       },
 
       // Escrow metrics

@@ -33,7 +33,7 @@ import { Progress } from '@/components/ui/progress'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 
 interface OnboardingStep {
   id: number

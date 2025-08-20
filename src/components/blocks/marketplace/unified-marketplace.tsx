@@ -200,16 +200,18 @@ export function UnifiedMarketplace({
             !domainName.includes(query)
           )
             return false
-        } else if (listing.listingCategory === 'service') {
-          // For service listings, also search in service title and description
-          const serviceTitle = listing.serviceTitle?.toLowerCase() || ''
-          const serviceDescription =
-            listing.serviceDescription?.toLowerCase() || ''
+        } else if (
+          listing.listingCategory === 'job' ||
+          listing.listingCategory === 'service'
+        ) {
+          // For job/service listings, search in title and description
+          const title = listing.title?.toLowerCase() || ''
+          const description = listing.description?.toLowerCase() || ''
           if (
             !userName.includes(query) &&
             !userEmail.includes(query) &&
-            !serviceTitle.includes(query) &&
-            !serviceDescription.includes(query)
+            !title.includes(query) &&
+            !description.includes(query)
           )
             return false
         } else {
@@ -272,13 +274,14 @@ export function UnifiedMarketplace({
       : category === 'service'
         ? [
             {
-              title: 'Service Listings',
+              title: 'Job & Service Listings',
               value: filteredListings.filter(
-                (l: EscrowListingWithUser) => l.listingCategory === 'service'
+                (l: any) =>
+                  l.listingCategory === 'job' || l.listingCategory === 'service'
               ).length,
-              subtitle: 'Services available',
+              subtitle: 'Available postings',
               icon: <Briefcase className='h-5 w-5 text-white' />,
-              badge: 'SERVICES',
+              badge: 'POSTINGS',
               colorScheme: 'green'
             },
             {
@@ -286,40 +289,48 @@ export function UnifiedMarketplace({
               value: new Set(
                 filteredListings
                   .filter(
-                    (l: EscrowListingWithUser) =>
+                    (l: any) =>
+                      l.listingCategory === 'job' ||
                       l.listingCategory === 'service'
                   )
-                  .map((l: EscrowListingWithUser) => l.userId)
+                  .map((l: any) => l.userId || l.clientId)
               ).size,
-              subtitle: 'Active providers',
+              subtitle: 'Active users',
               icon: <Users className='h-5 w-5 text-white' />,
               badge: 'PROVIDERS',
               colorScheme: 'blue'
             },
             {
-              title: 'Avg Rate',
+              title: 'Avg Budget',
               value:
                 filteredListings.filter(
-                  (l: EscrowListingWithUser) => l.listingCategory === 'service'
+                  (l: any) =>
+                    l.listingCategory === 'job' ||
+                    l.listingCategory === 'service'
                 ).length > 0
                   ? `$${Math.round(
                       filteredListings
                         .filter(
-                          (l: EscrowListingWithUser) =>
+                          (l: any) =>
+                            l.listingCategory === 'job' ||
                             l.listingCategory === 'service'
                         )
                         .reduce(
-                          (sum: number, l: EscrowListingWithUser) =>
-                            sum + parseFloat(l.pricePerUnit || l.amount || '0'),
+                          (sum: number, l: any) =>
+                            sum +
+                            parseFloat(
+                              l.pricePerUnit || l.amount || l.budgetMin || '0'
+                            ),
                           0
                         ) /
                         filteredListings.filter(
-                          (l: EscrowListingWithUser) =>
+                          (l: any) =>
+                            l.listingCategory === 'job' ||
                             l.listingCategory === 'service'
                         ).length
                     )}`
                   : '$0',
-              subtitle: 'Average service rate',
+              subtitle: 'Average rate',
               icon: <DollarSign className='h-5 w-5 text-white' />,
               badge: 'PRICING',
               colorScheme: 'purple'
@@ -329,12 +340,13 @@ export function UnifiedMarketplace({
               value: new Set(
                 filteredListings
                   .filter(
-                    (l: EscrowListingWithUser) =>
+                    (l: any) =>
+                      l.listingCategory === 'job' ||
                       l.listingCategory === 'service'
                   )
                   .map((l: any) => l.categoryId || 1)
               ).size,
-              subtitle: 'Service types',
+              subtitle: 'Different types',
               icon: <Activity className='h-5 w-5 text-white' />,
               badge: 'VARIETY',
               colorScheme: 'yellow'

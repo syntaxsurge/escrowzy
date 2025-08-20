@@ -62,8 +62,7 @@ export async function createListing(
       adminTransferEmail: envPublic.NEXT_PUBLIC_DOMAIN_ESCROW_EMAIL
     } as DomainMetadata
   } else {
-    // Services are now handled through jobPostings table
-    throw new Error('Services should be created through the jobs API')
+    throw new Error('Invalid listing category')
   }
 
   const [listing] = await db.insert(escrowListings).values(values).returning()
@@ -90,18 +89,13 @@ export async function getActiveListings(
     conditions.push(eq(escrowListings.isActive, true))
   }
 
-  // Category filter - services no longer supported here
+  // Category filter
   if (query.listingCategory) {
-    if (query.listingCategory === 'service') {
-      // Services are now in jobPostings table
-      conditions.push(eq(escrowListings.listingCategory, 'none')) // Will return no results
-    } else {
-      conditions.push(eq(escrowListings.listingCategory, query.listingCategory))
-    }
+    conditions.push(eq(escrowListings.listingCategory, query.listingCategory))
   }
 
-  // Type filter - only apply for non-service categories
-  if (query.listingType && query.listingCategory !== 'service') {
+  // Type filter
+  if (query.listingType) {
     conditions.push(eq(escrowListings.listingType, query.listingType))
   }
 

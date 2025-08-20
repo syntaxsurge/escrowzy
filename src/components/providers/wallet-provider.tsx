@@ -9,7 +9,8 @@ import {
   WalletProviders,
   type WalletProvider as WalletProviderType
 } from '@/config/wallet-provider'
-import { BlockchainProvider, NetworkProvider } from '@/context'
+import { BlockchainProvider } from '@/context/blockchain'
+import { NetworkProvider } from '@/context/network'
 
 // Dynamically load wallet providers
 const ThirdwebProvider = dynamic(

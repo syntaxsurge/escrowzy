@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 
 import { Button } from '@/components/ui/button'
 import { isWalletProvider, WalletProviders } from '@/config/wallet-provider'
-import { useUnifiedChainInfo } from '@/context'
+import { useUnifiedChainInfo } from '@/context/blockchain'
 
 import { NetworkSelectorFallback } from './network-selector-fallback'
 

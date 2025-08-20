@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { getServerSession } from '@/lib/auth'
+import { getServerSession } from '@/lib/auth/session'
 import { getReviewPrompts } from '@/services/reviews'
 
 export async function GET(request: NextRequest) {

@@ -2,7 +2,7 @@
 
 import { Award, Shield, Star, Trophy, Gem } from 'lucide-react'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/cn'
 
 interface ReputationBadgeProps {
   score: number

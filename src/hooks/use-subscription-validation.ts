@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import useSWR from 'swr'
 
 import { apiEndpoints } from '@/config/api-endpoints'
-import { useUnifiedWalletInfo } from '@/context'
+import { useUnifiedWalletInfo } from '@/context/blockchain'
 import { mutateGlobalSWR } from '@/lib/api/swr'
 
 /**

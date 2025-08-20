@@ -42,7 +42,7 @@ import {
 } from '@/components/ui/card'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
-import { useUnifiedChainInfo } from '@/context'
+import { useUnifiedChainInfo } from '@/context/blockchain'
 import { cn } from '@/lib'
 import { api } from '@/lib/api/http-client'
 import { getNativeCurrencySymbol, DEFAULT_CHAIN_ID } from '@/lib/blockchain'

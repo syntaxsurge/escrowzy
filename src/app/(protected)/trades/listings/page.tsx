@@ -40,9 +40,7 @@ import type { EscrowListingWithUser } from '@/types/listings'
 
 export default function MarketplacePage() {
   const router = useRouter()
-  const [category, setCategory] = useState<
-    'all' | 'p2p' | 'domain' | 'service'
-  >('all')
+  const [category, setCategory] = useState<'all' | 'p2p' | 'domain'>('all')
   const [filterType, setFilterType] = useState<'all' | 'buy' | 'sell'>('all')
   const [filterToken, setFilterToken] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -111,10 +109,6 @@ export default function MarketplacePage() {
             !domainName.includes(query)
           )
             return false
-        } else if (listing.listingCategory === 'service') {
-          // Services are now in jobPostings table, skip search for legacy service listings
-          if (!userName.includes(query) && !userEmail.includes(query))
-            return false
         } else {
           if (!userName.includes(query) && !userEmail.includes(query))
             return false
@@ -172,111 +166,40 @@ export default function MarketplacePage() {
             colorScheme: 'yellow'
           }
         ]
-      : category === 'service'
-        ? [
-            {
-              title: 'Service Listings',
-              value: filteredListings.filter(
-                (l: EscrowListingWithUser) => l.listingCategory === 'service'
-              ).length,
-              subtitle: 'Services available',
-              icon: <ShoppingCart className='h-5 w-5 text-white' />,
-              badge: 'SERVICES',
-              colorScheme: 'green'
-            },
-            {
-              title: 'Freelancers',
-              value: new Set(
-                filteredListings
-                  .filter(
-                    (l: EscrowListingWithUser) =>
-                      l.listingCategory === 'service'
-                  )
-                  .map((l: EscrowListingWithUser) => l.userId)
-              ).size,
-              subtitle: 'Active providers',
-              icon: <Users className='h-5 w-5 text-white' />,
-              badge: 'PROVIDERS',
-              colorScheme: 'blue'
-            },
-            {
-              title: 'Avg Rate',
-              value:
-                filteredListings.filter(
-                  (l: EscrowListingWithUser) => l.listingCategory === 'service'
-                ).length > 0
-                  ? `$${Math.round(
-                      filteredListings
-                        .filter(
-                          (l: EscrowListingWithUser) =>
-                            l.listingCategory === 'service'
-                        )
-                        .reduce(
-                          (sum: number, l: EscrowListingWithUser) =>
-                            sum + parseFloat(l.pricePerUnit || l.amount || '0'),
-                          0
-                        ) /
-                        filteredListings.filter(
-                          (l: EscrowListingWithUser) =>
-                            l.listingCategory === 'service'
-                        ).length
-                    )}`
-                  : '$0',
-              subtitle: 'Average service rate',
-              icon: <DollarSign className='h-5 w-5 text-white' />,
-              badge: 'PRICING',
-              colorScheme: 'purple'
-            },
-            {
-              title: 'Categories',
-              value: new Set(
-                filteredListings
-                  .filter(
-                    (l: EscrowListingWithUser) =>
-                      l.listingCategory === 'service'
-                  )
-                  .map((l: any) => l.categoryId || 1)
-              ).size,
-              subtitle: 'Service types',
-              icon: <Activity className='h-5 w-5 text-white' />,
-              badge: 'VARIETY',
-              colorScheme: 'yellow'
-            }
-          ]
-        : [
-            {
-              title: 'Active Offers',
-              value: marketStats?.totalActiveListings ?? 0,
-              subtitle: 'Available for trading',
-              icon: <Activity className='h-5 w-5 text-white' />,
-              badge: 'LIVE',
-              colorScheme: 'green'
-            },
-            {
-              title: 'Buy Orders',
-              value: marketStats?.totalBuyOrders ?? 0,
-              subtitle: 'Users want to buy',
-              icon: <DollarSign className='h-5 w-5 text-white' />,
-              badge: 'DEMAND',
-              colorScheme: 'blue'
-            },
-            {
-              title: 'Sell Orders',
-              value: marketStats?.totalSellOrders ?? 0,
-              subtitle: 'Users want to sell',
-              icon: <Zap className='h-5 w-5 text-white' />,
-              badge: 'SUPPLY',
-              colorScheme: 'purple'
-            },
-            {
-              title: 'Active Traders',
-              value: marketStats?.activeTraders ?? 0,
-              subtitle: 'Unique users trading',
-              icon: <Users className='h-5 w-5 text-white' />,
-              badge: 'COMMUNITY',
-              colorScheme: 'yellow'
-            }
-          ]
+      : [
+          {
+            title: 'Active Offers',
+            value: marketStats?.totalActiveListings ?? 0,
+            subtitle: 'Available for trading',
+            icon: <Activity className='h-5 w-5 text-white' />,
+            badge: 'LIVE',
+            colorScheme: 'green'
+          },
+          {
+            title: 'Buy Orders',
+            value: marketStats?.totalBuyOrders ?? 0,
+            subtitle: 'Users want to buy',
+            icon: <DollarSign className='h-5 w-5 text-white' />,
+            badge: 'DEMAND',
+            colorScheme: 'blue'
+          },
+          {
+            title: 'Sell Orders',
+            value: marketStats?.totalSellOrders ?? 0,
+            subtitle: 'Users want to sell',
+            icon: <Zap className='h-5 w-5 text-white' />,
+            badge: 'SUPPLY',
+            colorScheme: 'purple'
+          },
+          {
+            title: 'Active Traders',
+            value: marketStats?.activeTraders ?? 0,
+            subtitle: 'Unique users trading',
+            icon: <Users className='h-5 w-5 text-white' />,
+            badge: 'COMMUNITY',
+            colorScheme: 'yellow'
+          }
+        ]
 
   return (
     <div className='from-background via-background to-primary/5 dark:to-primary/10 min-h-screen bg-gradient-to-br'>
@@ -289,9 +212,7 @@ export default function MarketplacePage() {
               ? 'Browse and purchase domains with secure escrow'
               : category === 'p2p'
                 ? 'Trade cryptocurrencies directly with other users'
-                : category === 'service'
-                  ? 'Find professional services and freelancers'
-                  : 'Browse all escrow listings'
+                : 'Browse all escrow listings'
           }
           icon={<ShoppingCart className='h-8 w-8 text-white' />}
           actions={
@@ -335,13 +256,6 @@ export default function MarketplacePage() {
             >
               <Globe className='mr-2 h-4 w-4' />
               DOMAINS
-            </TabsTrigger>
-            <TabsTrigger
-              value='service'
-              className='text-lg font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600/20 data-[state=active]:to-emerald-600/20'
-            >
-              <ShoppingCart className='mr-2 h-4 w-4' />
-              SERVICES
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -434,9 +348,7 @@ export default function MarketplacePage() {
                   ? 'NO DOMAINS FOUND'
                   : category === 'p2p'
                     ? 'NO P2P LISTINGS FOUND'
-                    : category === 'service'
-                      ? 'NO SERVICES FOUND'
-                      : 'NO LISTINGS FOUND'}
+                    : 'NO LISTINGS FOUND'}
               </h3>
               <p className='text-muted-foreground mb-6'>
                 {searchQuery || filterType !== 'all' || filterToken !== 'all'
@@ -445,9 +357,7 @@ export default function MarketplacePage() {
                     ? 'Be the first to list a domain'
                     : category === 'p2p'
                       ? 'Be the first to create a P2P listing'
-                      : category === 'service'
-                        ? 'Be the first to offer a service'
-                        : 'Be the first to create a listing'}
+                      : 'Be the first to create a listing'}
               </p>
               {!searchQuery &&
                 filterType === 'all' &&

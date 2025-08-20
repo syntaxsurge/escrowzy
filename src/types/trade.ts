@@ -8,8 +8,7 @@ import type { TradeStatus } from './listings'
  */
 export enum TradeCategory {
   P2P = 'p2p', // Peer-to-peer crypto/fiat trades
-  DOMAIN = 'domain', // Domain name trades
-  SERVICE = 'service' // Professional services and freelance work
+  DOMAIN = 'domain' // Domain name trades
 }
 
 /**

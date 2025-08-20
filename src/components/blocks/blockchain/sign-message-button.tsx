@@ -3,7 +3,7 @@
 import { Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { useUnifiedWalletInfo } from '@/context'
+import { useUnifiedWalletInfo } from '@/context/blockchain'
 import { useUnifiedWalletAuth } from '@/hooks/blockchain/use-unified-wallet-auth'
 import { cn } from '@/lib'
 

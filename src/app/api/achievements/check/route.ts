@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { getServerSession } from '@/lib/auth'
+import { getServerSession } from '@/lib/auth/session'
 import { getUserAchievements } from '@/lib/db/queries/achievements'
 import { checkAllAchievements } from '@/services/achievement-triggers'
 import {

@@ -37,7 +37,7 @@ import {
   CardTitle
 } from '@/components/ui/card'
 import { apiEndpoints } from '@/config/api-endpoints'
-import { useUnifiedChainInfo } from '@/context'
+import { useUnifiedChainInfo } from '@/context/blockchain'
 import { useLoading } from '@/hooks/use-loading'
 import { api } from '@/lib/api/http-client'
 
