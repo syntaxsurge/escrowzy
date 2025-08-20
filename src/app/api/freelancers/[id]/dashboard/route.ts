@@ -52,6 +52,9 @@ export async function GET(
       )
     }
 
+    // Use the actual profile ID for queries, not the user ID
+    const profileId = profile.id
+
     // Get earnings summary
     const earningsSummary = await getFreelancerEarningsSummary(freelancerId)
 
@@ -86,7 +89,7 @@ export async function GET(
       .from(jobPostings)
       .where(
         and(
-          eq(jobPostings.freelancerId, freelancerId),
+          eq(jobPostings.freelancerId, profileId),
           sql`${jobPostings.status} IN ('in_progress', 'active')`
         )
       )
@@ -105,7 +108,7 @@ export async function GET(
         clientName: sql<string>`(SELECT u.name FROM users u INNER JOIN ${jobPostings} j ON u.id = j.client_id WHERE j.id = ${jobBids.jobId})`
       })
       .from(jobBids)
-      .where(eq(jobBids.freelancerId, freelancerId))
+      .where(eq(jobBids.freelancerId, profileId))
       .orderBy(desc(jobBids.createdAt))
       .limit(5)
 
@@ -119,7 +122,7 @@ export async function GET(
         rejected: sql<number>`COUNT(*) FILTER (WHERE status = 'rejected')`
       })
       .from(jobBids)
-      .where(eq(jobBids.freelancerId, freelancerId))
+      .where(eq(jobBids.freelancerId, profileId))
 
     // Calculate conversion rate
     const totalCompleted =
@@ -157,7 +160,7 @@ export async function GET(
             jsonb_array_elements_text(${jobPostings.skillsRequired}) as skill_name,
             ${jobPostings.id} as job_id
           FROM ${jobPostings}
-          WHERE ${jobPostings.freelancerId} = ${freelancerId}
+          WHERE ${jobPostings.freelancerId} = ${profileId}
             AND ${jobPostings.status} = 'completed'
         ) as job_skills`
       )
@@ -172,7 +175,7 @@ export async function GET(
         completedJobs: sql<number>`COUNT(*) FILTER (WHERE status = 'completed')`
       })
       .from(jobPostings)
-      .where(eq(jobPostings.freelancerId, freelancerId))
+      .where(eq(jobPostings.freelancerId, profileId))
 
     const completionRate =
       Number(completionStats?.totalJobs) > 0
@@ -193,7 +196,7 @@ export async function GET(
       })
       .from(jobMilestones)
       .innerJoin(jobPostings, eq(jobMilestones.jobId, jobPostings.id))
-      .where(eq(jobPostings.freelancerId, freelancerId))
+      .where(eq(jobPostings.freelancerId, profileId))
 
     // Get client diversity (unique clients)
     const [clientStats] = await db
@@ -205,7 +208,7 @@ export async function GET(
         sql`(
           SELECT client_id, COUNT(*) as client_job_count
           FROM ${jobPostings}
-          WHERE freelancer_id = ${freelancerId}
+          WHERE freelancer_id = ${profileId}
           GROUP BY client_id
         ) as client_jobs`
       )
