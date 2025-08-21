@@ -185,6 +185,19 @@ export default function TutorialsPage() {
     advanced: '🔥'
   }
 
+  if (loading) {
+    return (
+      <div className='container mx-auto max-w-7xl px-4 py-8'>
+        <div className='flex items-center justify-center py-12'>
+          <div className='text-center'>
+            <div className='border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent'></div>
+            <p>Loading tutorials...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className='container mx-auto max-w-7xl px-4 py-8'>
       {/* Header */}
@@ -362,22 +375,35 @@ export default function TutorialsPage() {
                     </div>
                   )}
 
-                  <Button
-                    className='w-full'
-                    variant={isCompleted ? 'outline' : 'default'}
-                    disabled={isLocked}
-                    onClick={() => startTutorial(tutorial)}
-                  >
-                    {isLocked && <Lock className='mr-2 h-4 w-4' />}
-                    {isCompleted
-                      ? 'Review'
-                      : isLocked
-                        ? 'Locked'
-                        : 'Start Tutorial'}
-                    {!isLocked && !isCompleted && (
-                      <ChevronRight className='ml-2 h-4 w-4' />
+                  <div className='space-y-2'>
+                    <Button
+                      className='w-full'
+                      variant={isCompleted ? 'outline' : 'default'}
+                      disabled={isLocked}
+                      onClick={() => startTutorial(tutorial)}
+                    >
+                      {isLocked && <Lock className='mr-2 h-4 w-4' />}
+                      {isCompleted
+                        ? 'Review'
+                        : isLocked
+                          ? 'Locked'
+                          : 'Start Tutorial'}
+                      {!isLocked && !isCompleted && (
+                        <ChevronRight className='ml-2 h-4 w-4' />
+                      )}
+                    </Button>
+
+                    {progress && !isCompleted && progress.progress > 0 && (
+                      <Button
+                        className='w-full'
+                        variant='outline'
+                        onClick={() => completeTutorial(tutorial.id)}
+                      >
+                        <CheckCircle className='mr-2 h-4 w-4' />
+                        Mark Complete
+                      </Button>
                     )}
-                  </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

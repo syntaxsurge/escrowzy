@@ -138,6 +138,7 @@ export default function JobDetailsPage() {
     setIsSaving(true)
     try {
       const response = await api.post(apiEndpoints.jobs.save(jobId))
+      console.log('Job saved successfully:', response)
       mutate()
     } catch (error) {
       console.error('Failed to save job:', error)

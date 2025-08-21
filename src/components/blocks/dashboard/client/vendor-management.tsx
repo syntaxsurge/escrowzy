@@ -107,6 +107,7 @@ export function VendorManagement({
         })
       }
     } catch (error) {
+      console.error('Failed to add to favorites:', error)
       toast({
         title: 'Error',
         description: 'Failed to add to favorites',
@@ -135,6 +136,7 @@ export function VendorManagement({
         setSelectedFreelancer(null)
       }
     } catch (error) {
+      console.error('Failed to send feedback:', error)
       toast({
         title: 'Error',
         description: 'Failed to send feedback',

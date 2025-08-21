@@ -131,6 +131,7 @@ export function JobArchives({ freelancerId }: JobArchivesProps) {
         toast.error('Failed to unarchive job')
       }
     } catch (error) {
+      console.error('Failed to unarchive job:', error)
       toast.error('Failed to unarchive job')
     }
   }

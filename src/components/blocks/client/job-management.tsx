@@ -91,6 +91,7 @@ export function ClientJobManagement() {
         errorMessage: 'Failed to update job'
       }
     )
+    console.log('Job action response:', response)
 
     mutate()
   }

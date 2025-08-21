@@ -187,6 +187,7 @@ export default function FAQPage() {
         feedback: feedbackText
       })
 
+      console.log('Feedback submitted successfully:', response)
       toast.success('Thank you for your detailed feedback!')
       setFeedbackModal({ isOpen: false, faqId: null })
       setFeedbackText('')

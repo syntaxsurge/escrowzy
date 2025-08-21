@@ -386,6 +386,7 @@ export default function PricingPage() {
       )
 
       // Response received successfully
+      console.log('Downgrade response:', response)
 
       // Refresh all data to show updated plan
       await Promise.all([
@@ -454,6 +455,7 @@ export default function PricingPage() {
       )
 
       // Response received successfully
+      console.log('Team downgrade response:', response)
 
       // Refresh all data to show updated plan
       await Promise.all([

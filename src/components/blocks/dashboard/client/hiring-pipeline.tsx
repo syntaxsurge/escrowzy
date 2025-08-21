@@ -124,12 +124,14 @@ export function HiringPipeline({
         data: { bidId }
       })
 
+      console.log('Shortlist response:', response)
       toast({
         title: 'Success',
         description: 'Candidate shortlisted successfully'
       })
       window.location.reload()
     } catch (error) {
+      console.error('Failed to shortlist candidate:', error)
       toast({
         title: 'Error',
         description: 'Failed to shortlist candidate',
@@ -161,6 +163,7 @@ export function HiringPipeline({
         }
       })
 
+      console.log('Bulk invite response:', response)
       toast({
         title: 'Success',
         description: `Invitations sent to ${selectedApplications.length} freelancers`
@@ -170,6 +173,7 @@ export function HiringPipeline({
       setInviteMessage('')
       window.location.reload()
     } catch (error) {
+      console.error('Failed to send invitations:', error)
       toast({
         title: 'Error',
         description: 'Failed to send invitations',

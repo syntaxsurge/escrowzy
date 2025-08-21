@@ -14,7 +14,8 @@ import {
   User,
   DollarSign,
   Clock,
-  Target
+  Target,
+  Trophy
 } from 'lucide-react'
 
 import { PortfolioGallery } from '@/components/blocks/freelancers/portfolio-gallery'
@@ -105,6 +106,22 @@ export default async function FreelancerProfilePage() {
       icon: <Briefcase className='h-5 w-5' />,
       badge: 'ACTIVE',
       colorScheme: 'blue'
+    },
+    {
+      title: 'Total Jobs',
+      value: totalJobs,
+      subtitle: 'All-time projects',
+      icon: <Target className='h-5 w-5' />,
+      badge: 'PROJECTS',
+      colorScheme: 'green'
+    },
+    {
+      title: 'Platform Average',
+      value: `${platformStats?.averageRating?.toFixed(1) || 'N/A'}★`,
+      subtitle: `vs ${platformStats?.totalFreelancers || 0} freelancers`,
+      icon: <Trophy className='h-5 w-5' />,
+      badge: 'PLATFORM',
+      colorScheme: 'purple'
     }
   ]
 

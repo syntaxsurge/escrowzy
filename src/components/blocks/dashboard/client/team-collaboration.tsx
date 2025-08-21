@@ -121,6 +121,7 @@ export function TeamCollaboration({
         setInviteRole('member')
       }
     } catch (error) {
+      console.error('Failed to send invitation:', error)
       toast({
         title: 'Error',
         description: 'Failed to send invitation',

@@ -85,6 +85,7 @@ export default function ScheduledTasksPage() {
         toast.error(response.error || `Failed to run task ${taskId}`)
       }
     } catch (error) {
+      console.error(`Failed to run task ${taskId}:`, error)
       toast.error(`Failed to run task ${taskId}`)
     } finally {
       setIsRunning({ ...isRunning, [taskId]: false })

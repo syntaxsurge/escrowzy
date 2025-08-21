@@ -69,12 +69,12 @@ import {
   getChainConfig,
   ACHIEVEMENT_NFT_ABI
 } from '@/lib/blockchain'
-import {
-  AchievementNFTService,
-  type CreateAchievementParams,
-  type MintAchievementParams,
-  type AchievementCategory
-} from '@/services/blockchain/achievement-nft.service'
+import { AchievementNFTService } from '@/services/blockchain/achievement-nft-client.service'
+import type {
+  CreateAchievementParams,
+  MintAchievementParams,
+  AchievementCategory
+} from '@/services/blockchain/achievement-nft.types'
 
 interface NFTStats {
   totalMinted: number
@@ -246,8 +246,7 @@ export function AchievementNFTManager() {
           imageUrl: newAchievementImage,
           category: 0 as AchievementCategory, // Default to TRADING category
           requiredProgress: parseInt(newAchievementMaxSupply) || 1,
-          xpReward: 100, // Default XP reward
-          isActive: true
+          xpReward: 100 // Default XP reward
         }
 
         const contractAddress = getAchievementNFTAddress(effectiveChainId)
@@ -298,8 +297,7 @@ export function AchievementNFTManager() {
         const mintParams: MintAchievementParams = {
           to: mintRecipient,
           achievementId: parseInt(mintAchievementId),
-          progress: 100, // Default to 100% progress
-          earnedAt: Math.floor(Date.now() / 1000) // Current timestamp in seconds
+          progress: 100 // Default to 100% progress
         }
 
         const contractAddress = getAchievementNFTAddress(effectiveChainId)

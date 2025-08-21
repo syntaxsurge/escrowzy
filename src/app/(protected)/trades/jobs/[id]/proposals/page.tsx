@@ -212,6 +212,7 @@ export default function JobProposalsPage() {
         toast.error(response.error || `Failed to ${action} bid`)
       }
     } catch (error) {
+      console.error(`Failed to ${action} bid:`, error)
       toast.error(`Failed to ${action} bid`)
     }
   }
@@ -234,6 +235,7 @@ export default function JobProposalsPage() {
       setSelectedBids([])
       mutateBids()
     } catch (error) {
+      console.error(`Failed to ${action} bids:`, error)
       toast.error(`Failed to ${action} bids`)
     }
   }

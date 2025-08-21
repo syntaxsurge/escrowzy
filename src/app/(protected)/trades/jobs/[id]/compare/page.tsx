@@ -141,6 +141,7 @@ export default function CompareFreelancersPage() {
         toast.error(response.error || 'Failed to accept bid')
       }
     } catch (error) {
+      console.error('Failed to accept bid:', error)
       toast.error('Failed to accept bid')
     }
   }

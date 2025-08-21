@@ -125,6 +125,7 @@ export default function FreelancerBidsPage() {
         toast.error(response.error || 'Failed to withdraw bid')
       }
     } catch (error) {
+      console.error('Failed to withdraw bid:', error)
       toast.error('Failed to withdraw bid')
     }
   }

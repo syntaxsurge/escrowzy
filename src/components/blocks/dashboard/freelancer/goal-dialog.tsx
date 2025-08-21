@@ -80,6 +80,7 @@ export function GoalDialog({
         toast.error(response.error || 'Failed to create goal')
       }
     } catch (error) {
+      console.error('Failed to create goal:', error)
       toast.error('Failed to create goal')
     } finally {
       setLoading(false)

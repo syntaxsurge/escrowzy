@@ -181,6 +181,7 @@ export function JobTemplates({
         toast.error(response.error || 'Failed to create template')
       }
     } catch (error) {
+      console.error('Failed to create template:', error)
       toast.error('Failed to create template')
     }
   }
@@ -220,6 +221,7 @@ export function JobTemplates({
         toast.error(response.error || 'Failed to update template')
       }
     } catch (error) {
+      console.error('Failed to update template:', error)
       toast.error('Failed to update template')
     }
   }

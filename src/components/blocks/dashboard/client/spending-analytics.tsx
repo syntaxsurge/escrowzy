@@ -119,6 +119,7 @@ export function SpendingAnalytics({
         })
       }
     } catch (error) {
+      console.error('Failed to export report:', error)
       toast({
         title: 'Error',
         description: 'Failed to export report',

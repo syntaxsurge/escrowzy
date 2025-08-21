@@ -3,42 +3,30 @@ import { ethers } from 'ethers'
 import { ACHIEVEMENT_NFT_ABI, getAchievementNFTAddress } from '@/lib/blockchain'
 
 import { BaseContractClientService } from './base-contract-client.service'
+import type {
+  AchievementCategory,
+  CreateAchievementParams,
+  MintAchievementParams,
+  Achievement,
+  UserAchievement,
+  AchievementProgress,
+  ContractInfo,
+  EventLog
+} from './achievement-nft.types'
 
-// ============================================================================
-// Enums and Types
-// ============================================================================
-
-export enum AchievementCategory {
-  TRADING = 0,
-  VOLUME = 1,
-  STREAK = 2,
-  SPECIAL = 3,
-  LEVEL = 4,
-  BATTLE = 5
+// Re-export types for backward compatibility
+export type {
+  CreateAchievementParams,
+  MintAchievementParams,
+  Achievement,
+  UserAchievement,
+  AchievementProgress,
+  ContractInfo,
+  EventLog
 }
+export { AchievementCategory } from './achievement-nft.types'
 
-// ============================================================================
-// Interfaces
-// ============================================================================
-
-export interface CreateAchievementParams {
-  achievementId: number
-  name: string
-  description: string
-  imageUrl: string
-  category: AchievementCategory
-  requiredProgress: number
-  xpReward: number
-  isActive?: boolean
-}
-
-export interface MintAchievementParams {
-  to: string
-  achievementId: number
-  progress: number
-  earnedAt: number
-}
-
+// Additional service-specific interfaces not in types file
 export interface BatchMintAchievementsParams {
   to: string
   achievementIds: number[]
@@ -58,24 +46,8 @@ export interface IncrementUserProgressParams {
   amount: number
 }
 
-export interface AchievementMetadata {
-  achievementId: number
-  name: string
-  description: string
-  imageUrl: string
-  category: AchievementCategory
-  requiredProgress: number
-  xpReward: number
-  isActive: boolean
+export interface AchievementMetadata extends Achievement {
   totalMinted: number
-}
-
-export interface UserAchievement {
-  tokenId: number
-  achievementId: number
-  progress: number
-  earnedAt: number
-  owner: string
 }
 
 // ============================================================================
@@ -117,7 +89,7 @@ export class AchievementNFTService extends BaseContractClientService {
           achievementParams.category,
           BigInt(achievementParams.requiredProgress),
           BigInt(achievementParams.xpReward),
-          achievementParams.isActive ?? true
+          true // Always active by default
         ]
       }
 
@@ -127,7 +99,7 @@ export class AchievementNFTService extends BaseContractClientService {
           mintParams.to as `0x${string}`,
           BigInt(mintParams.achievementId),
           BigInt(mintParams.progress),
-          BigInt(mintParams.earnedAt)
+          BigInt(Date.now())
         ]
       }
 
@@ -241,13 +213,16 @@ export class AchievementNFTService extends BaseContractClientService {
         BigInt(achievementId)
       )
       return {
-        achievementId: Number(metadata.achievementId),
+        id: achievementId,
         name: metadata.name,
         description: metadata.description,
         imageUrl: metadata.imageUrl,
         category: metadata.category,
         requiredProgress: Number(metadata.requiredProgress),
         xpReward: Number(metadata.xpReward),
+        prerequisiteId: 0,
+        currentSupply: 0,
+        maxSupply: 0,
         isActive: metadata.isActive,
         totalMinted: Number(metadata.totalMinted)
       }
@@ -536,25 +511,47 @@ export async function mintAchievementNFT(
   progress: number = 100
 ): Promise<{ tokenId?: number; txHash?: string }> {
   try {
-    // Use serverFetch for server-side API calls
-    const { serverFetch } = await import('@/lib/api/server-utils')
-    const { apiEndpoints } = await import('@/config/api-endpoints')
+    // Check if we're on the server
+    if (typeof window === 'undefined') {
+      // Use serverFetch for server-side API calls
+      const { serverFetch } = await import('@/lib/api/server-utils')
+      const { apiEndpoints } = await import('@/config/api-endpoints')
 
-    const data = await serverFetch(apiEndpoints.achievements.mint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        to,
-        achievementId,
-        progress
+      const data = await serverFetch(apiEndpoints.achievements.mint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          to,
+          achievementId,
+          progress
+        })
       })
-    })
 
-    return {
-      tokenId: data.tokenId,
-      txHash: data.txHash
+      return {
+        tokenId: data.tokenId,
+        txHash: data.txHash
+      }
+    } else {
+      // Client-side: call the API endpoint directly
+      const response = await fetch('/api/achievements/mint', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          to,
+          achievementId,
+          progress
+        })
+      })
+      
+      const data = await response.json()
+      return {
+        tokenId: data.tokenId,
+        txHash: data.txHash
+      }
     }
   } catch (error) {
     console.error('Error minting achievement:', error)

@@ -23,7 +23,7 @@ const ThirdwebConnectButton = dynamic(
           getSupportedThirdwebChains,
           getThirdwebChain
         } = require('@/lib/blockchain')
-        const { useNetwork } = require('@/context')
+        const { useNetwork } = require('@/context/network')
 
         const { selectedChainId } = useNetwork()
         const supportedChains = getSupportedThirdwebChains()
@@ -90,7 +90,7 @@ const ThirdwebConnectButtonNoAuto = dynamic(
           getSupportedThirdwebChains,
           getThirdwebChain
         } = require('@/lib/blockchain')
-        const { useNetwork } = require('@/context')
+        const { useNetwork } = require('@/context/network')
 
         const { selectedChainId } = useNetwork()
         const supportedChains = getSupportedThirdwebChains()

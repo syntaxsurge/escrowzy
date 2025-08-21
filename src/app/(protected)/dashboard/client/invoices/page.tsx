@@ -126,6 +126,7 @@ export default function InvoicesPage() {
         })
       }
     } catch (error) {
+      console.error('Failed to download invoice:', error)
       toast({
         title: 'Error',
         description: 'Failed to download invoice',
@@ -154,6 +155,7 @@ export default function InvoicesPage() {
         mutate()
       }
     } catch (error) {
+      console.error('Failed to update invoice:', error)
       toast({
         title: 'Error',
         description: 'Failed to update invoice',

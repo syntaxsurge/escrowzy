@@ -126,6 +126,7 @@ export function MilestoneTracker({
         throw new Error(response.error)
       }
     } catch (error) {
+      console.error(`Failed to ${action} milestone:`, error)
       toast({
         title: 'Error',
         description: `Failed to ${action} milestone`,

@@ -51,6 +51,7 @@ async function FreelancersList({
   }
 
   const { freelancers, total } = await searchFreelancers(filters)
+  console.log(`Found ${total} freelancers matching filters`)
 
   if (freelancers.length === 0) {
     return (

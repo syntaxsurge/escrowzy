@@ -705,63 +705,46 @@ export default function PartnerPortal() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {[
-                    {
-                      date: '2024-12-28',
-                      id: 'TXN-001234',
-                      amount: '$234.50',
-                      status: 'pending'
-                    },
-                    {
-                      date: '2024-12-27',
-                      id: 'TXN-001233',
-                      amount: '$189.25',
-                      status: 'pending'
-                    },
-                    {
-                      date: '2024-12-26',
-                      id: 'TXN-001232',
-                      amount: '$412.75',
-                      status: 'paid',
-                      paidAt: '2024-12-28'
-                    },
-                    {
-                      date: '2024-12-25',
-                      id: 'TXN-001231',
-                      amount: '$567.30',
-                      status: 'paid',
-                      paidAt: '2024-12-28'
-                    },
-                    {
-                      date: '2024-12-24',
-                      id: 'TXN-001230',
-                      amount: '$123.45',
-                      status: 'paid',
-                      paidAt: '2024-12-28'
-                    }
-                  ].map((commission, i) => (
-                    <TableRow key={i}>
-                      <TableCell>{commission.date}</TableCell>
-                      <TableCell className='font-mono text-sm'>
-                        {commission.id}
+                  {commissions.length > 0 ? (
+                    commissions.map((commission, i) => (
+                      <TableRow key={i}>
+                        <TableCell>
+                          {commission.date.toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className='font-mono text-sm'>
+                          {commission.id}
+                        </TableCell>
+                        <TableCell className='font-semibold'>
+                          {commission.amount}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              commission.status === 'paid'
+                                ? 'default'
+                                : 'secondary'
+                            }
+                          >
+                            {commission.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {commission.paidAt
+                            ? commission.paidAt.toLocaleDateString()
+                            : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className='text-muted-foreground py-8 text-center'
+                      >
+                        No commission history available
                       </TableCell>
-                      <TableCell className='font-semibold'>
-                        {commission.amount}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            commission.status === 'paid'
-                              ? 'default'
-                              : 'secondary'
-                          }
-                        >
-                          {commission.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{commission.paidAt || '-'}</TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

@@ -147,6 +147,7 @@ export const GET = withAuth(
     context: { session: any; params?: { userId: string } }
   ) => {
     try {
+      console.log('GET client dashboard request:', request.url)
       const clientId = parseInt(context.params?.userId || '0')
 
       // Get client's posted jobs
